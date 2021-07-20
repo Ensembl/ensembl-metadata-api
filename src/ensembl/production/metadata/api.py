@@ -1,4 +1,3 @@
-import logging
 import sqlalchemy as db
 from sqlalchemy.orm import Session
 import pymysql
@@ -25,8 +24,3 @@ def load_database(uri=None):
 
     connection.close()
     return engine
-
-
-if __name__ == '__main__':
-    logging.basicConfig()
-    serve()
