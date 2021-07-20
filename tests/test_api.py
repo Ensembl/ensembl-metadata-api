@@ -13,24 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Hello world module.
-
-If executed as __main__ it will print "Hello world!" on
-stdout.
+"""
+Unit tests for api module
 """
 
-
-def hello(word: str) -> str:
-    """Concats "Hello " with another string.
-
-    Args:
-        word (str): A string that is concatenated with "Hello "
-
-    Returns:
-        A string that is the result of the concatenation between "Hello " and `word`
-    """
-    return f"Hello {word}"
+from ensembl.production.metadata.api import load_database
 
 
-if __name__ == "__main__":
-    hello("world!")
+def test_load_database():
+    """Test api.load_database function"""
+    pass
