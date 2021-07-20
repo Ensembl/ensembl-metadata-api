@@ -6,7 +6,6 @@ python:
 
 env:
   - TESTENV=test
-  - TESTENV=lint
 
 install:
   - pip install -r requirements-test.txt
@@ -15,5 +14,3 @@ install:
 script:
   - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi
   - if [[ "$TESTENV" == "test" ]]; then coverage report -m; fi
-  - if [[ "$TESTENV" == "lint" ]]; then pylint src tests; fi
-  - if [[ "$TESTENV" == "lint" ]]; then mypy src tests; fi
