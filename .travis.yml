@@ -6,17 +6,10 @@ python:
 
 env:
   - TESTENV=test
-  - TESTENV=lint
-  - TESTENV=docs
 
 install:
-  - if [[ "$TESTENV" != "docs" ]]; then pip install -r requirements-test.txt; fi
-  - if [[ "$TESTENV" == "docs" ]]; then pip install -r requirements-doc.txt; fi
+  - pip install -r requirements-test.txt
   - pip install .
 
 script:
   - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi
-  - if [[ "$TESTENV" == "test" ]]; then coverage report -m; fi
-  - if [[ "$TESTENV" == "lint" ]]; then pylint src tests; fi
-  - if [[ "$TESTENV" == "lint" ]]; then mypy src tests; fi
-  - if [[ "$TESTENV" == "docs" ]]; then ./scripts/build_docs.sh; fi

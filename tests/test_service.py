@@ -13,24 +13,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Hello world module.
-
-If executed as __main__ it will print "Hello world!" on
-stdout.
+"""
+Unit tests for service module
 """
 
-
-def hello(word: str) -> str:
-    """Concats "Hello " with another string.
-
-    Args:
-        word (str): A string that is concatenated with "Hello "
-
-    Returns:
-        A string that is the result of the concatenation between "Hello " and `word`
-    """
-    return f"Hello {word}"
+from ensembl.production.metadata.service import create_genome, create_genome_sequence, create_release
 
 
-if __name__ == "__main__":
-    hello("world!")
+def test_create_genome():
+    """Test service.create_genome function"""
+    pass
+
+
+def test_create_genome_sequence():
+    """Test service.create_genome_sequence function"""
+    pass
+
+
+def test_create_release():
+    """Test service.create_release function"""
+    pass

@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package ensembl_metadata;
+
+// Metadata for the genomes in Ensembl.
+service EnsemblMetadata {
+  // Retrieve genome by its UUID.
+  rpc GetGenomeByUUID(GenomeUUIDRequest) returns (Genome) {}
+
+  // Retrieve genome by Ensembl name and site, and optionally release.
+  rpc GetGenomeByName(GenomeNameRequest) returns (Genome) {}
+
+  // Retrieve release details.
+  rpc GetRelease(ReleaseRequest) returns (stream Release) {}
+
+  // Retrieve release details for a genome.
+  rpc GetReleaseByUUID(GenomeUUIDRequest) returns (stream Release) {}
+
+  // Retrieve sequence metadata for a genome's assembly.
+  rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
+}
+
+/*
+A genome is a collection of datasets for an assembly,
+which may or may not be in the current Ensembl release.
+ */
+message Genome {
+  string genome_uuid = 1;
+  string ensembl_name = 2;
+  string url_name = 3;
+  string display_name = 4;
+  bool is_current = 5;
+  Assembly assembly = 6;
+  Taxon taxon = 7;
+}
+
+/*
+An INSDC record of a genome assembly.
+ */
+message Assembly {
+  string accession = 1;
+  string name = 2;
+  string ucsc_name = 3;
+  string level = 4;
+}
+
+/*
+Taxonomic information derived from the NCBI Taxonomy.
+ */
+message Taxon {
+  uint32 taxonomy_id = 1;
+  string scientific_name = 2;
+  string strain = 3;
+  repeated string common_name = 4;
+}
+
+/*
+Release details for all Ensembl sites.
+ */
+message Release {
+  uint32 release_version = 1;
+  string release_date = 2;
+  string release_label = 3;
+  bool is_current = 4;
+  string site_name = 5;
+  string site_label = 6;
+  string site_uri = 7;
+}
+
+/*
+Metadata about the sequences that comprise a genome's assembly.
+ */
+message GenomeSequence {
+  string accession = 1;
+  string name = 2;
+  string sequence_location = 3;
+  uint32 length = 4;
+  bool chromosomal = 5;
+}
+
+/*
+The messages below are used to request data - required-ness is not enforced
+by protocol buffers, but in practice some fields are mandatory in order to
+receive a non-empty response, so this is indicated with a comment.
+ */
+
+/*
+Genome UUID filter.
+ */
+message GenomeUUIDRequest {
+  string genome_uuid = 1; // Mandatory
+}
+
+/*
+Genome name filter.
+If release_version is not given, the current version is used.
+ */
+message GenomeNameRequest {
+  string ensembl_name = 1;    // Mandatory
+  string site_name = 2;       // Mandatory
+  uint32 release_version = 3; // Optional
+}
+
+/*
+Release filter.
+An empty message will return all releases, for all sites.
+ */
+message ReleaseRequest {
+  repeated string site_name = 1;        // Optional
+  repeated uint32 release_version = 2;  // Optional
+  bool current_only = 3;                // Optional
+}
+
+/*
+Genome sequence filter.
+ */
+message GenomeSequenceRequest {
+  string genome_uuid = 1;     // Mandatory
+  bool chromosomal_only = 2;  // Optional
+}
