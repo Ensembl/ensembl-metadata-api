@@ -13,4 +13,3 @@ install:
 
 script:
   - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi
-  - if [[ "$TESTENV" == "test" ]]; then coverage report -m; fi
