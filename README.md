@@ -29,9 +29,13 @@ pip install -r requirements.txt
 ## Related repositories
 
 [ensembl-metadata](https://github.com/Ensembl/ensembl-metadata): Legacy Ensembl Metadata database and Perl API
+
 [ensembl-metadata-admin](https://github.com/Ensembl/ensembl-metadata-admin): Django ORM for the Ensembl Metadata database
+
 [ensembl-metadata-registry](https://github.com/Ensembl/ensembl-metadata-registry): GUI for the Ensembl Metadata database
+
 [ensembl-metadata-service](https://github.com/Ensembl/ensembl-metadata-service): gRPC layer for the Ensembl Metadata database
+
 
 ## Development
 
