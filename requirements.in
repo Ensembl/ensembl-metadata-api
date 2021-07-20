@@ -1,0 +1,7 @@
+ensembl-metadata-api@git+https://github.com/Ensembl/ensembl-metadata-api.git#egg=ensembl-metadata-api
+grpcio
+grpcio-tools
+mysqlclient
+pymysql
+sqlalchemy
+types-pymysql

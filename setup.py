@@ -1,7 +1,4 @@
-"""Build script for setuptools."""
-
-
-from setuptools import setup, find_packages
+from setuptools import find_namespace_packages, setup
 
 
 with open('README.md') as f:
@@ -11,28 +8,27 @@ with open('README.md') as f:
 with open('VERSION') as f:
     version = f.read()
 
+
 setup(
-    name='ensembl_template_py',
+    name='ensembl_metadata_service',
     version=version,
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
-    description="Ensembl Python Template",
-    include_package_data=True,
+    description='Ensembl Metadata Service',
     long_description=readme,
     author='Ensembl',
     author_email='dev@ensembl.org',
     url='https://www.ensembl.org',
-    download_url='https://github.com/Ensembl/template-python',
-    license="Apache License 2.0",
-    python_requires=">=3.8",
+    download_url='https://github.com/Ensembl/ensembl-metadata-service',
+    license='Apache License 2.0',
+    packages=find_namespace_packages(where='src', include=['ensembl.*']),
+    package_dir={'': 'src'},
+    include_package_data=True,
+    python_requires='>=3.8',
     classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Environment :: Console",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         "Programming Language :: Python :: 3.8",
-        "Topic :: Scientific/Engineering :: Bio-Informatics",
-        "Topic :: Software Development :: Libraries :: Python Modules",
     ]
 )
