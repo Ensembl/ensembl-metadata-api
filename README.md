@@ -11,7 +11,7 @@ gRPC layer for the Ensembl Metadata database.
 
 ## Usage
 
-Clone this template:
+Clone the repository:
 ```
 git clone -b main https://github.com/Ensembl/ensembl-metadata-service.git
 ```
