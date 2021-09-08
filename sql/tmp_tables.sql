@@ -19,3 +19,14 @@ create table tmp_attribute (
   label varchar(255),
   value varchar(255)
 );
+
+create table tmp_assembly_sequence (
+  assembly_accession varchar(32),
+  accession varchar(32),
+  name varchar(128),
+  length int,
+  chromosomal tinyint,
+  sequence_location varchar(10),
+  sequence_checksum varchar(32),
+  ga4gh_identifier varchar(32)
+);

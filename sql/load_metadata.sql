@@ -44,18 +44,15 @@ insert into assembly
 select assembly_accession, assembly_name, assembly_ucsc, assembly_level
 from ensembl_metadata_qrp.assembly;
 
-insert into assembly_sequence
-  (name, accession, assembly_id, chromosomal, length, sequence_location)
-select as1.name, as1.acc, a2.assembly_id, 0, 0, NULL
-from ensembl_metadata_qrp.assembly_sequence as1 inner join
-  ensembl_metadata_qrp.assembly a1 on as1.assembly_id = a1.assembly_id inner join
-  assembly a2 on a1.assembly_accession = a2.accession;
+update assembly set ucsc_name = NULL where ucsc_name = '';
 
 insert into organism
   (display_name, ensembl_name, scientific_name, species_taxonomy_id, strain, taxonomy_id, url_name)
 select o1.display_name, o1.name, o1.scientific_name, o1.species_taxonomy_id, o1.strain, o1.taxonomy_id, o1.url_name
 from ensembl_metadata_qrp.organism o1
 group by o1.display_name, o1.name, o1.scientific_name, o1.species_taxonomy_id, o1.strain, o1.taxonomy_id, o1.url_name;
+
+update organism set strain=null where strain='reference';
 
 -- Temporarily add columns, to ease data population
 alter table genome add column assembly_accession varchar(128);
@@ -264,5 +261,24 @@ group by
   ta.type, ta.value, a.attribute_id, d.dataset_id
 ;
 
+insert into assembly_sequence
+  (assembly_id, accession, name, length, chromosomal,
+   sequence_location, sequence_checksum, ga4gh_identifier)
+select distinct a.assembly_id, tas.accession, tas.name, tas.length, tas.chromosomal,
+       tas.sequence_location, tas.sequence_checksum, tas.ga4gh_identifier
+from
+  tmp_assembly_sequence tas inner join
+  assembly a on tas.assembly_accession = a.accession;
+
+create temporary table tmp_chromosomal as
+  select assembly_id, max(chromosomal) as chr from assembly_sequence
+  group by assembly_id;
+
+update assembly a inner join tmp_chromosomal tc using (assembly_id)
+  set level = if(chr = 1, 'chromosome', 'scaffold')
+where level = 'primary_assembly';
+
 drop table tmp_dataset;
 drop table tmp_attribute;
+drop table tmp_assembly_sequence;
+drop temporary table tmp_chromosomal;
