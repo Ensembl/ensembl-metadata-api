@@ -35,13 +35,19 @@ class BaseAdaptor:
 
 
 class ReleaseAdaptor(BaseAdaptor):
-    def fetch_releases(self, release_id=None, release_version=None, current_only=1, site_name=None):
-        if release_version is None:
+    def fetch_releases(self, release_id=None, release_version=None, current_only=True, site_name=None):
+        if release_id is None:
             release_id = []
+        elif not isinstance(release_id, list):
+            release_id = [release_id]
         if release_version is None:
             release_version = []
+        elif not isinstance(release_version, list):
+            release_version = [release_version]
         if site_name is None:
             site_name = []
+        elif not isinstance(site_name, list):
+            site_name = [site_name]
 
         # Reflect existing tables, letting sqlalchemy load linked tables where possible.
         release = db.Table('ensembl_release', self.md, autoload_with=self.metadata_db)
@@ -64,14 +70,14 @@ class ReleaseAdaptor(BaseAdaptor):
             release_select = release_select.filter(release.c.release_id.in_(release_id))
         elif len(release_version) > 0:
             release_select = release_select.filter(release.c.version.in_(release_version))
-        elif current_only == 1:
+        elif current_only:
             release_select = release_select.filter_by(is_current=1)
 
         release_select = release_select.join(site)
         if len(site_name) > 0:
             release_select = release_select.filter(site.c.name.in_(site_name))
 
-        return result in self.metadata_db_session.execute(release_select).all()
+        return self.metadata_db_session.execute(release_select).all()
 
     def fetch_releases_for_genome(self, genome_uuid, site_name=None):
         genome = db.Table('genome', self.md, autoload_with=self.metadata_db)
