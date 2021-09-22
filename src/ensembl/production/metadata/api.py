@@ -2,7 +2,7 @@ import sqlalchemy as db
 from sqlalchemy.orm import Session
 import pymysql
 
-from ensembl.production.metadata.config import MetadataConfig
+from config import MetadataConfig
 
 pymysql.install_as_MySQLdb()
 config = MetadataConfig()
@@ -89,7 +89,7 @@ class ReleaseAdaptor(BaseAdaptor):
                 genome_uuid=genome_uuid
             ).join(genome_release)
 
-        release_ids = self.metadata_db_session.execute(release_id_select).all()
+        release_ids = [rid for (rid,) in self.metadata_db_session.execute(release_id_select)]
 
         return self.fetch_releases(release_id=release_ids, site_name=site_name)
 
@@ -103,7 +103,7 @@ class ReleaseAdaptor(BaseAdaptor):
                 dataset_uuid=dataset_uuid
             ).join(genome_dataset)
 
-        release_ids = self.metadata_db_session.execute(release_id_select).all()
+        release_ids = [rid for (rid,) in self.metadata_db_session.execute(release_id_select)]
 
         return self.fetch_releases(release_id=release_ids, site_name=site_name)
 
