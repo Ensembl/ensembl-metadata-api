@@ -2,7 +2,7 @@ import sqlalchemy as db
 from sqlalchemy.orm import Session
 import pymysql
 
-from config import MetadataConfig
+from ensembl.production.metadata.config import MetadataConfig
 
 pymysql.install_as_MySQLdb()
 config = MetadataConfig()
