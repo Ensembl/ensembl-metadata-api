@@ -23,6 +23,14 @@ def load_database(uri):
     return engine
 
 
+def check_parameter(param):
+    if param is None:
+        param = []
+    elif not isinstance(param, list):
+        param = [param]
+    return param
+
+
 class BaseAdaptor:
     def __init__(self, metadata_uri=None):
         # This is sqlalchemy's metadata, not Ensembl's!
@@ -35,19 +43,17 @@ class BaseAdaptor:
 
 
 class ReleaseAdaptor(BaseAdaptor):
-    def fetch_releases(self, release_id=None, release_version=None, current_only=True, site_name=None):
-        if release_id is None:
-            release_id = []
-        elif not isinstance(release_id, list):
-            release_id = [release_id]
-        if release_version is None:
-            release_version = []
-        elif not isinstance(release_version, list):
-            release_version = [release_version]
-        if site_name is None:
-            site_name = []
-        elif not isinstance(site_name, list):
-            site_name = [site_name]
+    def fetch_releases(self,
+                       release_id=None,
+                       release_version=None,
+                       current_only=True,
+                       release_type=None,
+                       site_name=None
+                       ):
+        release_id = check_parameter(release_id)
+        release_version = check_parameter(release_version)
+        release_type = check_parameter(release_type)
+        site_name = check_parameter(site_name)
 
         # Reflect existing tables, letting sqlalchemy load linked tables where possible.
         release = db.Table('ensembl_release', self.md, autoload_with=self.metadata_db)
@@ -59,6 +65,7 @@ class ReleaseAdaptor(BaseAdaptor):
                 db.cast(release.c.release_date, db.String),
                 release.c.label.label('release_label'),
                 release.c.is_current,
+                release.c.release_type,
                 site.c.name.label('site_name'),
                 site.c.label.label('site_label'),
                 site.c.uri.label('site_uri')
@@ -72,6 +79,9 @@ class ReleaseAdaptor(BaseAdaptor):
             release_select = release_select.filter(release.c.version.in_(release_version))
         elif current_only:
             release_select = release_select.filter_by(is_current=1)
+
+        if len(release_type) > 0:
+            release_select = release_select.filter(release.c.release_type.in_(release_type))
 
         release_select = release_select.join(site)
         if len(site_name) > 0:
@@ -127,16 +137,19 @@ class GenomeAdaptor(BaseAdaptor):
     def fetch_taxonomy_ids(self):
         organism = db.Table('organism', self.md, autoload_with=self.metadata_db)
         taxonomy_id_select = db.select(organism.c.taxonomy_id.distinct())
-        return self.taxonomy_db.execute(taxonomy_id_select).all()
+        taxonomy_ids = [tid for (tid,) in self.metadata_db.execute(taxonomy_id_select)]
+        return taxonomy_ids
 
     def fetch_taxonomy_names(self, taxonomy_id):
         ncbi_taxa_name = db.Table('ncbi_taxa_name', self.md, autoload_with=self.taxonomy_db)
 
-        names = {
-            'scientific_name': None,
-            'synonym': []
-        }
-        taxons = dict.fromkeys(taxonomy_id, names)
+        taxons = {}
+        for tid in taxonomy_id:
+            names = {
+                'scientific_name': None,
+                'synonym': []
+            }
+            taxons[tid] = names
 
         sci_name_select = db.select(
             ncbi_taxa_name.c.taxon_id,
@@ -171,19 +184,14 @@ class GenomeAdaptor(BaseAdaptor):
                       genome_id=None, genome_uuid=None,
                       assembly_accession=None,
                       ensembl_name=None, taxonomy_id=None,
-                      unreleased=False, site_name=None, release_version=None
+                      unreleased_only=False,
+                      site_name=None, release_type=None, release_version=None, current_only=True
                       ):
-
-        if genome_id is None:
-            genome_id = []
-        if genome_uuid is None:
-            genome_uuid = []
-        if assembly_accession is None:
-            assembly_accession = []
-        if ensembl_name is None:
-            ensembl_name = []
-        if taxonomy_id is None:
-            taxonomy_id = []
+        genome_id = check_parameter(genome_id)
+        genome_uuid = check_parameter(genome_uuid)
+        assembly_accession = check_parameter(assembly_accession)
+        ensembl_name = check_parameter(ensembl_name)
+        taxonomy_id = check_parameter(taxonomy_id)
 
         genome = db.Table('genome', self.md, autoload_with=self.metadata_db)
         assembly = self.md.tables['assembly']
@@ -203,7 +211,7 @@ class GenomeAdaptor(BaseAdaptor):
                 assembly.c.level.label('assembly_level')
             ).select_from(genome).join(assembly).join(organism)
 
-        if unreleased:
+        if unreleased_only:
             genome_release = db.Table('genome_release', self.md, autoload_with=self.metadata_db)
 
             genome_select = genome_select.outerjoin(genome_release).filter_by(genome_id=None)
@@ -218,11 +226,14 @@ class GenomeAdaptor(BaseAdaptor):
                                 release).join(
                                 site).filter_by(site_name=site_name)
 
-            # If release version not specified, assume that we want the current data.
-            if release_version is None:
-                genome_select = genome_select.filter(release.c.is_current is True)
-            else:
-                genome_select = genome_select.filter(release.c.version == release_version)
+            if release_type is not None:
+                genome_select = genome_select.filter(release.c.release_type == release_type)
+
+            if current_only:
+                genome_select = genome_select.filter(genome_release.c.is_current is True)
+
+            if release_version is not None:
+                genome_select = genome_select.filter(release.c.version <= release_version)
 
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
@@ -239,82 +250,102 @@ class GenomeAdaptor(BaseAdaptor):
 
         for result in self.metadata_db_session.execute(genome_select):
             taxon_names = self.taxon_names[result.taxonomy_id]
-            result.update(taxon_names)
-            yield dict(result)
+            result_dict = dict(result)
+            result_dict.update(taxon_names)
+            yield result_dict
 
     def fetch_genomes_by_genome_uuid(self,
                                      genome_uuid,
-                                     unreleased=False,
-                                     site_name=None, release_version=None):
-
+                                     unreleased_only=False,
+                                     site_name=None, release_type=None,
+                                     release_version=None, current_only=True
+                                     ):
         return self.fetch_genomes(genome_uuid=genome_uuid,
-                                  unreleased=unreleased,
-                                  site_name=site_name, release_version=release_version)
+                                  unreleased_only=unreleased_only,
+                                  site_name=site_name,
+                                  release_type=release_type,
+                                  release_version=release_version,
+                                  current_only=current_only)
 
     def fetch_genomes_by_assembly_accession(self,
                                             assembly_accession,
-                                            unreleased=False,
-                                            site_name=None, release_version=None):
-
+                                            unreleased_only=False,
+                                            site_name=None, release_type=None,
+                                            release_version=None, current_only=True
+                                            ):
         return self.fetch_genomes(assembly_accession=assembly_accession,
-                                  unreleased=unreleased,
-                                  site_name=site_name, release_version=release_version)
+                                  unreleased_only=unreleased_only,
+                                  site_name=site_name,
+                                  release_type=release_type,
+                                  release_version=release_version,
+                                  current_only=current_only)
 
     def fetch_genomes_by_ensembl_name(self,
                                       ensembl_name,
-                                      unreleased=False,
-                                      site_name=None, release_version=None):
-
+                                      unreleased_only=False,
+                                      site_name=None, release_type=None,
+                                      release_version=None, current_only=True
+                                      ):
         return self.fetch_genomes(ensembl_name=ensembl_name,
-                                  unreleased=unreleased,
-                                  site_name=site_name, release_version=release_version)
+                                  unreleased_only=unreleased_only,
+                                  site_name=site_name,
+                                  release_type=release_type,
+                                  release_version=release_version,
+                                  current_only=current_only)
 
     def fetch_genomes_by_taxonomy_id(self,
                                      taxonomy_id,
-                                     unreleased=False,
-                                     site_name=None, release_version=None):
-
+                                     unreleased_only=False,
+                                     site_name=None, release_type=None,
+                                     release_version=None, current_only=True
+                                     ):
         return self.fetch_genomes(taxonomy_id=taxonomy_id,
-                                  unreleased=unreleased,
-                                  site_name=site_name, release_version=release_version)
+                                  unreleased_only=unreleased_only,
+                                  site_name=site_name,
+                                  release_type=release_type,
+                                  release_version=release_version,
+                                  current_only=current_only)
 
     def fetch_genomes_by_scientific_name(self,
                                          scientific_name,
-                                         unreleased=False,
-                                         site_name=None, release_version=None):
-
+                                         unreleased_only=False,
+                                         site_name=None, release_type=None,
+                                         release_version=None, current_only=True
+                                         ):
         taxonomy_ids = [t_id for t_id in self.taxon_names
                         if self.taxon_names[t_id]['scientific_name'] == scientific_name]
 
         return self.fetch_genomes_by_taxonomy_id(taxonomy_ids,
-                                                 unreleased=unreleased,
+                                                 unreleased_only=unreleased_only,
                                                  site_name=site_name,
-                                                 release_version=release_version)
+                                                 release_type=release_type,
+                                                 release_version=release_version,
+                                                 current_only=current_only)
 
     def fetch_genomes_by_synonym(self,
                                  synonym,
-                                 unreleased=False,
-                                 site_name=None, release_version=None):
-
+                                 unreleased_only=False,
+                                 site_name=None, release_type=None,
+                                 release_version=None, current_only=True
+                                 ):
         taxonomy_ids = [t_id for t_id in self.taxon_names
                         if synonym in self.taxon_names[t_id]['synonym']]
 
         return self.fetch_genomes_by_taxonomy_id(taxonomy_ids,
-                                                 unreleased=unreleased,
+                                                 unreleased_only=unreleased_only,
                                                  site_name=site_name,
-                                                 release_version=release_version)
+                                                 release_type=release_type,
+                                                 release_version=release_version,
+                                                 current_only=current_only)
 
     def fetch_sequences(self,
                         genome_id=None, genome_uuid=None,
                         assembly_accession=None,
-                        chromosomal_only=False):
-
-        if genome_id is None:
-            genome_id = []
-        if genome_uuid is None:
-            genome_uuid = []
-        if assembly_accession is None:
-            assembly_accession = []
+                        chromosomal_only=False
+                        ):
+        genome_id = check_parameter(genome_id)
+        genome_uuid = check_parameter(genome_uuid)
+        assembly_accession = check_parameter(assembly_accession)
 
         genome = db.Table('genome', self.md, autoload_with=self.metadata_db)
         assembly = self.md.tables['assembly']
@@ -353,3 +384,4 @@ class GenomeAdaptor(BaseAdaptor):
     def fetch_sequences_by_assembly_accession(self, assembly_accession, chromosomal_only=False):
         return self.fetch_sequences(assembly_accession=assembly_accession,
                                     chromosomal_only=chromosomal_only)
+
