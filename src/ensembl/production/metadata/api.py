@@ -35,15 +35,28 @@ class BaseAdaptor:
 
 
 class ReleaseAdaptor(BaseAdaptor):
-    def fetch_releases(self, release_id=None, release_version=None, current_only=True, site_name=None):
+    def fetch_releases(self,
+                       release_id=None,
+                       release_version=None,
+                       current_only=True,
+                       release_type=None,
+                       site_name=None
+                       ):
         if release_id is None:
             release_id = []
         elif not isinstance(release_id, list):
             release_id = [release_id]
+
         if release_version is None:
             release_version = []
         elif not isinstance(release_version, list):
             release_version = [release_version]
+
+        if release_type is None:
+            release_type = []
+        elif not isinstance(release_type, list):
+            release_type = [release_type]
+
         if site_name is None:
             site_name = []
         elif not isinstance(site_name, list):
@@ -59,6 +72,7 @@ class ReleaseAdaptor(BaseAdaptor):
                 db.cast(release.c.release_date, db.String),
                 release.c.label.label('release_label'),
                 release.c.is_current,
+                release.c.release_type,
                 site.c.name.label('site_name'),
                 site.c.label.label('site_label'),
                 site.c.uri.label('site_uri')
@@ -72,6 +86,9 @@ class ReleaseAdaptor(BaseAdaptor):
             release_select = release_select.filter(release.c.version.in_(release_version))
         elif current_only:
             release_select = release_select.filter_by(is_current=1)
+
+        if len(release_type) > 0:
+            release_select = release_select.filter(release.c.release_type.in_(release_type))
 
         release_select = release_select.join(site)
         if len(site_name) > 0:
