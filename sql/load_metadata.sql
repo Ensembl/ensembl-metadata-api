@@ -9,8 +9,8 @@ insert into ensembl_site (name, label, uri) values
 ('covid-19', 'COVID-19', 'https://covid-19.ensembl.org/');
 
 insert into ensembl_release
-  (version, release_date, is_current, site_id)
-select ensembl_genomes_version, release_date, is_current, site_id
+  (version, release_date, is_current, release_type, site_id)
+select ensembl_genomes_version, release_date, is_current, 'partial', site_id
 from ensembl_metadata_qrp.data_release, ensembl_site
 where ensembl_site.name = 'rapid';
 
@@ -113,8 +113,8 @@ group by dt.dataset_type_id, g1.genebuild, a1.assembly_accession, ds.dataset_sou
 
 -- Link assembly datasets to genomes
 insert into genome_dataset
-  (genome_id, dataset_id, release_id)
-select g2.genome_id, d2.dataset_id, r2.release_id
+  (genome_id, dataset_id, release_id, is_current)
+select g2.genome_id, d2.dataset_id, min(r2.release_id), 1
 from ensembl_metadata_qrp.genome g1 inner join
   ensembl_metadata_qrp.assembly a1 on g1.assembly_id = a1.assembly_id inner join
   ensembl_metadata_qrp.data_release dr1 on g1.data_release_id = dr1.data_release_id inner join
@@ -125,19 +125,19 @@ from ensembl_metadata_qrp.genome g1 inner join
   ensembl_release r2 on dr1.ensembl_genomes_version = r2.version inner join
   ensembl_site s on r2.site_id = s.site_id
 where s.name = 'rapid' and g1.genebuild = g2.genebuild and d2.dataset_source_id = ds.dataset_source_id
-group by g2.genome_id, d2.dataset_id, r2.release_id;
+group by g2.genome_id, d2.dataset_id;
 
 -- Link genomes to a release
 insert into genome_release
-  (genome_id, release_id)
-select genome_id, release_id
+  (genome_id, release_id, is_current)
+select genome_id, min(release_id), 1
 from genome_dataset
-group by genome_id, release_id;
+group by genome_id;
 
 -- Link geneset datasets to genomes
 insert into genome_dataset
-  (genome_id, dataset_id, release_id)
-select g2.genome_id, d2.dataset_id, r2.release_id
+  (genome_id, dataset_id, release_id, is_current)
+select g2.genome_id, d2.dataset_id, min(r2.release_id), 1
 from ensembl_metadata_qrp.genome g1 inner join
   ensembl_metadata_qrp.assembly a1 on g1.assembly_id = a1.assembly_id inner join
   ensembl_metadata_qrp.data_release dr1 on g1.data_release_id = dr1.data_release_id inner join
@@ -148,7 +148,7 @@ from ensembl_metadata_qrp.genome g1 inner join
   ensembl_release r2 on dr1.ensembl_genomes_version = r2.version inner join
   ensembl_site s on r2.site_id = s.site_id
 where s.name = 'rapid' and g1.genebuild = g2.genebuild and d2.dataset_source_id = ds.dataset_source_id
-group by g2.genome_id, d2.dataset_id, r2.release_id;
+group by g2.genome_id, d2.dataset_id;
 
 -- Rapid release doesn't use strain groups, but we can create a dog group,
 -- so that we've got a bit of data in the tables to play with.
@@ -180,8 +180,8 @@ from
 ;
 
 insert into genome_dataset
-  (dataset_id, genome_id, release_id)
-select d2.dataset_id, gd.genome_id, gd.release_id
+  (dataset_id, genome_id, release_id, is_current)
+select d2.dataset_id, gd.genome_id, gd.release_id, 1
 from
   genome_dataset gd inner join
   dataset d1 on gd.dataset_id = d1.dataset_id inner join
