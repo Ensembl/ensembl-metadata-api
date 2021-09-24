@@ -222,13 +222,13 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.join(
                                 genome_release).join(
                                 release).join(
-                                site).filter_by(site_name=site_name)
+                                site).filter_by(name=site_name)
 
             if release_type is not None:
                 genome_select = genome_select.filter(release.c.release_type == release_type)
 
             if current_only:
-                genome_select = genome_select.filter(genome_release.c.is_current is True)
+                genome_select = genome_select.filter(genome_release.c.is_current == 1)
 
             if release_version is not None:
                 genome_select = genome_select.filter(release.c.version <= release_version)
@@ -384,4 +384,3 @@ class GenomeAdaptor(BaseAdaptor):
     def fetch_sequences_by_assembly_accession(self, assembly_accession, chromosomal_only=False):
         return self.fetch_sequences(assembly_accession=assembly_accession,
                                     chromosomal_only=chromosomal_only)
-
