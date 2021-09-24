@@ -347,8 +347,7 @@ class GenomeAdaptor(BaseAdaptor):
         genome_uuid = check_parameter(genome_uuid)
         assembly_accession = check_parameter(assembly_accession)
 
-        genome = db.Table('genome', self.md, autoload_with=self.metadata_db)
-        assembly = self.md.tables['assembly']
+        assembly = db.Table('assembly', self.md, autoload_with=self.metadata_db)
         assembly_sequence = db.Table('assembly_sequence', self.md, autoload_with=self.metadata_db)
 
         seq_select = db.select(
@@ -359,22 +358,26 @@ class GenomeAdaptor(BaseAdaptor):
                 assembly_sequence.c.chromosomal,
                 assembly_sequence.c.sequence_checksum,
                 assembly_sequence.c.ga4gh_identifier
-            ).select_from(genome).filter_by(
-                genome_uuid=genome_uuid
-            ).join(assembly).join(assembly_sequence)
-        if chromosomal_only == 1:
-            seq_select = seq_select.filter_by(chromosomal=True)
+            ).select_from(
+                assembly).join(
+                assembly_sequence, assembly.c.assembly_id == assembly_sequence.c.assembly_id)
+        if chromosomal_only:
+            seq_select = seq_select.filter_by(chromosomal=1)
 
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
-        if len(genome_id) > 0:
-            seq_select = seq_select.filter(genome.c.genome_id.in_(genome_id))
-        elif len(genome_uuid) > 0:
-            seq_select = seq_select.filter(genome.c.genome_uuid.in_(genome_uuid))
-        elif len(assembly_accession) > 0:
+        if genome_id is not None:
+            genome = db.Table('genome', self.md, autoload_with=self.metadata_db)
+            seq_select = seq_select.join(
+                genome).filter(genome.c.genome_id.in_(genome_id))
+        elif genome_uuid is not None:
+            genome = db.Table('genome', self.md, autoload_with=self.metadata_db)
+            seq_select = seq_select.join(
+                genome).filter(genome.c.genome_uuid.in_(genome_uuid))
+        elif assembly_accession is not None:
             seq_select = seq_select.filter(assembly.c.accession.in_(assembly_accession))
 
-        for result in session.execute(seq_select):
+        for result in self.metadata_db_session.execute(seq_select):
             yield dict(result)
 
     def fetch_sequences_by_genome_uuid(self, genome_uuid, chromosomal_only=False):
