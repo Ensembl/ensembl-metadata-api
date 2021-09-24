@@ -24,9 +24,7 @@ def load_database(uri):
 
 
 def check_parameter(param):
-    if param is None:
-        param = []
-    elif not isinstance(param, list):
+    if param is not None and not isinstance(param, list):
         param = [param]
     return param
 
@@ -73,18 +71,18 @@ class ReleaseAdaptor(BaseAdaptor):
 
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
-        if len(release_id) > 0:
+        if release_id is not None:
             release_select = release_select.filter(release.c.release_id.in_(release_id))
-        elif len(release_version) > 0:
+        elif release_version is not None:
             release_select = release_select.filter(release.c.version.in_(release_version))
         elif current_only:
             release_select = release_select.filter_by(is_current=1)
 
-        if len(release_type) > 0:
+        if release_type is not None:
             release_select = release_select.filter(release.c.release_type.in_(release_type))
 
         release_select = release_select.join(site)
-        if len(site_name) > 0:
+        if site_name is not None:
             release_select = release_select.filter(site.c.name.in_(site_name))
 
         return self.metadata_db_session.execute(release_select).all()
@@ -237,15 +235,15 @@ class GenomeAdaptor(BaseAdaptor):
 
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
-        if len(genome_id) > 0:
+        if genome_id is not None:
             genome_select = genome_select.filter(genome.c.genome_id.in_(genome_id))
-        elif len(genome_uuid) > 0:
+        elif genome_uuid is not None:
             genome_select = genome_select.filter(genome.c.genome_uuid.in_(genome_uuid))
-        elif len(assembly_accession) > 0:
+        elif assembly_accession is not None:
             genome_select = genome_select.filter(assembly.c.accession.in_(assembly_accession))
-        elif len(ensembl_name) > 0:
+        elif ensembl_name is not None:
             genome_select = genome_select.filter(organism.c.ensembl_name.in_(ensembl_name))
-        elif len(taxonomy_id) > 0:
+        elif taxonomy_id is not None:
             genome_select = genome_select.filter(organism.c.taxonomy_id.in_(taxonomy_id))
 
         for result in self.metadata_db_session.execute(genome_select):
@@ -328,8 +326,10 @@ class GenomeAdaptor(BaseAdaptor):
                                  site_name=None, release_type=None,
                                  release_version=None, current_only=True
                                  ):
-        taxonomy_ids = [t_id for t_id in self.taxon_names
-                        if synonym in self.taxon_names[t_id]['synonym']]
+        taxonomy_ids = []
+        for taxon_id in self.taxon_names:
+            if synonym.casefold() in [x.casefold() for x in self.taxon_names[taxon_id]['synonym']]:
+                taxonomy_ids.append(taxon_id)
 
         return self.fetch_genomes_by_taxonomy_id(taxonomy_ids,
                                                  unreleased_only=unreleased_only,
