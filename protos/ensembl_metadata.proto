@@ -38,12 +38,12 @@ message Genome {
 }
 
 message Species {
-     string genome_uuid = 1;
-     string ensembl_name = 2;
-     string display_name = 4;
-     uint32 taxonomy_id = 5;
-     string scientific_name = 6;
-     string strain = 7;
+  string genome_uuid = 1;
+  string ensembl_name = 2;
+  string display_name = 4;
+  uint32 taxonomy_id = 5;
+  string scientific_name = 6;
+  string strain = 7;
 }
 
 /*

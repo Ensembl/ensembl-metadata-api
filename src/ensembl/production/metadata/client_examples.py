@@ -106,18 +106,25 @@ def list_releases_by_uuid(stub):
     for release in releases1:
         print(release)
 
+def get_species_information_by_uuid(stub):
+    request1 = GenomeUUIDRequest(genome_uuid='3c4cec7f-fb69-11eb-8dac-005056b32883')
+    releases1 = stub.GetSpeciesInformation(request1)
+    print('**** Species information ****')
+    print(releases1)
+
 
 def run():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
-        print("-------------- Get Genomes --------------")
-        get_genomes(stub)
-        print("-------------- List Sequences --------------")
-        list_genome_sequences(stub)
-        print("-------------- List Releases --------------")
-        list_releases(stub)
-        print("-------------- List Releases for Genome --------------")
-        list_releases_by_uuid(stub)
+        get_species_information_by_uuid(stub)
+        # print("-------------- Get Genomes --------------")
+        # get_genomes(stub)
+        # print("-------------- List Sequences --------------")
+        # list_genome_sequences(stub)
+        # print("-------------- List Releases --------------")
+        # list_releases(stub)
+        # print("-------------- List Releases for Genome --------------")
+        # list_releases_by_uuid(stub)
 
 
 if __name__ == '__main__':

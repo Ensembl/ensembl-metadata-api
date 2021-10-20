@@ -20,6 +20,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
                 response_deserializer=ensembl__metadata__pb2.Genome.FromString,
                 )
+        self.GetSpeciesInformation = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetSpeciesInformation',
+                request_serializer=ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl__metadata__pb2.Species.FromString,
+                )
         self.GetGenomeByName = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeByName',
                 request_serializer=ensembl__metadata__pb2.GenomeNameRequest.SerializeToString,
@@ -48,6 +53,13 @@ class EnsemblMetadataServicer(object):
 
     def GetGenomeByUUID(self, request, context):
         """Retrieve genome by its UUID.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetSpeciesInformation(self, request, context):
+        """Get species information for a genome UUID
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -88,6 +100,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetGenomeByUUID,
                     request_deserializer=ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
                     response_serializer=ensembl__metadata__pb2.Genome.SerializeToString,
+            ),
+            'GetSpeciesInformation': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetSpeciesInformation,
+                    request_deserializer=ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    response_serializer=ensembl__metadata__pb2.Species.SerializeToString,
             ),
             'GetGenomeByName': grpc.unary_unary_rpc_method_handler(
                     servicer.GetGenomeByName,
@@ -134,6 +151,23 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeByUUID',
             ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
             ensembl__metadata__pb2.Genome.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetSpeciesInformation(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetSpeciesInformation',
+            ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl__metadata__pb2.Species.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

@@ -22,18 +22,21 @@ def load_database(uri=None):
 
     try:
         engine = db.create_engine(uri)
+        taxonomy_engine = db.create_engine(taxonomy_uri)
     except AttributeError:
         raise ValueError(f'Could not connect to database. Check METADATA_URI env variable.')
 
     try:
         connection = engine.connect()
+        taxonomy_connection = taxonomy_engine.connect()
     except db.exc.OperationalError as err:
         raise ValueError(f'Could not connect to database {uri}: {err}.') from err
 
     connection.close()
-    return engine
+    taxonomy_connection.close()
+    return engine, taxonomy_engine
 
-def get_species_information(metadata_db, genome_uuid):
+def get_species_information(metadata_db, taxonomy_db, genome_uuid):
     if genome_uuid is None:
         return create_genome()
 
@@ -41,7 +44,6 @@ def get_species_information(metadata_db, genome_uuid):
     session = Session(metadata_db, future=True)
 
     genome = db.Table('genome', md, autoload_with=metadata_db)
-    genome_release = db.Table('genome_release', md, autoload_with=metadata_db)
     organism = md.tables['organism']
 
     genome_select = db.select(
@@ -59,9 +61,9 @@ def get_species_information(metadata_db, genome_uuid):
     if len(species_results) == 1:
         species_data = dict(species_results[0])
         species_data['genome_uuid'] = genome_uuid
-        return species_data
+        return create_species(species_data)
     else:
-        return {}
+        return create_species()
 
 def get_genome_by_uuid(metadata_db, genome_uuid):
     if genome_uuid is None:
@@ -260,6 +262,19 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
     for result in release_results:
         yield create_release(dict(result))
 
+def create_species(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.Species()
+
+    species = ensembl_metadata_pb2.Species(
+        genome_uuid=data['genome_uuid'],
+        ensembl_name=data['ensembl_name'],
+        display_name=data['display_name'],
+        scientific_name=data['scientific_name'],
+        strain=data['strain'],
+        taxonomy_id=data['taxonomy_id'],
+    )
+    return species
 
 def create_genome(data=None):
     if data is None:
@@ -322,10 +337,10 @@ def create_release(data=None):
 
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):
     def __init__(self):
-        self.db = load_database()
+        self.db, self.taxo_db = load_database()
 
     def GetSpeciesInformation(self, request, context):
-        return get_species_information(self.db, request.genome_uuid)
+        return get_species_information(self.db, self.taxo_db, request.genome_uuid)
 
     def GetGenomeByUUID(self, request, context):
         return get_genome_by_uuid(self.db,

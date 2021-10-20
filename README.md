@@ -59,6 +59,12 @@ pip install --upgrade pip
 pip install -r requirements-dev.txt
 ```
 
+To generate client and server files
+
+```
+python3 -m grpc_tools.protoc -Iprotos --python_out=src/ensembl/production/metadata --grpc_python_out=src/ensembl/production/metadata protos/ensembl_metadata.proto
+```
+
 ### Testing
 
 Run test suite:
