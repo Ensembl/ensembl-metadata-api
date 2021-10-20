@@ -116,8 +116,8 @@ def run():
         list_genome_sequences(stub)
         print("-------------- List Releases --------------")
         list_releases(stub)
-        # print("-------------- List Releases for Genome --------------")
-        # list_releases_by_uuid(stub)
+        print("-------------- List Releases for Genome --------------")
+        list_releases_by_uuid(stub)
 
 
 if __name__ == '__main__':

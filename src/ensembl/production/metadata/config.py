@@ -2,7 +2,6 @@ class MetadataRegistryConfig:
     metadata_db_user = "ensro"
     metatata_db_name = "ensembl_metadata_2020_test"
     metadata_db_host = "mysql-ens-test-1"
-    # db_pasword = "ensembl"
     METADATA_URI = f"mysql+pymysql://{metadata_db_user}@{metadata_db_host}:4508/{metatata_db_name}"
 
     taxonomy_db_user = "ensro"
