@@ -7,6 +7,9 @@ service EnsemblMetadata {
   // Retrieve genome by its UUID.
   rpc GetGenomeByUUID(GenomeUUIDRequest) returns (Genome) {}
 
+  // Get species information for a genome UUID
+  rpc GetSpeciesInformation(GenomeUUIDRequest) returns (Species) {}
+
   // Retrieve genome by Ensembl name and site, and optionally release.
   rpc GetGenomeByName(GenomeNameRequest) returns (Genome) {}
 
@@ -32,6 +35,15 @@ message Genome {
   bool is_current = 5;
   Assembly assembly = 6;
   Taxon taxon = 7;
+}
+
+message Species {
+     string genome_uuid = 1;
+     string ensembl_name = 2;
+     string display_name = 4;
+     uint32 taxonomy_id = 5;
+     string scientific_name = 6;
+     string strain = 7;
 }
 
 /*

@@ -5,9 +5,11 @@ import sqlalchemy as db
 from sqlalchemy.orm import Session
 import pymysql
 
-import ensembl.production.metadata.ensembl_metadata_pb2 as ensembl__metadata__pb2
-import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
-from ensembl.production.metadata.config import MetadataRegistryConfig
+import ensembl_metadata_pb2
+
+import ensembl_metadata_pb2_grpc
+# import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
+from config import MetadataRegistryConfig
 
 pymysql.install_as_MySQLdb()
 config = MetadataRegistryConfig()
@@ -16,6 +18,7 @@ config = MetadataRegistryConfig()
 def load_database(uri=None):
     if uri is None:
         uri = config.METADATA_URI
+        taxonomy_uri = config.TAXONOMY_URI
 
     try:
         engine = db.create_engine(uri)
@@ -30,6 +33,35 @@ def load_database(uri=None):
     connection.close()
     return engine
 
+def get_species_information(metadata_db, genome_uuid):
+    if genome_uuid is None:
+        return create_genome()
+
+    md = db.MetaData()
+    session = Session(metadata_db, future=True)
+
+    genome = db.Table('genome', md, autoload_with=metadata_db)
+    genome_release = db.Table('genome_release', md, autoload_with=metadata_db)
+    organism = md.tables['organism']
+
+    genome_select = db.select(
+            organism.c.ensembl_name,
+            organism.c.display_name,
+            organism.c.taxonomy_id,
+            organism.c.scientific_name,
+            organism.c.strain,
+        ).select_from(genome).filter_by(
+            genome_uuid=genome_uuid
+        ).join(organism)
+
+    species_results = session.execute(genome_select).all()
+
+    if len(species_results) == 1:
+        species_data = dict(species_results[0])
+        species_data['genome_uuid'] = genome_uuid
+        return species_data
+    else:
+        return {}
 
 def get_genome_by_uuid(metadata_db, genome_uuid):
     if genome_uuid is None:
@@ -291,6 +323,9 @@ def create_release(data=None):
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):
     def __init__(self):
         self.db = load_database()
+
+    def GetSpeciesInformation(self, request, context):
+        return get_species_information(self.db, request.genome_uuid)
 
     def GetGenomeByUUID(self, request, context):
         return get_genome_by_uuid(self.db,
