@@ -57,10 +57,27 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
         ).join(organism)
 
     species_results = session.execute(genome_select).all()
-
     if len(species_results) == 1:
         species_data = dict(species_results[0])
         species_data['genome_uuid'] = genome_uuid
+        td = db.MetaData()
+        session = Session(taxonomy_db, future=True)
+        tax_name = db.Table('ncbi_taxa_name', td, autoload_with=taxonomy_db)
+        tax_names = db.select([tax_name.c.name, tax_name.c.name_class]).where(tax_name.c.taxon_id == species_data['taxonomy_id'])
+        taxo_results = session.execute(tax_names).all()
+        common_names = []
+        # Get the common name and alternative names
+        if len(taxo_results) > 0:
+            for item in taxo_results:
+                if item[1] is not None and item[0] is not None:
+                    if item[1] == 'genbank common name':
+                        species_data['ncbi_common_name'] = item[0]
+                    if item[1] == 'common name':
+                        common_names.append(item[1])
+            species_data['alternative_names'] = common_names
+            if len(common_names) > 0:
+                species_data['common_name'] = common_names[0]
+            else: species_data['common_name'] = None
         return create_species(species_data)
     else:
         return create_species()
@@ -265,14 +282,13 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
 def create_species(data=None):
     if data is None:
         return ensembl_metadata_pb2.Species()
-
     species = ensembl_metadata_pb2.Species(
         genome_uuid=data['genome_uuid'],
-        ensembl_name=data['ensembl_name'],
-        display_name=data['display_name'],
+        common_name=data['common_name'],
+        ncbi_common_name=data['ncbi_common_name'],
         scientific_name=data['scientific_name'],
-        strain=data['strain'],
-        taxonomy_id=data['taxonomy_id'],
+        alternative_names=data['alternative_names'],
+        taxon_id=data['taxonomy_id'],
     )
     return species
 

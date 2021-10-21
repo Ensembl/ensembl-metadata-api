@@ -116,15 +116,16 @@ def get_species_information_by_uuid(stub):
 def run():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
+        print("---------------Get Species Information----------- ")
         get_species_information_by_uuid(stub)
-        # print("-------------- Get Genomes --------------")
-        # get_genomes(stub)
-        # print("-------------- List Sequences --------------")
-        # list_genome_sequences(stub)
-        # print("-------------- List Releases --------------")
-        # list_releases(stub)
-        # print("-------------- List Releases for Genome --------------")
-        # list_releases_by_uuid(stub)
+        print("-------------- Get Genomes --------------")
+        get_genomes(stub)
+        print("-------------- List Sequences --------------")
+        list_genome_sequences(stub)
+        print("-------------- List Releases --------------")
+        list_releases(stub)
+        print("-------------- List Releases for Genome --------------")
+        list_releases_by_uuid(stub)
 
 
 if __name__ == '__main__':
