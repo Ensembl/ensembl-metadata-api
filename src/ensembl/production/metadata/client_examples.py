@@ -106,6 +106,7 @@ def list_releases_by_uuid(stub):
     for release in releases1:
         print(release)
 
+
 def get_species_information_by_uuid(stub):
     request1 = GenomeUUIDRequest(genome_uuid='3c4cec7f-fb69-11eb-8dac-005056b32883')
     releases1 = stub.GetSpeciesInformation(request1)

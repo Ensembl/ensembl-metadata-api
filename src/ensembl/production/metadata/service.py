@@ -8,7 +8,7 @@ import pymysql
 import ensembl_metadata_pb2
 
 import ensembl_metadata_pb2_grpc
-# import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
+import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 from config import MetadataRegistryConfig
 
 pymysql.install_as_MySQLdb()
@@ -35,6 +35,40 @@ def load_database(uri=None):
     connection.close()
     taxonomy_connection.close()
     return engine, taxonomy_engine
+
+def get_assembly_information(metadata_db, assembly_id):
+    if assembly_id is None:
+        return create_assembly()
+
+    md = db.MetaData()
+    session = Session(metadata_db, future=True)
+
+    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+    assembly = db.Table('genome', md, autoload_with=metadata_db)
+    assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
+
+    assembly_info = db.select(
+            assembly.c.accession,
+            assembly.c.level,
+            assembly.c.name,
+            assembly_sequence.c.chromosomal,
+            assembly_sequence.c.length,
+            assembly_sequence.c.sequence_location,
+            assembly_sequence.c.sequence_checksum,
+            assembly_sequence.c.ga4gh_identifier,
+    ).select_from(assembly).filter_by(
+            assembly_id=assembly_id
+        ).join(assembly_sequence)
+
+    assembly_results = session.execute(assembly_info).all()
+    assembly_results = dict(assembly_results[0])
+    assembly_results['assembly_id'] = assembly_id
+
+    if len(assembly_results) > 0:
+        return create_assembly(assembly_results)
+    else:
+        return create_assembly()
+
 
 def get_species_information(metadata_db, taxonomy_db, genome_uuid):
     if genome_uuid is None:
@@ -81,6 +115,76 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
         return create_species(species_data)
     else:
         return create_species()
+
+def get_sub_species_info(metadata_db, organism_id):
+    if organism_id is None:
+        return create_sub_species()
+
+    md = db.MetaData()
+    session = Session(metadata_db, future=True)
+
+    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+    organism_group_member = db.Table('organism_group_member', md, autoload_with=metadata_db)
+    organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
+
+    sub_species_select = db.select(
+            organism_group.c.type,
+            organism_group.c.name,
+        ).select_from(organism_group_member).filter_by(
+            organism_id=organism_id
+        ).join(organism_group)
+
+    sub_species_results = session.execute(sub_species_select).all()
+
+    species_name = []
+    species_type = []
+    if len(sub_species_results) > 0:
+        for item in sub_species_select:
+            species_type.append(item[0])
+            species_name.append(item[1])
+
+        return create_sub_species({
+            'organism_id': organism_id,
+            'species_type': species_type,
+            'species_name': species_name
+        })
+    else:
+        return create_sub_species()
+
+def get_grouping_info(metadata_db, organism_id):
+    if organism_id is None:
+        return create_grouping()
+
+    md = db.MetaData()
+    session = Session(metadata_db, future=True)
+
+    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+    organism_group_member = db.Table('organism_group_member', md, autoload_with=metadata_db)
+    organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
+
+    sub_species_select = db.select(
+            organism_group.c.type,
+            organism_group.c.name,
+        ).select_from(organism_group_member).filter_by(
+            organism_id=organism_id
+        ).join(organism_group)
+
+    sub_species_results = session.execute(sub_species_select).all()
+
+    species_name = []
+    species_type = []
+    if len(sub_species_results) > 0:
+        for item in sub_species_select:
+            species_type.append(item[0])
+            species_name.append(item[1])
+
+        return create_grouping({
+            'organism_id': organism_id,
+            'species_type': species_type,
+            'species_name': species_name
+        })
+    else:
+        return create_grouping()
 
 def get_genome_by_uuid(metadata_db, genome_uuid):
     if genome_uuid is None:
@@ -292,6 +396,42 @@ def create_species(data=None):
     )
     return species
 
+def create_grouping(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.Grouping()
+    grouping = ensembl_metadata_pb2.Grouping(
+        organism_id=data['organism_id'],
+        species_name=data['name'],
+        species_type=data['type'],
+    )
+    return grouping
+
+def create_sub_species(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.SubSpecies()
+    sub_species = ensembl_metadata_pb2.SubSpecies(
+        organism_id=data['organism_id'],
+        species_name=data['name'],
+        species_type=data['type'],
+    )
+    return sub_species
+
+def create_assembly(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.AssemblyInfo()
+    assembly = ensembl_metadata_pb2.AssemblyInfo(
+        assembly_id=data['assembly_id'],
+        accession=data['accession'],
+        level=data['level'],
+        name=data['name'],
+        chromosomal=data['chromosomal'],
+        length=data['length'],
+        sequence_location=data['sequence_location'],
+        sequence_checksum=data['sequence_checksum'],
+        ga4gh_identifier=data['ga4gh_identifier'],
+    )
+    return assembly
+
 def create_genome(data=None):
     if data is None:
         return ensembl_metadata_pb2.Genome()
@@ -357,6 +497,12 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetSpeciesInformation(self, request, context):
         return get_species_information(self.db, self.taxo_db, request.genome_uuid)
+
+    def GetAssemblyInformation(self, request, context):
+        return get_assembly_information(self.db, request.assembly_id)
+
+    def GetSubSpeciesInformation(self, request, context):
+        return get_sub_species_info(self.db, request.organism_id)
 
     def GetGenomeByUUID(self, request, context):
         return get_genome_by_uuid(self.db,

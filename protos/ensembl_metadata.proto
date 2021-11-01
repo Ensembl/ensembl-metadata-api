@@ -10,6 +10,15 @@ service EnsemblMetadata {
   // Get species information for a genome UUID
   rpc GetSpeciesInformation(GenomeUUIDRequest) returns (Species) {}
 
+  // Get assembly information
+  rpc GetAssemblyInformation(AssemblyIDRequest) returns (AssemblyInfo) {}
+
+  // Get subspecies information
+  rpc GetSubSpeciesInformation(OrganismIDRequest) returns (SubSpecies) {}
+
+  // Get grouping information
+  rpc GetGroupingInformation(OrganismIDRequest) returns (Grouping) {}
+
   // Retrieve genome by Ensembl name and site, and optionally release.
   rpc GetGenomeByName(GenomeNameRequest) returns (Genome) {}
 
@@ -44,6 +53,30 @@ message Species {
   uint32 taxon_id = 5;
   string scientific_name = 6;
   repeated string alternative_names = 7;
+}
+
+message AssemblyInfo {
+  string assembly_id = 1;
+  string accession = 2;
+  string level = 3;
+  string name = 4;
+  uint32 chromosomal = 5;
+  uint32 length = 6;
+  string sequence_location = 7;
+  string sequence_checksum = 8;
+  string ga4gh_identifier = 9;
+}
+
+message SubSpecies {
+  string organism_id = 1;
+  repeated string species_type = 2;
+  repeated string species_name = 3;
+}
+
+message Grouping {
+  string organism_id = 1;
+  repeated string species_type = 2;
+  repeated string species_name = 3;
 }
 
 /*
@@ -101,6 +134,17 @@ Genome UUID filter.
  */
 message GenomeUUIDRequest {
   string genome_uuid = 1; // Mandatory
+}
+
+/*
+Assembly ID filter
+ */
+message AssemblyIDRequest {
+  string assembly_id = 1; // Mandatory
+}
+
+message OrganismIDRequest {
+  string organism_id = 1;
 }
 
 /*
