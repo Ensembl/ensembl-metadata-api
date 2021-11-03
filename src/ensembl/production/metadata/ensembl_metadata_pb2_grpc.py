@@ -40,6 +40,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
                 response_deserializer=ensembl__metadata__pb2.Grouping.FromString,
                 )
+        self.GetKaryotypeInformation = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
+                request_serializer=ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl__metadata__pb2.Karyotype.FromString,
+                )
         self.GetGenomeByName = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeByName',
                 request_serializer=ensembl__metadata__pb2.GenomeNameRequest.SerializeToString,
@@ -101,6 +106,13 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetKaryotypeInformation(self, request, context):
+        """Get karyotype information
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def GetGenomeByName(self, request, context):
         """Retrieve genome by Ensembl name and site, and optionally release.
         """
@@ -156,6 +168,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetGroupingInformation,
                     request_deserializer=ensembl__metadata__pb2.OrganismIDRequest.FromString,
                     response_serializer=ensembl__metadata__pb2.Grouping.SerializeToString,
+            ),
+            'GetKaryotypeInformation': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetKaryotypeInformation,
+                    request_deserializer=ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    response_serializer=ensembl__metadata__pb2.Karyotype.SerializeToString,
             ),
             'GetGenomeByName': grpc.unary_unary_rpc_method_handler(
                     servicer.GetGenomeByName,
@@ -270,6 +287,23 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGroupingInformation',
             ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
             ensembl__metadata__pb2.Grouping.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetKaryotypeInformation(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
+            ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl__metadata__pb2.Karyotype.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

@@ -19,6 +19,9 @@ service EnsemblMetadata {
   // Get grouping information
   rpc GetGroupingInformation(OrganismIDRequest) returns (Grouping) {}
 
+  // Get karyotype information
+  rpc GetKaryotypeInformation(GenomeUUIDRequest) returns (Karyotype) {}
+
   // Retrieve genome by Ensembl name and site, and optionally release.
   rpc GetGenomeByName(GenomeNameRequest) returns (Genome) {}
 
@@ -44,6 +47,13 @@ message Genome {
   bool is_current = 5;
   Assembly assembly = 6;
   Taxon taxon = 7;
+}
+
+message Karyotype {
+   string code = 1;
+   string chromosomal = 2;
+   string location = 3;
+   string genome_uuid = 4;
 }
 
 message Species {
