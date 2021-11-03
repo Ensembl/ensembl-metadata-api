@@ -5,7 +5,8 @@ from ensembl_metadata_pb2 import \
     GenomeUUIDRequest, GenomeNameRequest, \
     ReleaseRequest, GenomeSequenceRequest, AssemblyIDRequest, \
     OrganismIDRequest
-import ensembl_metadata_pb2_grpc
+# import ensembl_metadata_pb2_grpc
+import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
 
 def get_genome(stub, genome_request):
@@ -146,10 +147,10 @@ def get_karyotype_information(stub):
 def run():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
-        # print("---------------Get Species Information-----------")
-        # get_species_information_by_uuid(stub)
-        # print("---------------Get Assembly Information-----------")
-        # get_assembly_information(stub)
+        print("---------------Get Species Information-----------")
+        get_species_information_by_uuid(stub)
+        print("---------------Get Assembly Information-----------")
+        get_assembly_information(stub)
         print("---------------Get Subspecies Information-----------")
         get_sub_species_info(stub)
         print("---------------Get Grouping Information-----------")
