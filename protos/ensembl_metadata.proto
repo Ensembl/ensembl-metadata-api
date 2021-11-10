@@ -22,6 +22,9 @@ service EnsemblMetadata {
   // Get karyotype information
   rpc GetKaryotypeInformation(GenomeUUIDRequest) returns (Karyotype) {}
 
+  // Get top level statistics
+  rpc GetTopLevelStatistics(OrganismIDRequest) returns (TopLevelStatistics) {}
+
   // Retrieve genome by Ensembl name and site, and optionally release.
   rpc GetGenomeByName(GenomeNameRequest) returns (Genome) {}
 
@@ -87,6 +90,17 @@ message Grouping {
   string organism_id = 1;
   repeated string species_type = 2;
   repeated string species_name = 3;
+}
+
+message TopLevelStatistics {
+  string organism_id = 1;
+  message AttributeStatistics {
+    string name = 2;
+    string label = 3;
+    string statistic_type = 4;
+    string statistic_value = 5;
+  }
+  repeated AttributeStatistics statistics = 2;
 }
 
 /*

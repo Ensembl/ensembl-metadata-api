@@ -6,13 +6,10 @@ from sqlalchemy.orm import Session
 import pymysql
 
 import ensembl_metadata_pb2
-
+# from config import MetadataRegistryConfig as config
 # import ensembl_metadata_pb2_grpc
 import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 from config import MetadataRegistryConfig
-
-pymysql.install_as_MySQLdb()
-config = MetadataRegistryConfig()
 
 
 def load_database(uri=None):
@@ -51,7 +48,9 @@ def get_karyotype_information(metadata_db, genome_uuid):
             assembly.c.level,
             assembly_sequence.c.chromosomal,
             assembly_sequence.c.sequence_location,
-    ]).filter(genome.c.assembly_id == assembly_sequence.c.assembly_id).filter(assembly_sequence.c.assembly_id == assembly.c.assembly_id)
+    ]).where(genome.c.genome_uuid == genome_uuid) \
+        .where(genome.c.assembly_id == assembly_sequence.c.assembly_id)\
+        .where(assembly_sequence.c.assembly_id == assembly.c.assembly_id)
 
     karyotype_results = session.execute(karyotype_info).all()
     if len(karyotype_results) == 1:
@@ -60,6 +59,47 @@ def get_karyotype_information(metadata_db, genome_uuid):
         return create_karyotype(karyotype_data)
     else:
         return create_karyotype()
+
+
+def get_top_level_statistics(metadata_db, organism_id):
+    if organism_id is None:
+        return create_assembly()
+    md = db.MetaData()
+    session = Session(metadata_db, future=True)
+
+    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+    genome = db.Table('genome', md, autoload_with=metadata_db)
+    genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
+    dataset_attribute = db.Table('dataset_attribute', md, autoload_with=metadata_db)
+    attribute = db.Table('attribute', md, autoload_with=metadata_db)
+
+    stats_info = db.select([
+            dataset_attribute.c.type,
+            dataset_attribute.c.value,
+            attribute.c.name,
+            attribute.c.label
+    ]).select_from(genome).select_from(genome_dataset).select_from(dataset_attribute) \
+        .where(genome.c.organism_id == organism_id) \
+        .where(genome.c.genome_id == genome_dataset.c.genome_id) \
+        .where(genome_dataset.c.dataset_id == dataset_attribute.c.dataset_id) \
+        .where(dataset_attribute.c.attribute_id == attribute.c.attribute_id)
+
+    stats_results = session.execute(stats_info).all()
+    statistics = []
+    if len(stats_results) > 0:
+        for stat_type, stat_value, name, label in stats_results:
+            statistics.append({
+                'name': name,
+                'label': label,
+                'statistic_type': stat_type,
+                'statistic_value': stat_value
+            })
+        return create_top_level_statistics({
+            'organism_id': organism_id,
+            'statistics': statistics
+        })
+    else:
+        return create_top_level_statistics()
 
 
 def get_assembly_information(metadata_db, assembly_id):
@@ -418,6 +458,15 @@ def create_species(data=None):
     )
     return species
 
+def create_top_level_statistics(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.TopLevelStatistics()
+    species = ensembl_metadata_pb2.TopLevelStatistics(
+        organism_id=data['organism_id'],
+        statistics=data['statistics'],
+    )
+    return species
+
 def create_karyotype(data=None):
     if data is None:
         return ensembl_metadata_pb2.Karyotype()
@@ -543,6 +592,9 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetKaryotypeInformation(self, request, context):
         return get_sub_species_info(self.db, request.genome_uuid)
+
+    def GetTopLevelStatistics(self, request, context):
+        return get_top_level_statistics(self.db, request.organism_id)
 
     def GetGenomeByUUID(self, request, context):
         return get_genome_by_uuid(self.db,

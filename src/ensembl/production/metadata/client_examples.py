@@ -144,19 +144,28 @@ def get_karyotype_information(stub):
     print(releases1)
 
 
+def get_top_level_statistics(stub):
+    request1 = OrganismIDRequest(organism_id='41')
+    releases1 = stub.GetTopLevelStatistics(request1)
+    print('**** Top level statistics ****')
+    print(releases1)
+
+
 def run():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
-        print("---------------Get Species Information-----------")
-        get_species_information_by_uuid(stub)
-        print("---------------Get Assembly Information-----------")
-        get_assembly_information(stub)
-        print("---------------Get Subspecies Information-----------")
-        get_sub_species_info(stub)
-        print("---------------Get Grouping Information-----------")
-        get_grouping_info(stub)
+        # print("---------------Get Species Information-----------")
+        # get_species_information_by_uuid(stub)
+        # print("---------------Get Assembly Information-----------")
+        # get_assembly_information(stub)
+        # print("---------------Get Subspecies Information-----------")
+        # get_sub_species_info(stub)
+        # print("---------------Get Grouping Information-----------")
+        # get_grouping_info(stub)
         print("---------------Get Karyotype Information-----------")
         get_karyotype_information(stub)
+        print("---------------Get Top Level Statistics-----------")
+        get_top_level_statistics(stub)
         print("-------------- Get Genomes --------------")
         get_genomes(stub)
         print("-------------- List Sequences --------------")
