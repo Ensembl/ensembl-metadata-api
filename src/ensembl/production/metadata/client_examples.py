@@ -22,8 +22,6 @@ def get_genome(stub, genome_request):
         print("No genome")
         return
 
-    print(genome)
-
 
 def get_genomes(stub):
     request1 = GenomeUUIDRequest(genome_uuid='dc8cbfd9-9bd4-11eb-b85b-0028f81f0374')
@@ -154,14 +152,14 @@ def get_top_level_statistics(stub):
 def run():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
-        # print("---------------Get Species Information-----------")
-        # get_species_information_by_uuid(stub)
-        # print("---------------Get Assembly Information-----------")
-        # get_assembly_information(stub)
-        # print("---------------Get Subspecies Information-----------")
-        # get_sub_species_info(stub)
-        # print("---------------Get Grouping Information-----------")
-        # get_grouping_info(stub)
+        print("---------------Get Species Information-----------")
+        get_species_information_by_uuid(stub)
+        print("---------------Get Assembly Information-----------")
+        get_assembly_information(stub)
+        print("---------------Get Subspecies Information-----------")
+        get_sub_species_info(stub)
+        print("---------------Get Grouping Information-----------")
+        get_grouping_info(stub)
         print("---------------Get Karyotype Information-----------")
         get_karyotype_information(stub)
         print("---------------Get Top Level Statistics-----------")

@@ -5,11 +5,8 @@ import sqlalchemy as db
 from sqlalchemy.orm import Session
 import pymysql
 
-import ensembl_metadata_pb2
 # from config import MetadataRegistryConfig as config
-# import ensembl_metadata_pb2_grpc
 import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
-from config import MetadataRegistryConfig
 
 
 def load_database(uri=None):
@@ -457,6 +454,7 @@ def create_species(data=None):
         taxon_id=data['taxonomy_id'],
     )
     return species
+    # return json_format.MessageToJson(species)
 
 def create_top_level_statistics(data=None):
     if data is None:
@@ -542,7 +540,6 @@ def create_genome(data=None):
         assembly=assembly,
         taxon=taxon,
     )
-
     return genome
 
 
