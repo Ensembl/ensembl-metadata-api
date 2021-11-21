@@ -24,7 +24,7 @@ import pymysql
 import pytest
 import json
 from google.protobuf import json_format
-from tests.config_test import MetadataRegistryConfig as config
+# from tests.config_test import MetadataRegistryConfig as config
 import ensembl.production.metadata.service
 
 
