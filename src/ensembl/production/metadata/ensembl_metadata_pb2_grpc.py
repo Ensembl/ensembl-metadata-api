@@ -2,7 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import ensembl_metadata_pb2 as ensembl__metadata__pb2
+import ensembl.production.metadata.ensembl_metadata_pb2 as ensembl__metadata__pb2
+# import ensembl_metadata_pb2 as ensembl__metadata__pb2
 
 
 class EnsemblMetadataStub(object):
