@@ -29,5 +29,6 @@ sqlalchemy==1.4.21
 types-pymysql==1.0.0
     # via -r requirements.in
 pytest
+coverage[toml]
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
