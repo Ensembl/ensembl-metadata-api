@@ -3,8 +3,10 @@ import logging
 
 from ensembl_metadata_pb2 import \
     GenomeUUIDRequest, GenomeNameRequest, \
-    ReleaseRequest, GenomeSequenceRequest
-import ensembl_metadata_pb2_grpc
+    ReleaseRequest, GenomeSequenceRequest, AssemblyIDRequest, \
+    OrganismIDRequest
+# import ensembl_metadata_pb2_grpc
+import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
 
 def get_genome(stub, genome_request):
@@ -19,8 +21,6 @@ def get_genome(stub, genome_request):
     if genome.genome_uuid == '':
         print("No genome")
         return
-
-    print(genome)
 
 
 def get_genomes(stub):
@@ -107,9 +107,63 @@ def list_releases_by_uuid(stub):
         print(release)
 
 
+def get_species_information_by_uuid(stub):
+    request1 = GenomeUUIDRequest(genome_uuid='3c4cec7f-fb69-11eb-8dac-005056b32883')
+    releases1 = stub.GetSpeciesInformation(request1)
+    print('**** Species information ****')
+    print(releases1)
+
+
+def get_assembly_information(stub):
+    request1 = AssemblyIDRequest(assembly_id='2')
+    releases1 = stub.GetAssemblyInformation(request1)
+    print('**** Assembly information ****')
+    print(releases1)
+
+
+def get_sub_species_info(stub):
+    request1 = OrganismIDRequest(organism_id='41')
+    releases1 = stub.GetSubSpeciesInformation(request1)
+    print('**** Sub species information ****')
+    print(releases1)
+
+
+def get_grouping_info(stub):
+    request1 = OrganismIDRequest(organism_id='41')
+    releases1 = stub.GetGroupingInformation(request1)
+    print('**** Grouping information ****')
+    print(releases1)
+
+
+def get_karyotype_information(stub):
+    request1 = GenomeUUIDRequest(genome_uuid='3c4cec7f-fb69-11eb-8dac-005056b32883')
+    releases1 = stub.GetKaryotypeInformation(request1)
+    print('**** Karyotype ****')
+    print(releases1)
+
+
+def get_top_level_statistics(stub):
+    request1 = OrganismIDRequest(organism_id='41')
+    releases1 = stub.GetTopLevelStatistics(request1)
+    print('**** Top level statistics ****')
+    print(releases1)
+
+
 def run():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
+        print("---------------Get Species Information-----------")
+        get_species_information_by_uuid(stub)
+        print("---------------Get Assembly Information-----------")
+        get_assembly_information(stub)
+        print("---------------Get Subspecies Information-----------")
+        get_sub_species_info(stub)
+        print("---------------Get Grouping Information-----------")
+        get_grouping_info(stub)
+        print("---------------Get Karyotype Information-----------")
+        get_karyotype_information(stub)
+        print("---------------Get Top Level Statistics-----------")
+        get_top_level_statistics(stub)
         print("-------------- Get Genomes --------------")
         get_genomes(stub)
         print("-------------- List Sequences --------------")

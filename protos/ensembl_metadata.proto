@@ -7,6 +7,24 @@ service EnsemblMetadata {
   // Retrieve genome by its UUID.
   rpc GetGenomeByUUID(GenomeUUIDRequest) returns (Genome) {}
 
+  // Get species information for a genome UUID
+  rpc GetSpeciesInformation(GenomeUUIDRequest) returns (Species) {}
+
+  // Get assembly information
+  rpc GetAssemblyInformation(AssemblyIDRequest) returns (AssemblyInfo) {}
+
+  // Get subspecies information
+  rpc GetSubSpeciesInformation(OrganismIDRequest) returns (SubSpecies) {}
+
+  // Get grouping information
+  rpc GetGroupingInformation(OrganismIDRequest) returns (Grouping) {}
+
+  // Get karyotype information
+  rpc GetKaryotypeInformation(GenomeUUIDRequest) returns (Karyotype) {}
+
+  // Get top level statistics
+  rpc GetTopLevelStatistics(OrganismIDRequest) returns (TopLevelStatistics) {}
+
   // Retrieve genome by Ensembl name and site, and optionally release.
   rpc GetGenomeByName(GenomeNameRequest) returns (Genome) {}
 
@@ -32,6 +50,57 @@ message Genome {
   bool is_current = 5;
   Assembly assembly = 6;
   Taxon taxon = 7;
+}
+
+message Karyotype {
+   string code = 1;
+   string chromosomal = 2;
+   string location = 3;
+   string genome_uuid = 4;
+}
+
+message Species {
+  string genome_uuid = 1;
+  string common_name = 2;
+  string ncbi_common_name = 4;
+  uint32 taxon_id = 5;
+  string scientific_name = 6;
+  repeated string alternative_names = 7;
+}
+
+message AssemblyInfo {
+  string assembly_id = 1;
+  string accession = 2;
+  string level = 3;
+  string name = 4;
+  uint32 chromosomal = 5;
+  uint32 length = 6;
+  string sequence_location = 7;
+  string sequence_checksum = 8;
+  string ga4gh_identifier = 9;
+}
+
+message SubSpecies {
+  string organism_id = 1;
+  repeated string species_type = 2;
+  repeated string species_name = 3;
+}
+
+message Grouping {
+  string organism_id = 1;
+  repeated string species_type = 2;
+  repeated string species_name = 3;
+}
+
+message TopLevelStatistics {
+  string organism_id = 1;
+  message AttributeStatistics {
+    string name = 2;
+    string label = 3;
+    string statistic_type = 4;
+    string statistic_value = 5;
+  }
+  repeated AttributeStatistics statistics = 2;
 }
 
 /*
@@ -89,6 +158,17 @@ Genome UUID filter.
  */
 message GenomeUUIDRequest {
   string genome_uuid = 1; // Mandatory
+}
+
+/*
+Assembly ID filter
+ */
+message AssemblyIDRequest {
+  string assembly_id = 1; // Mandatory
+}
+
+message OrganismIDRequest {
+  string organism_id = 1;
 }
 
 /*
