@@ -33,7 +33,7 @@ class TestClass:
     connection = sqlite3.connect(f'{dirpath.name}/test.db')
     cursor = connection.cursor()
 
-    sql_file = open("/tests/sampledb.sql")
+    sql_file = open("sampledb.sql")
 
     sql_as_string = sql_file.read()
     cursor.executescript(sql_as_string)
