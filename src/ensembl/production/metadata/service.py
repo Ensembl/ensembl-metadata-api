@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 import pymysql
 
 # from config import MetadataRegistryConfig as config
-import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
+from ensembl.production.metadata import ensembl_metadata_pb2_grpc
+from ensembl.production.metadata import ensembl_metadata_pb2
 
 
 def load_database(uri=None):
