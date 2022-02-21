@@ -66,6 +66,7 @@ message Species {
   uint32 taxon_id = 5;
   string scientific_name = 6;
   repeated string alternative_names = 7;
+  string scientific_parlance_name = 8;
 }
 
 message AssemblyInfo {

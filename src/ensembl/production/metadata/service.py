@@ -31,6 +31,7 @@ def load_database(uri=None):
     taxonomy_connection.close()
     return engine, taxonomy_engine
 
+
 def get_karyotype_information(metadata_db, genome_uuid):
     if genome_uuid is None:
         return create_genome()
@@ -146,6 +147,7 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
             organism.c.taxonomy_id,
             organism.c.scientific_name,
             organism.c.strain,
+            organism.c.scientific_parlance_name
         ).select_from(genome).filter_by(
             genome_uuid=genome_uuid
         ).join(organism)
@@ -211,6 +213,7 @@ def get_sub_species_info(metadata_db, organism_id):
     else:
         return create_sub_species()
 
+
 def get_grouping_info(metadata_db, organism_id):
     if organism_id is None:
         return create_grouping()
@@ -246,6 +249,7 @@ def get_grouping_info(metadata_db, organism_id):
     else:
         return create_grouping()
 
+
 def get_genome_by_uuid(metadata_db, genome_uuid):
     if genome_uuid is None:
         return create_genome()
@@ -269,6 +273,7 @@ def get_genome_by_uuid(metadata_db, genome_uuid):
             organism.c.taxonomy_id,
             organism.c.scientific_name,
             organism.c.strain,
+            organism.c.scientific_parlance_name,
             assembly.c.accession.label('assembly_accession'),
             assembly.c.name.label('assembly_name'),
             assembly.c.ucsc_name.label('assembly_ucsc_name'),
@@ -321,6 +326,7 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
             organism.c.taxonomy_id,
             organism.c.scientific_name,
             organism.c.strain,
+            organism.c.scientific_parlance_name,
             assembly.c.accession.label('assembly_accession'),
             assembly.c.name.label('assembly_name'),
             assembly.c.ucsc_name.label('assembly_ucsc_name'),
@@ -443,6 +449,7 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
     for result in release_results:
         yield create_release(dict(result))
 
+
 def create_species(data=None):
     if data is None:
         return ensembl_metadata_pb2.Species()
@@ -453,9 +460,11 @@ def create_species(data=None):
         scientific_name=data['scientific_name'],
         alternative_names=data['alternative_names'],
         taxon_id=data['taxonomy_id'],
+        scientific_parlance_name=data['scientific_parlance_name']
     )
     return species
     # return json_format.MessageToJson(species)
+
 
 def create_top_level_statistics(data=None):
     if data is None:
@@ -465,6 +474,7 @@ def create_top_level_statistics(data=None):
         statistics=data['statistics'],
     )
     return species
+
 
 def create_karyotype(data=None):
     if data is None:
@@ -478,6 +488,7 @@ def create_karyotype(data=None):
     )
     return karyotype
 
+
 def create_grouping(data=None):
     if data is None:
         return ensembl_metadata_pb2.Grouping()
@@ -488,6 +499,7 @@ def create_grouping(data=None):
     )
     return grouping
 
+
 def create_sub_species(data=None):
     if data is None:
         return ensembl_metadata_pb2.SubSpecies()
@@ -497,6 +509,7 @@ def create_sub_species(data=None):
         species_type=data['species_type'],
     )
     return sub_species
+
 
 def create_assembly(data=None):
     if data is None:
@@ -513,6 +526,7 @@ def create_assembly(data=None):
         ga4gh_identifier=data['ga4gh_identifier'],
     )
     return assembly
+
 
 def create_genome(data=None):
     if data is None:
