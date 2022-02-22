@@ -32,7 +32,7 @@ select
   'length_bp' as type,
   concat('gene_genomic_', biotype_group) as name,
   '' as label,
-  sum(seq_region_end - seq_region_start + 1) as value
+  sum(CAST(seq_region_end as SIGNED) - CAST(seq_region_start as SIGNED) + 1) as value
 from
   meta m1,
   gene inner join
@@ -57,7 +57,7 @@ select
   'max_bp' as type,
   concat('gene_genomic_', biotype_group) as name,
   '' as label,
-  max(seq_region_end - seq_region_start + 1) as value
+  max(CAST(seq_region_end as SIGNED) - CAST(seq_region_start as SIGNED) + 1) as value
 from
   meta m1,
   gene inner join
@@ -82,7 +82,7 @@ select
   'min_bp' as type,
   concat('gene_genomic_', biotype_group) as name,
   '' as label,
-  min(seq_region_end - seq_region_start + 1) as value
+  min(CAST(seq_region_end as SIGNED) - CAST(seq_region_start as SIGNED) + 1) as value
 from
   meta m1,
   gene inner join
@@ -132,7 +132,7 @@ select
   'length_bp' as type,
   concat('transcript_genomic_', biotype_group) as name,
   '' as label,
-  sum(seq_region_end - seq_region_start + 1) as value
+  sum(CAST(seq_region_end as SIGNED) - CAST(seq_region_start as SIGNED) + 1) as value
 from
   meta m1,
   transcript inner join
@@ -157,7 +157,7 @@ select
   'length_bp' as type,
   concat('cdna_', biotype_group) as name,
   '' as label,
-  sum(exon.seq_region_end - exon.seq_region_start + 1) as value
+  sum(CAST(exon.seq_region_end as signed) - cast(exon.seq_region_start as signed) + 1) as value
 from
   meta m1,
   exon inner join
