@@ -9,11 +9,13 @@ import pymysql
 from ensembl.production.metadata import ensembl_metadata_pb2_grpc
 from ensembl.production.metadata import ensembl_metadata_pb2
 
+from config import MetadataConfig as cfg
+
 
 def load_database(uri=None):
     if uri is None:
-        uri = config.METADATA_URI
-        taxonomy_uri = config.TAXONOMY_URI
+        uri = cfg.METADATA_URI
+        taxonomy_uri = cfg.TAXONOMY_URI
 
     try:
         engine = db.create_engine(uri)
