@@ -120,5 +120,5 @@ docker build -t metadata-service .
 
 ### To run docker container
 ```
- docker run -d -t -i -e METADATA_URI='ffdff' -e TAXONOMY_URI='ffdvf' -p 80:80 metadata-service
+ docker run -d -t -i -e METADATA_URI=<URI> -e TAXONOMY_URI=<URI> -p 80:80 metadata-service
 ```
