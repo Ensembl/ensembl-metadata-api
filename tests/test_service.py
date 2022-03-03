@@ -65,6 +65,7 @@ class TestClass:
             'assembly_level': 'level',
             'taxonomy_id': 1234,
             'scientific_name': 'scientific name',
+            'scientific_parlance_name': 'scientific_parlance_name',
             'strain': 'test strain'
         }
         expected_output = {
@@ -144,6 +145,7 @@ class TestClass:
             'ncbi_common_name': 'cattle',
             'scientific_name': 'Bos taurus',
             'alternative_names': ["bovine", "cow", "dairy cow", "domestic cattle", "domestic cow"],
+            'scientific_parlance_name': 'Bos taurus',
             'taxonomy_id': 9913
         }
 
@@ -152,6 +154,7 @@ class TestClass:
             'commonName': 'cow',
             'ncbiCommonName': 'cattle',
             'scientificName': 'Bos taurus',
+            'scientificParlanceName': 'Bos taurus',
             'alternativeNames': ["bovine", "cow", "dairy cow", "domestic cattle", "domestic cow"],
             'taxonId': 9913
         }
@@ -186,7 +189,8 @@ class TestClass:
                 'name': 'transcript_genomic_mnoncoding',
                 'statisticType': 'length_bp',
                 'statisticValue': '5873'
-            },{
+            },
+                {
                 'label': 'Pseudogenic transcript',
                 'name': 'transcript_genomic_pseudogene',
                 'statisticType': 'length_bp',
