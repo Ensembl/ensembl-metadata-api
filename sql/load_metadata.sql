@@ -11,7 +11,7 @@ insert into ensembl_site (name, label, uri) values
 insert into ensembl_release
   (version, release_date, is_current, release_type, site_id)
 select ensembl_genomes_version, release_date, is_current, 'partial', site_id
-from ensembl_metadata_qrp.data_release, ensembl_site
+from ensembl_metadata.data_release, ensembl_site
 where ensembl_site.name = 'rapid';
 
 insert into dataset_type
@@ -42,14 +42,14 @@ values
 insert into assembly
   (accession, name, ucsc_name, level)
 select assembly_accession, assembly_name, assembly_ucsc, assembly_level
-from ensembl_metadata_qrp.assembly;
+from ensembl_metadata.assembly;
 
 update assembly set ucsc_name = NULL where ucsc_name = '';
 
 insert into organism
   (display_name, ensembl_name, scientific_name, species_taxonomy_id, strain, taxonomy_id, url_name)
 select o1.display_name, o1.name, o1.scientific_name, o1.species_taxonomy_id, o1.strain, o1.taxonomy_id, o1.url_name
-from ensembl_metadata_qrp.organism o1
+from ensembl_metadata.organism o1
 group by o1.display_name, o1.name, o1.scientific_name, o1.species_taxonomy_id, o1.strain, o1.taxonomy_id, o1.url_name;
 
 update organism set strain=null where strain='reference';
@@ -61,10 +61,10 @@ alter table genome add column genebuild varchar(128);
 insert into genome
   (genome_uuid, assembly_id, organism_id, assembly_accession, genebuild, created)
 select uuid(), a2.assembly_id, o2.organism_id, a1.assembly_accession, g1.genebuild, min(ge1.creation_time)
-from ensembl_metadata_qrp.genome g1 inner join
-  ensembl_metadata_qrp.organism o1 on g1.organism_id = o1.organism_id inner join
-  ensembl_metadata_qrp.assembly a1 on g1.assembly_id = a1.assembly_id inner join
-  ensembl_metadata_qrp.genome_event ge1 on g1.genome_id = ge1.genome_id inner join
+from ensembl_metadata.genome g1 inner join
+  ensembl_metadata.organism o1 on g1.organism_id = o1.organism_id inner join
+  ensembl_metadata.assembly a1 on g1.assembly_id = a1.assembly_id inner join
+  ensembl_metadata.genome_event ge1 on g1.genome_id = ge1.genome_id inner join
   assembly a2 on a1.assembly_accession = a2.accession inner join
   organism o2 on o1.name = o2.ensembl_name
 group by a2.assembly_id, o2.organism_id, a1.assembly_accession, g1.genebuild;
@@ -72,14 +72,14 @@ group by a2.assembly_id, o2.organism_id, a1.assembly_accession, g1.genebuild;
 insert into dataset_source
   (type, name)
 select type, dbname
-from ensembl_metadata_qrp.genome_database
+from ensembl_metadata.genome_database
 group by type, dbname
 order by dbname;
 
 insert into dataset_source
   (type, name)
 select 'compara', dbname
-from ensembl_metadata_qrp.compara_analysis
+from ensembl_metadata.compara_analysis
 group by dbname
 order by dbname;
 
@@ -87,10 +87,10 @@ order by dbname;
 insert into dataset
   (dataset_uuid, dataset_type_id, name, label, version, created, dataset_source_id)
 select uuid(), dt.dataset_type_id, 'assembly', a1.assembly_accession, NULL, min(ge1.creation_time), ds.dataset_source_id
-from ensembl_metadata_qrp.genome g1 inner join
-  ensembl_metadata_qrp.assembly a1 on g1.assembly_id = a1.assembly_id inner join
-  ensembl_metadata_qrp.genome_event ge1 on g1.genome_id = ge1.genome_id inner join
-  ensembl_metadata_qrp.genome_database gd1 on g1.genome_id = gd1.genome_id inner join
+from ensembl_metadata.genome g1 inner join
+  ensembl_metadata.assembly a1 on g1.assembly_id = a1.assembly_id inner join
+  ensembl_metadata.genome_event ge1 on g1.genome_id = ge1.genome_id inner join
+  ensembl_metadata.genome_database gd1 on g1.genome_id = gd1.genome_id inner join
   dataset_type dt inner join
   dataset_source ds on gd1.dbname = ds.name inner join
   genome g2 on a1.assembly_accession = g2.assembly_accession
@@ -101,10 +101,10 @@ group by dt.dataset_type_id, a1.assembly_accession, ds.dataset_source_id;
 insert into dataset
   (dataset_uuid, dataset_type_id, name, label, version, created, dataset_source_id)
 select uuid(), dt.dataset_type_id, 'gene_core', g1.genebuild, a1.assembly_accession, min(ge1.creation_time), ds.dataset_source_id
-from ensembl_metadata_qrp.genome g1 inner join
-  ensembl_metadata_qrp.assembly a1 on g1.assembly_id = a1.assembly_id inner join
-  ensembl_metadata_qrp.genome_event ge1 on g1.genome_id = ge1.genome_id inner join
-  ensembl_metadata_qrp.genome_database gd1 on g1.genome_id = gd1.genome_id inner join
+from ensembl_metadata.genome g1 inner join
+  ensembl_metadata.assembly a1 on g1.assembly_id = a1.assembly_id inner join
+  ensembl_metadata.genome_event ge1 on g1.genome_id = ge1.genome_id inner join
+  ensembl_metadata.genome_database gd1 on g1.genome_id = gd1.genome_id inner join
   dataset_type dt inner join
   dataset_source ds on gd1.dbname = ds.name inner join
   genome g2 on a1.assembly_accession = g2.assembly_accession
@@ -115,10 +115,10 @@ group by dt.dataset_type_id, g1.genebuild, a1.assembly_accession, ds.dataset_sou
 insert into genome_dataset
   (genome_id, dataset_id, release_id, is_current)
 select g2.genome_id, d2.dataset_id, min(r2.release_id), 1
-from ensembl_metadata_qrp.genome g1 inner join
-  ensembl_metadata_qrp.assembly a1 on g1.assembly_id = a1.assembly_id inner join
-  ensembl_metadata_qrp.data_release dr1 on g1.data_release_id = dr1.data_release_id inner join
-  ensembl_metadata_qrp.genome_database gd1 on g1.genome_id = gd1.genome_id inner join
+from ensembl_metadata.genome g1 inner join
+  ensembl_metadata.assembly a1 on g1.assembly_id = a1.assembly_id inner join
+  ensembl_metadata.data_release dr1 on g1.data_release_id = dr1.data_release_id inner join
+  ensembl_metadata.genome_database gd1 on g1.genome_id = gd1.genome_id inner join
   genome g2 on a1.assembly_accession = g2.assembly_accession inner join
   dataset d2 on g2.assembly_accession = d2.label inner join
   dataset_source ds on gd1.dbname = ds.name inner join
@@ -138,10 +138,10 @@ group by genome_id;
 insert into genome_dataset
   (genome_id, dataset_id, release_id, is_current)
 select g2.genome_id, d2.dataset_id, min(r2.release_id), 1
-from ensembl_metadata_qrp.genome g1 inner join
-  ensembl_metadata_qrp.assembly a1 on g1.assembly_id = a1.assembly_id inner join
-  ensembl_metadata_qrp.data_release dr1 on g1.data_release_id = dr1.data_release_id inner join
-  ensembl_metadata_qrp.genome_database gd1 on g1.genome_id = gd1.genome_id inner join
+from ensembl_metadata.genome g1 inner join
+  ensembl_metadata.assembly a1 on g1.assembly_id = a1.assembly_id inner join
+  ensembl_metadata.data_release dr1 on g1.data_release_id = dr1.data_release_id inner join
+  ensembl_metadata.genome_database gd1 on g1.genome_id = gd1.genome_id inner join
   genome g2 on a1.assembly_accession = g2.assembly_accession inner join
   dataset d2 on g2.genebuild = d2.label and g2.assembly_accession = d2.version inner join
   dataset_source ds on gd1.dbname = ds.name inner join
