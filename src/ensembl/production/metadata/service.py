@@ -4,11 +4,10 @@ import logging
 import sqlalchemy as db
 from sqlalchemy.orm import Session
 
-# from config import MetadataRegistryConfig as config
-import ensembl_metadata_pb2_grpc
-import ensembl_metadata_pb2
+from ensembl.production.metadata import ensembl_metadata_pb2_grpc
+from ensembl.production.metadata import ensembl_metadata_pb2
 
-from config import MetadataConfig as cfg
+from ensembl.production.metadata.config import MetadataConfig as cfg
 
 
 def load_database(uri=None):
