@@ -112,3 +112,13 @@ mypy src tests
 ```
 Pylint will check the code for syntax, name errors and formatting style.
 Mypy will use type hints to statically type check the code.
+
+### To build docker image
+```
+docker build -t ensembl-metadata-service .
+```
+
+### To run docker container
+```
+ docker run -t -i -e METADATA_URI=<URI> -e TAXONOMY_URI=<URI> -p 80:80 ensembl-metadata-service
+```
