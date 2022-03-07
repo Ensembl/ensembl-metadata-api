@@ -14,14 +14,14 @@ from config import MetadataConfig as cfg
 
 def load_database(uri=None):
     if uri is None:
-        uri = cfg.METADATA_URI
-        taxonomy_uri = cfg.TAXONOMY_URI
+        uri = cfg.metadata_uri
+        taxonomy_uri = cfg.taxonomy_uri
 
     try:
         engine = db.create_engine(uri)
         taxonomy_engine = db.create_engine(taxonomy_uri)
     except AttributeError:
-        raise ValueError(f'Could not connect to database. Check METADATA_URI env variable.')
+        raise ValueError(f'Could not connect to database. Check metadata_uri env variable.')
 
     try:
         connection = engine.connect()
