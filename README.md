@@ -120,5 +120,5 @@ docker build -t ensembl-metadata-service .
 
 ### To run docker container
 ```
- docker run -d -t -i -e metadata_uri=<URI> -e taxonomy_uri=<URI> -p 80:80 ensembl-metadata-service
+ docker run -t -i -e METADATA_URI=<URI> -e TAXONOMY_URI=<URI> -p 80:80 ensembl-metadata-service
 ```

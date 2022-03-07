@@ -3,19 +3,18 @@ import grpc
 import logging
 import sqlalchemy as db
 from sqlalchemy.orm import Session
-import pymysql
 
 # from config import MetadataRegistryConfig as config
-from ensembl.production.metadata import ensembl_metadata_pb2_grpc
-from ensembl.production.metadata import ensembl_metadata_pb2
+import ensembl_metadata_pb2_grpc
+import ensembl_metadata_pb2
 
 from config import MetadataConfig as cfg
 
 
 def load_database(uri=None):
     if uri is None:
-        uri = cfg.metadata_uri
-        taxonomy_uri = cfg.taxonomy_uri
+        uri = cfg.METADATA_URI
+        taxonomy_uri = cfg.TAXONOMY_URI
 
     try:
         engine = db.create_engine(uri)
