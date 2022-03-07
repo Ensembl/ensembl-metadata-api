@@ -12,8 +12,8 @@ from ensembl.production.metadata.config import MetadataConfig as cfg
 
 def load_database(uri=None):
     if uri is None:
-        uri = cfg.METADATA_URI
-        taxonomy_uri = cfg.TAXONOMY_URI
+        uri = cfg.metadata_uri
+        taxonomy_uri = cfg.taxonomy_uri
 
     try:
         engine = db.create_engine(uri)
