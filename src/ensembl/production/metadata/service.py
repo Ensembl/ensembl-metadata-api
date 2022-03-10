@@ -16,8 +16,8 @@ def load_database(uri=None):
         taxonomy_uri = cfg.taxonomy_uri
 
     try:
-        engine = db.create_engine(uri)
-        taxonomy_engine = db.create_engine(taxonomy_uri)
+        engine = db.create_engine(uri, pool_size=cfg.pool_size, max_overflow=cfg.max_overflow)
+        taxonomy_engine = db.create_engine(taxonomy_uri, pool_size=cfg.pool_size, max_overflow=cfg.max_overflow)
     except AttributeError:
         raise ValueError(f'Could not connect to database. Check metadata_uri env variable.')
 
