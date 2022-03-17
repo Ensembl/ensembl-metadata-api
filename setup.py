@@ -10,19 +10,22 @@ with open('VERSION') as f:
 
 
 setup(
-    name='ensembl_metadata_service',
+    name='ensembl-metadata-service',
     version=version,
     description='Ensembl Metadata Service',
     long_description=readme,
-    author='Ensembl',
-    author_email='dev@ensembl.org',
-    url='https://www.ensembl.org',
+    author='Alisha',
+    author_email='aaneja@ensembl.org',
+    url='https://github.com/Ensembl/ensembl-metadata-service',
     download_url='https://github.com/Ensembl/ensembl-metadata-service',
     license='Apache License 2.0',
-    packages=find_namespace_packages(where='src', include=['ensembl.*']),
+    packages=find_namespace_packages(where='src'),
     package_dir={'': 'src'},
     include_package_data=True,
     python_requires='>=3.8',
+    install_requires=[
+        'grpcio'
+    ],
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",

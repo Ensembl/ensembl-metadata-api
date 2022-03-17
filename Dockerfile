@@ -1,21 +1,16 @@
 FROM python:3.8
 
-RUN mkdir /service
+WORKDIR /usr/src/app
 
-COPY protos/ /service/protos/
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-COPY src/ensembl/production/metadata /service/ensembl/production/metadata
+COPY . /usr/src/app/
 
-WORKDIR /service/
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-RUN python -m pip install --upgrade pip
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+RUN pip install .
 
-RUN python -m pip install -r ensembl/production/metadata/requirements.txt
-
-RUN python -m grpc_tools.protoc -I protos --python_out=. \
-
-           --grpc_python_out=. protos/ensembl_metadata.proto
-
-EXPOSE 50051
-
-ENTRYPOINT [ "python", "ensembl/production/metadata/service.py" ]
+CMD ["python", "src/ensembl/production/metadata/service.py"]

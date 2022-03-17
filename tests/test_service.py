@@ -16,9 +16,6 @@
 Unit tests for service module
 """
 import sqlalchemy as db
-from sqlalchemy.orm import Session
-import pymysql
-import pytest
 import json
 from google.protobuf import json_format
 
