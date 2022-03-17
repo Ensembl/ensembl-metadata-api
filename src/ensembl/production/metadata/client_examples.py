@@ -5,7 +5,7 @@ from ensembl_metadata_pb2 import \
     GenomeUUIDRequest, GenomeNameRequest, \
     ReleaseRequest, GenomeSequenceRequest, AssemblyIDRequest, \
     OrganismIDRequest
-# import ensembl_metadata_pb2_grpc
+
 import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
 
@@ -24,7 +24,7 @@ def get_genome(stub, genome_request):
 
 
 def get_genomes(stub):
-    request1 = GenomeUUIDRequest(genome_uuid='dc8cbfd9-9bd4-11eb-b85b-0028f81f0374')
+    request1 = GenomeUUIDRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3')
     request2 = GenomeUUIDRequest(genome_uuid='rhubarb')
     request3 = GenomeNameRequest(ensembl_name='accipiter_gentilis', site_name='rapid')
     request4 = GenomeNameRequest(ensembl_name='accipiter_gentilis', site_name='rapid', release_version=13)
@@ -42,13 +42,13 @@ def get_genomes(stub):
 
 
 def list_genome_sequences(stub):
-    request1 = GenomeSequenceRequest(genome_uuid='dc8cf6ef-9bd4-11eb-b85b-0028f81f0374', chromosomal_only=True)
+    request1 = GenomeSequenceRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3', chromosomal_only=True)
     genome_sequences1 = stub.GetGenomeSequence(request1)
     print('**** Only chromosomes ****')
     for seq in genome_sequences1:
         print(seq)
 
-    request2 = GenomeSequenceRequest(genome_uuid='dc8cf6ef-9bd4-11eb-b85b-0028f81f0374')
+    request2 = GenomeSequenceRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3')
     genome_sequences2 = stub.GetGenomeSequence(request2)
     print('**** All sequences ****')
     for seq in genome_sequences2:
@@ -80,7 +80,7 @@ def list_releases(stub):
     for release in releases3:
         print(release)
 
-    request4 = ReleaseRequest(release_version=[14])
+    request4 = ReleaseRequest(release_version=[1])
     releases4 = stub.GetRelease(request4)
     print('**** Version 14 ****')
     for release in releases4:
@@ -92,7 +92,7 @@ def list_releases(stub):
     for release in releases5:
         print(release)
 
-    request6 = ReleaseRequest(release_version=[14, 15])
+    request6 = ReleaseRequest(release_version=[1])
     releases6 = stub.GetRelease(request6)
     print('**** Versions 14 and 15 ****')
     for release in releases6:
@@ -100,7 +100,7 @@ def list_releases(stub):
 
 
 def list_releases_by_uuid(stub):
-    request1 = GenomeUUIDRequest(genome_uuid='dc8cbfd9-9bd4-11eb-b85b-0028f81f0374')
+    request1 = GenomeUUIDRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3')
     releases1 = stub.GetReleaseByUUID(request1)
     print('**** Release for Narwhal ****')
     for release in releases1:
@@ -108,7 +108,7 @@ def list_releases_by_uuid(stub):
 
 
 def get_species_information_by_uuid(stub):
-    request1 = GenomeUUIDRequest(genome_uuid='3c4cec7f-fb69-11eb-8dac-005056b32883')
+    request1 = GenomeUUIDRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3')
     releases1 = stub.GetSpeciesInformation(request1)
     print('**** Species information ****')
     print(releases1)
@@ -122,28 +122,28 @@ def get_assembly_information(stub):
 
 
 def get_sub_species_info(stub):
-    request1 = OrganismIDRequest(organism_id='41')
+    request1 = OrganismIDRequest(organism_id='3')
     releases1 = stub.GetSubSpeciesInformation(request1)
     print('**** Sub species information ****')
     print(releases1)
 
 
 def get_grouping_info(stub):
-    request1 = OrganismIDRequest(organism_id='41')
+    request1 = OrganismIDRequest(organism_id='3')
     releases1 = stub.GetGroupingInformation(request1)
     print('**** Grouping information ****')
     print(releases1)
 
 
 def get_karyotype_information(stub):
-    request1 = GenomeUUIDRequest(genome_uuid='3c4cec7f-fb69-11eb-8dac-005056b32883')
+    request1 = GenomeUUIDRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3')
     releases1 = stub.GetKaryotypeInformation(request1)
     print('**** Karyotype ****')
     print(releases1)
 
 
 def get_top_level_statistics(stub):
-    request1 = OrganismIDRequest(organism_id='41')
+    request1 = OrganismIDRequest(organism_id='3')
     releases1 = stub.GetTopLevelStatistics(request1)
     print('**** Top level statistics ****')
     print(releases1)
