@@ -9,7 +9,7 @@ env:
 
 install:
   - pip install -r requirements-test.txt
-  - pip install .
+  - pip install -e .
 
 script:
   - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi
