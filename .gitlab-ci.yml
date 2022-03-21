@@ -5,6 +5,14 @@ image: python:3.8
 # only cache local items.
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  METADATA_DB_HOST: "$CI_METADATA_DB_HOST"
+  METADATA_DB_PORT: "$CI_METADATA_DB_PORT"
+  METADATA_DB_USER: "$CI_METADATA_DB_USER"
+  METADATA_DB_PASSWORD: "$CI_METADATA_DB_PASS"
+  TAXON_DB_HOST: "$CI_TAXON_DB_HOST"
+  TAXON_DB_PORT: "$CI_TAXON_DB_PORT"
+  TAXON_DB_USER: "$CI_TAXON_DB_USER"
+  TAXON_DB_PASSWORD: "$CI_TAXON_DB_PASS"
 
 # Pip's cache doesn't store the python packages
 # https://pip.pypa.io/en/stable/reference/pip_install/#caching
