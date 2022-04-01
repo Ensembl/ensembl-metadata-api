@@ -25,28 +25,26 @@ cache:
     - venv/
 
 
-test:
-  stage: test
-  before_script:
-    - python -V
-    - pip install virtualenv
-    - virtualenv venv
-    - source venv/bin/activate
-    - pip install -r requirements-test.txt
-    - pip install -e .
+ test:
+   stage: test
+   before_script:
+     - python -V
+     - pip install virtualenv
+     - virtualenv venv
+     - source venv/bin/activate
+     - pip install -r requirements-test.txt
+     - pip install -e .
 
-  script:
-    - coverage run -m pytest
-    - coverage report -m
+   script:
+     - coverage run -m pytest
+     - coverage report -m
 
 
 build:
   stage: build
-  only:
-    - tags
 
   variables:
-    IMAGE_TAG: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
+    IMAGE_TAG: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
     LATEST_TAG: ${CI_REGISTRY_IMAGE}:latest
     DOCKER_TLS_CERTDIR: ""
 
@@ -60,7 +58,7 @@ build:
     - docker info
 
   script:
-    - docker build -t $IMAGE_TAG --no-cache .
+    - docker build -t $IMAGE_TAG --no-cache  .
     - docker tag $IMAGE_TAG $LATEST_TAG
     - docker push $IMAGE_TAG
     - docker push $LATEST_TAG
@@ -71,7 +69,7 @@ build:
   stage: deploy
 
   variables:
-    CONTAINER_IMAGE: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
+    CONTAINER_IMAGE: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
 
   image: ${TOOLS_IMAGE}:${TOOLS_TAG}
 
@@ -96,27 +94,24 @@ build:
 deploy_staging:
   extends: .deploy
 
-  only:
-    - tags
-
   environment:
     name: staging
 
   before_script:
     - git clone https://oauth2:${GITLAB_ACCESS_TOKEN}@${GITLAB_HOST}/${MANIFESTS_NAMESPACE}/k8s-manifests.git
     - cd k8s-manifests
-    - git checkout staging
+    - git checkout metadata-api-config
     - cd ..
 
 
-deploy_prod:
-  extends: .deploy
+# # deploy_prod:
+# #   extends: .deploy
 
-  only:
-    - /^release-.+$/
+# #   only:
+# #     - /^release-.+$/
 
-  except:
-    - branches
+# #   except:
+# #     - branches
 
-  environment:
-    name: prod
+# #   environment:
+# #     name: prod
