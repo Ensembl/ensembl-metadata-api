@@ -104,14 +104,15 @@ deploy_staging:
     - cd ..
 
 
-# # deploy_prod:
-# #   extends: .deploy
+deploy_prod:
+    when: manual
+    extends: .deploy
 
-# #   only:
-# #     - /^release-.+$/
+    only:
+      - /^release-.+$/
 
-# #   except:
-# #     - branches
+    except:
+      - branches
 
-# #   environment:
-# #     name: prod
+    environment:
+      name: prod
