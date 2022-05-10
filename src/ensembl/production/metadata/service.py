@@ -38,6 +38,7 @@ def get_karyotype_information(metadata_db, genome_uuid):
 
     md = db.MetaData()
     session = Session(metadata_db, future=True)
+    print("testing prod pipeline")
 
     # Reflect existing tables, letting sqlalchemy load linked tables where possible.
     genome = db.Table('genome', md, autoload_with=metadata_db)
