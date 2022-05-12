@@ -12,8 +12,15 @@ from ensembl.production.metadata.config import MetadataConfig as cfg
 
 def load_database(uri=None):
     if uri is None:
-        uri = f"mysql+pymysql://{cfg.metadata_user}:{cfg.metadata_pass}@{cfg.metadata_host}:{cfg.metadata_port}/ensembl_metadata_2020"
-        taxonomy_uri = f"mysql+pymysql://{cfg.taxon_user}:{cfg.taxon_pass}@{cfg.taxon_host}:{cfg.taxon_port}/ncbi_taxonomy"
+        if cfg.metadata_pass is None:
+            uri = f"mysql+pymysql://{cfg.metadata_user}@{cfg.metadata_host}:{cfg.metadata_port}/ensembl_metadata_2020"
+        else:
+            uri = f"mysql+pymysql://{cfg.metadata_user}:{cfg.metadata_pass}@{cfg.metadata_host}:{cfg.metadata_port}/ensembl_metadata_2020"
+
+        if cfg.taxon_pass is None:
+            taxonomy_uri = f"mysql+pymysql://{cfg.taxon_user}@{cfg.taxon_host}:{cfg.taxon_port}/ncbi_taxonomy"
+        else:
+            taxonomy_uri = f"mysql+pymysql://{cfg.taxon_user}:{cfg.taxon_pass}@{cfg.taxon_host}:{cfg.taxon_port}/ncbi_taxonomy"
 
     try:
         engine = db.create_engine(uri, pool_size=cfg.pool_size, max_overflow=cfg.max_overflow)
@@ -38,7 +45,6 @@ def get_karyotype_information(metadata_db, genome_uuid):
 
     md = db.MetaData()
     session = Session(metadata_db, future=True)
-    print("testing prod pipeline")
 
     # Reflect existing tables, letting sqlalchemy load linked tables where possible.
     genome = db.Table('genome', md, autoload_with=metadata_db)
