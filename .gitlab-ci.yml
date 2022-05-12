@@ -89,7 +89,6 @@ build:
     - >-
       sed -i "s#<CI_ENVIRONMENT_SLUG>#${CI_ENVIRONMENT_SLUG}#g"
       k8s-manifests/metadata-grpc/deployment.yaml
-    - echo ${CONTAINER_IMAGE}
     - kubectl apply -f k8s-manifests/metadata-grpc/configmap.yaml
     - kubectl apply -f k8s-manifests/metadata-grpc/secret.yaml
     - kubectl apply -f k8s-manifests/metadata-grpc/deployment.yaml
