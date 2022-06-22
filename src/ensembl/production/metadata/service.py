@@ -146,8 +146,7 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
             organism.c.display_name,
             organism.c.taxonomy_id,
             organism.c.scientific_name,
-            organism.c.strain,
-            organism.c.scientific_parlance_name
+            organism.c.strain
         ).select_from(genome).filter_by(
             genome_uuid=genome_uuid
         ).join(organism)
@@ -163,6 +162,7 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
         taxo_results = session.execute(tax_names).all()
         common_names = []
         # Get the common name and alternative names
+        species_data['ncbi_common_name'] = None
         if len(taxo_results) > 0:
             for item in taxo_results:
                 if item[1] is not None and item[0] is not None:
@@ -273,7 +273,6 @@ def get_genome_by_uuid(metadata_db, genome_uuid):
             organism.c.taxonomy_id,
             organism.c.scientific_name,
             organism.c.strain,
-            organism.c.scientific_parlance_name,
             assembly.c.accession.label('assembly_accession'),
             assembly.c.name.label('assembly_name'),
             assembly.c.ucsc_name.label('assembly_ucsc_name'),
@@ -326,7 +325,6 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
             organism.c.taxonomy_id,
             organism.c.scientific_name,
             organism.c.strain,
-            organism.c.scientific_parlance_name,
             assembly.c.accession.label('assembly_accession'),
             assembly.c.name.label('assembly_name'),
             assembly.c.ucsc_name.label('assembly_ucsc_name'),
@@ -459,8 +457,7 @@ def create_species(data=None):
         ncbi_common_name=data['ncbi_common_name'],
         scientific_name=data['scientific_name'],
         alternative_names=data['alternative_names'],
-        taxon_id=data['taxonomy_id'],
-        scientific_parlance_name=data['scientific_parlance_name']
+        taxon_id=data['taxonomy_id']
     )
     return species
     # return json_format.MessageToJson(species)
