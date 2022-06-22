@@ -4,11 +4,11 @@ variables:
   METADATA_DB_HOST: $CI_METADATA_DB_HOST
   METADATA_DB_PORT: $CI_METADATA_DB_PORT
   METADATA_DB_USER: $CI_METADATA_DB_USER
-  METADATA_DB_PASSWORD: $CI_METADATA_DB_PASS
+  METADATA_DB_PASS: $CI_METADATA_DB_PASS
   TAXON_DB_HOST: $CI_TAXON_DB_HOST
   TAXON_DB_PORT: $CI_TAXON_DB_PORT
   TAXON_DB_USER: $CI_TAXON_DB_USER
-  TAXON_DB_PASSWORD: $CI_TAXON_DB_PASS
+  TAXON_DB_PASS: $CI_TAXON_DB_PASS
 stages:
   - test
   - build
@@ -46,6 +46,8 @@ build:
     - docker tag $IMAGE_TAG $LATEST_TAG
     - docker push $IMAGE_TAG
     - docker push $LATEST_TAG
+    - echo $CI_COMMIT_SHORT_SHA
+    - echo $IMAGE_TAG
     - docker logout $CI_REGISTRY
 .deploy:
   stage: deploy
@@ -94,10 +96,9 @@ deploy_staging:
   extends: .deploy
   environment:
     name: staging
-  before_script:
-    - >-
-      git clone
-      https://oauth2:${GITLAB_ACCESS_TOKEN}@${GITLAB_HOST}/${MANIFESTS_NAMESPACE}/k8s-manifests.git
-    - cd k8s-manifests
-    - git checkout metadata-api-config
-    - cd ..
+
+deploy_prod:
+  extends: .deploy
+  environment:
+    name: prod
+  when: manual
