@@ -170,6 +170,7 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
         taxo_results = session.execute(tax_names).all()
         common_names = []
         # Get the common name and alternative names
+        species_data['ncbi_common_name'] = None
         if len(taxo_results) > 0:
             for item in taxo_results:
                 if item[1] is not None and item[0] is not None:

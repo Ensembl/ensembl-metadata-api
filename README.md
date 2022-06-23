@@ -73,7 +73,7 @@ python3 src/ensembl/production/metadata/service.py
 
 Start the client script
 ```
-python3 src/ensembl/production/metadata/client_examples.py
+PYTHONPATH='src' python3 src/ensembl/production/metadata/client_examples.py
 ```
 
 ### Testing
@@ -81,7 +81,7 @@ python3 src/ensembl/production/metadata/client_examples.py
 Run test suite:
 ```
 cd ensembl-metadata-service
-pytest
+PYTHONPATH='src' pytest
 ```
 
 To run tests, calculate and display testing coverage stats:
