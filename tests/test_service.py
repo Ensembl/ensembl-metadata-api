@@ -142,6 +142,7 @@ class TestClass:
             'ncbi_common_name': 'cattle',
             'scientific_name': 'Bos taurus',
             'alternative_names': ["bovine", "cow", "dairy cow", "domestic cattle", "domestic cow"],
+            'scientific_parlance_name': 'Bos taurus',
             'taxonomy_id': 9913
         }
 
@@ -150,6 +151,7 @@ class TestClass:
             'commonName': 'cow',
             'ncbiCommonName': 'cattle',
             'scientificName': 'Bos taurus',
+            'scientificParlanceName': 'Bos taurus',
             'alternativeNames': ["bovine", "cow", "dairy cow", "domestic cattle", "domestic cow"],
             'taxonId': 9913
         }
