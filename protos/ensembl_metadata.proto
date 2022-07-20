@@ -1,3 +1,14 @@
+/* 
+ * This file defines what API calls we are going to handle
+ * where we got our gRPC definition and what request and response
+ * side or server side or both.
+ * It's used to generate two files:
+ * ensembl_metadata_pb2: which has all the different requests and responses
+ * ensembl_metadata_pb2_grpc: which has the services that we want to implement 
+ *   and the "stubs" that we will be using in the client side 
+ */
+
+
 syntax = "proto3";
 
 package ensembl_metadata;
@@ -36,6 +47,9 @@ service EnsemblMetadata {
 
   // Retrieve sequence metadata for a genome's assembly.
   rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
+
+  // Retrieve a list of dataset_ids associated with a genome UUID.
+  rpc GetDatasetsByUUID(GenomeUUIDRequest) returns (Datasets) {}
 }
 
 /*
@@ -198,4 +212,39 @@ Genome sequence filter.
 message GenomeSequenceRequest {
   string genome_uuid = 1;     // Mandatory
   bool chromosomal_only = 2;  // Optional
+}
+
+/*
+Datasets list associated to the provided genome_uuid 
+ */
+ // Level 0
+ message Datasets {
+  string genome_uuid = 1;     // Mandatory
+  // DatasetsInfo datasets = 2;
+  // AssemblyDataset assembly_name = 2;
+  DatasetsObject datasets = 2;
+  // string data_set_type_field = 3;
+  // string data_set_type = 3;
+}
+
+// Level 1
+message DatasetsObject{
+  // AssemblyDataset datasets_obj = 1;
+  // https://stackoverflow.com/q/56401376/4488332
+  // https://developers.google.com/protocol-buffers/docs/reference/python-generated#map-fields
+  map<string, AssemblyDataset> datasets_obj = 1;
+}
+
+// Level 2
+message AssemblyDataset {
+  repeated DatasetsInfo assembly_dataset = 1;
+}
+
+// Level 3
+message DatasetsInfo {
+  string dataset_uuid = 1;
+  string dataset_name = 2;
+  string dataset_version = 3;
+  string dataset_label = 4;
+  int32 version = 5;
 }
