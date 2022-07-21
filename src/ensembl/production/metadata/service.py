@@ -441,17 +441,10 @@ def get_datasets_by_uuid(metadata_db, genome_uuid):
                 assembly_datasets_info_list.append(datasets_info_list)
                         
 
-        # Populate AssemblyDataset
-        assembly_ds_obj = ensembl_metadata_pb2.AssemblyDataset(
+        # Populate DatasetsObject
+        ds_obj = ensembl_metadata_pb2.DatasetsObject(
             assembly_dataset=assembly_datasets_info_list
         )
-
-        # Finally the DatasetsObject
-        ds_obj = ensembl_metadata_pb2.DatasetsObject()
-        # 'assembly' will be created if doesn't exist
-        # https://developers.google.com/protocol-buffers/docs/reference/python-generated#undefined
-        # https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message
-        ds_obj.datasets_obj['assembly'].CopyFrom(assembly_ds_obj)
             
         return create_datasets({
             'genome_uuid': genome_uuid,
@@ -696,12 +689,14 @@ def create_datasets(data=None):
     if data is None:
         return ensembl_metadata_pb2.Datasets()
 
-    datasets = ensembl_metadata_pb2.Datasets(
-        genome_uuid=data['genome_uuid'],
-        datasets=data['datasets']
+    ds = ensembl_metadata_pb2.Datasets(
+        genome_uuid=data['genome_uuid']
     )
+    # https://developers.google.com/protocol-buffers/docs/reference/python-generated#undefined
+    # https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message
+    ds.datasets['assembly'].CopyFrom(data['datasets'])
 
-    return datasets
+    return ds
 
 
 

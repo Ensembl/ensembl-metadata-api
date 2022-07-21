@@ -222,7 +222,7 @@ Datasets list associated to the provided genome_uuid
   string genome_uuid = 1;     // Mandatory
   // DatasetsInfo datasets = 2;
   // AssemblyDataset assembly_name = 2;
-  DatasetsObject datasets = 2;
+  map<string, DatasetsObject> datasets = 2;
   // string data_set_type_field = 3;
   // string data_set_type = 3;
 }
@@ -232,15 +232,11 @@ message DatasetsObject{
   // AssemblyDataset datasets_obj = 1;
   // https://stackoverflow.com/q/56401376/4488332
   // https://developers.google.com/protocol-buffers/docs/reference/python-generated#map-fields
-  map<string, AssemblyDataset> datasets_obj = 1;
+  repeated DatasetsInfo assembly_dataset = 1;
+  // repeated DatasetsInfo align_xrefs_dataset = 2;
 }
 
 // Level 2
-message AssemblyDataset {
-  repeated DatasetsInfo assembly_dataset = 1;
-}
-
-// Level 3
 message DatasetsInfo {
   string dataset_uuid = 1;
   string dataset_name = 2;
