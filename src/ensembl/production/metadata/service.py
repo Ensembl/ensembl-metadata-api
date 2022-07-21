@@ -364,19 +364,27 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
         return create_genome()
 
 
-def get_data_set_types():
-    # TODO: fetch the values from DB
-    return ('assembly', 'alignment_xrefs')
+def get_data_set_types(metadata_db):
+    # This is sqlalchemy's metadata, not Ensembl's!
+    md = db.MetaData()
+    session = Session(metadata_db, future=True)
+    dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
+
+    ds_types = db.select(dataset_type.c.name.label('data_set_type')).distinct()
+    ds_types_results = session.execute(ds_types).all()
+    ds_types_list = [ds_type['data_set_type'] for ds_type in ds_types_results]
+
+    return ds_types_list
 
 
 def populate_datasets_info(data):
-    ds_info = ensembl_metadata_pb2.DatasetsInfo(
-        dataset_uuid = data['dataset_uuid'],
-        dataset_name = data['dataset_name'],
-        dataset_version = data['dataset_version'],
-        dataset_label = data['dataset_label'],
-        version = data['version']
-    )
+    ds_info = {
+        'dataset_uuid': data['dataset_uuid'],
+        'dataset_name': data['dataset_name'],
+        'dataset_version': data['dataset_version'],
+        'dataset_label': data['dataset_label'],
+        'version': data['version']
+    }
     return ds_info
 
 
@@ -392,59 +400,43 @@ def get_datasets_by_uuid(metadata_db, genome_uuid):
     genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
     dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
     ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
-    assembly = db.Table('assembly', md, autoload_with=metadata_db)
 
-    # genome_select = db.select(
-    #         genome.c.genome_uuid,
-    #         dataset.c.dataset_uuid,
-    #         # The label here should be identical to what's in proto file
-    #         dataset_type.c.name.label('data_set_type'),
-    #         dataset.c.name.label('dataset_name'),
-    #         dataset.c.version.label('dataset_version'),
-    #         dataset.c.label.label('dataset_label'),
-    #         ensembl_release.c.version
-    #     ).select_from(genome).filter_by(
-    #         genome_uuid=genome_uuid
-    #     ).join(genome_dataset).join(dataset).join(dataset_type).join(ensembl_release).join(assembly)#.limit(3)#.filter_by(ucsc_name="hg38")
+    genome_select = db.select(
+        genome.c.genome_uuid,
+        dataset.c.dataset_uuid,
+        # The label here should be identical to what's in proto file
+        dataset_type.c.name.label('data_set_type'),
+        dataset.c.name.label('dataset_name'),
+        dataset.c.version.label('dataset_version'),
+        dataset.c.label.label('dataset_label'),
+        ensembl_release.c.version
+        ).select_from(
+            genome
+        ).join(genome_dataset).join(dataset) \
+        .join(dataset_type).join(ensembl_release) \
+        .where(ensembl_release.c.version == "2020") \
+        .where(ensembl_release.c.is_current == 1) \
+        .distinct()
 
-    genome_select = db.select([
-            genome.c.genome_uuid,
-            dataset.c.dataset_uuid,
-            # The label here should be identical to what's in proto file
-            dataset_type.c.name.label('data_set_type'),
-            dataset.c.name.label('dataset_name'),
-            dataset.c.version.label('dataset_version'),
-            dataset.c.label.label('dataset_label'),
-            ensembl_release.c.version
-        ]).select_from(genome).select_from(dataset).select_from(dataset_type).select_from(ensembl_release).select_from(assembly) \
-            .where(genome.c.genome_uuid == genome_uuid) \
-            .where(dataset.c.dataset_id == genome_dataset.c.dataset_id) \
-            .where(ensembl_release.c.release_id == genome_dataset.c.release_id) \
-            .where(genome.c.genome_id == genome_dataset.c.genome_id) \
-            .where(assembly.c.ucsc_name == 'hg38').limit(3)
-
+    # print("SQL QUERY ===> ", str(genome_select))
 
     datasets_results = session.execute(genome_select).all()
-    print("len of datasets_results ===> ", len(datasets_results)) 
+    # print("len of datasets_results ===> ", len(datasets_results)) 
 
     if len(datasets_results) > 0:
-        all_data_set_types = get_data_set_types()
-        assembly_datasets_info_list = []
+        all_data_set_types = get_data_set_types(metadata_db)
+        ds_obj = {}
         for result in datasets_results:
-            if result['data_set_type'] in all_data_set_types:
+            ds_type_result = result['data_set_type']
+            if ds_type_result in all_data_set_types:
                 # Populate the objects bottom up
                 datasets_info_list = populate_datasets_info(result)
-            else:
-                return create_datasets()
-
-            if result['data_set_type'] == 'assembly':
-                assembly_datasets_info_list.append(datasets_info_list)
-                        
-
-        # Populate DatasetsObject
-        ds_obj = ensembl_metadata_pb2.DatasetsObject(
-            assembly_dataset=assembly_datasets_info_list
-        )
+                # Populate datasets Struct
+                try:
+                    ds_obj[ds_type_result].append(datasets_info_list)
+                except KeyError:
+                    ds_obj[ds_type_result] = []
+                    ds_obj[ds_type_result].append(datasets_info_list)
             
         return create_datasets({
             'genome_uuid': genome_uuid,
@@ -453,6 +445,7 @@ def get_datasets_by_uuid(metadata_db, genome_uuid):
     
     else:
         return create_datasets()
+
 
 def genome_sequence_iterator(metadata_db, genome_uuid, chromosomal_only):
     if genome_uuid is None:
@@ -685,16 +678,29 @@ def create_release(data=None):
 
 
 def create_datasets(data=None):
-    print("@@@@ data --> ", data)
+
     if data is None:
         return ensembl_metadata_pb2.Datasets()
 
     ds = ensembl_metadata_pb2.Datasets(
-        genome_uuid=data['genome_uuid']
+        genome_uuid=data['genome_uuid'],
     )
-    # https://developers.google.com/protocol-buffers/docs/reference/python-generated#undefined
-    # https://developers.google.com/protocol-buffers/docs/reference/python-generated#embedded_message
-    ds.datasets['assembly'].CopyFrom(data['datasets'])
+
+    ds.datasets.update(data['datasets'])
+    # ds.datasets['person'] = { 
+    #     'fname':'foo', 
+    #     'lname':'bar',  
+    #     'addresses': [
+    #         {
+    #             'number': 12, 
+    #             'post_code': 'ABC'
+    #         },
+    #         {
+    #             'number': 33, 
+    #             'post_code': 'XYZ'
+    #         } 
+    #     ]
+    # }
 
     return ds
 
