@@ -683,32 +683,15 @@ def create_release(data=None):
 
 
 def create_datasets(data=None):
-
     if data is None:
         return ensembl_metadata_pb2.Datasets()
 
     ds = ensembl_metadata_pb2.Datasets(
         genome_uuid=data['genome_uuid'],
     )
-
     ds.datasets.update(data['datasets'])
-    # ds.datasets['person'] = { 
-    #     'fname':'foo', 
-    #     'lname':'bar',  
-    #     'addresses': [
-    #         {
-    #             'number': 12, 
-    #             'post_code': 'ABC'
-    #         },
-    #         {
-    #             'number': 33, 
-    #             'post_code': 'XYZ'
-    #         } 
-    #     ]
-    # }
 
     return ds
-
 
 
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):
