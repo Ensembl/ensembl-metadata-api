@@ -52,7 +52,7 @@ service EnsemblMetadata {
   rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
 
   // Retrieve a list of dataset_ids associated with a genome UUID.
-  rpc GetDatasetsByUUID(GenomeUUIDRequest) returns (Datasets) {}
+  rpc GetDatasetsByUUID(DatasetsRequest) returns (Datasets) {}
 }
 
 /*
@@ -166,6 +166,16 @@ message GenomeSequence {
 }
 
 /*
+Datasets list associated to the provided genome_uuid 
+ */
+ message Datasets {
+  string genome_uuid = 1;
+  // https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#struct
+  // https://stackoverflow.com/a/60880593/4488332
+  google.protobuf.Struct datasets = 2;
+}
+
+/*
 The messages below are used to request data - required-ness is not enforced
 by protocol buffers, but in practice some fields are mandatory in order to
 receive a non-empty response, so this is indicated with a comment.
@@ -218,11 +228,9 @@ message GenomeSequenceRequest {
 }
 
 /*
-Datasets list associated to the provided genome_uuid 
+Datasets filter.
  */
-message Datasets {
+message DatasetsRequest {
   string genome_uuid = 1;     // Mandatory
-  // https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#struct
-  // https://stackoverflow.com/a/60880593/4488332
-  google.protobuf.Struct datasets = 2;
+  uint32 release_version = 2; // Optional
 }

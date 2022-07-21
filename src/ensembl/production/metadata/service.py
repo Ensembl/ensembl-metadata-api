@@ -388,7 +388,7 @@ def populate_datasets_info(data):
     return ds_info
 
 
-def get_datasets_by_uuid(metadata_db, genome_uuid):
+def get_datasets_by_uuid(metadata_db, genome_uuid, release_version):
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
     session = Session(metadata_db, future=True)
@@ -414,9 +414,14 @@ def get_datasets_by_uuid(metadata_db, genome_uuid):
             genome
         ).join(genome_dataset).join(dataset) \
         .join(dataset_type).join(ensembl_release) \
-        .where(ensembl_release.c.version == "2020") \
-        .where(ensembl_release.c.is_current == 1) \
+        .where(genome_dataset.c.is_current == 1) \
         .distinct()
+
+    if release_version > 0:
+        genome_select = genome_select.filter_by(version=release_version)
+    else:
+        # if the release is not specified, we return the latest by default
+        genome_select = genome_select.filter_by(is_current=1)
 
     # print("SQL QUERY ===> ", str(genome_select))
 
@@ -760,7 +765,8 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetDatasetsByUUID(self, request, context):
         return get_datasets_by_uuid(self.db,
-                                    request.genome_uuid
+                                    request.genome_uuid,
+                                    request.release_version
                                     )
 
 
