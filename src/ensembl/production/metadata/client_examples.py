@@ -152,7 +152,7 @@ def get_top_level_statistics(stub):
 
 
 def get_datasets_list_by_uuid(stub):
-    request1 = DatasetsRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3', release_version='2020')
+    request1 = DatasetsRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3', release_version=2020)
     datasets = stub.GetDatasetsByUUID(request1)
     print(datasets)
 

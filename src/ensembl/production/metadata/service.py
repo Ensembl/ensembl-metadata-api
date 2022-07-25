@@ -4,10 +4,10 @@ import logging
 import sqlalchemy as db
 from sqlalchemy.orm import Session
 
-from ensembl.production.metadata import ensembl_metadata_pb2_grpc
-from ensembl.production.metadata import ensembl_metadata_pb2
+import ensembl_metadata_pb2_grpc
+import ensembl_metadata_pb2
 
-from ensembl.production.metadata.config import MetadataConfig as cfg
+from config import MetadataConfig as cfg
 
 
 def load_database(uri=None):
@@ -364,19 +364,6 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
         return create_genome()
 
 
-def get_data_set_types(metadata_db):
-    # This is sqlalchemy's metadata, not Ensembl's!
-    md = db.MetaData()
-    session = Session(metadata_db, future=True)
-    dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
-
-    ds_types = db.select(dataset_type.c.name.label('data_set_type')).distinct()
-    ds_types_results = session.execute(ds_types).all()
-    ds_types_list = [ds_type['data_set_type'] for ds_type in ds_types_results]
-
-    return ds_types_list
-
-
 def populate_datasets_info(data):
     ds_info = {
         'dataset_uuid': data['dataset_uuid'],
@@ -395,7 +382,6 @@ def get_datasets_by_uuid(metadata_db, genome_uuid, release_version):
 
     # Reflect existing tables, letting sqlalchemy load linked tables where possible.
     genome = db.Table('genome', md, autoload_with=metadata_db)
-    # genome = md.tables['genome'] ?
     dataset = db.Table('dataset', md, autoload_with=metadata_db)
     genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
     dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
@@ -430,19 +416,16 @@ def get_datasets_by_uuid(metadata_db, genome_uuid, release_version):
     # print("len of datasets_results ===> ", len(datasets_results)) 
 
     if len(datasets_results) > 0:
-        all_data_set_types = get_data_set_types(metadata_db)
         ds_obj = {}
         for result in datasets_results:
             ds_type_result = result['data_set_type']
-            if ds_type_result in all_data_set_types:
-                # Populate the objects bottom up
-                datasets_info_list = populate_datasets_info(result)
-                # Populate datasets Struct
-                try:
-                    ds_obj[ds_type_result].append(datasets_info_list)
-                except KeyError:
-                    ds_obj[ds_type_result] = []
-                    ds_obj[ds_type_result].append(datasets_info_list)
+            # Populate the objects bottom up
+            dataset_dict = populate_datasets_info(result)
+            # Populate datasets Struct
+            try:
+                ds_obj[ds_type_result].append(dataset_dict)
+            except KeyError:
+                ds_obj[ds_type_result] = [dataset_dict]
             
         return create_datasets({
             'genome_uuid': genome_uuid,
