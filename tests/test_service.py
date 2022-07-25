@@ -335,3 +335,10 @@ class TestClass:
                                   'value': '2379995981'
                               }]
                           }
+
+
+    def test_get_dataset_by_genome_id_no_results(self):
+        output = json_format.MessageToJson(
+            service.get_dataset_by_genome_id(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883', 'blah blah blah'))
+        output = json.loads(output)
+        assert output == {}

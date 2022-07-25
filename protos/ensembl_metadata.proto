@@ -141,7 +141,7 @@ message Release {
 }
 
 /*
-Wrapper for a list of DatasetInfos
+Wrapper for a list of DatasetInfo objects
 */
 message DatasetInfos {
   string genome_uuid = 1;

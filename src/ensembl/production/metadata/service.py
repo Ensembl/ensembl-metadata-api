@@ -634,10 +634,14 @@ def create_release(data=None):
 
 
 def create_dataset_info(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
     return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(**dict(data))
 
 
 def create_dataset_infos(genome_uuid, requested_dataset_type, data=None):
+    if data is None or data == []:
+        return ensembl_metadata_pb2.DatasetInfos()
     dataset_infos = [create_dataset_info(result) for result in data]
     return ensembl_metadata_pb2.DatasetInfos(
         genome_uuid=genome_uuid,
