@@ -4,7 +4,7 @@ import logging
 from ensembl_metadata_pb2 import \
     GenomeUUIDRequest, GenomeNameRequest, \
     ReleaseRequest, GenomeSequenceRequest, AssemblyIDRequest, \
-    OrganismIDRequest
+    OrganismIDRequest, GenomeDatatypeRequest
 
 import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
@@ -149,6 +149,12 @@ def get_top_level_statistics(stub):
     print(releases1)
 
 
+def get_dataset_infos(stub):
+    request1 = GenomeDatatypeRequest(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", dataset_type="geneset")
+    datasets1 = stub.GetDatasetInformation(request1)
+    print(datasets1.dataset_infos)
+
+
 def run():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
@@ -172,6 +178,8 @@ def run():
         list_releases(stub)
         print("-------------- List Releases for Genome --------------")
         list_releases_by_uuid(stub)
+        print("-------------- List Dataset information for Genome --------------")
+        get_dataset_infos(stub)
 
 
 if __name__ == '__main__':
