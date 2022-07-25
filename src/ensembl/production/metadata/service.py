@@ -414,6 +414,7 @@ def get_datasets_by_uuid(metadata_db, genome_uuid, release_version):
             genome
         ).join(genome_dataset).join(dataset) \
         .join(dataset_type).join(ensembl_release) \
+        .where(genome.c.genome_uuid == genome_uuid) \
         .where(genome_dataset.c.is_current == 1) \
         .distinct()
 
