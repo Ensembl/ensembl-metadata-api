@@ -149,7 +149,7 @@ def get_top_level_statistics(stub):
     print(releases1)
 
 
-def get_dataset_infos(stub):
+def get_dataset_infos_by_dataset_type(stub):
     request1 = GenomeDatatypeRequest(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", dataset_type="geneset")
     datasets1 = stub.GetDatasetInformation(request1)
     print(datasets1.dataset_infos)
@@ -179,7 +179,7 @@ def run():
         print("-------------- List Releases for Genome --------------")
         list_releases_by_uuid(stub)
         print("-------------- List Dataset information for Genome --------------")
-        get_dataset_infos(stub)
+        get_dataset_infos_by_dataset_type(stub)
 
 
 if __name__ == '__main__':
