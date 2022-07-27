@@ -4,10 +4,10 @@ import logging
 import sqlalchemy as db
 from sqlalchemy.orm import Session
 
-import ensembl_metadata_pb2_grpc
-import ensembl_metadata_pb2
+from ensembl.production.metadata import ensembl_metadata_pb2_grpc
+from ensembl.production.metadata import ensembl_metadata_pb2
 
-from config import MetadataConfig as cfg
+from ensembl.production.metadata.config import MetadataConfig as cfg
 
 
 def load_database(uri=None):
@@ -365,13 +365,13 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
 
 
 def populate_datasets_info(data):
-    ds_info = {
-        'dataset_uuid': data['dataset_uuid'],
-        'dataset_name': data['dataset_name'],
-        'dataset_version': data['dataset_version'],
-        'dataset_label': data['dataset_label'],
-        'version': data['version']
-    }
+    ds_info = ensembl_metadata_pb2.DatasetsInfo(
+        dataset_uuid = data['dataset_uuid'],
+        dataset_name = data['dataset_name'],
+        dataset_version = data['dataset_version'],
+        dataset_label = data['dataset_label'],
+        version = data['version']
+    )
     return ds_info
 
 
@@ -387,7 +387,7 @@ def get_datasets_by_uuid(metadata_db, genome_uuid, release_version):
     dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
     ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
 
-    genome_select = db.select(
+    datasets_select = db.select(
         genome.c.genome_uuid,
         dataset.c.dataset_uuid,
         # The label here should be identical to what's in proto file
@@ -405,33 +405,43 @@ def get_datasets_by_uuid(metadata_db, genome_uuid, release_version):
         .distinct()
 
     if release_version > 0:
-        genome_select = genome_select.filter_by(version=release_version)
+        datasets_select = datasets_select.filter_by(version=release_version)
+        # TODO: Marc comment: Might be interesting to do a <=, because I am still not sure whether 
+        # we'll replicate version attachment for everything every time we do a new release.
     else:
         # if the release is not specified, we return the latest by default
-        genome_select = genome_select.filter_by(is_current=1)
+        datasets_select = datasets_select.filter_by(is_current=1)
 
-    # print("SQL QUERY ===> ", str(genome_select))
-
-    datasets_results = session.execute(genome_select).all()
+    # print("SQL QUERY ===> ", str(datasets_select))
+    datasets_results = session.execute(datasets_select).all()
     # print("len of datasets_results ===> ", len(datasets_results)) 
 
     if len(datasets_results) > 0:
-        ds_obj = {}
+        # ds_obj_dict where all datasets are stored as:
+        # { dataset_type_1: [datasets_dt1_1, datasets_dt1_2], dataset_type_2: [datasets_dt2_1] }
+        ds_obj_dict = {}
         for result in datasets_results:
-            ds_type_result = result['data_set_type']
+            dataset_type = result['data_set_type']
             # Populate the objects bottom up
-            dataset_dict = populate_datasets_info(result)
-            # Populate datasets Struct
-            try:
-                ds_obj[ds_type_result].append(dataset_dict)
-            except KeyError:
-                ds_obj[ds_type_result] = [dataset_dict]
-            
+            datasets_info = populate_datasets_info(result)
+            # Construct the datasets dictionary
+            if dataset_type in ds_obj_dict:
+                ds_obj_dict[dataset_type].append(datasets_info)
+            else:
+                ds_obj_dict[dataset_type] = [datasets_info]
+
+        dataset_object_dict = {}
+        # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetsObject
+        for dataset_type_key in ds_obj_dict:
+            dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetsObject(
+                datasets_list=ds_obj_dict[dataset_type_key]
+            )
+                        
         return create_datasets({
             'genome_uuid': genome_uuid,
-            'datasets': ds_obj
+            'datasets': dataset_object_dict
         })
-    
+
     else:
         return create_datasets()
 
@@ -672,10 +682,10 @@ def create_datasets(data=None):
 
     ds = ensembl_metadata_pb2.Datasets(
         genome_uuid=data['genome_uuid'],
+        datasets=data['datasets']
     )
-    ds.datasets.update(data['datasets'])
-
     return ds
+
 
 
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):

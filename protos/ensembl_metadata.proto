@@ -13,9 +13,6 @@ syntax = "proto3";
 
 package ensembl_metadata;
 
-import "google/protobuf/struct.proto";
-
-
 // Metadata for the genomes in Ensembl.
 service EnsemblMetadata {
   // Retrieve genome by its UUID.
@@ -168,12 +165,28 @@ message GenomeSequence {
 /*
 Datasets list associated to the provided genome_uuid 
  */
- message Datasets {
+// Level 0
+message Datasets {
   string genome_uuid = 1;
-  // https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#struct
-  // https://stackoverflow.com/a/60880593/4488332
-  google.protobuf.Struct datasets = 2;
+  map<string, DatasetsObject> datasets = 2;
 }
+
+// Level 1
+message DatasetsObject{
+  // https://stackoverflow.com/q/56401376/4488332
+  // https://developers.google.com/protocol-buffers/docs/reference/python-generated#map-fields
+  repeated DatasetsInfo datasets_list = 1;
+}
+
+// Level 2
+message DatasetsInfo {
+  string dataset_uuid = 1;
+  string dataset_name = 2;
+  string dataset_version = 3;
+  string dataset_label = 4;
+  int32 version = 5;
+}
+
 
 /*
 The messages below are used to request data - required-ness is not enforced
