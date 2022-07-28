@@ -70,8 +70,8 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
                 response_deserializer=ensembl__metadata__pb2.GenomeSequence.FromString,
                 )
-        self.GetDatasetsByUUID = channel.unary_unary(
-                '/ensembl_metadata.EnsemblMetadata/GetDatasetsByUUID',
+        self.GetDatasetsListByUUID = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
                 request_serializer=ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
                 response_deserializer=ensembl__metadata__pb2.Datasets.FromString,
                 )
@@ -158,7 +158,7 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetDatasetsByUUID(self, request, context):
+    def GetDatasetsListByUUID(self, request, context):
         """Retrieve a list of dataset_ids associated with a genome UUID.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -223,8 +223,8 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     request_deserializer=ensembl__metadata__pb2.GenomeSequenceRequest.FromString,
                     response_serializer=ensembl__metadata__pb2.GenomeSequence.SerializeToString,
             ),
-            'GetDatasetsByUUID': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetDatasetsByUUID,
+            'GetDatasetsListByUUID': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetDatasetsListByUUID,
                     request_deserializer=ensembl__metadata__pb2.DatasetsRequest.FromString,
                     response_serializer=ensembl__metadata__pb2.Datasets.SerializeToString,
             ),
@@ -427,7 +427,7 @@ class EnsemblMetadata(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def GetDatasetsByUUID(request,
+    def GetDatasetsListByUUID(request,
             target,
             options=(),
             channel_credentials=None,
@@ -437,7 +437,7 @@ class EnsemblMetadata(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetDatasetsByUUID',
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
             ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
             ensembl__metadata__pb2.Datasets.FromString,
             options, channel_credentials,

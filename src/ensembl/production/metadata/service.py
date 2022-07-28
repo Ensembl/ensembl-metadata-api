@@ -365,17 +365,16 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
 
 
 def populate_datasets_info(data):
-    ds_info = ensembl_metadata_pb2.DatasetsInfo(
+    return ensembl_metadata_pb2.DatasetsInfo(
         dataset_uuid = data['dataset_uuid'],
         dataset_name = data['dataset_name'],
         dataset_version = data['dataset_version'],
         dataset_label = data['dataset_label'],
         version = data['version']
     )
-    return ds_info
 
 
-def get_datasets_by_uuid(metadata_db, genome_uuid, release_version):
+def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version):
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
     session = Session(metadata_db, future=True)
@@ -680,11 +679,10 @@ def create_datasets(data=None):
     if data is None:
         return ensembl_metadata_pb2.Datasets()
 
-    ds = ensembl_metadata_pb2.Datasets(
+    return ensembl_metadata_pb2.Datasets(
         genome_uuid=data['genome_uuid'],
         datasets=data['datasets']
     )
-    return ds
 
 
 
@@ -740,8 +738,8 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
                                         request.chromosomal_only
                                         )
 
-    def GetDatasetsByUUID(self, request, context):
-        return get_datasets_by_uuid(self.db,
+    def GetDatasetsListByUUID(self, request, context):
+        return get_datasets_list_by_uuid(self.db,
                                     request.genome_uuid,
                                     request.release_version
                                     )

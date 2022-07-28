@@ -49,7 +49,7 @@ service EnsemblMetadata {
   rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
 
   // Retrieve a list of dataset_ids associated with a genome UUID.
-  rpc GetDatasetsByUUID(DatasetsRequest) returns (Datasets) {}
+  rpc GetDatasetsListByUUID(DatasetsRequest) returns (Datasets) {}
 }
 
 /*
