@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from ensembl.production.metadata import ensembl_metadata_pb2 as ensembl__metadata__pb2
+import ensembl_metadata_pb2 as ensembl__metadata__pb2
 
 
 class EnsemblMetadataStub(object):
@@ -74,6 +74,7 @@ class EnsemblMetadataStub(object):
                 '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
                 request_serializer=ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
                 response_deserializer=ensembl__metadata__pb2.Datasets.FromString,
+                )
         self.GetDatasetInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetDatasetInformation',
                 request_serializer=ensembl__metadata__pb2.GenomeDatatypeRequest.SerializeToString,
@@ -164,6 +165,10 @@ class EnsemblMetadataServicer(object):
 
     def GetDatasetsListByUUID(self, request, context):
         """Retrieve a list of dataset_ids associated with a genome UUID.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
 
     def GetDatasetInformation(self, request, context):
         """Retrieve dataset info by genome uuid and dataset_type
@@ -234,6 +239,7 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetDatasetsListByUUID,
                     request_deserializer=ensembl__metadata__pb2.DatasetsRequest.FromString,
                     response_serializer=ensembl__metadata__pb2.Datasets.SerializeToString,
+            ),
             'GetDatasetInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetDatasetInformation,
                     request_deserializer=ensembl__metadata__pb2.GenomeDatatypeRequest.FromString,
@@ -434,6 +440,23 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeSequence',
             ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
             ensembl__metadata__pb2.GenomeSequence.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetDatasetsListByUUID(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
+            ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
+            ensembl__metadata__pb2.Datasets.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
