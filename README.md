@@ -91,6 +91,20 @@ coverage run -m pytest
 coverage report -m
 ```
 
+#### Explore test DB content
+
+As for now, some of the test DB sqlite content is different from what's in MySQL metadata DB (e.g. release `version` in `ensembl_release`)
+
+> `test.db` created when running tests is deleted once tests are executed.
+
+To take a look at the test data you can create a temporary `sampledb.db` importing `sampledb.sql` content using the command:
+
+```
+cat sampledb.sql | sqlite3 sampledb.db
+```
+
+You can then open `sampledb.db` using [DB Browser for SQLite](https://sqlitebrowser.org/dl/).
+
 ### Automatic Formatting
 ```
 cd ensembl-metadata-service
