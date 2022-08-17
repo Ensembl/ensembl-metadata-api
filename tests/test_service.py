@@ -429,3 +429,27 @@ class TestClass:
         output = json.loads(output)
         expected_output = {}
         assert output == expected_output
+
+
+    def test_get_dataset_by_genome_id(self):
+        output = json_format.MessageToJson(service.get_dataset_by_genome_id(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883', 'assembly'))
+        output = json.loads(output)
+        assert output == {'genomeUuid': '3c4cec7f-fb69-11eb-8dac-005056b32883', 'datasetType': 'assembly',
+                          'datasetInfos': [
+                              {
+                                  'datasetUuid': '40a98446-fb69-11eb-8dac-005056b32883',
+                                  'datasetName': 'assembly',
+                                  'name': 'ungapped_genome',
+                                  'type': 'length_bp',
+                                  'datasetLabel': 'GCA_009873245.2',
+                                  'version': 22,
+                                  'value': '2379995981'
+                              }]
+                          }
+
+
+    def test_get_dataset_by_genome_id_no_results(self):
+        output = json_format.MessageToJson(
+            service.get_dataset_by_genome_id(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883', 'blah blah blah'))
+        output = json.loads(output)
+        assert output == {}
