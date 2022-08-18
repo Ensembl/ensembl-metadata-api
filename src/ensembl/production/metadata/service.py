@@ -364,8 +364,8 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
         return create_genome()
 
 
-def populate_datasets_info(data):
-    return ensembl_metadata_pb2.DatasetsInfo(
+def populate_dataset_info(data):
+    return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
         dataset_uuid = data['dataset_uuid'],
         dataset_name = data['dataset_name'],
         dataset_version = data['dataset_version'],
@@ -422,7 +422,7 @@ def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version):
         for result in datasets_results:
             dataset_type = result['data_set_type']
             # Populate the objects bottom up
-            datasets_info = populate_datasets_info(result)
+            datasets_info = populate_dataset_info(result)
             # Construct the datasets dictionary
             if dataset_type in ds_obj_dict:
                 ds_obj_dict[dataset_type].append(datasets_info)
@@ -430,10 +430,10 @@ def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version):
                 ds_obj_dict[dataset_type] = [datasets_info]
 
         dataset_object_dict = {}
-        # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetsObject
+        # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetInfos
         for dataset_type_key in ds_obj_dict:
-            dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetsObject(
-                datasets_list=ds_obj_dict[dataset_type_key]
+            dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
+                dataset_infos=ds_obj_dict[dataset_type_key]
             )
                         
         return create_datasets({
