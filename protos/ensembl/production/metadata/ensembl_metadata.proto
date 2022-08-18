@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package ensembl_metadata;
 
+// IMPORTANT: the directory structure of the protos directory should mirror the structure of the src directory to avoid
+// Python import errors.
+
 // Metadata for the genomes in Ensembl.
 service EnsemblMetadata {
   // Retrieve genome by its UUID.
