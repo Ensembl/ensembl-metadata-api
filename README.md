@@ -62,13 +62,13 @@ pip install -r requirements-dev.txt
 To generate client and server files
 (Remember to run these after adding a new method in ensembl_metadata.proto)
 ```
-python3 -m grpc_tools.protoc -Iprotos --python_out=src/ensembl/production/metadata --grpc_python_out=src/ensembl/production/metadata protos/ensembl_metadata.proto
+python3 -m grpc_tools.protoc -Iprotos --python_out=src --grpc_python_out=src protos/ensembl/production/metadata/ensembl_metadata.proto
 ```
 
 Start the server script
 
 ```
-python3 src/ensembl/production/metadata/service.py
+PYTHONPATH='src' python3 src/ensembl/production/metadata/service.py
 ```
 
 Start the client script

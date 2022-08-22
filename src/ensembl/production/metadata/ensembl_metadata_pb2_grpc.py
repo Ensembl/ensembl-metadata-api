@@ -6,7 +6,10 @@ from ensembl.production.metadata import ensembl_metadata_pb2 as ensembl_dot_prod
 
 
 class EnsemblMetadataStub(object):
-    """Metadata for the genomes in Ensembl.
+    """IMPORTANT: the directory structure of the protos directory should mirror the structure of the src directory to avoid
+    Python import errors.
+
+    Metadata for the genomes in Ensembl.
     """
 
     def __init__(self, channel):
@@ -72,8 +75,8 @@ class EnsemblMetadataStub(object):
                 )
         self.GetDatasetsListByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
-                request_serializer=ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
-                response_deserializer=ensembl__metadata__pb2.Datasets.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Datasets.FromString,
                 )
         self.GetDatasetInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetDatasetInformation',
@@ -83,7 +86,10 @@ class EnsemblMetadataStub(object):
 
 
 class EnsemblMetadataServicer(object):
-    """Metadata for the genomes in Ensembl.
+    """IMPORTANT: the directory structure of the protos directory should mirror the structure of the src directory to avoid
+    Python import errors.
+
+    Metadata for the genomes in Ensembl.
     """
 
     def GetGenomeByUUID(self, request, context):
@@ -237,8 +243,8 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
             ),
             'GetDatasetsListByUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetDatasetsListByUUID,
-                    request_deserializer=ensembl__metadata__pb2.DatasetsRequest.FromString,
-                    response_serializer=ensembl__metadata__pb2.Datasets.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetsRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Datasets.SerializeToString,
             ),
             'GetDatasetInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetDatasetInformation,
@@ -253,7 +259,10 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class EnsemblMetadata(object):
-    """Metadata for the genomes in Ensembl.
+    """IMPORTANT: the directory structure of the protos directory should mirror the structure of the src directory to avoid
+    Python import errors.
+
+    Metadata for the genomes in Ensembl.
     """
 
     @staticmethod
@@ -455,8 +464,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
-            ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
-            ensembl__metadata__pb2.Datasets.FromString,
+            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Datasets.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
