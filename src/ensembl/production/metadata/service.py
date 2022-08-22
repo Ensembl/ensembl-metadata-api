@@ -370,7 +370,7 @@ def populate_dataset_info(data):
         dataset_name = data['dataset_name'],
         dataset_version = data['dataset_version'],
         dataset_label = data['dataset_label'],
-        version = data['version']
+        version = int(data['version'])
     )
 
 

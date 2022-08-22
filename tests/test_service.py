@@ -326,8 +326,40 @@ class TestClass:
         expected_output = {
             "genomeUuid": "3c51ff24-fb69-11eb-8dac-005056b32883",
             "datasets": {
+                "assembly": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "40aa7070-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "assembly",
+                    "datasetLabel": "GCA_902859565.1",
+                    "version": 103
+                    }
+                ]
+                },
+                "checksum_xrefs": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "56cc017f-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "uniparc_checksum",
+                    "datasetVersion": "2021-05-01",
+                    "datasetLabel": "UniParc",
+                    "version": 103
+                    }
+                ]
+                },
+                "go_terms": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "56ce6e0b-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "interpro2go",
+                    "datasetVersion": "2021-04-10",
+                    "datasetLabel": "InterPro2GO mapping",
+                    "version": 103
+                    }
+                ]
+                },
                 "repeat_features": {
-                "datasetsList": [
+                "datasetInfos": [
                     {
                     "datasetUuid": "56d08e6e-fb69-11eb-8dac-005056b32883",
                     "datasetName": "dust",
@@ -379,40 +411,8 @@ class TestClass:
                     }
                 ]
                 },
-                "checksum_xrefs": {
-                "datasetsList": [
-                    {
-                    "datasetUuid": "56cc017f-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "uniparc_checksum",
-                    "datasetVersion": "2021-05-01",
-                    "datasetLabel": "UniParc",
-                    "version": 103
-                    }
-                ]
-                },
-                "geneset": {
-                "datasetsList": [
-                    {
-                    "datasetUuid": "43ed89eb-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "gene_core",
-                    "datasetLabel": "2021-01-KAUST",
-                    "version": 103
-                    }
-                ]
-                },
-                "go_terms": {
-                "datasetsList": [
-                    {
-                    "datasetUuid": "56ce6e0b-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "interpro2go",
-                    "datasetVersion": "2021-04-10",
-                    "datasetLabel": "InterPro2GO mapping",
-                    "version": 103
-                    }
-                ]
-                },
                 "protein_features": {
-                "datasetsList": [
+                "datasetInfos": [
                     {
                     "datasetUuid": "56cf650f-fb69-11eb-8dac-005056b32883",
                     "datasetName": "interproscan",
@@ -428,12 +428,12 @@ class TestClass:
                     }
                 ]
                 },
-                "assembly": {
-                "datasetsList": [
+                "geneset": {
+                "datasetInfos": [
                     {
-                    "datasetUuid": "40aa7070-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "assembly",
-                    "datasetLabel": "GCA_902859565.1",
+                    "datasetUuid": "43ed89eb-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "gene_core",
+                    "datasetLabel": "2021-01-KAUST",
                     "version": 103
                     }
                 ]
