@@ -6,7 +6,10 @@ from ensembl.production.metadata import ensembl_metadata_pb2 as ensembl_dot_prod
 
 
 class EnsemblMetadataStub(object):
-    """Metadata for the genomes in Ensembl.
+    """IMPORTANT: the directory structure of the protos directory should mirror the structure of the src directory to avoid
+    Python import errors.
+
+    Metadata for the genomes in Ensembl.
     """
 
     def __init__(self, channel):
@@ -18,6 +21,11 @@ class EnsemblMetadataStub(object):
         self.GetGenomeByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeByUUID',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+                )
+        self.GetGenomesByKeyword = channel.unary_stream(
+                '/ensembl_metadata.EnsemblMetadata/GetGenomesByKeyword',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
                 )
         self.GetSpeciesInformation = channel.unary_unary(
@@ -78,11 +86,21 @@ class EnsemblMetadataStub(object):
 
 
 class EnsemblMetadataServicer(object):
-    """Metadata for the genomes in Ensembl.
+    """IMPORTANT: the directory structure of the protos directory should mirror the structure of the src directory to avoid
+    Python import errors.
+
+    Metadata for the genomes in Ensembl.
     """
 
     def GetGenomeByUUID(self, request, context):
         """Retrieve genome by its UUID.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetGenomesByKeyword(self, request, context):
+        """Retrieve genomes by keyword search
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -173,6 +191,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.SerializeToString,
             ),
+            'GetGenomesByKeyword': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetGenomesByKeyword,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.SerializeToString,
+            ),
             'GetSpeciesInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetSpeciesInformation,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
@@ -236,7 +259,10 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class EnsemblMetadata(object):
-    """Metadata for the genomes in Ensembl.
+    """IMPORTANT: the directory structure of the protos directory should mirror the structure of the src directory to avoid
+    Python import errors.
+
+    Metadata for the genomes in Ensembl.
     """
 
     @staticmethod
@@ -252,6 +278,23 @@ class EnsemblMetadata(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeByUUID',
             ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetGenomesByKeyword(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomesByKeyword',
+            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
