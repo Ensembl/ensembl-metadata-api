@@ -128,7 +128,7 @@ def get_assembly_information(metadata_db, assembly_id):
             assembly_sequence.c.sequence_location,
             assembly_sequence.c.sequence_checksum,
             assembly_sequence.c.ga4gh_identifier
-    ]).where(assembly.c.assembly_id == assembly_sequence.c.assembly_id)
+    ]).join(assembly_sequence).where(assembly.c.assembly_id == assembly_id)
 
     assembly_results = session.execute(assembly_info).all()
     assembly_results = dict(assembly_results[0])
@@ -138,6 +138,27 @@ def get_assembly_information(metadata_db, assembly_id):
         return create_assembly(assembly_results)
     else:
         return create_assembly()
+
+
+def get_genomes_from_assembly_accession_iterator(metadata_db, assembly_accession):
+    if assembly_accession is None:
+        return
+    sqlalchemy_md = db.MetaData()
+    session = Session(metadata_db, future=True)
+
+    genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
+    genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
+    release = sqlalchemy_md.tables['ensembl_release']
+    assembly = sqlalchemy_md.tables['assembly']
+    organism = sqlalchemy_md.tables['organism']
+
+    genome_select = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome).join(
+        genome_release).join(release).join(assembly).join(organism).where(
+        assembly.c.accession == assembly_accession)
+    genome_results = session.execute(genome_select).all()
+
+    for genome in genome_results:
+        yield create_genome(genome)
 
 
 def get_species_information(metadata_db, taxonomy_db, genome_uuid):
@@ -699,6 +720,9 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
     def GetAssemblyInformation(self, request, context):
         return get_assembly_information(self.db, request.assembly_id)
 
+    def GetGenomesByAssemblyAccessionID(self, request, context):
+        return get_genomes_from_assembly_accession_iterator(self.db, request.assembly_id)
+
     def GetSubSpeciesInformation(self, request, context):
         return get_sub_species_info(self.db, request.organism_id)
 
@@ -726,6 +750,10 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
                                   request.site_name,
                                   request.release_version
                                   )
+    
+    def GetGenomesByAssemblyAccessionID(self, request, context):
+        return get_genomes_from_assembly_accession_iterator(self.db,
+                                                            request.assembly_accession)
 
     def GetRelease(self, request, context):
         return release_iterator(self.db,

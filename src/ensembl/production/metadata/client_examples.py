@@ -4,7 +4,7 @@ import logging
 from ensembl_metadata_pb2 import \
     GenomeUUIDRequest, GenomeNameRequest, \
     ReleaseRequest, GenomeSequenceRequest, AssemblyIDRequest, \
-    OrganismIDRequest, GenomeDatatypeRequest, GenomeByKeywordRequest
+    OrganismIDRequest, GenomeDatatypeRequest, GenomeByKeywordRequest, AssemblyAccessionIDRequest
 
 import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
@@ -134,6 +134,19 @@ def get_assembly_information(stub):
     print(releases1)
 
 
+def get_genomes_by_assembly_accession(stub):
+    request1 = AssemblyAccessionIDRequest(assembly_accession="GCA_000001405.28")
+    genomes1 = stub.GetGenomesByAssemblyAccessionID(request1)
+    print('**** Genomes from assembly accession information ****')
+    for genome in genomes1:
+        print(genome)
+
+    request2 = AssemblyAccessionIDRequest(assembly_accession=None)
+    genomes2 = stub.GetGenomesByAssemblyAccessionID(request2)
+    print('**** Genomes from null assembly accession ****')
+    print(list(genomes2))
+
+
 def get_sub_species_info(stub):
     request1 = OrganismIDRequest(organism_id='3')
     releases1 = stub.GetSubSpeciesInformation(request1)
@@ -175,6 +188,8 @@ def run():
         get_species_information_by_uuid(stub)
         print("---------------Get Assembly Information-----------")
         get_assembly_information(stub)
+        print("---------------Get Genome Information from assembly accession-----------")
+        get_genomes_by_assembly_accession(stub)
         print("---------------Get Subspecies Information-----------")
         get_sub_species_info(stub)
         print("---------------Get Grouping Information-----------")
