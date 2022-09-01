@@ -15,9 +15,10 @@ CREATE TABLE `assembly` (
 `accession` TEXT NOT NULL,
 `level` TEXT NOT NULL,
 `name` TEXT NOT NULL,
+`tolid` TEXT DEFAULT NULL,
 PRIMARY KEY (`assembly_id`)
 );
-INSERT INTO `assembly` VALUES (2,NULL,'GCA_009873245.2','chromosome','mBalMus1.v2');
+INSERT INTO `assembly` VALUES (2,NULL,'GCA_009873245.2','chromosome','mBalMus1.v2',NULL),(254,NULL,'test accession','test level','test name',NULL);
 
 CREATE TABLE `assembly_sequence` (
 `assembly_sequence_id` INTEGER NOT NULL ,
@@ -98,7 +99,7 @@ PRIMARY KEY (`id`)
 
 CREATE TABLE `ensembl_release` (
 `release_id` INTEGER NOT NULL ,
-`version` INTEGER NOT NULL,
+`version` FLOAT NOT NULL,
 `release_date` date NOT NULL,
 `label` TEXT DEFAULT NULL,
 `is_current` tinyINTEGER NOT NULL,
@@ -116,6 +117,7 @@ CREATE TABLE `ensembl_site` (
 `uri` TEXT NOT NULL,
 PRIMARY KEY (`site_id`)
 );
+INSERT INTO `ensembl_site` VALUES (7,'vertebrates','Ensembl','https://ensembl.org/');
 
 CREATE TABLE `genome` (
 `genome_id` INTEGER NOT NULL ,
@@ -127,7 +129,7 @@ PRIMARY KEY (`genome_id`),
 FOREIGN KEY (`assembly_id`) REFERENCES `assembly` (`assembly_id`) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (`organism_id`) REFERENCES `organism` (`organism_id`) ON DELETE CASCADE ON UPDATE CASCADE
 );
-INSERT INTO `genome` VALUES (3578,'3c4cec7f-fb69-11eb-8dac-005056b32883',2,26,'2020-05-01 13:28:33.000000'),(3603,'3c51a0c8-fb69-11eb-8dac-005056b32883',27,63,'2020-05-14 18:24:12.000000'),(3609,'3c51a614-fb69-11eb-8dac-005056b32883',33,44,'2020-06-11 13:58:06.000000'),(3618,'3c51aa3e-fb69-11eb-8dac-005056b32883',41,50,'2020-06-11 14:27:57.000000'),(3619,'3c51aaaa-fb69-11eb-8dac-005056b32883',41,50,'2020-07-20 18:01:38.000000'),(3661,'3c51bc4d-fb69-11eb-8dac-005056b32883',82,241,'2020-07-08 10:13:19.000000'),(3750,'3c51ed39-fb69-11eb-8dac-005056b32883',171,48,'2020-11-10 15:13:32.000000'),(3751,'3c51ed88-fb69-11eb-8dac-005056b32883',172,43,'2020-11-11 10:16:03.000000'),(3767,'3c51f335-fb69-11eb-8dac-005056b32883',188,27,'2021-01-27 15:19:47.000000'),(3768,'3c51f383-fb69-11eb-8dac-005056b32883',189,47,'2021-01-29 14:19:56.000000'),(3769,'3c51f3d2-fb69-11eb-8dac-005056b32883',190,41,'2021-01-29 14:29:29.000000'),(3787,'3c51fa9a-fb69-11eb-8dac-005056b32883',208,195,'2021-03-04 08:29:38.000000'),(3793,'3c51fcc1-fb69-11eb-8dac-005056b32883',214,42,'2021-03-30 16:56:27.000000'),(3794,'3c51fd10-fb69-11eb-8dac-005056b32883',215,46,'2021-03-30 17:26:27.000000'),(3795,'3c51fd65-fb69-11eb-8dac-005056b32883',216,45,'2021-03-31 09:26:35.000000'),(3800,'3c51ff24-fb69-11eb-8dac-005056b32883',221,79,'2021-05-10 17:50:04.000000'),(3808,'3c520192-fb69-11eb-8dac-005056b32883',229,138,'2021-06-08 18:28:11.000000'),(3814,'3c52036e-fb69-11eb-8dac-005056b32883',235,139,'2021-06-08 19:37:40.000000'),(3833,'3c52097a-fb69-11eb-8dac-005056b32883',254,217,'2021-07-19 13:22:26.000000');
+INSERT INTO `genome` VALUES (3578,'3c4cec7f-fb69-11eb-8dac-005056b32883',2,26,'2020-05-01 13:28:33.000000'),(3603,'3c51a0c8-fb69-11eb-8dac-005056b32883',27,63,'2020-05-14 18:24:12.000000'),(3609,'3c51a614-fb69-11eb-8dac-005056b32883',33,44,'2020-06-11 13:58:06.000000'),(3618,'3c51aa3e-fb69-11eb-8dac-005056b32883',41,50,'2020-06-11 14:27:57.000000'),(3619,'3c51aaaa-fb69-11eb-8dac-005056b32883',41,50,'2020-07-20 18:01:38.000000'),(3661,'3c51bc4d-fb69-11eb-8dac-005056b32883',82,241,'2020-07-08 10:13:19.000000'),(3750,'3c51ed39-fb69-11eb-8dac-005056b32883',171,48,'2020-11-10 15:13:32.000000'),(3751,'3c51ed88-fb69-11eb-8dac-005056b32883',172,43,'2020-11-11 10:16:03.000000'),(3767,'3c51f335-fb69-11eb-8dac-005056b32883',188,27,'2021-01-27 15:19:47.000000'),(3768,'3c51f383-fb69-11eb-8dac-005056b32883',189,47,'2021-01-29 14:19:56.000000'),(3769,'3c51f3d2-fb69-11eb-8dac-005056b32883',190,41,'2021-01-29 14:29:29.000000'),(3787,'3c51fa9a-fb69-11eb-8dac-005056b32883',208,195,'2021-03-04 08:29:38.000000'),(3793,'3c51fcc1-fb69-11eb-8dac-005056b32883',214,42,'2021-03-30 16:56:27.000000'),(3794,'3c51fd10-fb69-11eb-8dac-005056b32883',215,46,'2021-03-30 17:26:27.000000'),(3795,'3c51fd65-fb69-11eb-8dac-005056b32883',216,45,'2021-03-31 09:26:35.000000'),(3800,'3c51ff24-fb69-11eb-8dac-005056b32883',221,79,'2021-05-10 17:50:04.000000'),(3808,'3c520192-fb69-11eb-8dac-005056b32883',229,138,'2021-06-08 18:28:11.000000'),(3814,'3c52036e-fb69-11eb-8dac-005056b32883',235,139,'2021-06-08 19:37:40.000000'),(3815,'b7fe2096-45e7-4554-9aa4-28cd0842f809',235,140,'2021-06-08 19:37:40.000000'),(3833,'3c52097a-fb69-11eb-8dac-005056b32883',254,217,'2021-07-19 13:22:26.000000');
 
 CREATE TABLE `genome_dataset` (
 `genome_dataset_id` INTEGER NOT NULL ,
@@ -151,7 +153,7 @@ PRIMARY KEY (`genome_release_id`),
 FOREIGN KEY (`genome_id`) REFERENCES `genome` (`genome_id`) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (`release_id`) REFERENCES `ensembl_release` (`release_id`)
 );
-INSERT INTO `genome_release` VALUES (1,3578,1,1),(2,3603,1,1),(3,3609,2,1),(4,3618,2,1),(5,3619,3,1),(6,3661,4,1),(7,3750,11,1),(8,3751,11,1),(9,3767,15,1),(10,3768,16,1),(11,3769,16,1),(12,3787,17,1),(13,3793,19,1),(14,3794,19,1),(15,3795,19,1),(16,3800,22,1),(17,3808,22,1),(18,3814,22,1),(19,3833,24,1),(20,3800,32,1);
+INSERT INTO `genome_release` VALUES (1,3578,1,1),(2,3603,1,1),(3,3609,2,1),(4,3618,2,1),(5,3619,3,1),(6,3661,4,1),(7,3750,11,1),(8,3751,11,1),(9,3767,15,1),(10,3768,16,1),(11,3769,16,1),(12,3787,17,1),(13,3793,19,1),(14,3794,19,1),(15,3795,19,1),(16,3800,22,1),(17,3808,22,1),(18,3814,23,1),(19,3833,24,1),(20,3800,32,1),(21,3815,33,1);
 
 CREATE TABLE `organism` (
 `organism_id` INTEGER NOT NULL ,
@@ -162,9 +164,48 @@ CREATE TABLE `organism` (
 `scientific_name` TEXT DEFAULT NULL,
 `url_name` TEXT NOT NULL,
 `ensembl_name` TEXT NOT NULL,
+`scientific_parlance_name` TEXT NOT NULL,
 PRIMARY KEY (`organism_id`)
 );
-INSERT INTO `organism` VALUES (26,9771,9771,'Balaenoptera musculus (Blue whale) - GCA_009873245.2',NULL,'Balaenoptera musculus','Balaenoptera_musculus_GCA_009873245.2','balaenoptera_musculus'),(27,9771,9771,'Balaenoptera musculus (Blue whale) - GCA_009873245.3',NULL,'Balaenoptera musculus','Balaenoptera_musculus_GCA_009873245.3','balaenoptera_musculus_gca009873245v3'),(41,9615,9615,'Canis lupus familiaris (Basenji) - GCA_004886185.1','Basenji','Canis lupus familiaris','Canis_lupus_familiaris_GCA_004886185.1','canis_lupus_gca004886185v1'),(42,9615,9615,'Canis lupus familiaris (Basenji) - GCA_004886185.2','Basenji','Canis lupus familiaris','Canis_lupus_familiaris_GCA_004886185.2','canis_lupus_gca004886185v2'),(43,9615,9615,'Canis lupus familiaris (Boxer) - GCA_000002285.4','Boxer','Canis lupus familiaris','Canis_lupus_familiaris_GCA_000002285.4','canis_lupus_gca000002285v4'),(44,9615,9615,'Canis lupus familiaris (German Shepherd) - GCA_008641055.1','German Shepherd','Canis lupus familiaris','Canis_lupus_familiaris_GCA_008641055.1','canis_lupus_familiarisgermanshepherd'),(45,9615,9615,'Canis lupus familiaris (German Shepherd) - GCA_008641055.3','German Shepherd','Canis lupus familiaris','Canis_lupus_familiaris_GCA_008641055.3','canis_lupus_gca008641055v3'),(46,9615,9615,'Canis lupus familiaris (German Shepherd) - GCA_011100685.1','German Shepherd','Canis lupus familiaris','Canis_lupus_familiaris_GCA_011100685.1','canis_lupus_gca011100685v1'),(47,9615,9615,'Canis lupus familiaris (Great Dane) - GCA_005444595.1','Great Dane','Canis lupus familiaris','Canis_lupus_familiaris_GCA_005444595.1','canis_lupus_gca005444595v1'),(48,9615,9615,'Canis lupus familiaris (Labrador retriever) - GCA_014441545.1','Labrador retriever','Canis lupus familiaris','Canis_lupus_familiaris_GCA_014441545.1','canis_lupus_gca014441545v1'),(50,9925,9925,'Capra hircus (Goat) - GCA_001704415.1',NULL,'Capra hircus','Capra_hircus_GCA_001704415.1','capra_hircus_sanclemente'),(63,252671,252671,'Clytia hemisphaerica (Z4C2) - GCA_902728285.1','Z4C2','Clytia hemisphaerica','Clytia_hemisphaerica_GCA_902728285.1','clytia_hemisphaerica_gca902728285'),(79,1010633,1010633,'Digitaria exilis (Fonio) - GCA_902859565.1','digitaria_exilis','Digitaria exilis','Digitaria_exilis','digitaria_exilis_gca902859565v1'),(138,113334,113334,'Melitaea cinxia (alternate haplotype) - GCA_905220555.1',NULL,'Melitaea cinxia','Melitaea_cinxia_GCA_905220555.1','melitaea_cinxia_gca905220555v1'),(139,113334,113334,'Melitaea cinxia (Glanville fritillary) - GCA_905220565.1',NULL,'Melitaea cinxia','Melitaea_cinxia_GCA_905220565.1','melitaea_cinxia_gca905220565v1'),(195,10116,10116,'Rattus norvegicus (BN/NHsdMcwi) - GCA_015227675.2','BN/NHsdMcwi','Rattus norvegicus','Rattus_norvegicus_GCA_015227675.2','rattus_norvegicus_gca015227675v2'),(217,9823,9823,'Sus scrofa (Pig) - GCA_000003025.6',NULL,'Sus scrofa','Sus_scrofa_GCA_000003025.6','sus_scrofa_gca000003025v6'),(241,507980,507980,'Tyto alba alba (Barn owl) - GCA_902150015.1',NULL,'Tyto alba alba','Tyto_alba_alba_GCA_902150015.1','tyto_alba_alba');
+INSERT INTO `organism`
+VALUES (26, 9771, 9771, 'Balaenoptera musculus (Blue whale) - GCA_009873245.2', NULL, 'Balaenoptera musculus',
+        'Balaenoptera_musculus_GCA_009873245.2', 'balaenoptera_musculus', 'Balaenoptera musculus'),
+       (27, 9771, 9771, 'Balaenoptera musculus (Blue whale) - GCA_009873245.3', NULL, 'Balaenoptera musculus',
+        'Balaenoptera_musculus_GCA_009873245.3', 'balaenoptera_musculus_gca009873245v3', 'Balaenoptera musculus'),
+       (41, 9615, 9615, 'Canis lupus familiaris (Basenji) - GCA_004886185.1', 'Basenji', 'Canis lupus familiaris',
+        'Canis_lupus_familiaris_GCA_004886185.1', 'canis_lupus_gca004886185v1', 'Canis lupus familiaris'),
+       (42, 9615, 9615, 'Canis lupus familiaris (Basenji) - GCA_004886185.2', 'Basenji', 'Canis lupus familiaris',
+        'Canis_lupus_familiaris_GCA_004886185.2', 'canis_lupus_gca004886185v2', 'Canis lupus familiaris'),
+       (43, 9615, 9615, 'Canis lupus familiaris (Boxer) - GCA_000002285.4', 'Boxer', 'Canis lupus familiaris',
+        'Canis_lupus_familiaris_GCA_000002285.4', 'canis_lupus_gca000002285v4', 'Canis lupus familiaris'),
+       (44, 9615, 9615, 'Canis lupus familiaris (German Shepherd) - GCA_008641055.1', 'German Shepherd',
+        'Canis lupus familiaris', 'Canis_lupus_familiaris_GCA_008641055.1', 'canis_lupus_familiarisgermanshepherd', 'German Shepherd'),
+       (45, 9615, 9615, 'Canis lupus familiaris (German Shepherd) - GCA_008641055.3', 'German Shepherd',
+        'Canis lupus familiaris', 'Canis_lupus_familiaris_GCA_008641055.3', 'canis_lupus_gca008641055v3', 'German Shepherd'),
+       (46, 9615, 9615, 'Canis lupus familiaris (German Shepherd) - GCA_011100685.1', 'German Shepherd',
+        'Canis lupus familiaris', 'Canis_lupus_familiaris_GCA_011100685.1', 'canis_lupus_gca011100685v1', 'German Shepherd'),
+       (47, 9615, 9615, 'Canis lupus familiaris (Great Dane) - GCA_005444595.1', 'Great Dane', 'Canis lupus familiaris',
+        'Canis_lupus_familiaris_GCA_005444595.1', 'canis_lupus_gca005444595v1', 'Canis lupus familiaris'),
+       (48, 9615, 9615, 'Canis lupus familiaris (Labrador retriever) - GCA_014441545.1', 'Labrador retriever',
+        'Canis lupus familiaris', 'Canis_lupus_familiaris_GCA_014441545.1', 'canis_lupus_gca014441545v1', 'Labrador retriever'),
+       (50, 9925, 9925, 'Capra hircus (Goat) - GCA_001704415.1', NULL, 'Capra hircus', 'Capra_hircus_GCA_001704415.1',
+        'capra_hircus_sanclemente', 'Capra hircus'),
+       (63, 252671, 252671, 'Clytia hemisphaerica (Z4C2) - GCA_902728285.1', 'Z4C2', 'Clytia hemisphaerica',
+        'Clytia_hemisphaerica_GCA_902728285.1', 'clytia_hemisphaerica_gca902728285', 'Clytia hemisphaerica'),
+       (79, 1010633, 1010633, 'Digitaria exilis (Fonio) - GCA_902859565.1', 'digitaria_exilis', 'Digitaria exilis',
+        'Digitaria_exilis', 'digitaria_exilis_gca902859565v1', 'Digitaria exilis'),
+       (138, 113334, 113334, 'Melitaea cinxia (alternate haplotype) - GCA_905220555.1', NULL, 'Melitaea cinxia',
+        'Melitaea_cinxia_GCA_905220555.1', 'melitaea_cinxia_gca905220555v1', 'Melitaea cinxia'),
+       (139, 113334, 113334, 'Melitaea cinxia (Glanville fritillary) - GCA_905220565.1', NULL, 'Melitaea cinxia',
+        'Melitaea_cinxia_GCA_905220565.1', 'melitaea_cinxia_gca905220565v1', 'Melitaea cinxia'),
+       (140, 113334, 113334, 'Melitaea cinxia (made-up test organism) - GCA_000000042.1', NULL, 'Melitaea cinxia',
+        'Melitaea_cinxia_GCA_000000042.1', 'melitaea_cinxia_gca000000042v1', 'Melitaea cinxia'),
+       (195, 10116, 10116, 'Rattus norvegicus (BN/NHsdMcwi) - GCA_015227675.2', 'BN/NHsdMcwi', 'Rattus norvegicus',
+        'Rattus_norvegicus_GCA_015227675.2', 'rattus_norvegicus_gca015227675v2', 'Rattus norvegicus'),
+       (217, 9823, 9823, 'Sus scrofa (Pig) - GCA_000003025.6', NULL, 'Sus scrofa', 'Sus_scrofa_GCA_000003025.6',
+        'sus_scrofa_gca000003025v6', 'Sus scrofa'),
+       (241, 507980, 507980, 'Tyto alba alba (Barn owl) - GCA_902150015.1', NULL, 'Tyto alba alba',
+        'Tyto_alba_alba_GCA_902150015.1', 'tyto_alba_alba', 'Tyto alba alba');
 
 CREATE TABLE `organism_group` (
 `organism_group_id` INTEGER NOT NULL ,

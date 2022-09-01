@@ -4,7 +4,8 @@ import logging
 from ensembl_metadata_pb2 import \
     GenomeUUIDRequest, GenomeNameRequest, \
     ReleaseRequest, GenomeSequenceRequest, AssemblyIDRequest, \
-    OrganismIDRequest, DatasetsRequest, GenomeDatatypeRequest
+    OrganismIDRequest, DatasetsRequest, GenomeDatatypeRequest, \
+    GenomeByKeywordRequest
 
 import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
@@ -25,12 +26,21 @@ def get_genome(stub, genome_request):
         return
 
 
+def get_genomes_by_keyword(stub, genome_request):
+    genome_uuids = [genome.genome_uuid for genome in stub.GetGenomesByKeyword(genome_request)]
+    if not genome_uuids:
+        print("No genomes")
+        return
+
+
 def get_genomes(stub):
     request1 = GenomeUUIDRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3')
     request2 = GenomeUUIDRequest(genome_uuid='rhubarb')
     request3 = GenomeNameRequest(ensembl_name='accipiter_gentilis', site_name='rapid')
-    request4 = GenomeNameRequest(ensembl_name='accipiter_gentilis', site_name='rapid', release_version=13)
-    request5 = GenomeNameRequest(ensembl_name='banana', site_name='plants', release_version=104)
+    request4 = GenomeNameRequest(ensembl_name='accipiter_gentilis', site_name='rapid', release_version=13.0)
+    request5 = GenomeNameRequest(ensembl_name='banana', site_name='plants', release_version=104.0)
+    request6 = GenomeByKeywordRequest(keyword='Human')
+    request7 = GenomeByKeywordRequest(keyword='Bigfoot')
     print('**** Valid UUID ****')
     get_genome(stub, request1)
     print('**** Invalid UUID ****')
@@ -41,6 +51,10 @@ def get_genomes(stub):
     get_genome(stub, request4)
     print('**** Invalid name ****')
     get_genome(stub, request5)
+    print('**** Valid keyword, no release ****')
+    get_genomes_by_keyword(stub, request6)
+    print('**** Invalid keyword ****')
+    get_genomes_by_keyword(stub, request7)
 
 
 def list_genome_sequences(stub):
