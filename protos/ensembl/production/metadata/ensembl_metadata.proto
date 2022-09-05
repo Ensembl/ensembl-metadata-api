@@ -279,7 +279,7 @@ Datasets filter.
  */
 message DatasetsRequest {
   string genome_uuid = 1;     // Mandatory
-  uint32 release_version = 2; // Optional
+  double release_version = 2; // Optional
 }
 
 /*

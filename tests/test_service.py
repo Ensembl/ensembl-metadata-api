@@ -338,7 +338,7 @@ class TestClass:
 
 
     def test_get_datasets_list_by_uuid(self):
-        output = json_format.MessageToJson(service.get_datasets_list_by_uuid(self.engine, '3c51ff24-fb69-11eb-8dac-005056b32883', 103))
+        output = json_format.MessageToJson(service.get_datasets_list_by_uuid(self.engine, '3c51ff24-fb69-11eb-8dac-005056b32883', 103.0))
 
         expected_output = {
             "genomeUuid": "3c51ff24-fb69-11eb-8dac-005056b32883",
@@ -462,7 +462,7 @@ class TestClass:
 
     def test_get_datasets_list_by_uuid_no_results(self):
         output = json_format.MessageToJson(
-            service.get_datasets_list_by_uuid(self.engine, 'some-random-uuid-f00-b4r', 103)
+            service.get_datasets_list_by_uuid(self.engine, 'some-random-uuid-f00-b4r', 103.0)
         )
         output = json.loads(output)
         expected_output = {}
