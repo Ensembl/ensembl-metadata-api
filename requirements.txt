@@ -14,3 +14,5 @@ sqlalchemy==1.4.21
     # via -r requirements.in
 types-pymysql==1.0.0
     # via -r requirements.in
+fastapi==0.83.0
+    # via -r requirements.in
