@@ -278,6 +278,76 @@ class TestClass:
         assert json.loads(output) == expected_output
 
 
+    def test_get_genomes_from_assembly_accession_iterator(self):
+        output = [json.loads(json_format.MessageToJson(response)) for response in
+            service.get_genomes_from_assembly_accession_iterator(self.engine, "test accession")]
+        expected_output = [
+            {
+                'assembly': {
+                    'accession': 'test accession',
+                    'level': 'test level',
+                    'name': 'test name'
+                },
+                'created': '2021-07-19 13:22:26',
+                'genomeUuid': '3c52097a-fb69-11eb-8dac-005056b32883',
+                'organism': {
+                    'displayName': 'Sus scrofa (Pig) - GCA_000003025.6',
+                    'ensemblName': 'sus_scrofa_gca000003025v6',
+                    'scientificName': 'Sus scrofa',
+                    'scientificParlanceName': 'Sus scrofa',
+                    'urlName': 'Sus_scrofa_GCA_000003025.6'
+                },
+                'release': {
+                    'isCurrent': True,
+                    'releaseDate': '2021-06-30',
+                    'releaseVersion': 24.0
+                },
+                'taxon': {
+                    'scientificName': 'Sus scrofa',
+                    'taxonomyId': 9823
+                }
+            },
+            {
+                'assembly': {
+                    'accession': 'test accession',
+                    'level': 'test level',
+                    'name': 'test name'
+                },
+                'created': '2021-07-19 13:22:26',
+                'genomeUuid': '244fdac6-729f-4c05-a2e9-38021f9593dd',
+                'organism': {
+                    'displayName': 'test organism',
+                    'ensemblName': 'test_organism_gca000003025v6',
+                    'scientificName': 'test organism',
+                    'scientificParlanceName': 'test organism',
+                    'urlName': 'test_organism_GCA_000003025.6'
+                },
+                'release': {
+                    'isCurrent': True,
+                    'releaseDate': '2021-03-25',
+                    'releaseVersion': 104.0
+                },
+                'taxon': {
+                    'scientificName': 'test organism',
+                    'taxonomyId': 9823
+                }
+            }
+        ]
+        assert output == expected_output
+
+
+    def test_get_genomes_from_assembly_accession_iterator_null(self):
+        output = [json.loads(json_format.MessageToJson(response)) for response in
+            service.get_genomes_from_assembly_accession_iterator(self.engine, None)]
+        assert output == []
+
+
+    def test_get_genomes_from_assembly_accession_iterator_no_matches(self):
+        output = [json.loads(json_format.MessageToJson(response)) for response in
+            service.get_genomes_from_assembly_accession_iterator(self.engine, "asdfasdfadf")]
+        assert output == []
+
+
     def test_sub_species_info(self):
         output = json_format.MessageToJson(service.get_sub_species_info(self.engine, '41'))
         expected_output = {

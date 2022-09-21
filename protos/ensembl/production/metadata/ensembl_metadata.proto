@@ -24,6 +24,9 @@ service EnsemblMetadata {
   // Retrieve genomes by keyword search
   rpc GetGenomesByKeyword(GenomeByKeywordRequest) returns (stream Genome) {}
 
+  // Retrieve all genomes for a give assembly accession ID
+  rpc GetGenomesByAssemblyAccessionID(AssemblyAccessionIDRequest) returns (stream Genome) {}
+
   // Get species information for a genome UUID
   rpc GetSpeciesInformation(GenomeUUIDRequest) returns (Species) {}
 
@@ -250,6 +253,13 @@ Assembly ID filter
  */
 message AssemblyIDRequest {
   string assembly_id = 1; // Mandatory
+}
+
+/*
+Assembly ID filter
+ */
+message AssemblyAccessionIDRequest {
+  string assembly_accession = 1; // Mandatory
 }
 
 message OrganismIDRequest {
