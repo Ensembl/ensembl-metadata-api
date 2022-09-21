@@ -387,6 +387,86 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
         return create_genome()
 
 
+def populate_dataset_info(data):
+    return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
+        dataset_uuid = data['dataset_uuid'],
+        dataset_name = data['dataset_name'],
+        dataset_version = data['dataset_version'],
+        dataset_label = data['dataset_label'],
+        version = int(data['version'])
+    )
+
+
+def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version):
+    # This is sqlalchemy's metadata, not Ensembl's!
+    md = db.MetaData()
+    session = Session(metadata_db, future=True)
+
+    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+    genome = db.Table('genome', md, autoload_with=metadata_db)
+    dataset = db.Table('dataset', md, autoload_with=metadata_db)
+    genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
+    dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
+    ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
+
+    datasets_select = db.select(
+        genome.c.genome_uuid,
+        dataset.c.dataset_uuid,
+        # The label here should be identical to what's in proto file
+        dataset_type.c.name.label('data_set_type'),
+        dataset.c.name.label('dataset_name'),
+        dataset.c.version.label('dataset_version'),
+        dataset.c.label.label('dataset_label'),
+        ensembl_release.c.version
+        ).select_from(
+            genome
+        ).join(genome_dataset).join(dataset) \
+        .join(dataset_type).join(ensembl_release) \
+        .where(genome.c.genome_uuid == genome_uuid) \
+        .where(genome_dataset.c.is_current == 1) \
+        .distinct()
+
+    if release_version > 0:
+        datasets_select = datasets_select.filter_by(version=release_version)
+        # TODO: Marc comment: Might be interesting to do a <=, because I am still not sure whether 
+        # we'll replicate version attachment for everything every time we do a new release.
+    else:
+        # if the release is not specified, we return the latest by default
+        datasets_select = datasets_select.filter_by(is_current=1)
+
+    # print("SQL QUERY ===> ", str(datasets_select))
+    datasets_results = session.execute(datasets_select).all()
+    # print("len of datasets_results ===> ", len(datasets_results)) 
+
+    if len(datasets_results) > 0:
+        # ds_obj_dict where all datasets are stored as:
+        # { dataset_type_1: [datasets_dt1_1, datasets_dt1_2], dataset_type_2: [datasets_dt2_1] }
+        ds_obj_dict = {}
+        for result in datasets_results:
+            dataset_type = result['data_set_type']
+            # Populate the objects bottom up
+            datasets_info = populate_dataset_info(result)
+            # Construct the datasets dictionary
+            if dataset_type in ds_obj_dict:
+                ds_obj_dict[dataset_type].append(datasets_info)
+            else:
+                ds_obj_dict[dataset_type] = [datasets_info]
+
+        dataset_object_dict = {}
+        # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetInfos
+        for dataset_type_key in ds_obj_dict:
+            dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
+                dataset_infos=ds_obj_dict[dataset_type_key]
+            )
+                        
+        return create_datasets({
+            'genome_uuid': genome_uuid,
+            'datasets': dataset_object_dict
+        })
+
+    else:
+        return create_datasets()
+
 def get_genome_query(genome, genome_release, release, assembly, organism):
     return db.select(
         genome.c.genome_uuid,
@@ -693,6 +773,15 @@ def create_release(data=None):
     return release
 
 
+def create_datasets(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.Datasets()
+
+    return ensembl_metadata_pb2.Datasets(
+        genome_uuid=data['genome_uuid'],
+        datasets=data['datasets']
+    )
+
 def create_dataset_info(data=None):
     if data is None:
         return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
@@ -773,6 +862,11 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
                                         request.chromosomal_only
                                         )
 
+    def GetDatasetsListByUUID(self, request, context):
+        return get_datasets_list_by_uuid(self.db,
+                                    request.genome_uuid,
+                                    request.release_version
+                                    )
     def GetDatasetInformation(self, request, context):
         return get_dataset_by_genome_id(self.db, request.genome_uuid, request.dataset_type)
 

@@ -62,13 +62,13 @@ pip install -r requirements-dev.txt
 To generate client and server files
 (Remember to run these after adding a new method in ensembl_metadata.proto)
 ```
-python3 -m grpc_tools.protoc -Iprotos --python_out=src/ensembl/production/metadata --grpc_python_out=src/ensembl/production/metadata protos/ensembl_metadata.proto
+python3 -m grpc_tools.protoc -Iprotos --python_out=src --grpc_python_out=src protos/ensembl/production/metadata/ensembl_metadata.proto
 ```
 
 Start the server script
 
 ```
-python3 src/ensembl/production/metadata/service.py
+PYTHONPATH='src' python3 src/ensembl/production/metadata/service.py
 ```
 
 Start the client script
@@ -90,6 +90,20 @@ cd ensembl-metadata-service
 coverage run -m pytest
 coverage report -m
 ```
+
+#### Explore test DB content
+
+As for now, some of the test DB sqlite content is different from what's in MySQL metadata DB (e.g. release `version` in `ensembl_release`)
+
+> `test.db` created when running tests is deleted once tests are executed.
+
+To take a look at the test data you can create a temporary `sampledb.db` importing `sampledb.sql` content using the command:
+
+```
+cat sampledb.sql | sqlite3 sampledb.db
+```
+
+You can then open `sampledb.db` using [DB Browser for SQLite](https://sqlitebrowser.org/dl/).
 
 ### Automatic Formatting
 ```

@@ -3,8 +3,8 @@ import logging
 
 from ensembl_metadata_pb2 import \
     GenomeUUIDRequest, GenomeNameRequest, \
-    ReleaseRequest, GenomeSequenceRequest, AssemblyIDRequest, \
-    OrganismIDRequest, GenomeDatatypeRequest, GenomeByKeywordRequest, AssemblyAccessionIDRequest
+    ReleaseRequest, GenomeSequenceRequest, AssemblyIDRequest, GenomeByKeywordRequest, AssemblyAccessionIDRequest, \
+    OrganismIDRequest, DatasetsRequest, GenomeDatatypeRequest
 
 import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
@@ -12,8 +12,10 @@ import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata
 def get_genome(stub, genome_request):
     if isinstance(genome_request, GenomeUUIDRequest):
         genome = stub.GetGenomeByUUID(genome_request)
+        print(genome)
     elif isinstance(genome_request, GenomeNameRequest):
         genome = stub.GetGenomeByName(genome_request)
+        print(genome)
     else:
         print("Unrecognised request message")
         return
@@ -175,6 +177,12 @@ def get_top_level_statistics(stub):
     print(releases1)
 
 
+def get_datasets_list_by_uuid(stub):
+    request1 = DatasetsRequest(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3', release_version=2020.0)
+    datasets = stub.GetDatasetsListByUUID(request1)
+    print(datasets)
+    
+    
 def get_dataset_infos_by_dataset_type(stub):
     request1 = GenomeDatatypeRequest(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", dataset_type="geneset")
     datasets1 = stub.GetDatasetInformation(request1)
@@ -206,6 +214,8 @@ def run():
         list_releases(stub)
         print("-------------- List Releases for Genome --------------")
         list_releases_by_uuid(stub)
+        print("---------------Get Datasets List-----------")
+        get_datasets_list_by_uuid(stub)
         print("-------------- List Dataset information for Genome --------------")
         get_dataset_infos_by_dataset_type(stub)
 
