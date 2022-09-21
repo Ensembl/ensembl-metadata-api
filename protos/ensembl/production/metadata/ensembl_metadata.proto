@@ -1,3 +1,14 @@
+/* 
+ * This file defines what API calls we are going to handle
+ * where we got our gRPC definition and what request and response
+ * side or server side or both.
+ * It's used to generate two files:
+ * ensembl_metadata_pb2: which has all the different requests and responses
+ * ensembl_metadata_pb2_grpc: which has the services that we want to implement 
+ *   and the "stubs" that we will be using in the client side 
+ */
+
+
 syntax = "proto3";
 
 package ensembl_metadata;
@@ -43,6 +54,9 @@ service EnsemblMetadata {
   // Retrieve sequence metadata for a genome's assembly.
   rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
 
+  // Retrieve a list of dataset_ids associated with a genome UUID.
+  rpc GetDatasetsListByUUID(DatasetsRequest) returns (Datasets) {}
+  
   // Retrieve dataset info by genome uuid and dataset_type
   rpc GetDatasetInformation(GenomeDatatypeRequest) returns (DatasetInfos) {}
 }
@@ -188,6 +202,16 @@ message GenomeSequence {
 }
 
 /*
+Datasets list associated to the provided genome_uuid 
+ */
+message Datasets {
+  string genome_uuid = 1;
+  // https://stackoverflow.com/q/56401376/4488332
+  // https://developers.google.com/protocol-buffers/docs/reference/python-generated#map-fields
+  map<string, DatasetInfos> datasets = 2;
+}
+
+/*
 The messages below are used to request data - required-ness is not enforced
 by protocol buffers, but in practice some fields are mandatory in order to
 receive a non-empty response, so this is indicated with a comment.
@@ -251,8 +275,16 @@ message GenomeSequenceRequest {
 }
 
 /*
+Datasets filter.
+ */
+message DatasetsRequest {
+  string genome_uuid = 1;     // Mandatory
+  double release_version = 2; // Optional
+}
+
+/*
 Genome datatype filter
-*/
+ */
 message GenomeDatatypeRequest {
   string genome_uuid = 1;     // Mandatory
   string dataset_type = 2;    // Mandatory

@@ -336,6 +336,139 @@ class TestClass:
             'statisticValue': "22"
         }
 
+
+    def test_get_datasets_list_by_uuid(self):
+        output = json_format.MessageToJson(service.get_datasets_list_by_uuid(self.engine, '3c51ff24-fb69-11eb-8dac-005056b32883', 103.0))
+
+        expected_output = {
+            "genomeUuid": "3c51ff24-fb69-11eb-8dac-005056b32883",
+            "datasets": {
+                "assembly": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "40aa7070-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "assembly",
+                    "datasetLabel": "GCA_902859565.1",
+                    "version": 103
+                    }
+                ]
+                },
+                "checksum_xrefs": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "56cc017f-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "uniparc_checksum",
+                    "datasetVersion": "2021-05-01",
+                    "datasetLabel": "UniParc",
+                    "version": 103
+                    }
+                ]
+                },
+                "go_terms": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "56ce6e0b-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "interpro2go",
+                    "datasetVersion": "2021-04-10",
+                    "datasetLabel": "InterPro2GO mapping",
+                    "version": 103
+                    }
+                ]
+                },
+                "repeat_features": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "56d08e6e-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "dust",
+                    "datasetVersion": "2021-02-16",
+                    "datasetLabel": "Low complexity (Dust)",
+                    "version": 103
+                    },
+                    {
+                    "datasetUuid": "56d08ed9-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "repeatdetector_annotated",
+                    "datasetVersion": "2.17-r974-dirty",
+                    "datasetLabel": "Repeats: Red (annotated)",
+                    "version": 103
+                    },
+                    {
+                    "datasetUuid": "56d08f3c-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "repeatdetector",
+                    "datasetVersion": "2.0",
+                    "datasetLabel": "Repeats: Red",
+                    "version": 103
+                    },
+                    {
+                    "datasetUuid": "56d08fa1-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "repeatmask_nrplants",
+                    "datasetVersion": "4.0.5",
+                    "datasetLabel": "Repeats: nrplants",
+                    "version": 103
+                    },
+                    {
+                    "datasetUuid": "56d09002-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "repeatmask_redat",
+                    "datasetVersion": "4.0.5",
+                    "datasetLabel": "Repeats: REdat",
+                    "version": 103
+                    },
+                    {
+                    "datasetUuid": "56d09060-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "repeatmask_repbase",
+                    "datasetVersion": "4.0.5",
+                    "datasetLabel": "Repeats: Repbase",
+                    "version": 103
+                    },
+                    {
+                    "datasetUuid": "56d090c2-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "trf",
+                    "datasetVersion": "4.0",
+                    "datasetLabel": "Tandem repeats (TRF)",
+                    "version": 103
+                    }
+                ]
+                },
+                "protein_features": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "56cf650f-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "interproscan",
+                    "datasetVersion": "5.51-85.0",
+                    "datasetLabel": "InterProScan",
+                    "version": 103
+                    },
+                    {
+                    "datasetUuid": "56cf656f-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "seg",
+                    "datasetLabel": "seg",
+                    "version": 103
+                    }
+                ]
+                },
+                "geneset": {
+                "datasetInfos": [
+                    {
+                    "datasetUuid": "43ed89eb-fb69-11eb-8dac-005056b32883",
+                    "datasetName": "gene_core",
+                    "datasetLabel": "2021-01-KAUST",
+                    "version": 103
+                    }
+                ]
+                }
+            }
+        }
+        assert json.loads(output) == expected_output
+
+
+    def test_get_datasets_list_by_uuid_no_results(self):
+        output = json_format.MessageToJson(
+            service.get_datasets_list_by_uuid(self.engine, 'some-random-uuid-f00-b4r', 103.0)
+        )
+        output = json.loads(output)
+        expected_output = {}
+        assert output == expected_output
+
+
     def test_get_dataset_by_genome_id(self):
         output = json_format.MessageToJson(service.get_dataset_by_genome_id(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883', 'assembly'))
         output = json.loads(output)
