@@ -12,9 +12,8 @@
 import sqlalchemy as db
 from sqlalchemy.orm import Session
 import pymysql
-import models
 from ensembl.production.metadata.config import MetadataConfig
-
+import src.ensembl.production.metadata.models
 pymysql.install_as_MySQLdb()
 config = MetadataConfig()
 
