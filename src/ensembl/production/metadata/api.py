@@ -12,7 +12,7 @@
 import sqlalchemy as db
 from sqlalchemy.orm import Session
 import pymysql
-
+import models
 from ensembl.production.metadata.config import MetadataConfig
 
 pymysql.install_as_MySQLdb()
@@ -21,20 +21,21 @@ config = MetadataConfig()
 
 
 
-#Looks good right here.
-def load_database(uri):
-    try:
-        engine = db.create_engine(uri)
-    except AttributeError as err:
-        raise ValueError(f"Could not connect to database {uri}: {err}.") from err
-
-    try:
-        connection = engine.connect()
-    except db.exc.OperationalError as err:
-        raise ValueError(f"Could not connect to database {uri}: {err}.") from err
-
-    connection.close()
-    return engine
+#Replace with the DBconnection interface from ensembl-py.database.dbconnection.py
+#Remove after tests are acceptable.
+#def load_database(uri):
+#    try:
+#         engine = db.create_engine(uri)
+#     except AttributeError as err:
+#         raise ValueError(f"Could not connect to database {uri}: {err}.") from err
+#
+#     try:
+#         connection = engine.connect()
+#     except db.exc.OperationalError as err:
+#         raise ValueError(f"Could not connect to database {uri}: {err}.") from err
+#
+#     connection.close()
+#     return engine
 
 
 

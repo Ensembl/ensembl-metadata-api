@@ -16,3 +16,4 @@ types-pymysql==1.0.0
     # via -r requirements.in
 fastapi==0.83.0
     # via -r requirements.in
+git+https://github.com/Ensembl/ensembl-py.git@main

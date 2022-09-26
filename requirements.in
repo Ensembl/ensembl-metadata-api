@@ -3,3 +3,4 @@ pymysql
 sqlalchemy
 types-pymysql
 fastapi
+ensembl-py

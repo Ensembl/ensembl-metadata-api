@@ -1,14 +1,28 @@
-# coding: utf-8
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 from sqlalchemy import Column, DECIMAL, Date, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship, sessionmaker, backref
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, MetaData, inspect
 
+
 Base = declarative_base()
 metadata = Base.metadata
 
-# Currently the backreference is a plural of the
 
 class Assembly(Base):
     __tablename__ = 'assembly'
@@ -50,7 +64,6 @@ class Attribute(Base):
     name = Column(String(128), nullable=False)
     label = Column(String(128), nullable=False)
     description = Column(String(255))
-
 
 
 class Dataset(Base):
@@ -102,15 +115,6 @@ class DatasetType(Base):
     topic = Column(String(32), nullable=False)
     description = Column(String(255))
     details_uri = Column(String(255))
-
-
-class DjangoMigration(Base):
-    __tablename__ = 'django_migrations'
-
-    id = Column(Integer, primary_key=True)
-    app = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-    applied = Column(DATETIME(fsp=6), nullable=False)
 
 
 class EnsemblSite(Base):
@@ -178,57 +182,18 @@ class GenomeRelease(Base):
     release = relationship('EnsemblRelease', backref='genome_release')
 
 
-
 class Organism(Base):
     __tablename__ = 'organism'
 
     organism_id = Column(Integer, primary_key=True)
-    #taxonomy_id = Column(Integer, nullable=False)
-    #species_taxonomy_id = Column(Integer)
+    taxonomy_id = Column(Integer, nullable=False)
+    species_taxonomy_id = Column(Integer)
     display_name = Column(String(128), nullable=False)
     strain = Column(String(128))
     scientific_name = Column(String(128))
     url_name = Column(String(128), nullable=False)
     ensembl_name = Column(String(128), nullable=False, unique=True)
     scientific_parlance_name = Column(String(255))
-
-    # These are for the taxonomy that is in this document. Commented out fields are for if we remove it.
-    taxonomy_id = Column(ForeignKey('taxonomy_node.taxon_id'), nullable=False)
-    species_taxonomy_id = Column(ForeignKey('taxonomy_node.taxon_id'))
-    taxnode = relationship('TaxonomyNode', backref='organism') #no idea whether these will break in the future 2 to 1 relationship seems wrong.
-
-
-#Taxonomy relationships. Currently these were added as Ensembl/ensembl-metadata-admin/blob/main/ncbi_taxonomy/models.py
-# works on the djano implementation of sqlalchemy rather than the sqlalchemy ORM that is in use here.
-class TaxonomyNode(Base):
-    __tablename__ = 'taxonomy_node'
-    # Not sure what we are doing here, as the db doesn't have it.
-    # Could check from the regular metadata....
-    # Also check for the unique constraints and whether they are nullable.
-    # __table_args__ = (???)
-    taxon_id = Column(Integer, primary_key=True)
-    parent = Column(Integer)
-    rank = Column(String(255))
-    genbank_hidden_flag = Column(Integer)
-    left_index = Column(Integer)
-    right_index = Column(Integer)
-    root_id = Column(Integer)
-    #Not including the relationship for taxon_id to parent as I think the schema is wrong.
-
-
-class TaxonomyName(Base):
-    __tablename__ = 'taxonomy_name'
-    # Not sure what we are doing here, as the db doesn't have it.
-    # Could check from the regular metadata....
-    # Also check for the unique constraints and whether they are nullable.
-    # __table_args__ = (???)
-    name_id = Column(Integer, primary_key=True)
-    parent = Column(ForeignKey('taxonomy_node.taxon_id'))
-    name = Column(String(255))
-    name_class = Column(String(255))
-    taxnode = relationship('TaxonomyNode', backref='taxonomy_name')
-
-
 
 
 class OrganismGroup(Base):
@@ -256,5 +221,3 @@ class OrganismGroupMember(Base):
 
     organism_group = relationship('OrganismGroup', backref='organism_group_member')
     organism = relationship('Organism', backref='organism_group_member')
-
-
