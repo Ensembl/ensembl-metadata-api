@@ -13,8 +13,6 @@
 Unit tests for api module
 """
 
-from ensembl.production.metadata.api import load_database
-
 
 def test_load_database():
     """Test api.load_database function"""
