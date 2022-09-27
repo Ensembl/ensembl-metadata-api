@@ -810,7 +810,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return get_assembly_information(self.db, request.assembly_id)
 
     def GetGenomesByAssemblyAccessionID(self, request, context):
-        return get_genomes_from_assembly_accession_iterator(self.db, request.assembly_id)
+        return get_genomes_from_assembly_accession_iterator(self.db, request.assembly_accession)
 
     def GetSubSpeciesInformation(self, request, context):
         return get_sub_species_info(self.db, request.organism_id)
@@ -840,10 +840,6 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
                                   request.release_version
                                   )
     
-    def GetGenomesByAssemblyAccessionID(self, request, context):
-        return get_genomes_from_assembly_accession_iterator(self.db,
-                                                            request.assembly_accession)
-
     def GetRelease(self, request, context):
         return release_iterator(self.db,
                                 request.site_name,
