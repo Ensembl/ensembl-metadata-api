@@ -10,36 +10,34 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import sqlalchemy as db
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 import pymysql
 from ensembl.production.metadata.config import MetadataConfig
-import src.ensembl.production.metadata.models
-pymysql.install_as_MySQLdb()
-config = MetadataConfig()
+from ensembl.database.dbconnection import DBConnection
+from ensembl.production.metadata.models import *
 
 
+#Database ORM connection.
+class load_database(DBConnection):
+    """
+    Load a database and directly create a session for ORM interaction with the database
+    """
+    def create_session(self, engine):
+        self._session = Session(engine, future=True)
 
+    def __init__(self, url):
+        super().__init__(url)
+        self.create_session(self._engine)
 
-#Replace with the DBconnection interface from ensembl-py.database.dbconnection.py
-#Remove after tests are acceptable.
-#def load_database(uri):
-#    try:
-#         engine = db.create_engine(uri)
-#     except AttributeError as err:
-#         raise ValueError(f"Could not connect to database {uri}: {err}.") from err
-#
-#     try:
-#         connection = engine.connect()
-#     except db.exc.OperationalError as err:
-#         raise ValueError(f"Could not connect to database {uri}: {err}.") from err
-#
-#     connection.close()
-#     return engine
+    #Commit any changes to the database and create a new session instance.
+    def commit(self):
+        self._session.commit()
+        self._session.close()
+        self.create_session(self._engine)
 
-
-
-
-#Not sure why all of this is here, but it is not being removed until we are certain.
+    #rollback any changes made before commiting the session instance.
+    def rollback(self):
+        self._session.rollback()
 
 
 def check_parameter(param):
@@ -50,13 +48,9 @@ def check_parameter(param):
 
 class BaseAdaptor:
     def __init__(self, metadata_uri=None):
-        # This is sqlalchemy's metadata, not Ensembl's!
-        self.md = db.MetaData()
-
         if metadata_uri is None:
             metadata_uri = config.METADATA_URI
         self.metadata_db = load_database(metadata_uri)
-        self.metadata_db_session = Session(self.metadata_db, future=True)
 
 
 class ReleaseAdaptor(BaseAdaptor):
