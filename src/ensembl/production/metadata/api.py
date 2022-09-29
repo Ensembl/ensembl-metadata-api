@@ -10,9 +10,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import sqlalchemy as db
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 import pymysql
-from ensembl.production.metadata.config import MetadataConfig
+from ensembl.production.metadata.config import get_metadata_uri, get_taxonomy_uri
 from ensembl.database.dbconnection import DBConnection
 from ensembl.production.metadata.models import *
 
@@ -49,7 +50,7 @@ def check_parameter(param):
 class BaseAdaptor:
     def __init__(self, metadata_uri=None):
         if metadata_uri is None:
-            metadata_uri = config.METADATA_URI
+            metadata_uri = get_metadata_uri()
         self.metadata_db = load_database(metadata_uri)
 
 
@@ -67,43 +68,49 @@ class ReleaseAdaptor(BaseAdaptor):
         release_type = check_parameter(release_type)
         site_name = check_parameter(site_name)
 
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        release = db.Table("ensembl_release", self.md, autoload_with=self.metadata_db)
-        site = self.md.tables["ensembl_site"]
 
+        #SELECT ensembl_release.release_id, ensembl_release.version AS release_version, ensembl_release.release_date, ensembl_release.label AS release_label, ensembl_release.is_current, ensembl_release.release_type, ensembl_site.name AS site_name, ensembl_site.label AS site_label, ensembl_site.uri AS site_uri
+        #FROM ensembl_release JOIN ensembl_site ON ensembl_site.site_id = ensembl_release.site_id
         release_select = db.select(
-            release.c.release_id,
-            release.c.version.label("release_version"),
-            db.cast(release.c.release_date, db.String),
-            release.c.label.label("release_label"),
-            release.c.is_current,
-            release.c.release_type,
-            site.c.name.label("site_name"),
-            site.c.label.label("site_label"),
-            site.c.uri.label("site_uri"),
-        ).select_from(release)
+            EnsemblRelease.release_id,
+            EnsemblRelease.version.label("release_version"),
+            EnsemblRelease.release_date,
+            EnsemblRelease.label.label("release_label"),
+            EnsemblRelease.is_current,
+            EnsemblRelease.release_type,
+            EnsemblSite.name.label("site_name"),
+            EnsemblSite.label.label("site_label"),
+            EnsemblSite.uri.label("site_uri")
+        ).join(EnsemblRelease.site)
 
-        # These options are in order of decreasing specificity,
-        # and thus the ones later in the list can be redundant.
+        #WHERE ensembl_release.release_id = :release_id_1
         if release_id is not None:
-            release_select = release_select.filter(release.c.release_id.in_(release_id))
+            release_select = release_select.filter(
+                EnsemblRelease.release_id == release_id
+            )
+        #WHERE ensembl_release.version = :version_1
         elif release_version is not None:
             release_select = release_select.filter(
-                release.c.version.in_(release_version)
+                EnsemblRelease.version == release_version
             )
+        #WHERE ensembl_release.is_current =:is_current_1
         elif current_only:
-            release_select = release_select.filter_by(is_current=1)
+            release_select = release_select.filter(
+                EnsemblRelease.is_current == 1
+            )
 
+        #WHERE ensembl_release.release_type = :release_type_1
         if release_type is not None:
             release_select = release_select.filter(
-                release.c.release_type.in_(release_type)
+                EnsemblRelease.release_type == release_type
             )
 
-        release_select = release_select.join(site)
+        #WHERE ensembl_site.name = :name_1
         if site_name is not None:
-            release_select = release_select.filter(site.c.name.in_(site_name))
-
-        return self.metadata_db_session.execute(release_select).all()
+            release_select = release_select.filter(
+                EnsemblSite.name == site_name
+            )
+        return self.metadata_db._session.execute(release_select)
 
     def fetch_releases_for_genome(self, genome_uuid, site_name=None):
         genome = db.Table("genome", self.md, autoload_with=self.metadata_db)
@@ -142,6 +149,17 @@ class ReleaseAdaptor(BaseAdaptor):
         ]
 
         return self.fetch_releases(release_id=release_ids, site_name=site_name)
+
+
+TEST = ReleaseAdaptor('mysql://danielp:Killadam69@localhost/ensembl_metadata_2020')
+TEST2 = TEST.fetch_releases()
+for i in TEST2:
+    print (i)
+
+
+
+
+
 
 
 class GenomeAdaptor(BaseAdaptor):
