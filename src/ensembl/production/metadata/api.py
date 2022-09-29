@@ -159,7 +159,6 @@ class ReleaseAdaptor(BaseAdaptor):
         return self.fetch_releases(release_id=release_ids, site_name=site_name)
 
 
-
 class GenomeAdaptor(BaseAdaptor):
     taxon_names = {}
 

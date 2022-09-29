@@ -12,12 +12,16 @@
 """
 Unit tests for api module
 """
-
+from ensembl.production.metadata.api import *
 
 def test_load_database():
-    """Test api.load_database function"""
-    #load_database('XXX')
-    pass
+    DB_TEST = ReleaseAdaptor('sqlite:///TEST.db')
+    assert DB_TEST, "DB should not be empty"
 
-
-
+def test_Release_adaptor():
+    conn = ReleaseAdaptor('sqlite:///TEST.db')
+    TEST2 = conn.fetch_releases().one()
+    #Test the one to many connection
+    assert TEST2[6] == '2020-map'
+    #Test the direct access.
+    assert TEST2[3] == '2020 MAP 7 species'
