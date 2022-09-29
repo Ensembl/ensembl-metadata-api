@@ -112,24 +112,27 @@ class ReleaseAdaptor(BaseAdaptor):
             )
         return self.metadata_db._session.execute(release_select)
 
+
     def fetch_releases_for_genome(self, genome_uuid, site_name=None):
-        genome = db.Table("genome", self.md, autoload_with=self.metadata_db)
-        genome_release = db.Table(
-            "genome_release", self.md, autoload_with=self.metadata_db
+
+        # SELECT genome_release.release_id
+        # FROM genome_release
+        # JOIN genome ON genome.genome_id = genome_release.genome_id
+        # WHERE genome.genome_uuid =:genome_uuid_1
+        release_id_select = db.select(
+            GenomeRelease.release_id
+        ).filter(
+            Genome.genome_uuid == genome_uuid
+        ).join(
+            GenomeRelease.genome
         )
+        #Don't really like this section. Refactor later.
+        release_ids = []
+        release_objects = self.metadata_db._session.execute(release_id_select)
+        for rid in release_objects:
+            release_ids.append(rid[0])
 
-        release_id_select = (
-            db.select(genome_release.c.release_id)
-            .select_from(genome)
-            .filter_by(genome_uuid=genome_uuid)
-            .join(genome_release)
-        )
-
-        release_ids = [
-            rid for (rid,) in self.metadata_db_session.execute(release_id_select)
-        ]
-
-        return self.fetch_releases(release_id=release_ids, site_name=site_name)
+        return release_ids
 
     def fetch_releases_for_dataset(self, dataset_uuid, site_name=None):
         dataset = db.Table("dataset", self.md, autoload_with=self.metadata_db)
@@ -152,7 +155,7 @@ class ReleaseAdaptor(BaseAdaptor):
 
 
 TEST = ReleaseAdaptor('mysql://danielp:Killadam69@localhost/ensembl_metadata_2020')
-TEST2 = TEST.fetch_releases()
+TEST2 = TEST.fetch_releases_for_genome('3704ceb1-948d-11ec-a39d-005056b38ce3')
 for i in TEST2:
     print (i)
 
