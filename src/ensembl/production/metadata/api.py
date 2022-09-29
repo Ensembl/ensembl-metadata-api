@@ -127,6 +127,7 @@ class ReleaseAdaptor(BaseAdaptor):
             GenomeRelease.genome
         )
         #Don't really like this section. Refactor later.
+        # It is also used twice. Function maybe?
         release_ids = []
         release_objects = self.metadata_db._session.execute(release_id_select)
         for rid in release_objects:
@@ -135,33 +136,27 @@ class ReleaseAdaptor(BaseAdaptor):
         return self.fetch_releases(release_id=release_ids, site_name=site_name)
 
     def fetch_releases_for_dataset(self, dataset_uuid, site_name=None):
-        dataset = db.Table("dataset", self.md, autoload_with=self.metadata_db)
-        genome_dataset = db.Table(
-            "genome_dataset", self.md, autoload_with=self.metadata_db
+
+        # SELECT genome_release.release_id
+        # FROM genome_dataset
+        # JOIN dataset ON dataset.dataset_id = genome_dataset.dataset_id
+        # WHERE dataset.dataset_uuid = :dataset_uuid_1
+        release_id_select = db.select(
+            GenomeDataset.release_id
+        ).filter(
+            Dataset.dataset_uuid == dataset_uuid
+        ).join(
+            GenomeDataset.dataset
         )
 
-        release_id_select = (
-            db.select(genome_dataset.c.release_id)
-            .select_from(dataset)
-            .filter_by(dataset_uuid=dataset_uuid)
-            .join(genome_dataset)
-        )
-
-        release_ids = [
-            rid for (rid,) in self.metadata_db_session.execute(release_id_select)
-        ]
+        #Don't really like this section. Refactor later.
+        # It is also used twice. Function maybe?
+        release_ids = []
+        release_objects = self.metadata_db._session.execute(release_id_select)
+        for rid in release_objects:
+            release_ids.append(rid[0])
 
         return self.fetch_releases(release_id=release_ids, site_name=site_name)
-
-
-TEST = ReleaseAdaptor('mysql://danielp:Killadam69@localhost/ensembl_metadata_2020')
-TEST2 = TEST.fetch_releases_for_genome('3704ceb1-948d-11ec-a39d-005056b38ce3')
-for i in TEST2:
-    print (i)
-
-
-
-
 
 
 
