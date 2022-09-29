@@ -132,7 +132,7 @@ class ReleaseAdaptor(BaseAdaptor):
         for rid in release_objects:
             release_ids.append(rid[0])
 
-        return release_ids
+        return self.fetch_releases(release_id=release_ids, site_name=site_name)
 
     def fetch_releases_for_dataset(self, dataset_uuid, site_name=None):
         dataset = db.Table("dataset", self.md, autoload_with=self.metadata_db)
