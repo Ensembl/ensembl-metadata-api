@@ -18,10 +18,21 @@ def test_load_database():
     DB_TEST = ReleaseAdaptor('sqlite:///TEST.db')
     assert DB_TEST, "DB should not be empty"
 
-def test_Release_adaptor():
+def test_fetch_releases():
     conn = ReleaseAdaptor('sqlite:///TEST.db')
-    TEST2 = conn.fetch_releases().one()
+    TEST = conn.fetch_releases(release_id=1).one()
     #Test the one to many connection
-    assert TEST2[6] == '2020-map'
+    assert TEST.EnsemblSite.name == '2020-map'
     #Test the direct access.
-    assert TEST2[3] == '2020 MAP 7 species'
+    assert TEST.EnsemblRelease.label == '2020 MAP 7 species'
+
+#currently only have one release, so the testing is not comprehensive
+def test_fetch_releases_for_genome():
+    conn = ReleaseAdaptor('sqlite:///TEST.db')
+    TEST = conn.fetch_releases_for_genome('a733574a-93e7-11ec-a39d-005056b38ce3').one()
+    assert TEST.EnsemblSite.name == '2020-map'
+
+def test_fetch_releases_for_dataset():
+    conn = ReleaseAdaptor('sqlite:///TEST.db')
+    TEST = conn.fetch_releases_for_dataset('76ffa505-948d-11ec-a39d-005056b38ce3').one()
+    assert TEST.EnsemblSite.name == '2020-map'

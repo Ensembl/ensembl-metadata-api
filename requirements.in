@@ -2,5 +2,5 @@ mysqlclient
 pymysql
 sqlalchemy
 types-pymysql
-ensembl-py
+git+https://github.com/Ensembl/ensembl-py.git#egg=ensembl-py
 mysql
