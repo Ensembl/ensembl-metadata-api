@@ -3,13 +3,16 @@ os: linux
 
 python:
   - "3.8"
+  - "3.9"
+  - "3.10"
 
 env:
   - TESTENV=test
 
-install:
+before_script:
   - pip install -r requirements-test.txt
   - pip install .
+  - export PYTHONPATH=$PYTHONPATH:$PWD/src
 
 script:
   - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi

@@ -12,14 +12,17 @@
 """
 Unit tests for api module
 """
+from os.path import dirname
 from ensembl.production.metadata.api import *
 
+DB_NAME = 'sqlite:///' + dirname(__file__) + '/TEST.db'
+
 def test_load_database():
-    DB_TEST = ReleaseAdaptor('sqlite:///TEST.db')
+    DB_TEST = ReleaseAdaptor(DB_NAME)
     assert DB_TEST, "DB should not be empty"
 
 def test_fetch_releases():
-    conn = ReleaseAdaptor('sqlite:///TEST.db')
+    conn = ReleaseAdaptor(DB_NAME)
     TEST = conn.fetch_releases(release_id=1).one()
     #Test the one to many connection
     assert TEST.EnsemblSite.name == '2020-map'
@@ -28,11 +31,11 @@ def test_fetch_releases():
 
 #currently only have one release, so the testing is not comprehensive
 def test_fetch_releases_for_genome():
-    conn = ReleaseAdaptor('sqlite:///TEST.db')
+    conn = ReleaseAdaptor(DB_NAME)
     TEST = conn.fetch_releases_for_genome('a733574a-93e7-11ec-a39d-005056b38ce3').one()
     assert TEST.EnsemblSite.name == '2020-map'
 
 def test_fetch_releases_for_dataset():
-    conn = ReleaseAdaptor('sqlite:///TEST.db')
+    conn = ReleaseAdaptor(DB_NAME)
     TEST = conn.fetch_releases_for_dataset('76ffa505-948d-11ec-a39d-005056b38ce3').one()
     assert TEST.EnsemblSite.name == '2020-map'
