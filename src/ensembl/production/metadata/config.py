@@ -12,6 +12,8 @@
 import os
 
 
-class MetadataConfig:
-    METADATA_URI = os.environ.get("METADATA_URI", None)
-    TAXONOMY_URI = os.environ.get("TAXONOMY_URI", None)
+def get_metadata_uri():
+    return os.environ.get("METADATA_URI", None)
+
+def get_taxonomy_uri():
+    return os.environ.get("TAXONOMY_URI", None)
