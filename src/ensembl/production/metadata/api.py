@@ -18,30 +18,6 @@ from ensembl.database.dbconnection import DBConnection
 from ensembl.production.metadata.models import *
 
 
-# Database ORM connection.
-class load_database(DBConnection):
-    """
-    Load a database and directly create a session for ORM interaction with the database
-    """
-
-    def create_session(self, engine):
-        self._session = Session(engine, future=True)
-
-    def __init__(self, url):
-        super().__init__(url)
-        self.create_session(self._engine)
-
-    # Commit any changes to the database and create a new session instance.
-    def commit(self):
-        self._session.commit()
-        self._session.close()
-        self.create_session(self._engine)
-
-    # rollback any changes made before committing the session instance.
-    def rollback(self):
-        self._session.rollback()
-
-
 def check_parameter(param):
     if param is not None and not isinstance(param, list):
         param = [param]
