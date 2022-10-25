@@ -12,7 +12,10 @@
 """
 Unit tests for api module
 """
+from os.path import dirname
 from ensembl.production.metadata.api import *
+
+DB_NAME = 'sqlite:///' + dirname(__file__) + '/TEST.db'
 
 def test_load_database():
     DB_TEST = ReleaseAdaptor('sqlite:///TEST.db')
