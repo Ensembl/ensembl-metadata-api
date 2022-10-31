@@ -15,10 +15,6 @@ Unit tests for api module
 from os.path import dirname
 from ensembl.production.metadata.api import *
 
-# Should be removed after the travis CI works properly.
-# Many of the tests will fail on sqlite.
-# DB_NAME = 'sqlite:///' + dirname(__file__) + '/metadata_20202.sqlite'
-# TX_NAME = 'sqlite:/// + dirname(__file__) + '/ncbi_taxonomy.sqlite'
 DB_NAME = 'mysql://root:@127.0.0.1:3306/ensembl_metadata_2020'
 TX_NAME = 'mysql://root:@127.0.0.1:3306/ncbi_taxonomy'
 
