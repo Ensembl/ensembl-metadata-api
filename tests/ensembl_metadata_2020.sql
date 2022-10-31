@@ -23,7 +23,7 @@
 -- Current Database: `ensembl_metadata_2020`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ensembl_metadata_2020` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_0900_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ensembl_metadata_2020` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
 USE `ensembl_metadata_2020`;
 
