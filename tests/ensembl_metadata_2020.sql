@@ -1,3 +1,7 @@
+-- noinspection SqlDialectInspectionForFile
+
+-- noinspection SqlNoDataSourceInspectionForFile
+
 -- MySQL dump 10.13  Distrib 8.0.30, for Linux (x86_64)
 --
 -- Host: localhost    Database: ensembl_metadata_2020
@@ -7,7 +11,7 @@
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
+/*!50503 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -19,7 +23,7 @@
 -- Current Database: `ensembl_metadata_2020`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ensembl_metadata_2020` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ensembl_metadata_2020` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_0900_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
 USE `ensembl_metadata_2020`;
 
@@ -29,7 +33,7 @@ USE `ensembl_metadata_2020`;
 
 DROP TABLE IF EXISTS `assembly`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `assembly` (
   `assembly_id` int NOT NULL AUTO_INCREMENT,
   `ucsc_name` varchar(16) DEFAULT NULL,
@@ -64,7 +68,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `assembly_sequence`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `assembly_sequence` (
   `assembly_sequence_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(128) DEFAULT NULL,
@@ -98,7 +102,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `attribute`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `attribute` (
   `attribute_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL,
@@ -124,7 +128,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `dataset`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `dataset` (
   `dataset_id` int NOT NULL AUTO_INCREMENT,
   `dataset_uuid` varchar(128) NOT NULL,
@@ -159,7 +163,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `dataset_attribute`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `dataset_attribute` (
   `dataset_attribute_id` int NOT NULL AUTO_INCREMENT,
   `type` varchar(32) NOT NULL,
@@ -191,7 +195,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `dataset_source`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `dataset_source` (
   `dataset_source_id` int NOT NULL AUTO_INCREMENT,
   `type` varchar(32) NOT NULL,
@@ -217,7 +221,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `dataset_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `dataset_type` (
   `dataset_type_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(32) NOT NULL,
@@ -245,7 +249,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `ensembl_release`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `ensembl_release` (
   `release_id` int NOT NULL AUTO_INCREMENT,
   `version` decimal(10,1) NOT NULL,
@@ -277,7 +281,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `ensembl_site`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `ensembl_site` (
   `site_id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
@@ -303,7 +307,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `genome`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `genome` (
   `genome_id` int NOT NULL AUTO_INCREMENT,
   `genome_uuid` varchar(128) NOT NULL,
@@ -335,7 +339,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `genome_dataset`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `genome_dataset` (
   `genome_dataset_id` int NOT NULL AUTO_INCREMENT,
   `dataset_id` int NOT NULL,
@@ -368,7 +372,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `genome_release`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `genome_release` (
   `genome_release_id` int NOT NULL AUTO_INCREMENT,
   `genome_id` int NOT NULL,
@@ -398,7 +402,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `organism`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `organism` (
   `organism_id` int NOT NULL AUTO_INCREMENT,
   `taxonomy_id` int NOT NULL,
@@ -430,7 +434,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `organism_group`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `organism_group` (
   `organism_group_id` int NOT NULL AUTO_INCREMENT,
   `type` varchar(32) NOT NULL,
@@ -458,7 +462,7 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `organism_group_member`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!50503 SET character_set_client = utf8 */;
 CREATE TABLE `organism_group_member` (
   `organism_group_member_id` int NOT NULL AUTO_INCREMENT,
   `is_reference` tinyint(1) NOT NULL,
