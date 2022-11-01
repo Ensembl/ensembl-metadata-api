@@ -19,10 +19,8 @@ from sqlalchemy.orm import relationship, sessionmaker, backref
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, MetaData, inspect
 
-
 Base = declarative_base()
 metadata = Base.metadata
-
 
 class Assembly(Base):
     __tablename__ = 'assembly'
