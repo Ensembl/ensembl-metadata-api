@@ -20,7 +20,7 @@ from ensembl.production.metadata.api import *
 
 from ensembl.database.dbconnection import DBConnection
 from sqlalchemy.engine.url import make_url
-from sqlalchemy import select, func, desc, update, delete
+from sqlalchemy import select, update, func
 from ensembl.core.models import *
 import uuid
 import datetime
@@ -57,7 +57,6 @@ class BaseMetaUpdater:
 class CoreMetaUpdater(BaseMetaUpdater):
     def __init__(self, db_uri, metadata_uri):
         # Each of these objects represents a table in the database to store data in as either an array or a single object.
-        self.db_type = 'core'
         self.organism = None
         self.organism_group_member = None   #Implement
         self.organism_group = None          #Implement
@@ -76,6 +75,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
         self.attribute = None
 
         super().__init__(db_uri, metadata_uri)
+        self.db_type = 'core'
+
 
     def process_core(self):
         # Handle multispecies databases and run an update for each species
@@ -99,25 +100,25 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         #Get species data from the core db and populate the temporary meta table objects
         self.new_organism()
-        self.new_genome()  # needs organism_id and assembly_id
-        self.new_genome_release()  # needs genome_id
+        self.new_genome()
+        self.new_genome_release()
         self.new_assembly()
-        self.new_assembly_sequence()  # needs assembly_id
+        self.new_assembly_sequence()
         self.new_dataset_source()
         self.new_genome_dataset()
+        self.new_dataset()
 
         #################
-        # Transactions are committed once per logic step (Species,Assembly,Dataset).
-        # Failures are reverted mid transacation
-        # If a failure happens it will only revert that section.
-        # This should not cause issues, as the program will continue to update the following steps on restart.
+        # Transactions are committed once per pipeline.
+        # Failures prevent any commit
         #################
 
         #Species Check and Update
         # Check for new genome by checking if ensembl name is already present in the database
         if GenomeAdaptor().fetch_genomes_by_ensembl_name(self.organism.ensembl_name) == []:
             self.fresh_genome()
-            print("Fresh Organism. Adding data to organism, genome, genome_release, assembly, and assembly_sequence tables.")
+            print("Fresh Organism. Adding data to organism, genome, genome_release,"
+                  " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
         else:
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
@@ -138,59 +139,66 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 print("Old Organism with no change. No update to organism table")
             else:
                 self.update_organism()
-                print("Old Organism with chages. Updating organism table")
+                print("Old Organism with changes. Updating organism table")
 
-        #Assembly Check and Update
-        # A huge assumption here is that there is a single assembly for each organism. Otherwise several things will need
-        # to be changed. !DP!
+        # Assembly Check and Update
         with self.metadata_db.session_scope() as session:
             assembly_acc = session.execute(db.select(ensembl.production.metadata.models.Assembly
                         ).join(Genome.assembly).join(Genome.organism).filter(
                 Organism.ensembl_name == self.organism.ensembl_name)).one().Assembly.accession
         new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")
         if new_assembly_acc == assembly_acc:
-             print("Old Assembly with no change. No update to enome, genome_release, assembly, and assembly_sequence tables.")
+             print("Old Assembly with no change. No update to Genome, genome_release, assembly, and assembly_sequence tables.")
         else:
-            print("Old Assembly with changes. Updating Genome, genome_release, assembly, and assembly_sequence tables.")
+            print("New Assembly. Updating  genome, genome_release,"
+                  " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
             self.update_assembly()
 
     def fresh_genome(self):
         #In this, we are assuming that with a new genome, there will be a new assemblbly. I am also assuming that there
         #won't be an old assembly that needs to be deleted.
-        #!DP!# Verify with Marc
 
         with self.metadata_db.session_scope() as session:
-            session.add(self.organism)
-            session.flush()
+            #Organism section
+            #Updating Organism, organism_group_member, and organism_group
+            self.new_organism_group_and_members(session)
+            #Add in the new assembly here
+            #assembly sequence, assembly, genome, genome release.
+            assembly_test = session.execute(db.select(ensembl.production.metadata.models.Assembly).filter(
+                ensembl.production.metadata.models.Assembly.accession == self.assembly.accession)).one_or_none()
+            if assembly_test is not None:
+                Exception("Error, existing name but, assembly accession already found. Please update the Ensembl Name in the Meta field manually")
 
-            #            scientific_parlance_name=None,
+            release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == self.release).first()
 
-
-            organism_id = session.execute(db.select(Organism).filter(
-                Organism.ensembl_name == self.organism.ensembl_name)).one().Organism.organism_id
-            session.add(self.assembly)
-            session.flush()
-            assembly_id = session.execute(db.select(ensembl.production.metadata.models.Assembly).filter(
-                ensembl.production.metadata.models.Assembly.accession == self.assembly.accession)).one().Assembly.assembly_id
             for assembly_seq in self.assembly_sequence:
-                assembly_seq.assembly_id = assembly_id
-            session.add_all(self.assembly_sequence)
-            self.genome.organism_id = organism_id
-            self.genome.assembly_id = assembly_id
-            session.add(self.genome)
-            session.flush()
-            genome_id = session.execute(db.select(Genome).filter(
-                Genome.organism_id == self.genome.organism_id)).one().Genome.genome_id
-            self.genome_release.genome_id = genome_id
-            session.add(self.genome_release)
+                assembly_seq.assembly = self.assembly
+            self.assembly.genomes.append(self.genome)
 
-            # Section for the total genome length #!DP!. Do I leave this out, or do I calculate it.
-            #self.new_assembly_dataset()
-            #add  self.dataset_source
-            # Tables to update:
-            #dataset #needs update_source_id
-            # genome_dataset #needs dataset_id and genome_id
-            # dataset attribute_ #needs dataset_id
+            self.genome_release.ensembl_release = release
+            self.genome_release.genome = self.genome
+
+            self.genome.organism = self.organism
+
+            # Update assembly dataset
+            #Updates genome_dataset,dataset,dataset_source
+            dataset_source_test = session.execute(db.select(DatasetSource).filter(DatasetSource.name == self.dataset_source.name)).one_or_none()
+            if dataset_source_test is not None:
+                Exception("Error, data already present in source")
+
+            dataset_type = session.query(DatasetType).filter(DatasetType.name == "assembly").first()
+
+            self.genome_dataset.ensembl_release = release
+            self.genome_dataset.genome = self.genome
+            self.genome_dataset.dataset = self.dataset
+
+            self.dataset.dataset_type = dataset_type
+            self.dataset.dataset_source = self.dataset_source
+
+            #Add everything to the database. Closing the session commits it.
+            session.add(self.organism)
+
+
 
     def update_organism(self):
         with self.metadata_db.session_scope() as session:
@@ -205,49 +213,45 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     strain=self.organism.strain,
                 ))
 
+            #TODO: Add an update to the groups here.
+
     def update_assembly(self):
         with self.metadata_db.session_scope() as session:
-            organism_id = session.execute(db.select(Organism).filter(
-                Organism.ensembl_name == self.organism.ensembl_name)).one().Organism.organism_id
-            genome_id = session.execute(db.select(Genome).filter(
-                Genome.organism_id == organism_id)).one().Genome.genome_id
-            assembly_id = session.execute(db.select(ensembl.production.metadata.models.Assembly
-                        ).join(Genome.assembly).join(Genome.organism).filter(
-                Organism.ensembl_name == self.organism.ensembl_name)).one().Assembly.assembly_id
-            # Update date in Genome
-            session.execute(update(Genome).where(Genome.genome_id == genome_id).values(
-                 created=self.genome.created))
-            # Update release_id and is_current in genome_release
-            session.execute(update(GenomeRelease).where(GenomeRelease.genome_id == genome_id).values(
-                 release_id=self.genome_release.release_id, is_current=self.genome_release.is_current))
-            # Wipe all associated rows in assembly sequences and repopulate.
-            session.execute(delete(AssemblySequence).where(AssemblySequence.assembly_id == assembly_id))
-            session.flush()
+            #Get the genome
+            self.genome = session.query(Genome,Organism).filter(Genome.organism_id==Organism.organism_id).filter(
+                Organism.ensembl_name == self.organism.ensembl_name).first().Genome
+
+            release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == self.release).first()
+
             for assembly_seq in self.assembly_sequence:
-                assembly_seq.assembly_id = assembly_id
-            session.add_all(self.assembly_sequence)
-            # full update of assembly.
-            session.execute(
-                update(ensembl.production.metadata.models.Assembly).where(ensembl.production.metadata.models.Assembly.assembly_id == assembly_id).values(
-                    assembly_id=assembly_id,
-                    ucsc_name=self.assembly.ucsc_name,
-                    accession=self.assembly.accession,
-                    level=self.assembly.level,
-                    name=self.assembly.name,
-                    accession_body=self.assembly.accession_body,
-                    assembly_default=self.assembly.assembly_default,
-                    created=self.assembly.created,
-                    ensembl_name=self.assembly.ensembl_name,
-                ))
+                assembly_seq.assembly = self.assembly
+            self.assembly.genomes.append(self.genome)
 
-            # Add self.dataset_source if it does not already exist
+            self.genome_release.ensembl_release = release
+            self.genome_release.genome = self.genome
+
+            # Update assembly dataset
+            #Updates genome_dataset,dataset,dataset_source
+            dataset_source_test = session.execute(db.select(DatasetSource).filter(DatasetSource.name == self.dataset_source.name)).one_or_none()
+            if dataset_source_test is not None:
+                self.dataset_source = session.query(DatasetSource).filter(DatasetSource.name == self.dataset_source.name).first()
+
+            dataset_type = session.query(DatasetType).filter(DatasetType.name == "assembly").first()
+
+            self.genome_dataset.ensembl_release = release
+            self.genome_dataset.genome = self.genome
+            self.genome_dataset.dataset = self.dataset
+
+            self.dataset.dataset_type = dataset_type
+            self.dataset.dataset_source = self.dataset_source
 
 
 
 
-
-    # The following functions and classes are each related to a single table. It may be benificial to move them to the base class with later implementations
+    # The following methods populate the data from the core into the objects. K
+    # It may be beneficial to move them to the base class with later implementations
     def new_organism(self):
+        # All taken from the meta table except parlance name.
         self.organism = Organism(
             organism_id=None,  # Should be autogenerated upon insertion
             species_taxonomy_id=self.get_meta_single_meta_key(self.species, "species.species_taxonomy_id"),
@@ -257,51 +261,68 @@ class CoreMetaUpdater(BaseMetaUpdater):
             url_name=self.get_meta_single_meta_key(self.species, "species.url"),
             ensembl_name=self.get_meta_single_meta_key(self.species, "species.production_name"),
             strain=self.get_meta_single_meta_key(self.species, "species.strain"),
-
-            # Implement this on its own.
             scientific_parlance_name=None,
-
-
         )
         if self.organism.species_taxonomy_id is None:
             self.organism.species_taxonomy_id = self.organism.taxonomy_id
-        # print(self.organism.organism_id, self.organism.species_taxonomy_id, self.organism.taxonomy_id, self.organism.display_name,
-        #      self.organism.scientific_name, self.organism.url_name, self.organism.ensembl_name)
 
-        # !DP!#
-        # We currently don't touch the tables organism_group or organism_group_member
 
-    def new_organism(self):
-        self.organism = Organism(
-            organism_id=None,  # Should be autogenerated upon insertion
-            species_taxonomy_id=self.get_meta_single_meta_key(self.species, "species.species_taxonomy_id"),
-            taxonomy_id=self.get_meta_single_meta_key(self.species, "species.taxonomy_id"),
-            display_name=self.get_meta_single_meta_key(self.species, "species.display_name"),
-            scientific_name=self.get_meta_single_meta_key(self.species, "species.scientific_name"),
-            url_name=self.get_meta_single_meta_key(self.species, "species.url"),
-            ensembl_name=self.get_meta_single_meta_key(self.species, "species.production_name"),
-            strain=self.get_meta_single_meta_key(self.species, "species.strain"),
-            # !DP!#
-            # What is the purpose to the strain? Not quite relevent to the project but we use this very oddly.
-            # scientific_parlance_name=self.get_meta_single_meta_key(self.species, "species.scientific_parlance_name"),
+    def new_organism_group_and_members(self,session):
+        #This method auto grabs the division name and checks for the strain groups
+        division_name = self.get_meta_single_meta_key(self.species, "species.division")
+        if division_name is None:
+            Exception("No species.dvision found in meta table")
+        division = session.execute(db.select(OrganismGroup).filter(OrganismGroup.name == division_name)).one_or_none()
+        if division is None:
+            group = OrganismGroup(
+                organism_group_id=None,
+                type="Division",
+                name=division_name,
+                code=None,
+            )
+        else:
+            group = session.query(OrganismGroup).filter(OrganismGroup.name == division_name).first()
+        self.organism_group_member = OrganismGroupMember(
+            organism_group_member_id=None,
+            is_reference=0,
+            organism_id=None,
+            organism_group_id=None,
         )
+        self.organism_group_member.organism_group = group
+        self.organism_group_member.organism = self.organism
 
-    def new_organism(self):
-        self.organism = Organism(
-            organism_id=None,  # Should be autogenerated upon insertion
-            species_taxonomy_id=self.get_meta_single_meta_key(self.species, "species.species_taxonomy_id"),
-            taxonomy_id=self.get_meta_single_meta_key(self.species, "species.taxonomy_id"),
-            display_name=self.get_meta_single_meta_key(self.species, "species.display_name"),
-            scientific_name=self.get_meta_single_meta_key(self.species, "species.scientific_name"),
-            url_name=self.get_meta_single_meta_key(self.species, "species.url"),
-            ensembl_name=self.get_meta_single_meta_key(self.species, "species.production_name"),
-            strain=self.get_meta_single_meta_key(self.species, "species.strain"),
-            # !DP!#
-            # What is the purpose to the strain? Not quite relevent to the project but we use this very oddly.
-            # scientific_parlance_name=self.get_meta_single_meta_key(self.species, "species.scientific_parlance_name"),
-        )
+        # Work on the strain level group members
+        strain = self.get_meta_single_meta_key(self.species, "species.strain")
+        strain_group = self.get_meta_single_meta_key(self.species, "species.strain_group")
+        strain_type = self.get_meta_single_meta_key(self.species, "species.type")
 
+        if strain is not None:
+            if strain == 'reference':
+                reference = 1
+            else:
+                reference = 0
+            group_member = OrganismGroupMember(
+                organism_group_member_id=None,
+                is_reference=reference,
+                organism_id=None,
+                organism_group_id=None,
+            )
+            # Check for group, if not present make it
+            division = session.execute(
+                db.select(OrganismGroup).filter(OrganismGroup.name == strain_group)).one_or_none()
+            if division is None:
+                print(division)
+                group = OrganismGroup(
+                    organism_group_id=None,
+                    type=strain_type,
+                    name=strain_group,
+                    code=None,
+                )
 
+            else:
+                group = session.query(OrganismGroup).filter(OrganismGroup.name == strain_group).first()
+                group_member.organism_group = group
+                group_member.organism = self.organism
 
     def new_genome(self):
         # Data for the update function.
@@ -310,24 +331,18 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genome_uuid=str(uuid.uuid4()),
             assembly_id=None,# Update the assembly before inserting and grab the assembly key
             organism_id=None,  # Update the organism before inserting and grab the organism_id
-            created=datetime.datetime.utcnow(),
-            # !DP!#
-            # I feel that this date should be when the assembly is created. Easy enough to add, but our core db is not the best with the date.
-            # Alternatively, we can grab the assembly date from the metadata. *This will not be in the proper format! but does that matter?
-            # created = self.get_meta_single_meta_key(self.species, "assembly.date")
+            created=func.now(), # Replace all of them with sqlalchemy func.now()
         )
-        # print(self.genome.created, self.genome.genome_uuid)
 
     def new_genome_release(self):
         # Genome Release
         self.genome_release = GenomeRelease(
             genome_release_id=None,  # Should be autogenerated upon insertion
             genome_id=None,  # Update the genome before inserting and grab the genome_id
-            release_id=self.release,
+            release_id=None,
             is_current=self.release_is_current,
         )
     def new_assembly(self):
-        # !DP!# We are loading models from two different files. I should switch to direct calls for one of them.
         level = None
         print (self.species)
         with self.db.session_scope() as session:
@@ -340,13 +355,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
             accession=self.get_meta_single_meta_key(self.species, "assembly.accession"),
             level=level,
             name=self.get_meta_single_meta_key(self.species, "assembly.name"),
-            accession_body=None,  # !DP!# I have no idea what this is supposed to be.
+            accession_body=None,  # Not implemented yet
             assembly_default=self.get_meta_single_meta_key(self.species, "assembly.default"),
-            created=datetime.datetime.utcnow(),
-            # !DP!#
-            # I feel that this date should be when the assembly is created. Easy enough to add, but our core db is not the best with the date.
-            # Alternatively, we can grab the assembly date from the metadata. *This will not be in the proper format! but does that matter?
-            # created = self.get_meta_single_meta_key(self.species, "assembly.date")
+            created=func.now(),
             ensembl_name=self.get_meta_single_meta_key(self.species, "species.production_name"),
             # !DP!# Why are we duplicating this? It is found in the genome. If it is something assembly related, what is it?
         )
@@ -354,16 +365,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def new_assembly_sequence(self):
         self.assembly_sequence = []
-        # !DP!# Come back to this when you have time. So none of these models in core/models.py are backrefed. Do it and then update to ORM.....
-        # Will be ugly as an ORM. Comment heavily
-
+            #TODO:Make this ORM, get the sequence location
         with self.db.session_scope() as session:
             accessions = session.execute("select distinct s.name, ss.synonym, c.name, s.length  from coord_system c "
                 "join seq_region s using (coord_system_id)left join seq_region_synonym ss "
                 "on(ss.seq_region_id=s.seq_region_id and ss.external_db_id in "
                 f"(select external_db_id from external_db where db_name='INSDC')) where c.species_id={self.species}"
                 " and attrib like '%default_version%'")
-            #After this is done, turn it all into objects if that makes it cleaner and more readible.
             accession_dict = {}
             length_dict = {}
             chromosome_dict = {}
@@ -403,33 +411,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 sequence_checksum = None,
                 ga4gh_identifier = None,
             ))
-        # for i in self.assembly_sequence:
-        #     print (i.name, i.accession, i.chromosomal, i.length)
-
-    # def new_assembly_dataset(self):
-    #     self.new_dataset = Dataset(
-    #         dataset_id=None,  # Should be autogenerated upon insertion
-    #         dataset_uuid = str(uuid.uuid4()),
-    #         dataset_type_id = 1,
-    #         name = 'assembly',
-    #         version = None,
-    #         created = datetime.datetime.utcnow(),
-    #         dataset_source_id = None, #Update after
-    #         label = self.assembly.accession
-    #     )
-    #     self.dataset_attribute =  DatasetAttribute(
-    #         dataset_attribute_id=None,  # Should be autogenerated upon insertion
-    #         type = 'lenght_bp',
-    #         value = #I don't think I am supposed to calculate this here, but can do if need be !DP!
-    #         attribute_id = #Not sure how to get this properly either
-    #         dataset_id = None,
 
     def new_genome_dataset(self):
-        GenomeDataset(
+        self.genome_dataset = GenomeDataset(
             genome_dataset_id = None,  # Should be autogenerated upon insertion
             dataset_id = None, #extract from dataset once genertated
             genome_id = None, #extract from genome once genertated
-            release_id = self.release,
+            release_id = None,#extract from release once genertated
             is_current = self.release_is_current,
         )
     def new_dataset_source(self):
@@ -438,56 +426,24 @@ class CoreMetaUpdater(BaseMetaUpdater):
             type = self.db_type,        # core/fungen etc
             name = make_url(self.db_uri).database   #dbname
         )
-    # def new_dataset(self):
-    #     Dataset(
-    #         dataset_id = None,  # Should be autogenerated upon insertion
-    #         dataset_uuid = str(uuid.uuid4()),
-    #         dataset_type_id = "DO THIS NOW"#Lookup from dataset. Do now!
-    #         name = Column(String(128), nullable=False)
-    #         version = Column(String(128))
-    #         created = Column(DATETIME(fsp=6), nullable=False)
-    #         dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
-    #         label = Column(String(128), nullable=False)
-    #     )
-
-
-
+        print (self.dataset_source.type)
+        print (self.db_type)
     def new_dataset(self):
-        with self.db.session_scope() as session:
-            print(session.execute(select(Meta.meta_value)).filter(
-                Meta.meta_key == "species.species_taxonomy_id" and Meta.species_id == self.species).scalar().one())
-
-    def update_dataset(self):
-        with self.db.session_scope() as session:
-            print(session.execute(select(Meta.meta_value)).filter(
-                Meta.meta_key == "species.species_taxonomy_id" and Meta.species_id == self.species).scalar().one())
-
-
-#                   a = Address(email='foo@bar.com')
-#                   p = Person(name='foo')
-#                    p.addresses.append(a)
+        #Currently only functional for assembly.
+        self.dataset = Dataset(
+            dataset_id = None,  # Should be autogenerated upon insertion
+            dataset_uuid = str(uuid.uuid4()),
+            dataset_type_id = None,#extract from dataset_type
+            name = "assembly",
+            version = None,
+            created = func.now(),
+            dataset_source_id = None, #extract from dataset_source
+            label = self.assembly.accession,
+        )
 
 
-# Check to see if metadata.organism.ensembl_name contains meta.species.production_name
 
-# Update the following metadata:
-# organism:taxonomy_id, specie_taxonomy_id, display_name, strain, scientific_name, url_name, ensembl_name,
-# organism_group_member:is_reference,organism_id,organism_group_id,organism_member_id
 
-# Do not touch scientific parlence name!
-
-# Org name = ensembl.name
-
-# Check to see if the genome exists in the database.
-# If it does, has it changed?
-
-# Check to see if the assembly exists in the db.
-# If it does, has it changed?
-
-# Check to see if the datasets exist in the db.
-# If so, have they changed?
-
-# DO NOT CALCULATE STATISTICS
 
 def meta_factory(db_uri, metadata_uri=None):
     db_url = make_url(db_uri)

@@ -12,7 +12,6 @@
 """
 Unit tests for api module
 """
-from os.path import dirname
 from ensembl.production.metadata.api import *
 
 DB_NAME = 'mysql://root:@127.0.0.1:3306/ensembl_metadata_2020'

@@ -255,6 +255,10 @@ class Organism(Base):
     organism_group_members = relationship('OrganismGroupMember', back_populates='organism')
     #many to one relationships
     #organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
+    def __repr__(self):
+        return f'organism_id={self.organism_id}, taxonomy_id={self.taxonomy_id}, species_taxonomy_id={self.species_taxonomy_id}, ' \
+               f'display_name={self.display_name}, strain={self.strain}, scientific_name={self.scientific_name}, ' \
+               f'url_name={self.url_name}, ensembl_name={self.ensembl_name}, scientific_parlance_name={self.scientific_parlance_name}'
 
 class OrganismGroup(Base):
     __tablename__ = 'organism_group'
@@ -271,6 +275,9 @@ class OrganismGroup(Base):
     organism_group_members = relationship('OrganismGroupMember', back_populates='organism_group')
     #many to one relationships
     #none
+    def __repr__(self):
+        return f'organism_group_id={self.organism_group_id}, type={self.type}, name={self.name}, ' \
+               f'code={self.code}'
 
 class OrganismGroupMember(Base):
     __tablename__ = 'organism_group_member'
@@ -289,3 +296,7 @@ class OrganismGroupMember(Base):
     #organism_id to organism
     organism_group = relationship('OrganismGroup', back_populates='organism_group_members')
     organism = relationship('Organism', back_populates='organism_group_members')
+
+    def __repr__(self):
+        return f'organism_group_member_id={self.organism_group_member_id}, is_reference={self.is_reference}, organism_id={self.organism_id}, ' \
+               f'organism_group_id={self.organism_group_id}'
