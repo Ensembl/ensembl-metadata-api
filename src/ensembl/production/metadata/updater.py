@@ -11,7 +11,7 @@
 #   limitations under the License.
 
 
-# TODO: add in cleanup_removed_genomes_collection, clean up inports, solve collections situation
+# TODO: add in cleanup_removed_genomes_collection, clean up inports, solve collections situation, simplify imports
 
 import re
 
@@ -23,7 +23,6 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy import select, update, func
 from ensembl.core.models import *
 import uuid
-import datetime
 
 
 class BaseMetaUpdater:
@@ -35,6 +34,7 @@ class BaseMetaUpdater:
         if metadata_uri is None:
             metadata_uri = get_metadata_uri()
         #Use the current release if none is specified.
+        #TODO: Remove release if not specified. Change variable name for consistency
         if release is None:
             self.release = NewReleaseAdaptor(metadata_uri).current_release_id
         else:
@@ -86,19 +86,15 @@ class CoreMetaUpdater(BaseMetaUpdater):
             )
         multi_species = [multi_species for multi_species, in multi_species]
 
-        if len(multi_species) == 1:
-            self.species = multi_species[0]
+        for species in multi_species:
+            self.species = species
             self.process_species()
-        else:
-            # Add in the cleanup_removed genomes here
-            # Further discussion is needed to see how this will be implemented.
-            for species in multi_species:
-                self.species = species
-                self.process_species()
 
     def process_species(self):
 
         #Get species data from the core db and populate the temporary meta table objects
+
+        #TODO: ADD more comments about the logic flow and classes.
         self.new_organism()
         self.new_genome()
         self.new_genome_release()
@@ -117,6 +113,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
         # Check for new genome by checking if ensembl name is already present in the database
         if GenomeAdaptor().fetch_genomes_by_ensembl_name(self.organism.ensembl_name) == []:
             self.fresh_genome()
+            #TODO: Swap print for logger.
+            #TODO:Add check for if the production name is changed. Base of assembly accesion.
+
             print("Fresh Organism. Adding data to organism, genome, genome_release,"
                   " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
         else:
@@ -153,10 +152,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
             print("New Assembly. Updating  genome, genome_release,"
                   " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
             self.update_assembly()
-
+#TODO: Add geneset check and build here.
     def fresh_genome(self):
         #In this, we are assuming that with a new genome, there will be a new assemblbly. I am also assuming that there
         #won't be an old assembly that needs to be deleted.
+        #TODO: Remove release if not specified
 
         with self.metadata_db.session_scope() as session:
             #Organism section
@@ -170,7 +170,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 Exception("Error, existing name but, assembly accession already found. Please update the Ensembl Name in the Meta field manually")
 
             release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == self.release).first()
-
+            #RENAME assembly sequence to assembly sequences!
             for assembly_seq in self.assembly_sequence:
                 assembly_seq.assembly = self.assembly
             self.assembly.genomes.append(self.genome)
@@ -216,6 +216,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             #TODO: Add an update to the groups here.
 
     def update_assembly(self):
+        #Change to new assembly/fresh
         with self.metadata_db.session_scope() as session:
             #Get the genome
             self.genome = session.query(Genome,Organism).filter(Genome.organism_id==Organism.organism_id).filter(
@@ -396,7 +397,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 accession_dict[acc[0]] = acc[0]
 
             #Look up the sequence location
-            #!D!# Not sure exactly what I should put here. Looks easy enough, but which joins to do should be disscussed.
+            #!DP!# Not sure exactly what I should put here. Looks easy enough, but which joins to do should be disscussed.
 
             #Nor am I sure where to get the sequence checksum or ga4gh identifiers
         for name in accession_dict:
