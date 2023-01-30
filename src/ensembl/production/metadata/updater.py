@@ -11,7 +11,7 @@
 #   limitations under the License.
 
 
-# TODO: add in cleanup_removed_genomes_collection, clean up inports, solve collections situation, simplify imports
+# TODO: add in cleanup_removed_genomes_collection, clean up imports, solve collections situation
 
 import re
 
@@ -36,7 +36,8 @@ class BaseMetaUpdater:
         #Use the current release if none is specified.
         #TODO: Remove release if not specified. Change variable name for consistency
         if release is None:
-            self.release = NewReleaseAdaptor(metadata_uri).current_release_id
+            self.release = None
+            self.release_is_current = None
         else:
             self.release = release
         self.release_is_current = ReleaseAdaptor(metadata_uri).fetch_releases(release_id=self.release)[
@@ -113,7 +114,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
         # Check for new genome by checking if ensembl name is already present in the database
         if GenomeAdaptor().fetch_genomes_by_ensembl_name(self.organism.ensembl_name) == []:
             self.fresh_genome()
-            #TODO:Add check for if the production name is changed. Base of assembly accesion.
             #Check if the assembly accesion is already present in the database
             new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")
             with self.metadata_db.session_scope() as session:
@@ -172,15 +172,15 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 ensembl.production.metadata.models.Assembly.accession == self.assembly.accession)).one_or_none()
             if assembly_test is not None:
                 Exception("Error, existing name but, assembly accession already found. Please update the Ensembl Name in the Meta field manually")
+            if self.release is not None:
+                release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == self.release).first()
+                self.genome_release.ensembl_release = release
+                self.genome_release.genome = self.genome
 
-            release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == self.release).first()
-            #RENAME assembly sequence to assembly sequences!
+            #TODO RENAME assembly sequence to assembly sequences!
             for assembly_seq in self.assembly_sequence:
                 assembly_seq.assembly = self.assembly
             self.assembly.genomes.append(self.genome)
-
-            self.genome_release.ensembl_release = release
-            self.genome_release.genome = self.genome
 
             self.genome.organism = self.organism
 
@@ -191,8 +191,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 Exception("Error, data already present in source")
 
             dataset_type = session.query(DatasetType).filter(DatasetType.name == "assembly").first()
-
-            self.genome_dataset.ensembl_release = release
+            if self.release is not None:
+                self.genome_dataset.ensembl_release = release
             self.genome_dataset.genome = self.genome
             self.genome_dataset.dataset = self.dataset
 
@@ -225,15 +225,16 @@ class CoreMetaUpdater(BaseMetaUpdater):
             #Get the genome
             self.genome = session.query(Genome,Organism).filter(Genome.organism_id==Organism.organism_id).filter(
                 Organism.ensembl_name == self.organism.ensembl_name).first().Genome
-
-            release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == self.release).first()
+            if self.release is not None:
+                release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == self.release).first()
+                self.genome_release.ensembl_release = release
+                self.genome_release.genome = self.genome
 
             for assembly_seq in self.assembly_sequence:
                 assembly_seq.assembly = self.assembly
             self.assembly.genomes.append(self.genome)
 
-            self.genome_release.ensembl_release = release
-            self.genome_release.genome = self.genome
+
 
             # Update assembly dataset
             #Updates genome_dataset,dataset,dataset_source
@@ -242,8 +243,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 self.dataset_source = session.query(DatasetSource).filter(DatasetSource.name == self.dataset_source.name).first()
 
             dataset_type = session.query(DatasetType).filter(DatasetType.name == "assembly").first()
-
-            self.genome_dataset.ensembl_release = release
+            if self.release is not None:
+                self.genome_dataset.ensembl_release = release
             self.genome_dataset.genome = self.genome
             self.genome_dataset.dataset = self.dataset
 
