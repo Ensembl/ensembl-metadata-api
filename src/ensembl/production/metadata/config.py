@@ -13,7 +13,9 @@ import os
 
 
 def get_metadata_uri():
-    return os.environ.get("METADATA_URI", None)
+    return "mysql://danielp:Killadam69!@localhost:3306/ensembl_metadata_2020"
+    #return os.environ.get("METADATA_URI", None)
 
 def get_taxonomy_uri():
-    return os.environ.get("TAXONOMY_URI", None)
+    return "mysql://danielp:Killadam69!@localhost:3306/ncbi_taxonomy"
+    #return os.environ.get("TAXONOMY_URI", None)
