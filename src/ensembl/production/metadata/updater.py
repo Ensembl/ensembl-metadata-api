@@ -11,7 +11,7 @@
 #   limitations under the License.
 
 
-# TODO: add in cleanup_removed_genomes_collection, clean up imports, solve collections situation
+# TODO: add genebuild. Finish the ORM conversion for assembly sequences, ensure tests run well.
 
 import re
 
@@ -20,7 +20,8 @@ from ensembl.production.metadata.api import *
 
 from ensembl.database.dbconnection import DBConnection
 from sqlalchemy.engine.url import make_url
-from sqlalchemy import select, update, func
+from sqlalchemy.orm import aliased
+from sqlalchemy import select, update, func, and_, text, case, null, alias
 from ensembl.core.models import *
 import uuid
 import logging
@@ -156,11 +157,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
             logging.info("New Assembly. Updating  genome, genome_release,"
                   " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
             self.update_assembly()
+
+
 #TODO: Add geneset check and build here.
+
+
     def fresh_genome(self):
-        #In this, we are assuming that with a new genome, there will be a new assemblbly. I am also assuming that there
-        #won't be an old assembly that needs to be deleted.
-        #TODO: Remove release if not specified
+        #In this, we are assuming that with a new genome, there will be a new assemblbly.
 
         with self.metadata_db.session_scope() as session:
             #Organism section
@@ -193,8 +196,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
             dataset_type = session.query(DatasetType).filter(DatasetType.name == "assembly").first()
             if self.release is not None:
                 self.genome_dataset.ensembl_release = release
-            self.genome_dataset.genome = self.genome
-            self.genome_dataset.dataset = self.dataset
+                self.genome_dataset.genome = self.genome
+                self.genome_dataset.dataset = self.dataset
 
             self.dataset.dataset_type = dataset_type
             self.dataset.dataset_source = self.dataset_source
@@ -245,8 +248,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
             dataset_type = session.query(DatasetType).filter(DatasetType.name == "assembly").first()
             if self.release is not None:
                 self.genome_dataset.ensembl_release = release
-            self.genome_dataset.genome = self.genome
-            self.genome_dataset.dataset = self.dataset
+                self.genome_dataset.genome = self.genome
+                self.genome_dataset.dataset = self.dataset
 
             self.dataset.dataset_type = dataset_type
             self.dataset.dataset_source = self.dataset_source
@@ -368,71 +371,71 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def new_assembly_sequence(self):
         self.assembly_sequence = []
-            #TODO:Make this ORM, get the sequence location
         with self.db.session_scope() as session:
+            # Alias the seq_region_attrib and seq_region_synonym tables
+            sra1 = aliased(SeqRegionAttrib)
+            sra2 = aliased(SeqRegionAttrib)
+            sra3 = aliased(SeqRegionAttrib)
 
-     # select distinct s.name, ss.synonym, c.name, s.length
-     # from coord_system c
-     # join seq_region s using (coord_system_id)
-     # left join seq_region_synonym ss on
-     #  (ss.seq_region_id=s.seq_region_id and ss.external_db_id in
-     #     (select external_db_id from external_db where db_name='INSDC'))
-     # where c.species_id=? and attrib like '%default_version%'/,
+            results = (
+                session.query(SeqRegion.name, SeqRegionSynonym.synonym, SeqRegion.length,
+                              CoordSystem.name,
+                              sra3.value,
+                              )
+                .join(CoordSystem, SeqRegion.coord_system_id == CoordSystem.coord_system_id)
+                .join(Meta, CoordSystem.species_id == Meta.species_id)
+                .join(sra1, SeqRegion.seq_region_id == sra1.seq_region_id)
+                .outerjoin(SeqRegionSynonym, and_(SeqRegion.seq_region_id == SeqRegionSynonym.seq_region_id,
+                                                  SeqRegionSynonym.external_db_id == 50710))
+                .outerjoin(sra2, and_(SeqRegion.seq_region_id == sra2.seq_region_id,
+                                                 sra2.attrib_type_id == 367))
+                .outerjoin(sra3, and_(SeqRegion.seq_region_id == sra3.seq_region_id,
+                                                 sra3.attrib_type_id == 547))
+                .filter(Meta.meta_key == 'assembly.accession', sra1.attrib_type_id == 6, Meta.species_id == self.species)
+            ).all()
+        for data in results:
+
+            #If the name does not match normal accession formating, then use that name.
+            name = None
+            if re.match('^[a-zA-Z]+\d+\.\d+', data[0]):
+                name = None
+            else:
+                name = data[0]
+            #Nab accession from the seq region synonym or else the name.
+            accession = None
+            if data[1] is not None and re.match('^[a-zA-Z]+\d+\.\d+', data[1]):
+                accession = data[1]
+            elif name is not None:
+                accession = name
+            else:
+                accession = None
+
+            chromosomal = 0
+            if data[3] == 'chromosome':
+                chromosomal = 1
 
 
-            accessions = (
-                session.query(SeqRegion.name, SeqRegionSynonym.synonym, CoordSystem.name, SeqRegion.length)
-                .join(CoordSystem)
-                .outerjoin(SeqRegionSynonym, and_(SeqRegionSynonym.seq_region_id == SeqRegion.seq_region_id,
-                    SeqRegionSynonym.external_db_id.in_(
-                    session.query(ExternalDb.external_db_id).filter(ExternalDb.db_name == "INSDC"))))
-                .filter(CoordSystem.species_id == self.species, CoordSystem.attrib.contains("default_version"))
-                .distinct())
+            sequence_location = None
+            if data[4] == 'nuclear_chromosome':
+                sequence_location = 'SO:0000738'
+            elif data[4] == 'mitochondrial_chromosome':
+                sequence_location = 'SO:0000737'
+            elif data[4] == 'chloroplast_chromosome':
+                sequence_location = 'SO:0000745'
+            elif data[4] is None:
+                sequence_location = 'SO:0000738'
+            else:
+                raise Exception('Error with sequence location: ' + data[4] + ' is not a valid type')
 
-            accession_dict = {}
-            length_dict = {}
-            chromosome_dict = {}
-
-            for acc in accessions:
-                accession_dict[acc[0]] = acc[1]
-                length_dict[acc[0]] = acc[3]
-                if acc[2] == 'chromosome':
-                    chromosome_dict[acc[0]] = 1
-                else:
-                    chromosome_dict[acc[0]] = 0
-
-        #Populate the accessions based on those that have ENA.
-            accessions = []
-            #List of Tubles containing "name"
-     #     select s.name
-     #      from coord_system c
-     #      join seq_region s using (coord_system_id)
-     #      join seq_region_attrib sa using (seq_region_id)
-     #      where sa.value='ENA' and c.species_id=? and attrib like '%default_version%'/,
-
-            accessions = (session.query(SeqRegion.name)
-                          .join(CoordSystem, SeqRegion.coord_system_id == CoordSystem.coord_system_id)
-                          .join(SeqRegionAttrib, SeqRegion.seq_region_id == SeqRegionAttrib.seq_region_id)
-                          .filter(CoordSystem.species_id == self.species)
-                          .filter(SeqRegionAttrib.value == 'ENA')
-                          .filter(SeqRegionAttrib.attrib.like('%default_version%'))
-                          .all())
-            for acc in accessions:
-                accession_dict[acc[0]] = acc[0]
-
-            #Look up the sequence location
-            #!DP!# Not sure exactly what I should put here. Looks easy enough, but which joins to do should be disscussed.
-
-            #Nor am I sure where to get the sequence checksum or ga4gh identifiers
-        for name in accession_dict:
             self.assembly_sequence.append(AssemblySequence(
                 assembly_sequence_id = None,  # Should be autogenerated upon insertion
                 name = name,
                 assembly_id = None,  # Update the assembly before inserting and grab the assembly_id
-                accession = accession_dict[name],
-                chromosomal = chromosome_dict[name],
-                length = length_dict[name],
-                sequence_location = None,
+                accession = accession,
+                chromosomal = chromosomal,
+                length = data[2],
+                sequence_location = sequence_location,
+                    # These two get populated in the core stats pipeline.
                 sequence_checksum = None,
                 ga4gh_identifier = None,
             ))
