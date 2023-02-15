@@ -14,7 +14,7 @@ Unit tests for api module
 """
 from ensembl.production.metadata.api import *
 
-DB_NAME = 'mysql://root:@127.0.0.1:3306/ensembl_metadata_2020'
+DB_NAME = 'mysql://root:@127.0.0.1:3306/ensembl_genome_metadata'
 TX_NAME = 'mysql://root:@127.0.0.1:3306/ncbi_taxonomy'
 
 

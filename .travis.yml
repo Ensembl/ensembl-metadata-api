@@ -15,7 +15,7 @@ before_script:
   - pip install -r requirements-test.txt
   - pip install .
   - export PYTHONPATH=$PYTHONPATH:$PWD/src
-  - mysql -u root -h 127.0.0.1 -e 'CREATE DATABASE ncbi_taxonomy; CREATE DATABASE ensembl_metadata_2020; use ncbi_taxonomy; source tests/ncbi_taxonomy.sql; use ensembl_metadata_2020; source tests/ensembl_metadata_2020.sql; source tests/Core_testdb_creater.sql'
+  - mysql -u root -h 127.0.0.1 -e 'CREATE DATABASE ncbi_taxonomy; CREATE DATABASE ensembl_genome_metadata; use ncbi_taxonomy; source tests/ncbi_taxonomy.sql; use ensembl_genome_metadata; source tests/ensembl_genome_metadata.sql; source tests/Core_testdb_creater.sql'
 
 script:
   - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi
