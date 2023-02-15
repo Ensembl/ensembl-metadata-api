@@ -11,8 +11,6 @@ DB_NAME3 = 'mysql://root:@127.0.0.1:3306/test_core_3'
 DB_NAME4 = 'mysql://root:@127.0.0.1:3306/test_core_4'
 
 
-# !DP! Currently local. Add the core_testdb_creator.sql to the travis file before push!!
-# Entirely from the Meta table.
 def test_new_organism():
     TEST = meta_factory(DB_NAME1, MD_NAME)
     TEST.process_core()

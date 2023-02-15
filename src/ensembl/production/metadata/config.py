@@ -13,9 +13,7 @@ import os
 
 
 def get_metadata_uri():
-    return "mysql://danielp:Killadam69!@localhost:3306/ensembl_genome_metadata"
-    #return os.environ.get("METADATA_URI", None)
+    return os.environ.get("METADATA_URI", None)
 
 def get_taxonomy_uri():
-    return "mysql://danielp:Killadam69!@localhost:3306/ncbi_taxonomy"
-    #return os.environ.get("TAXONOMY_URI", None)
+    return os.environ.get("TAXONOMY_URI", None)
