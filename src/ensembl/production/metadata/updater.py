@@ -167,19 +167,17 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # Dataset checks here.
             # Dataset section. More logic will be necessary for additional datasets. Currently only the genebuild is listed here.
         for dataset in self.datasets:
+            with self.metadata_db.session_scope() as session:
             # Check to see if any already exist:
             # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
-            if dataset.name == "genebuild":
-                dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
-                                                             Dataset.version == dataset.version,
-                                                             Dataset.label == dataset.label).first()
-                if dataset_test is None:
-                    with self.metadata_db.session_scope() as session:
-                        print(dataset.name, dataset.version)
+                if dataset.name == "genebuild":
+                    dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
+                                                                 Dataset.version == dataset.version,
+                                                                 Dataset.label == dataset.label).first()
+                    if dataset_test is None:
                         gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
                         dataset.dataset_type = gb_dataset_type
                         dataset.dataset_source = self.dataset_source
-                        print(dataset.version)
                         session.add(dataset)
 
     def create_organism(self):
