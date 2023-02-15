@@ -130,9 +130,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     Organism.ensembl_name == self.organism.ensembl_name)).one()
             self.organism.organism_id = test_organism.Organism.organism_id
             self.organism.scientific_parlance_name = test_organism.Organism.scientific_parlance_name
-            #           The following should work, but doesn't due to some type switching.
-            # !DP!# Change this if you do for the other checks.
-            #            if test_organism.Organism == self.organism:
+
             if int(test_organism.Organism.species_taxonomy_id) == int(self.organism.species_taxonomy_id) and \
                     int(test_organism.Organism.taxonomy_id) == int(self.organism.taxonomy_id) and \
                     str(test_organism.Organism.display_name) == str(self.organism.display_name) and \
@@ -140,45 +138,50 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     str(test_organism.Organism.url_name) == str(self.organism.url_name) and \
                     str(test_organism.Organism.strain) == str(self.organism.strain):
                 logging.info("Old Organism with no change. No update to organism table")
+                ################################################################
+                ##### Assembly Check and Update
+                ################################################################
+                with self.metadata_db.session_scope() as session:
+                    assembly_acc = session.execute(db.select(ensembl.production.metadata.models.Assembly
+                                                             ).join(Genome.assembly).join(Genome.organism).filter(
+                        Organism.ensembl_name == self.organism.ensembl_name)).all()
+                    new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")
+                    assembly_test = False
+                    for assembly_obj in assembly_acc:
+                        if assembly_obj[0].accession == new_assembly_acc:
+                            assembly_test = True
+                if assembly_test:
+                    logging.info(
+                        "Old Assembly with no change. No update to Genome, genome_release, assembly, and assembly_sequence tables.")
+                else:
+                    logging.info("New Assembly. Updating  genome, genome_release,"
+                                 " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
+                    self.update_assembly()
+                ################################################################
+                ##### dataset Check and Update
+                ################################################################
+                # Dataset section. More logic will be necessary for additional datasets. Currently only the genebuild is listed here.
+
+                for dataset in self.datasets:
+                    with self.metadata_db.session_scope() as session:
+                        # Check to see if any already exist:
+                        # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
+                        if dataset.name == "genebuild":
+                            dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
+                                                                         Dataset.version == dataset.version,
+                                                                         Dataset.label == dataset.label).first()
+                            if dataset_test is None:
+                                gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
+                                dataset.dataset_type = gb_dataset_type
+                                dataset.dataset_source = self.dataset_source
+                                session.add(dataset)
+
+
             else:
                 self.update_organism()
                 logging.info("Old Organism with changes. Updating organism table")
 
-        # Assembly Check and Update
-        with self.metadata_db.session_scope() as session:
-            session.expire_on_commit = False
-            ####REWRITE CHECK!!!
-            assembly_acc = session.execute(db.select(ensembl.production.metadata.models.Assembly
-                                                     ).join(Genome.assembly).join(Genome.organism).filter(
-                Organism.ensembl_name == self.organism.ensembl_name)).all()
-        new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")
-        assembly_test = False
-        for assembly_obj in assembly_acc:
-            if assembly_obj[0].accession == new_assembly_acc:
-                assembly_test = True
-        if assembly_test:
-            logging.info(
-                "Old Assembly with no change. No update to Genome, genome_release, assembly, and assembly_sequence tables.")
-        else:
-            logging.info("New Assembly. Updating  genome, genome_release,"
-                         " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
-            self.update_assembly()
 
-            # Dataset checks here.
-            # Dataset section. More logic will be necessary for additional datasets. Currently only the genebuild is listed here.
-        for dataset in self.datasets:
-            with self.metadata_db.session_scope() as session:
-            # Check to see if any already exist:
-            # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
-                if dataset.name == "genebuild":
-                    dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
-                                                                 Dataset.version == dataset.version,
-                                                                 Dataset.label == dataset.label).first()
-                    if dataset_test is None:
-                        gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
-                        dataset.dataset_type = gb_dataset_type
-                        dataset.dataset_source = self.dataset_source
-                        session.add(dataset)
 
     def create_organism(self):
         # In this, we are assuming that with a new genome, there will be a new assemblbly.
@@ -235,9 +238,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                             DatasetType.name == "genebuild").first()
                         dataset.dataset_source = self.dataset_source
                         session.add(dataset)
-
             # Add everything to the database. Closing the session commits it.
-            session.add(self.organism)
+                        session.add(self.organism)
 
     def update_organism(self):
         with self.metadata_db.session_scope() as session:
