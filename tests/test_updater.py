@@ -1,6 +1,4 @@
-from sqlalchemy import create_engine, MetaData, Table, select
 
-from ensembl.production.metadata.api import *
 from ensembl.production.metadata.updater import *
 
 MD_NAME = 'mysql://root:@127.0.0.1:3306/ensembl_genome_metadata'
