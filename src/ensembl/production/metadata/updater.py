@@ -23,7 +23,6 @@ from sqlalchemy.orm import aliased
 
 import ensembl.production.metadata.models
 from ensembl.core.models import *
-from ensembl.database.dbconnection import DBConnection
 from ensembl.production.metadata.api import *
 
 
@@ -42,8 +41,8 @@ class BaseMetaUpdater:
         else:
             self.listed_release = release
             self.listed_release_is_current = \
-            ReleaseAdaptor(metadata_uri).fetch_releases(release_id=self.listed_release)[
-                0].EnsemblRelease.is_current
+                ReleaseAdaptor(metadata_uri).fetch_releases(release_id=self.listed_release)[
+                    0].EnsemblRelease.is_current
         self.metadata_db = DBConnection(metadata_uri)
 
     # Basic API for the meta table in the submission database.
@@ -153,10 +152,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                      ).join(Genome.assembly).join(Genome.organism).filter(
                 Organism.ensembl_name == self.organism.ensembl_name)).all()
         new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")
-        assembly_test=False
+        assembly_test = False
         for assembly_obj in assembly_acc:
             if assembly_obj[0].accession == new_assembly_acc:
-                assembly_test=True
+                assembly_test = True
         if assembly_test:
             logging.info(
                 "Old Assembly with no change. No update to Genome, genome_release, assembly, and assembly_sequence tables.")
@@ -180,7 +179,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                         gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
                         dataset.dataset_type = gb_dataset_type
                         dataset.dataset_source = self.dataset_source
-                        print (dataset.version)
+                        print(dataset.version)
                         session.add(dataset)
 
     def create_organism(self):
@@ -234,7 +233,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                                  Dataset.version == dataset.version,
                                                                  Dataset.label == dataset.label).first()
                     if dataset_test is None:
-                        dataset.dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
+                        dataset.dataset_type = session.query(DatasetType).filter(
+                            DatasetType.name == "genebuild").first()
                         dataset.dataset_source = self.dataset_source
                         session.add(dataset)
 
@@ -262,10 +262,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # Get the genome
             self.organism = session.query(Organism).filter(
                 Organism.ensembl_name == self.organism.ensembl_name).first()
-            print (self.organism)
+            print(self.organism)
             self.genome.organism = self.organism
             self.assembly.genomes.append(self.genome)
-
 
             if self.listed_release is not None:
                 release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == self.listed_release).first()
@@ -310,10 +309,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                     DatasetSource.name == self.dataset_source.name)).one_or_none()
                             dataset.dataset_source = self.dataset_source
                             session.add(dataset)
-
-
-
-
 
     # The following methods populate the data from the core into the objects. K
     # It may be beneficial to move them to the base class with later implementations
@@ -568,5 +563,3 @@ def meta_factory(db_uri, metadata_uri=None):
         raise Exception("other not implemented yet")
     else:
         raise "Can't find data_type for database " + db_url.database
-
-
