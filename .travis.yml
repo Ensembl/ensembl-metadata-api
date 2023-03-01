@@ -26,6 +26,7 @@ deploy:
       tags: true
       repo: Ensembl/ensembl-metadata-api
       condition: "$TRAVIS_TAG =~ ^[0-9]+\\.[0-9]+(\\.[0-9]+)?-test(\\.[0-9]+)?$"
+    skip_existing: true
   - provider: pypi
     username: __token__
     password:
@@ -34,3 +35,4 @@ deploy:
       tags: true
       repo: Ensembl/ensembl-metadata-api
       condition: "$TRAVIS_TAG =~ ^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+    skip_existing: true
