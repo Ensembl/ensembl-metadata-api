@@ -30,6 +30,8 @@ class BaseAdaptor:
 
 
 class ReleaseAdaptor(BaseAdaptor):
+
+
     def fetch_releases(
             self,
             release_id=None,
@@ -121,6 +123,45 @@ class ReleaseAdaptor(BaseAdaptor):
                 release_ids.append(rid[0])
             release_ids = list(dict.fromkeys(release_ids))
         return self.fetch_releases(release_id=release_ids, site_name=site_name)
+
+
+class NewReleaseAdaptor(BaseAdaptor):
+
+    def __init__(self, metadata_uri=None):
+        super().__init__(metadata_uri)
+        # Get current release ID from ensembl_release
+        with self.metadata_db.session_scope() as session:
+            self.current_release_id = (session.execute(db.select(EnsemblRelease.release_id).filter(EnsemblRelease.is_current == 1)).one()[0])
+        if self.current_release_id == "":
+            raise Exception("Current release not found")
+     #   print (self.current_release_id)
+
+        # Get last release ID from ensembl_release
+        with self.metadata_db.session_scope() as session:
+            ############### Refactor this once done. It is messy.
+            current_version = int(session.execute(db.select(EnsemblRelease.version).filter(EnsemblRelease.release_id == self.current_release_id)).one()[0])
+            past_versions = session.execute(db.select(EnsemblRelease.version).filter(EnsemblRelease.version < current_version)).all()
+            sorted_versions = []
+            # Do I have to account for 1.12 and 1.2
+            for version in past_versions:
+                sorted_versions.append(float(version[0]))
+            sorted_versions.sort()
+            self.previous_release_id = (session.execute(db.select(EnsemblRelease.release_id).filter(EnsemblRelease.version == sorted_versions[-1])).one()[0])
+            if self.previous_release_id == "":
+                raise Exception("Previous release not found")
+
+    #     new_genomes (list of new genomes in the new release)
+    def fetch_new_genomes(self):
+        with self.metadata_db.session_scope() as session:
+            genome_selector=db.select(
+            EnsemblRelease, EnsemblSite
+        ).join(EnsemblRelease.ensembl_site)
+            old_genomes = session.execute(db.select(EnsemblRelease.version).filter(EnsemblRelease.version < current_version)).all()
+        new_genomes = []
+        novel_old_genomes = []
+        novel_new_genomes = []
+
+        return session.execute(release_select).all()
 
 
 class GenomeAdaptor(BaseAdaptor):
@@ -383,3 +424,7 @@ class GenomeAdaptor(BaseAdaptor):
         return self.fetch_sequences(
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
+
+
+
+
