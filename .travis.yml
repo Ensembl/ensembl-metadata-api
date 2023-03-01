@@ -1,40 +1,36 @@
 language: python
 os: linux
-
 python:
-  - "3.8"
-  - "3.9"
-
+  - '3.8'
+  - '3.9'
 env:
   - TESTENV=test
-
 services:
   - mysql
-
 before_script:
   - pip install -r requirements-test.txt
   - pip install .
   - export PYTHONPATH=$PYTHONPATH:$PWD/src
-  - mysql -u root -h 127.0.0.1 -e 'CREATE DATABASE ncbi_taxonomy; CREATE DATABASE ensembl_metadata_2020; use ncbi_taxonomy; source tests/ncbi_taxonomy.sql; use ensembl_metadata_2020; source tests/ensembl_metadata_2020.sql;'
-
+  - mysql -u root -h 127.0.0.1 -e 'CREATE DATABASE ncbi_taxonomy; CREATE DATABASE ensembl_metadata_2020;
+    use ncbi_taxonomy; source tests/ncbi_taxonomy.sql; use ensembl_metadata_2020; source
+    tests/ensembl_metadata_2020.sql;'
 script:
   - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi
-
 deploy:
-- provider: pypi
-  server: https://test.pypi.org/legacy/
-  username: __token__
-  password:
-    secure: pypi-AgENdGVzdC5weXBpLm9yZwIkZmE4NzQyNDItOGYxZi00YmU4LWJhMjUtOGY4MTFlZDJkNTdhAAIqWzMsImUxMTA1NjRlLTUxYTktNDdkMi04MjVkLTFjMTA4MzNkYzY5MyJdAAAGID2E1vVgEWQEXR7Jx_9LTDDYwvzZS69seAqy3cSHDje3
-  on:
-    tags: true
-    repo: Ensembl/ensembl-metadata-api
-    condition: $TRAVIS_TAG =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?-test(\.[0-9]+)?$
-- provider: pypi
-  username: __token__
-  password:
-    secure: pypi-AgEIcHlwaS5vcmcCJDEzNGYzYWFmLWFjZjctNGNhZi1hZDYwLWI1ODliMTRlNTM3ZQACKlszLCI2ZWE2YjRkZC0wMjM2LTRjNWQtODI1Mi01NDVhY2UzZjc2NDgiXQAABiBVFYpoaz8RC85SBbrxa2yGgGBPj02vzW0GFKIQZ5apxQ
-  on:
-    tags: true
-    repo: Ensembl/ensembl-metadata-api
-    condition: $TRAVIS_TAG =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$
+  - provider: pypi
+    server: https://test.pypi.org/legacy/
+    username: __token__
+    password:
+      secure: UCGgJqX0irr4E/Nw+hOWZojH4oj17a92opGGGMUCFsIN7vaOW7+rdEqLmvjR3cF3aTD2taMpDMBOIHOKy9xzv448FvA89ICpqbASaFhkb63UrCNCT8CMgBjrQyCqgONnlNlCDx8Od3LEd3muKUUJUzqWFVBTKD/OwFut7+Ju9rUnf5dYLUqQ1Mxl+T93G3wZtp7xCw1AyevEuF3adbDiukJDz93BGG3YiUlpIIg2DLJZMat0++O+4phCQKro6iYqbWWwCpj2t9BKeCqD7X4jG+ND3++Kg8K9SKTzpIWc5Rnk/ohuzTE0cDncrtR9HBopPaZwVyUzQkXJdIrjiW3wxPrh15SGWhpgmjvpRPkTYOfOnCB6JnvBGsErZ/sC/V5yT7u8btZ4Vi2Q8fTfThAU/ULD/15DtmHl08Hc+R+dV0gkgCCEVNUHBP65rlLKjXwHjItDlzpVtUBkDMH14E7QgN0X+lrysMXFs01MxcxLhGw8yL08XUPUjdoBgLWLTpVkR2rrhDvXSaIVa/OLJXILRfvdHkh5VoiffVqVyAmscUJnN8YTFi304aQix6/Ubs1Ajiq2oubF7tML9XCErL24IHzOkXelmtipmzO8uUV2WSxakLRX+EH6L7Cccvgba8cYFcsurgJxF29CU1ZAAHWhHGfpf2Y4pmZyRmDl0SP6YDw=
+    on:
+      tags: true
+      repo: Ensembl/ensembl-metadata-api
+      condition: "$TRAVIS_TAG =~ ^[0-9]+\\.[0-9]+(\\.[0-9]+)?-test(\\.[0-9]+)?$"
+  - provider: pypi
+    username: __token__
+    password:
+      secure: oStGO0suyyGYgYU2cckOz/0o2RgdTg2Kxg3Xs8c6M/V+BbffgKk9RNYCtSPmggXdMO4esKdhn8nHWzG8P49XiWo11v/W7O6N6DrJSLpk/Pt4P8u2U92TK6YLHKzvGd3LNVI42QOk4XaC63w4vkXU0afd5g2Fhflm3Hk4uEzYfRRhViJBm/SYt+/pQuZTpyGO7sh0s0VLVc1l3TMMyAvvuU6yQro1B7DugiwJqLVuV28qCZGIykbk5j6nXsNngmbVfb+Pxgu3j8XQAMh8KTWlZIW92iNWJyFVx6wRleM/NRcrWHzylq8flRYV3pbY/uZaGsd6x07NekvqVOz33gZJi7DiYSPJBf4S1ZIGorprlTj0+Y3IAOW9Y1MMmSxurjAQGZ69F8SLiuzUpd2GJaDFRP3nA2fzPzSwcFmVKzTSl2Ey8bpz8VDF33Zs6PM4sBg8EcE2PTRueJ14Kf5lDm5RbhQMFDqU4iMPPDlDBDNc3C1AsgQbrDE4I9YG893MruNgjIADIGMuqOcF/j0Dq5if/IfBCh2Au/JWLpejZgS6upr3m9NoyWWbmOYG3lc2k1gDaKS/B45NypbOvz43EwSbs5ajEkvekZpZJ3E/OUtcURNUctqZM7rEkwU2VtAxyHLLkUY+/65ZZK5GK+j5xbFV5RtayH/OX4zODvlBz6l3PC4=
+    on:
+      tags: true
+      repo: Ensembl/ensembl-metadata-api
+      condition: "$TRAVIS_TAG =~ ^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
