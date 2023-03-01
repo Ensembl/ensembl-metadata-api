@@ -22,10 +22,10 @@ script:
 
 deploy:
 - provider: pypi
-  username: __token__
   server: https://test.pypi.org/legacy/
+  username: __token__
   password:
-    secure: iu51t2rMc+jRJs8kFEUb9Ew3qcOYKWQjVF8WV/5Gb4xBvd874kQfmeEr9o0AlwacSSAQw+/GlrXX89iBpKayn7fXKMacYx08MwCGOm+8jcYUYmS9oXkj1pHYd4WhGLh3RP+avAlbJYHGs6s2Vc7ypamTb2gA1vfe96pDUo+JebulWd6oCDSk/rLltebMvG5DSrkNZoUTEOe1f1228eYF7GNlcYaxNEvatuPv6dK8ismBan/DJj8KcGBq+kGfZSmj9dZLjvZKRvLAi5vFvszn1rsSlxnk2WOQUMO3jZ5L+oLRxWrucS95qREvz0CFcH9qj84dvkZ4Db5eY/YPOZnpanjeKw6MKnkeIMtxVsiNev2COl8IoJlSI7XveOssdqVey7+UvmfR/S9Lw+U25liDAMrlIDwCj2e2Yo03hcWRm0bMeDWGDJZul2ZrXaUPy0DX47xytVSwGoe6zwll99oAU8O6SqtERsvY+3eZ4qccClDm/DSEHpAc4N3An5oG5CuDuqWaGx2t0Q+qOYixcmkJkd73cC7zygi00EgrIV81E2ftn/1kA/ql4jO+dSN4W9+2W09OZsOYYFlTBqj/KAQJVi2lxeBhZTEjL2eD2P2xyObElMMyY4Iy/iD05ewdG6diGJ0ja54ssZTEwgQPo5t75tftCAX98xk6bdhfX/AWgsY=
+    secure: pypi-AgENdGVzdC5weXBpLm9yZwIkZmE4NzQyNDItOGYxZi00YmU4LWJhMjUtOGY4MTFlZDJkNTdhAAIqWzMsImUxMTA1NjRlLTUxYTktNDdkMi04MjVkLTFjMTA4MzNkYzY5MyJdAAAGID2E1vVgEWQEXR7Jx_9LTDDYwvzZS69seAqy3cSHDje3
   on:
     tags: true
     repo: Ensembl/ensembl-metadata-api
@@ -33,7 +33,7 @@ deploy:
 - provider: pypi
   username: __token__
   password:
-    secure: LMV5E2zPw7Ti8guRoFetRP3lktNM+kBtaqjrgI0GdL28mzmIzPLA6iD/NBRj8exN7HfVPGe3jTyzzZK/mMxQ0I/ITgG/GFWOGeY0PkqMunUMljazngWj5YMgkgHke7jJUOuM8eCX9wN/b+jE+fZ4P7wfgnJEQzI5s/yFxP/yirqgkvPnyLeNDKwvuMguwyL7sVLfSXd9pH8xH1tFfeptSmfLnKgxG+FglcAtCrWKX87aaS360I885fLWkwTODD/gg5qpIUibp4gsPAeZ3GYvq4eSjyAZtLysYGroUWBbtamyMIguloljD/7SjLlh+XUDw6odEil9+orVZW95+ZkO6aiNUFvRb/EcxtR1MaUUrLTiLrZ4ialcHKZBsfXmknp/wgRJfdqhHdPG3CCDJJWEAOdA6snyRiccgW7wbbdVa4+l1WQKEgqvB1jm7duYXlr6sswEYy6n8H0z7/J7qg6If3tSHR1MQ51Yp0TSFuX0UBZnJbt7GM1cUQGf+TTszPT55FQ0DSknCq8mTbkk1d1eDLwtPUIOEilMyW89dSJFG67Js/Ro3V7GYEfy8pTTOjpPNi0XlodgHJ/0VcnsYeEYiDvweORRzgTyypUEJShXGlhaUPkw5zjphayjtxJ2/8IlLbmYHRVOVqhbZk/7OnEJxaAgk/gMGk/A5BPiqTa13kQ=
+    secure: pypi-AgEIcHlwaS5vcmcCJDEzNGYzYWFmLWFjZjctNGNhZi1hZDYwLWI1ODliMTRlNTM3ZQACKlszLCI2ZWE2YjRkZC0wMjM2LTRjNWQtODI1Mi01NDVhY2UzZjc2NDgiXQAABiBVFYpoaz8RC85SBbrxa2yGgGBPj02vzW0GFKIQZ5apxQ
   on:
     tags: true
     repo: Ensembl/ensembl-metadata-api
