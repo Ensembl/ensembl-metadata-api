@@ -4,7 +4,7 @@
 
 -- MySQL dump 10.13  Distrib 8.0.30, for Linux (x86_64)
 --
--- Host: localhost    Database: ensembl_metadata_2020
+-- Host: localhost    Database: ensembl_genome_metadata
 -- ------------------------------------------------------
 -- Server version	8.0.30-0ubuntu0.22.04.1
 
@@ -20,12 +20,12 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Current Database: `ensembl_metadata_2020`
+-- Current Database: `ensembl_genome_metadata`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ensembl_metadata_2020` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ensembl_genome_metadata` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
-USE `ensembl_metadata_2020`;
+USE `ensembl_genome_metadata`;
 
 --
 -- Table structure for table `assembly`
@@ -82,7 +82,7 @@ CREATE TABLE `assembly_sequence` (
   PRIMARY KEY (`assembly_sequence_id`),
   UNIQUE KEY `assembly_sequence_assembly_id_accession_5f3e5119_uniq` (`assembly_id`,`accession`),
   KEY `assembly_sequence_assembly_id_2a84ddcb` (`assembly_id`),
-  CONSTRAINT `assembly_sequence_assembly_id_2a84ddcb_fk_assembly_assembly_id` FOREIGN KEY (`assembly_id`) REFERENCES `assembly` (`assembly_id`)
+  CONSTRAINT `assembly_sequence_assembly_id_2a84ddcb_fk_assembly_assembly_id` FOREIGN KEY (`assembly_id`) REFERENCES `assembly` (`assembly_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=256 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -142,8 +142,8 @@ CREATE TABLE `dataset` (
   UNIQUE KEY `dataset_uuid` (`dataset_uuid`),
   KEY `dataset_dataset_source_id_fd96f115_fk_dataset_s` (`dataset_source_id`),
   KEY `dataset_type_id_eb55ae9a` (`dataset_type_id`),
-  CONSTRAINT `dataset_dataset_source_id_fd96f115_fk_dataset_s` FOREIGN KEY (`dataset_source_id`) REFERENCES `dataset_source` (`dataset_source_id`),
-  CONSTRAINT `dataset_dataset_type_id_47284562_fk_dataset_type_dataset_type_id` FOREIGN KEY (`dataset_type_id`) REFERENCES `dataset_type` (`dataset_type_id`)
+  CONSTRAINT `dataset_dataset_source_id_fd96f115_fk_dataset_s` FOREIGN KEY (`dataset_source_id`) REFERENCES `dataset_source` (`dataset_source_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `dataset_dataset_type_id_47284562_fk_dataset_type_dataset_type_id` FOREIGN KEY (`dataset_type_id`) REFERENCES `dataset_type` (`dataset_type_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=671 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -174,8 +174,8 @@ CREATE TABLE `dataset_attribute` (
   UNIQUE KEY `dataset_attribute_dataset_id_attribute_id__d3b34d8c_uniq` (`dataset_id`,`attribute_id`,`type`,`value`),
   KEY `dataset_attribute_attribute_id_55c51407_fk_attribute` (`attribute_id`),
   KEY `dataset_attribute_dataset_id_2e2afe19` (`dataset_id`),
-  CONSTRAINT `dataset_attribute_attribute_id_55c51407_fk_attribute` FOREIGN KEY (`attribute_id`) REFERENCES `attribute` (`attribute_id`),
-  CONSTRAINT `dataset_attribute_dataset_id_2e2afe19_fk_dataset_dataset_id` FOREIGN KEY (`dataset_id`) REFERENCES `dataset` (`dataset_id`)
+  CONSTRAINT `dataset_attribute_attribute_id_55c51407_fk_attribute` FOREIGN KEY (`attribute_id`) REFERENCES `attribute` (`attribute_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `dataset_attribute_dataset_id_2e2afe19_fk_dataset_dataset_id` FOREIGN KEY (`dataset_id`) REFERENCES `dataset` (`dataset_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=586 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -239,7 +239,7 @@ CREATE TABLE `dataset_type` (
 
 LOCK TABLES `dataset_type` WRITE;
 /*!40000 ALTER TABLE `dataset_type` DISABLE KEYS */;
-INSERT INTO `dataset_type` VALUES (1,'assembly','Genomic assembly','assembly',NULL,NULL),(2,'checksum_xrefs','Cross-references','geneset_annotation','Cross-references assigned by checksum (i.e. sequence identity)',NULL),(3,'alignment_xrefs','Cross-references','geneset_annotation','Cross-references assigned by alignment (i.e. sequence similarity)',NULL),(4,'dependent_xrefs','Cross-references','geneset_annotation','Cross-references assigned via an intermediate annotation',NULL),(5,'direct_xrefs','Cross-references','geneset_annotation','Cross-references imported from external annotation',NULL),(6,'dna_alignments','DNA alignments','assembly_annotation','Features aligned against the genome',NULL),(7,'geneset','Geneset','geneset_annotation',NULL,NULL),(8,'gene_families','Gene families','comparative',NULL,NULL),(9,'gene_trees','Gene trees','comparative',NULL,NULL),(10,'multiple_alignment','Multiple genome alignment','comparative',NULL,NULL),(11,'pairwise_alignment','Pairwise genome alignment','comparative',NULL,NULL),(12,'go_terms','GO terms','geneset_annotation',NULL,NULL),(13,'homologies','Homologies','comparative',NULL,NULL),(14,'microarrays','Microarrays','geneset_annotation',NULL,NULL),(15,'phenotypes','Phenotypes','variation',NULL,NULL),(16,'protein_alignments','Protein alignments','geneset_annotation','Features aligned against proteins',NULL),(17,'protein_features','Protein domains and features','geneset_annotation',NULL,NULL),(18,'repeat_features','Repeat features','assembly_annotation',NULL,NULL),(19,'rnaseq_alignments','RNAseq alignments','assembly_annotation','RNAseq data aligned against the genome',NULL),(20,'syntenies','Syntenies','comparative',NULL,NULL),(21,'variants','Variants','variation',NULL,NULL),(22,'assembly','Genomic assembly','assembly',NULL,NULL),(23,'checksum_xrefs','Cross-references','geneset_annotation','Cross-references assigned by checksum (i.e. sequence identity)',NULL),(24,'alignment_xrefs','Cross-references','geneset_annotation','Cross-references assigned by alignment (i.e. sequence similarity)',NULL),(25,'dependent_xrefs','Cross-references','geneset_annotation','Cross-references assigned via an intermediate annotation',NULL),(26,'direct_xrefs','Cross-references','geneset_annotation','Cross-references imported from external annotation',NULL),(27,'dna_alignments','DNA alignments','assembly_annotation','Features aligned against the genome',NULL),(28,'geneset','Geneset','geneset_annotation',NULL,NULL),(29,'gene_families','Gene families','comparative',NULL,NULL),(30,'gene_trees','Gene trees','comparative',NULL,NULL),(31,'multiple_alignment','Multiple genome alignment','comparative',NULL,NULL),(32,'pairwise_alignment','Pairwise genome alignment','comparative',NULL,NULL),(33,'go_terms','GO terms','geneset_annotation',NULL,NULL),(34,'homologies','Homologies','comparative',NULL,NULL),(35,'microarrays','Microarrays','geneset_annotation',NULL,NULL),(36,'phenotypes','Phenotypes','variation',NULL,NULL),(37,'protein_alignments','Protein alignments','geneset_annotation','Features aligned against proteins',NULL),(38,'protein_features','Protein domains and features','geneset_annotation',NULL,NULL),(39,'repeat_features','Repeat features','assembly_annotation',NULL,NULL),(40,'rnaseq_alignments','RNAseq alignments','assembly_annotation','RNAseq data aligned against the genome',NULL),(41,'syntenies','Syntenies','comparative',NULL,NULL),(42,'variants','Variants','variation',NULL,NULL);
+INSERT INTO `dataset_type` VALUES (1,'assembly','Genomic assembly','assembly',NULL,NULL),(2,'checksum_xrefs','Cross-references','geneset_annotation','Cross-references assigned by checksum (i.e. sequence identity)',NULL),(3,'alignment_xrefs','Cross-references','geneset_annotation','Cross-references assigned by alignment (i.e. sequence similarity)',NULL),(4,'dependent_xrefs','Cross-references','geneset_annotation','Cross-references assigned via an intermediate annotation',NULL),(5,'direct_xrefs','Cross-references','geneset_annotation','Cross-references imported from external annotation',NULL),(6,'dna_alignments','DNA alignments','assembly_annotation','Features aligned against the genome',NULL),(7,'geneset','Geneset','geneset_annotation',NULL,NULL),(8,'gene_families','Gene families','comparative',NULL,NULL),(9,'gene_trees','Gene trees','comparative',NULL,NULL),(10,'multiple_alignment','Multiple genome alignment','comparative',NULL,NULL),(11,'pairwise_alignment','Pairwise genome alignment','comparative',NULL,NULL),(12,'go_terms','GO terms','geneset_annotation',NULL,NULL),(13,'homologies','Homologies','comparative',NULL,NULL),(14,'microarrays','Microarrays','geneset_annotation',NULL,NULL),(15,'phenotypes','Phenotypes','variation',NULL,NULL),(16,'protein_alignments','Protein alignments','geneset_annotation','Features aligned against proteins',NULL),(17,'protein_features','Protein domains and features','geneset_annotation',NULL,NULL),(18,'repeat_features','Repeat features','assembly_annotation',NULL,NULL),(19,'rnaseq_alignments','RNAseq alignments','assembly_annotation','RNAseq data aligned against the genome',NULL),(20,'syntenies','Syntenies','comparative',NULL,NULL),(21,'variants','Variants','variation',NULL,NULL),(22,'assembly','Genomic assembly','assembly',NULL,NULL),(23,'checksum_xrefs','Cross-references','geneset_annotation','Cross-references assigned by checksum (i.e. sequence identity)',NULL),(24,'alignment_xrefs','Cross-references','geneset_annotation','Cross-references assigned by alignment (i.e. sequence similarity)',NULL),(25,'dependent_xrefs','Cross-references','geneset_annotation','Cross-references assigned via an intermediate annotation',NULL),(26,'direct_xrefs','Cross-references','geneset_annotation','Cross-references imported from external annotation',NULL),(27,'dna_alignments','DNA alignments','assembly_annotation','Features aligned against the genome',NULL),(28,'geneset','Geneset','geneset_annotation',NULL,NULL),(29,'gene_families','Gene families','comparative',NULL,NULL),(30,'gene_trees','Gene trees','comparative',NULL,NULL),(31,'multiple_alignment','Multiple genome alignment','comparative',NULL,NULL),(32,'pairwise_alignment','Pairwise genome alignment','comparative',NULL,NULL),(33,'go_terms','GO terms','geneset_annotation',NULL,NULL),(34,'homologies','Homologies','comparative',NULL,NULL),(35,'microarrays','Microarrays','geneset_annotation',NULL,NULL),(36,'phenotypes','Phenotypes','variation',NULL,NULL),(37,'protein_alignments','Protein alignments','geneset_annotation','Features aligned against proteins',NULL),(38,'protein_features','Protein domains and features','geneset_annotation',NULL,NULL),(39,'repeat_features','Repeat features','assembly_annotation',NULL,NULL),(40,'rnaseq_alignments','RNAseq alignments','assembly_annotation','RNAseq data aligned against the genome',NULL),(41,'syntenies','Syntenies','comparative',NULL,NULL),(43,'genebuild','Genebuild','genebuild',NULL,NULL),(42,'variants','Variants','variation',NULL,NULL);
 /*!40000 ALTER TABLE `dataset_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -261,7 +261,7 @@ CREATE TABLE `ensembl_release` (
   PRIMARY KEY (`release_id`),
   UNIQUE KEY `ensembl_release_version_site_id_b743399a_uniq` (`version`,`site_id`),
   KEY `ensembl_release_site_id_7c2f537a_fk_ensembl_site_site_id` (`site_id`),
-  CONSTRAINT `ensembl_release_site_id_7c2f537a_fk_ensembl_site_site_id` FOREIGN KEY (`site_id`) REFERENCES `ensembl_site` (`site_id`)
+  CONSTRAINT `ensembl_release_site_id_7c2f537a_fk_ensembl_site_site_id` FOREIGN KEY (`site_id`) REFERENCES `ensembl_site` (`site_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -271,7 +271,7 @@ CREATE TABLE `ensembl_release` (
 
 LOCK TABLES `ensembl_release` WRITE;
 /*!40000 ALTER TABLE `ensembl_release` DISABLE KEYS */;
-INSERT INTO `ensembl_release` VALUES (1,2020.0,'2022-04-01','2020 MAP 7 species',1,9,'partial');
+INSERT INTO `ensembl_release` VALUES (1,2018.0,'2021-04-01','2020 MAP 7 species',0,9,'partial'),(2,2019.0,'2022-02-01','2020 MAP 7 species',0,9,'partial'),(3,2019.1,'2022-03-02','2020 MAP 7 species',0,9,'partial'),(4,2019.2,'2022-03-15','2020 MAP 7 species',0,9,'full'),(5,2020.0,'2022-04-01','2020 MAP 7 species',1,9,'partial');
 /*!40000 ALTER TABLE `ensembl_release` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -318,8 +318,8 @@ CREATE TABLE `genome` (
   UNIQUE KEY `genome_uuid` (`genome_uuid`),
   KEY `genome_assembly_id_0a748388_fk_assembly_assembly_id` (`assembly_id`),
   KEY `genome_organism_id_99ad7f35_fk_organism_organism_id` (`organism_id`),
-  CONSTRAINT `genome_assembly_id_0a748388_fk_assembly_assembly_id` FOREIGN KEY (`assembly_id`) REFERENCES `assembly` (`assembly_id`),
-  CONSTRAINT `genome_organism_id_99ad7f35_fk_organism_organism_id` FOREIGN KEY (`organism_id`) REFERENCES `organism` (`organism_id`)
+  CONSTRAINT `genome_assembly_id_0a748388_fk_assembly_assembly_id` FOREIGN KEY (`assembly_id`) REFERENCES `assembly` (`assembly_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `genome_organism_id_99ad7f35_fk_organism_organism_id` FOREIGN KEY (`organism_id`) REFERENCES `organism` (`organism_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -350,9 +350,9 @@ CREATE TABLE `genome_dataset` (
   KEY `ensembl_metadata_gen_dataset_id_26d7bac7_fk_dataset_d` (`dataset_id`),
   KEY `ensembl_metadata_gen_genome_id_7670a2c5_fk_genome_ge` (`genome_id`),
   KEY `ensembl_metadata_gen_release_id_c5440b9a_fk_ensembl_r` (`release_id`),
-  CONSTRAINT `ensembl_metadata_gen_dataset_id_26d7bac7_fk_dataset_d` FOREIGN KEY (`dataset_id`) REFERENCES `dataset` (`dataset_id`),
-  CONSTRAINT `ensembl_metadata_gen_genome_id_7670a2c5_fk_genome_ge` FOREIGN KEY (`genome_id`) REFERENCES `genome` (`genome_id`),
-  CONSTRAINT `ensembl_metadata_gen_release_id_c5440b9a_fk_ensembl_r` FOREIGN KEY (`release_id`) REFERENCES `ensembl_release` (`release_id`)
+  CONSTRAINT `ensembl_metadata_gen_dataset_id_26d7bac7_fk_dataset_d` FOREIGN KEY (`dataset_id`) REFERENCES `dataset` (`dataset_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ensembl_metadata_gen_genome_id_7670a2c5_fk_genome_ge` FOREIGN KEY (`genome_id`) REFERENCES `genome` (`genome_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ensembl_metadata_gen_release_id_c5440b9a_fk_ensembl_r` FOREIGN KEY (`release_id`) REFERENCES `ensembl_release` (`release_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=928 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -381,8 +381,8 @@ CREATE TABLE `genome_release` (
   PRIMARY KEY (`genome_release_id`),
   KEY `genome_release_genome_id_3e45dc04_fk` (`genome_id`),
   KEY `genome_release_release_id_bca7e1e5_fk_ensembl_release_release_id` (`release_id`),
-  CONSTRAINT `genome_release_genome_id_3e45dc04_fk` FOREIGN KEY (`genome_id`) REFERENCES `genome` (`genome_id`),
-  CONSTRAINT `genome_release_release_id_bca7e1e5_fk_ensembl_release_release_id` FOREIGN KEY (`release_id`) REFERENCES `ensembl_release` (`release_id`)
+  CONSTRAINT `genome_release_genome_id_3e45dc04_fk` FOREIGN KEY (`genome_id`) REFERENCES `genome` (`genome_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `genome_release_release_id_bca7e1e5_fk_ensembl_release_release_id` FOREIGN KEY (`release_id`) REFERENCES `ensembl_release` (`release_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -471,8 +471,8 @@ CREATE TABLE `organism_group_member` (
   PRIMARY KEY (`organism_group_member_id`),
   UNIQUE KEY `organism_group_member_organism_id_organism_gro_fe8f49ac_uniq` (`organism_id`,`organism_group_id`),
   KEY `organism_group_membe_organism_group_id_533ca128_fk_organism_` (`organism_group_id`),
-  CONSTRAINT `organism_group_membe_organism_group_id_533ca128_fk_organism_` FOREIGN KEY (`organism_group_id`) REFERENCES `organism_group` (`organism_group_id`),
-  CONSTRAINT `organism_group_membe_organism_id_2808252e_fk_organism_` FOREIGN KEY (`organism_id`) REFERENCES `organism` (`organism_id`)
+  CONSTRAINT `organism_group_membe_organism_group_id_533ca128_fk_organism_` FOREIGN KEY (`organism_group_id`) REFERENCES `organism_group` (`organism_group_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `organism_group_membe_organism_id_2808252e_fk_organism_` FOREIGN KEY (`organism_id`) REFERENCES `organism` (`organism_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
