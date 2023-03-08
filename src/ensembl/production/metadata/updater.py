@@ -57,7 +57,7 @@ class BaseMetaUpdater:
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
-    def __init__(self, db_uri, metadata_uri):
+    def __init__(self, db_uri, metadata_uri, release=None):
         # Each of these objects represents a table in the database to store data in as either an array or a single object.
         self.organism = None
         self.organism_group_member = None
@@ -76,7 +76,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         self.dataset_attribute = None
         self.attribute = None
 
-        super().__init__(db_uri, metadata_uri)
+        super().__init__(db_uri, metadata_uri, release=None)
         self.db_type = 'core'
 
     def process_core(self):
@@ -532,7 +532,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
         ))
         # Protein Features
 
-
+## Section will be moved to the hive pipeline and nextflow. Do not delete until both are done!
+## Tests will need to be altered at that point.
 def meta_factory(db_uri, metadata_uri=None):
     db_url = make_url(db_uri)
     if '_compara_' in db_url.database:
