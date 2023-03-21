@@ -1,15 +1,31 @@
-
+# See the NOTICE file distributed with this work for additional information
+#   regarding copyright ownership.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#       http://www.apache.org/licenses/LICENSE-2.0
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+import os
 from ensembl.production.metadata.updater import *
 
-MD_NAME = 'mysql://root:@127.0.0.1:3306/ensembl_genome_metadata'
-TX_NAME = 'mysql://root:@127.0.0.1:3306/ncbi_taxonomy'
-DB_NAME1 = 'mysql://root:@127.0.0.1:3306/test_core_1'
-DB_NAME2 = 'mysql://root:@127.0.0.1:3306/test_core_2'
-DB_NAME3 = 'mysql://root:@127.0.0.1:3306/test_core_3'
-DB_NAME4 = 'mysql://root:@127.0.0.1:3306/test_core_4'
+DB_HOST = os.getenv('DB_HOST', 'ensembl@127.0.0.1:3306')
+MD_NAME = f'mysql://{DB_HOST}/ensembl_genome_metadata'
+TX_NAME = f'mysql://{DB_HOST}/ncbi_taxonomy'
+DB_NAME1 = f'mysql://{DB_HOST}/test_core_1'
+DB_NAME2 = f'mysql://{DB_HOST}/test_core_2'
+DB_NAME3 = f'mysql://{DB_HOST}/test_core_3'
+DB_NAME4 = f'mysql://{DB_HOST}/test_core_4'
 
+os.environ["METADATA_URI"] = MD_NAME
+os.environ["TAXONOMY_URI"] = TX_NAME
 
 def test_new_organism():
+    print("DBAME1", DB_NAME1)
+    print("METADATAURI", os.environ.get)
     TEST = meta_factory(DB_NAME1, MD_NAME)
     TEST.process_core()
     # Look for organism, assembly and geneset

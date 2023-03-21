@@ -12,7 +12,7 @@ charset-normalizer==2.1.1
     # via requests
 ensembl-hive @ git+https://github.com/Ensembl/ensembl-hive.git@main
     # via ensembl-py
-ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git
+ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git@1.0.0dev1
     # via -r requirements.in
 greenlet==1.1.0
     # via sqlalchemy
