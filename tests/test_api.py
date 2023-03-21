@@ -64,7 +64,7 @@ def test_fetch_taxonomy_ids():
 def test_fetch_genomes():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes()
-    assert TEST[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12'
+    assert TEST[0].Organism.scientific_name == 'Caenorhabditis elegans'
 
 
 def test_fetch_genomes_by_genome_uuid():
