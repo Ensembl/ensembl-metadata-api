@@ -4,8 +4,7 @@ python:
   - '3.8'
   - '3.9'
 env:
-  - TESTENV=test
-  - DB_HOST='root:@127.0.0.1:3306'
+  - TESTENV=test DB_HOST='root:@127.0.0.1:3306'
 services:
   - mysql
 before_script:
