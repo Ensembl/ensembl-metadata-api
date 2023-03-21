@@ -4,7 +4,8 @@ python:
   - '3.8'
   - '3.9'
 env:
-  - TESTENV=test METADATA_URI='mysql://root:@127.0.0.1:3306/ensembl_genome_metadata' TAXONOMY_URI='mysql://root:@127.0.0.1:3306/ncbi_taxonomy'
+  - TESTENV=test
+  - DB_HOST='root:@127.0.0.1:3306'
 services:
   - mysql
 before_script:

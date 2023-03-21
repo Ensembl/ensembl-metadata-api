@@ -24,8 +24,6 @@ os.environ["METADATA_URI"] = MD_NAME
 os.environ["TAXONOMY_URI"] = TX_NAME
 
 def test_new_organism():
-    print("DBAME1", DB_NAME1)
-    print("METADATAURI", os.environ.get)
     TEST = meta_factory(DB_NAME1, MD_NAME)
     TEST.process_core()
     # Look for organism, assembly and geneset
