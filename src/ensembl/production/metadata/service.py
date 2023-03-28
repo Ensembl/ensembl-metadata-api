@@ -326,6 +326,7 @@ def get_genomes_by_keyword_iterator(metadata_db, keyword, release_version):
         .where(or_(assembly.c.tolid == keyword,
                    assembly.c.accession == keyword,
                    assembly.c.name == keyword,
+                   assembly.c.ensembl_name == keyword,
                    organism.c.scientific_name == keyword,
                    organism.c.scientific_parlance_name == keyword,
                    organism.c.species_taxonomy_id == keyword))
