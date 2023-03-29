@@ -137,6 +137,7 @@ message Assembly {
   string name = 2;
   string ucsc_name = 3;
   string level = 4;
+  string ensembl_name = 5;
 }
 
 /*

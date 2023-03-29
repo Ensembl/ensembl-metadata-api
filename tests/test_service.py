@@ -63,6 +63,7 @@ class TestClass:
             'assembly_name': 'assembly name',
             'assembly_ucsc_name': 'ucsc name',
             'assembly_level': 'level',
+            'assembly_ensembl_name': 'some assembly ensembl name',
             'taxonomy_id': 1234,
             'scientific_name': 'scientific name',
             'scientific_parlance_name': 'scientific_parlance_name',
@@ -76,7 +77,8 @@ class TestClass:
                 'accession': 'X.AE500',
                 'level': 'level',
                 'name': 'assembly name',
-                'ucscName': 'ucsc name'
+                'ucscName': 'ucsc name',
+                'ensemblName': 'some assembly ensembl name',
             },
             'created': '2022-08-15',
             'genomeUuid': 'f9d8c1dc-45dd-11ec-81d3-0242ac130003',
@@ -286,7 +288,8 @@ class TestClass:
                 'assembly': {
                     'accession': 'test accession',
                     'level': 'test level',
-                    'name': 'test name'
+                    'name': 'test name',
+                    'ensemblName': 'test assembly ensembl name'
                 },
                 'created': '2021-07-19 13:22:26',
                 'genomeUuid': '3c52097a-fb69-11eb-8dac-005056b32883',
@@ -598,7 +601,8 @@ class TestClass:
             "assembly": {
                 "accession": "test accession",
                 "name": "test name",
-                "level": "test level"
+                "level": "test level",
+                "ensemblName": "test assembly ensembl name"
             },
             "taxon": {
                 "taxonomyId": 9823,
@@ -663,7 +667,8 @@ class TestClass:
                 'assembly': {
                     'accession': 'test accession',
                     'name': 'test name',
-                    'level': 'test level'
+                    'level': 'test level',
+                    'ensemblName': 'test assembly ensembl name'
                 },
                 'taxon': {
                     'taxonomyId': 9823,
@@ -732,7 +737,8 @@ class TestClass:
             'assembly': {
                 'accession': 'test accession',
                 'name': 'test name',
-                'level': 'test level'
+                'level': 'test level',
+                'ensemblName': 'test assembly ensembl name'
             },
             'taxon': {
                 'taxonomyId': 9823,

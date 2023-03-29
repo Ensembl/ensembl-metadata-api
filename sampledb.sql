@@ -16,9 +16,10 @@ CREATE TABLE `assembly` (
 `level` TEXT NOT NULL,
 `name` TEXT NOT NULL,
 `tolid` TEXT DEFAULT NULL,
+`ensembl_name` TEXT DEFAULT NULL,
 PRIMARY KEY (`assembly_id`)
 );
-INSERT INTO `assembly` VALUES (2,NULL,'GCA_009873245.2','chromosome','mBalMus1.v2',NULL),(254,NULL,'test accession','test level','test name',NULL),(255,NULL,'test accession','test level','test name',NULL);
+INSERT INTO `assembly` VALUES (2,NULL,'GCA_009873245.2','chromosome','mBalMus1.v2',NULL,NULL),(254,NULL,'test accession','test level','test name',NULL,'test assembly ensembl name'),(255,NULL,'test accession','test level','test name',NULL,NULL);
 
 CREATE TABLE `assembly_sequence` (
 `assembly_sequence_id` INTEGER NOT NULL ,
