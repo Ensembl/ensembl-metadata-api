@@ -326,6 +326,7 @@ def get_genomes_by_keyword_iterator(metadata_db, keyword, release_version):
         .where(or_(assembly.c.tolid == keyword,
                    assembly.c.accession == keyword,
                    assembly.c.name == keyword,
+                   assembly.c.ensembl_name == keyword,
                    organism.c.scientific_name == keyword,
                    organism.c.scientific_parlance_name == keyword,
                    organism.c.species_taxonomy_id == keyword))
@@ -476,6 +477,7 @@ def get_genome_query(genome, genome_release, release, assembly, organism):
         assembly.c.name.label('assembly_name'),
         assembly.c.ucsc_name.label('assembly_ucsc_name'),
         assembly.c.level.label('assembly_level'),
+        assembly.c.ensembl_name.label('assembly_ensembl_name'),
         release.c.version.label('release_version'),
         release.c.release_date,
         release.c.label.label('release_label'),
@@ -703,6 +705,7 @@ def create_genome(data=None):
         name=data['assembly_name'],
         ucsc_name=data['assembly_ucsc_name'],
         level=data['assembly_level'],
+        ensembl_name=data['assembly_ensembl_name'],
     )
 
     taxon = ensembl_metadata_pb2.Taxon(
