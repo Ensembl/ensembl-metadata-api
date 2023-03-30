@@ -1,3 +1,4 @@
+import os
 from setuptools import find_namespace_packages, setup
 
 
@@ -11,11 +12,11 @@ with open('VERSION') as f:
 
 setup(
     name='ensembl-metadata-service',
-    version=version,
+    version=os.getenv('CI_COMMIT_TAG', version),
     description='Ensembl Metadata Service',
     long_description=readme,
-    author='Alisha',
-    author_email='aaneja@ensembl.org',
+    author='Alisha Aneja,Daniel Poppleton,Marc Chakiachvili,Sanjay boddu,Bilal El Houdaigui',
+    author_email='aaneja@ebi.ac.uk,danielp@ebi.ac.uk,mchakiachvili@ebi.ac.uk,sboddu@ebi.ac.uk,bilal@ebi.ac.uk',
     url='https://github.com/Ensembl/ensembl-metadata-service',
     download_url='https://github.com/Ensembl/ensembl-metadata-service',
     license='Apache License 2.0',
