@@ -12,11 +12,15 @@
 """
 Unit tests for api module
 """
+import os
 from ensembl.production.metadata.api import *
 
-DB_NAME = 'mysql://root:@127.0.0.1:3306/ensembl_genome_metadata'
-TX_NAME = 'mysql://root:@127.0.0.1:3306/ncbi_taxonomy'
+DB_HOST = os.getenv('DB_HOST', 'ensembl@127.0.0.1:3306')
+DB_NAME = f'mysql://{DB_HOST}/ensembl_genome_metadata'
+TX_NAME = f'mysql://{DB_HOST}/ncbi_taxonomy'
 
+os.environ["METADATA_URI"] = DB_NAME
+os.environ["TAXONOMY_URI"] = TX_NAME
 
 def test_load_database():
     DB_TEST = ReleaseAdaptor(DB_NAME)

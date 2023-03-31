@@ -284,7 +284,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
-            return session.execute(genome_select).all()
+            return session.execute(genome_select.order_by("ensembl_name")).all()
 
     def fetch_genomes_by_genome_uuid(
             self,
