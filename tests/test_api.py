@@ -65,6 +65,14 @@ def test_fetch_genomes():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes()
     assert TEST[0].Organism.scientific_name == 'Caenorhabditis elegans'
+    
+def test_fetch_genomes_by_group_division():
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    division_filter = 'EnsemblVertebrates'
+    TEST = conn.fetch_genomes(group='EnsemblVertebrate')
+    DIVISION_RES = set([row[-1].name for row in TEST])
+    assert len(DIVISION_RES) == 1
+    assert DIVISION_RES == division_filter
 
 
 def test_fetch_genomes_by_genome_uuid():
