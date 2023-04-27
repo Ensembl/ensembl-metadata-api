@@ -244,6 +244,7 @@ class GenomeAdaptor(BaseAdaptor):
         ensembl_name = check_parameter(ensembl_name)
         taxonomy_id = check_parameter(taxonomy_id)
         group = check_parameter(group)
+        group_type = check_parameter(group_type)
 
         genome_select = db.select(
           Genome, Organism, Assembly
