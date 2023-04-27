@@ -251,7 +251,7 @@ class GenomeAdaptor(BaseAdaptor):
         ).join(Genome.assembly).join(Genome.organism)
         
         if group :
-          group_type = group_type if len(group_type) else ['division']
+          group_type = group_type if group_type else ['division']
           genome_select = db.select(
               Genome, Organism, Assembly, OrganismGroupMember, OrganismGroup
           ).join(Genome.assembly).join(Genome.organism) \
