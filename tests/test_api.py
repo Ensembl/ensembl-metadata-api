@@ -69,11 +69,10 @@ def test_fetch_genomes():
 def test_fetch_genomes_by_group_division():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     division_filter = 'EnsemblVertebrates'
-    TEST = conn.fetch_genomes(group='EnsemblVertebrate')
+    TEST = conn.fetch_genomes(group=division_filter)
     DIVISION_RES = set([row[-1].name for row in TEST])
     assert len(DIVISION_RES) == 1
-    assert DIVISION_RES == division_filter
-
+    assert division_filter in DIVISION_RES
 
 def test_fetch_genomes_by_genome_uuid():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
