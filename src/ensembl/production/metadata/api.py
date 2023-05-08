@@ -437,4 +437,103 @@ class GenomeAdaptor(BaseAdaptor):
         return self.fetch_sequences(
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
+
+class GenomeInfoAdaptor(BaseAdaptor):
+    """Ensembl Genome Information 
+    Fetch the existing ensembl genomes from ensembl metadata database 
+    Args:
+        BaseAdaptor (Class): 
+    """ 
+       
+    def __init__(self, metadata_uri=None, taxonomy_uri=None):
+        """Initiate the metadata and taxonomy db sessions
+
+        Args:
+            metadata_uri (string, optional): medata database uri. Defaults to None.
+            taxonomy_uri (string, optional): taxonomy db uri. Defaults to None.
+        """        
+        super().__init__(metadata_uri)
+
+        if taxonomy_uri is None:
+            taxonomy_uri = get_taxonomy_uri()
+        self.taxonomy_db = DBConnection(taxonomy_uri)
+
+    def fetch_genomes_info(
+            self,
+            genome_uuid=None,
+            species_name=None,
+            organism_group=None,
+            organism_group_type=None,
+            unreleased_genomes=True,
+            site_name=None,
+            release_type=None,
+            release_version=None,
+            current_release=False,
+    ):
+        """Fetch all genomes from metadata database 
+
+        Args:
+            genome_uuid (List, optional): List of ensembl genome uuid. Defaults to None.
+            species_name (List, optional): List ensembl species name. Defaults to None.
+            organism_group (List, optional): List of ensembl groups, equivalent to division in old metadata db eg: EnsemblVertebrates, EnsemblPlants. Defaults to None.
+            organism_group_type (List, optional): List of organism group types. Defaults type to  division.
+            unreleased_genomes (bool, optional): fetch all unreleased genome. Defaults to True.
+            site_name (List, optional): List of ensembl sites where genome assigned. Defaults to None.
+            release_type (List, optional): List of ensembl release type where genome assigned eg: main, rapid and mvv . Defaults to None.
+            release_version (List, optional):List of  ensembl release version where genome assigned. Defaults to None.
+            current_release (bool, optional): get all genomes from current release. Defaults to False.
+
+        Returns:
+            dict: genome information  
+        """     
+
+        genome_uuid = check_parameter(genome_uuid)
+        ensembl_name = check_parameter(species_name)
+        group = check_parameter(organism_group)
+        group_type = check_parameter(organism_group_type)
+
+        genome_select = db.select(
+              Genome, Organism, Assembly, OrganismGroupMember, OrganismGroup
+          ).join(Genome.assembly).join(Genome.organism) \
+            .join(Organism.organism_group_members) \
+            .join(OrganismGroupMember.organism_group)
+            
+        if group :
+          group_type = group_type if group_type else ['division']
+          genome_select = genome_select.filter(OrganismGroup.type.in_(group_type)) \
+                                       .filter(OrganismGroup.name.in_(group))
+            
+        if unreleased_genomes:
+            genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
+                GenomeRelease.genome_id == None
+            )
+            
+        elif site_name is not None:
+            genome_select = genome_select.join(
+                Genome.genome_releases).join(
+                GenomeRelease.ensembl_release).join(
+                EnsemblRelease.ensembl_site).filter(EnsemblSite.name == site_name)
+
+            if release_type is not None:
+                genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
+
+            if current_release:
+                genome_select = genome_select.filter(GenomeRelease.is_current == 1)
+
+            if release_version is not None:
+                genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+
+        elif ensembl_name is not None:
+            genome_select = genome_select.filter(Organism.ensembl_name == ensembl_name)
+
+        elif genome_uuid is not None:
+            genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
+
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            return session.execute(genome_select.order_by("ensembl_name")).all()
+
+
+
+
                 
