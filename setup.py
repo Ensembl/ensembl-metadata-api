@@ -10,7 +10,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from setuptools import find_namespace_packages, setup
-
+import os
 
 with open('README.md') as f:
     readme = f.read()
@@ -22,7 +22,7 @@ with open('VERSION') as f:
 
 setup(
     name='ensembl_metadata_api',
-    version=version,
+    version=os.getenv('CI_COMMIT_TAG', version),
     description='Ensembl Metadata API',
     long_description=readme,
     author='Ensembl',
