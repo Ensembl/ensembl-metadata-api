@@ -76,7 +76,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         self.dataset_attribute = None
         self.attribute = None
 
-        super().__init__(db_uri, metadata_uri, release=None)
+        super().__init__(db_uri, metadata_uri, release)
         self.db_type = 'core'
 
     def process_core(self, **kwargs):
