@@ -121,7 +121,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Species Check
         # Check for new species by checking if ensembl name is already present in the database
-        if GenomeAdaptor(metadata_uri=self.metadata_db).fetch_genomes_by_ensembl_name(self.organism.ensembl_name) == []:
+        if GenomeAdaptor(metadata_uri=self.metadata_db.url).fetch_genomes_by_ensembl_name(self.organism.ensembl_name) == []:
             # Check if the assembly accesion is already present in the database
             new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")
             with self.metadata_db.session_scope() as session:
