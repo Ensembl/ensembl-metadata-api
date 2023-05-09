@@ -162,6 +162,21 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 if assembly_test:
                     logging.info(
                         "Old Assembly with no change. No update to Genome, genome_release, assembly, and assembly_sequence tables.")
+                    for dataset in self.datasets:
+                        with self.metadata_db.session_scope() as session:
+                            # Check to see if any already exist:
+                            # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
+                            if dataset.name == "genebuild":
+                                dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
+                                                                             Dataset.version == dataset.version,
+                                                                             Dataset.label == dataset.label).first()
+                                if dataset_test is None:
+                                    gb_dataset_type = session.query(DatasetType).filter(
+                                        DatasetType.name == "genebuild").first()
+                                    dataset.dataset_type = gb_dataset_type
+                                    dataset.dataset_source = self.dataset_source
+                                    session.add(dataset)
+
                 else:
                     logging.info("New Assembly. Updating  genome, genome_release,"
                                  " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
@@ -171,19 +186,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 ################################################################
                 # Dataset section. More logic will be necessary for additional datasets. Currently only the genebuild is listed here.
 
-                for dataset in self.datasets:
-                    with self.metadata_db.session_scope() as session:
-                        # Check to see if any already exist:
-                        # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
-                        if dataset.name == "genebuild":
-                            dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
-                                                                         Dataset.version == dataset.version,
-                                                                         Dataset.label == dataset.label).first()
-                            if dataset_test is None:
-                                gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
-                                dataset.dataset_type = gb_dataset_type
-                                dataset.dataset_source = self.dataset_source
-                                session.add(dataset)
+
 
 
             else:
@@ -271,7 +274,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # Get the genome
             self.organism = session.query(Organism).filter(
                 Organism.ensembl_name == self.organism.ensembl_name).first()
-            print(self.organism)
             self.genome.organism = self.organism
             self.assembly.genomes.append(self.genome)
 
@@ -280,8 +282,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 self.genome_release.ensembl_release = release
                 self.genome_release.genome = self.genome
 
-            # for assembly_seq in self.assembly_sequences:
-            #     assembly_seq.assembly = self.assembly
             self.assembly.genomes.append(self.genome)
 
             # Update assembly dataset
@@ -306,18 +306,17 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 # Check to see if any already exist:
                 # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
                 if dataset.name == "genebuild":
-                    with self.metadata_db.session_scope() as session:
-                        dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
-                                                                     Dataset.version == dataset.version,
-                                                                     Dataset.label == dataset.label).first()
-                        if dataset_test is None:
-                            gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
-                            dataset.dataset_type = gb_dataset_type
-                            dataset_source_test = session.execute(
-                                db.select(DatasetSource).filter(
-                                    DatasetSource.name == self.dataset_source.name)).one_or_none()
-                            dataset.dataset_source = self.dataset_source
-                            session.add(dataset)
+                    dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
+                                                                 Dataset.version == dataset.version,
+                                                                 Dataset.label == dataset.label).first()
+                    if dataset_test is None:
+                        gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
+                        dataset.dataset_type = gb_dataset_type
+                        dataset_source_test = session.execute(
+                            db.select(DatasetSource).filter(
+                                DatasetSource.name == self.dataset_source.name)).one_or_none()
+                        dataset.dataset_source = self.dataset_source
+                        session.add(dataset)
 
     # The following methods populate the data from the core into the objects. K
     # It may be beneficial to move them to the base class with later implementations
@@ -479,7 +478,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             elif name is not None:
                 accession = name
             else:
-                accession = None
+                accession = data[0]
 
             chromosomal = 0
             if data[3] == 'chromosome':
