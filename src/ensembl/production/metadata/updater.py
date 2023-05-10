@@ -49,7 +49,7 @@ class BaseMetaUpdater:
     def get_meta_single_meta_key(self, species_id, parameter):
         with self.db.session_scope() as session:
             result = (session.execute(db.select(Meta.meta_value).filter(
-                Meta.meta_key == parameter and Meta.species_id == species_id)).one_or_none())
+                Meta.meta_key == parameter).filter(Meta.species_id == species_id)).one_or_none())
             if result is None:
                 return None
             else:
@@ -57,7 +57,7 @@ class BaseMetaUpdater:
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
-    def __init__(self, db_uri, metadata_uri):
+    def __init__(self, db_uri, metadata_uri, release=None):
         # Each of these objects represents a table in the database to store data in as either an array or a single object.
         self.organism = None
         self.organism_group_member = None
@@ -76,15 +76,24 @@ class CoreMetaUpdater(BaseMetaUpdater):
         self.dataset_attribute = None
         self.attribute = None
 
-        super().__init__(db_uri, metadata_uri)
+        super().__init__(db_uri, metadata_uri, release)
         self.db_type = 'core'
 
-    def process_core(self):
-        # Handle multispecies databases and run an update for each species
-        with self.db.session_scope() as session:
-            multi_species = session.execute(
-                select(Meta.species_id).filter(Meta.meta_key == "species.production_name").distinct()
-            )
+    def process_core(self, **kwargs):
+        #Special case for loading a single species from a collection database. Can be removed in a future release
+        sel_species = kwargs.get('species',None)
+        if sel_species:
+            with self.db.session_scope() as session:
+                multi_species = session.execute(
+                    select(Meta.species_id).filter(Meta.meta_key == "species.production_name").filter(Meta.meta_value == sel_species).distinct()
+                )
+        else:
+            #Normal handling of collections from here
+            # Handle multispecies databases and run an update for each species
+            with self.db.session_scope() as session:
+                multi_species = session.execute(
+                    select(Meta.species_id).filter(Meta.meta_key == "species.production_name").distinct()
+                )
         multi_species = [multi_species for multi_species, in multi_species]
 
         for species in multi_species:
@@ -112,7 +121,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Species Check
         # Check for new species by checking if ensembl name is already present in the database
-        if GenomeAdaptor().fetch_genomes_by_ensembl_name(self.organism.ensembl_name) == []:
+        if GenomeAdaptor(metadata_uri=self.metadata_db.url).fetch_genomes_by_ensembl_name(self.organism.ensembl_name) == []:
             # Check if the assembly accesion is already present in the database
             new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")
             with self.metadata_db.session_scope() as session:
@@ -127,7 +136,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
                 test_organism = session.execute(db.select(Organism).filter(
-                    Organism.ensembl_name == self.organism.ensembl_name)).one()
+                    Organism.ensembl_name == self.organism.ensembl_name)).one_or_none()
             self.organism.organism_id = test_organism.Organism.organism_id
             self.organism.scientific_parlance_name = test_organism.Organism.scientific_parlance_name
 
@@ -153,6 +162,21 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 if assembly_test:
                     logging.info(
                         "Old Assembly with no change. No update to Genome, genome_release, assembly, and assembly_sequence tables.")
+                    for dataset in self.datasets:
+                        with self.metadata_db.session_scope() as session:
+                            # Check to see if any already exist:
+                            # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
+                            if dataset.name == "genebuild":
+                                dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
+                                                                             Dataset.version == dataset.version,
+                                                                             Dataset.label == dataset.label).first()
+                                if dataset_test is None:
+                                    gb_dataset_type = session.query(DatasetType).filter(
+                                        DatasetType.name == "genebuild").first()
+                                    dataset.dataset_type = gb_dataset_type
+                                    dataset.dataset_source = self.dataset_source
+                                    session.add(dataset)
+
                 else:
                     logging.info("New Assembly. Updating  genome, genome_release,"
                                  " assembly, assembly_sequence, dataset, dataset source, and genome_dataset tables.")
@@ -162,19 +186,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 ################################################################
                 # Dataset section. More logic will be necessary for additional datasets. Currently only the genebuild is listed here.
 
-                for dataset in self.datasets:
-                    with self.metadata_db.session_scope() as session:
-                        # Check to see if any already exist:
-                        # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
-                        if dataset.name == "genebuild":
-                            dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
-                                                                         Dataset.version == dataset.version,
-                                                                         Dataset.label == dataset.label).first()
-                            if dataset_test is None:
-                                gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
-                                dataset.dataset_type = gb_dataset_type
-                                dataset.dataset_source = self.dataset_source
-                                session.add(dataset)
+
 
 
             else:
@@ -262,7 +274,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # Get the genome
             self.organism = session.query(Organism).filter(
                 Organism.ensembl_name == self.organism.ensembl_name).first()
-            print(self.organism)
             self.genome.organism = self.organism
             self.assembly.genomes.append(self.genome)
 
@@ -271,8 +282,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 self.genome_release.ensembl_release = release
                 self.genome_release.genome = self.genome
 
-            # for assembly_seq in self.assembly_sequences:
-            #     assembly_seq.assembly = self.assembly
             self.assembly.genomes.append(self.genome)
 
             # Update assembly dataset
@@ -297,18 +306,17 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 # Check to see if any already exist:
                 # for all of genebuild in dataset, see if any have the same label (genebuild.id) and version. If so, don't update and error out here!
                 if dataset.name == "genebuild":
-                    with self.metadata_db.session_scope() as session:
-                        dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
-                                                                     Dataset.version == dataset.version,
-                                                                     Dataset.label == dataset.label).first()
-                        if dataset_test is None:
-                            gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
-                            dataset.dataset_type = gb_dataset_type
-                            dataset_source_test = session.execute(
-                                db.select(DatasetSource).filter(
-                                    DatasetSource.name == self.dataset_source.name)).one_or_none()
-                            dataset.dataset_source = self.dataset_source
-                            session.add(dataset)
+                    dataset_test = session.query(Dataset).filter(Dataset.name == "genebuild",
+                                                                 Dataset.version == dataset.version,
+                                                                 Dataset.label == dataset.label).first()
+                    if dataset_test is None:
+                        gb_dataset_type = session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
+                        dataset.dataset_type = gb_dataset_type
+                        dataset_source_test = session.execute(
+                            db.select(DatasetSource).filter(
+                                DatasetSource.name == self.dataset_source.name)).one_or_none()
+                        dataset.dataset_source = self.dataset_source
+                        session.add(dataset)
 
     # The following methods populate the data from the core into the objects. K
     # It may be beneficial to move them to the base class with later implementations
@@ -470,7 +478,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             elif name is not None:
                 accession = name
             else:
-                accession = None
+                accession = data[0]
 
             chromosomal = 0
             if data[3] == 'chromosome':
@@ -520,6 +528,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
     def new_datasets(self):
         self.datasets = []
         # Genebuild.
+        label = self.get_meta_single_meta_key(self.species, "genebuild.last_geneset_update")
+        if label is None:
+            label = self.get_meta_single_meta_key(self.species, "genebuild.start_date")
+
         self.datasets.append(Dataset(
             dataset_id=None,  # Should be autogenerated upon insertion
             dataset_uuid=str(uuid.uuid4()),
@@ -532,7 +544,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
         ))
         # Protein Features
 
-
+## Section will be moved to the hive pipeline and nextflow. Do not delete until both are done!
+## Tests will need to be altered at that point.
 def meta_factory(db_uri, metadata_uri=None):
     db_url = make_url(db_uri)
     if '_compara_' in db_url.database:

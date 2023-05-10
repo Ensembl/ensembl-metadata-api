@@ -11,7 +11,7 @@
 #   limitations under the License.
 import os
 from setuptools import find_namespace_packages, setup
-
+import os
 
 with open('README.md') as f:
     readme = f.read()
@@ -26,8 +26,8 @@ setup(
     version=os.getenv('CI_COMMIT_TAG', version),
     description='Ensembl Metadata API',
     long_description=readme,
-    author='Ensembl',
-    author_email='dev@ensembl.org',
+    author='Daniel Poppleton,Marc Chakiachvili,Vinay Kaikala',
+    author_email='danielp@ebi.ac.uk,mchakiachvili@ebi.ac.uk,vinay@ebi.ac.uk',
     url='https://www.ensembl.org',
     download_url='https://github.com/Ensembl/ensembl-metadata-api',
     license='Apache License 2.0',
