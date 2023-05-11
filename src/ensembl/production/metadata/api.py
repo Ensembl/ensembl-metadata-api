@@ -245,7 +245,7 @@ class GenomeAdaptor(BaseAdaptor):
         genome_select = db.select(
             Genome, Organism, Assembly
         ).join(Genome.assembly).join(Genome.organism)
-
+        #TODO: Modify this to accept
         if unreleased_only:
             genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
                 GenomeRelease.genome_id == None
