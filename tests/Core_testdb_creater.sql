@@ -94,7 +94,7 @@ insert into seq_region_attrib values(3,547,'mitochondrial_chromosome');
 
 #Genbuild data
 insert into meta (meta_key,meta_value) values ('gencode.version', '999');
-insert into meta (meta_key,meta_value) values ('genebuild.id', '01');
+insert into meta (meta_key,meta_value) values ('genebuild.last_geneset_update', '01');
 ################################################################
 ############## Section for organism update       ###############
 ################################################################
@@ -194,7 +194,7 @@ insert into seq_region_attrib values(3,547,'mitochondrial_chromosome');
 
 #Genbuild data
 insert into meta (meta_key,meta_value) values ('gencode.version', '999');
-insert into meta (meta_key,meta_value) values ('genebuild.id', '01');
+insert into meta (meta_key,meta_value) values ('genebuild.last_geneset_update', '01');
 ################################################################
 ############## Section for assembly update       ###############
 ################################################################
@@ -303,7 +303,7 @@ insert into meta (meta_key,meta_value) values ('genebuild.id', '01');
 ################################################################
 #Values changed:
 # insert into meta (meta_key,meta_value) values ('gencode.version', '999');
-# insert into meta (meta_key,meta_value) values ('genebuild.id', '01');
+# insert into meta (meta_key,meta_value) values ('genebuild.last_geneset_update', '01');
 create database test_core_4;
 use test_core_4;
 CREATE TABLE `meta` (
@@ -397,4 +397,4 @@ insert into seq_region_attrib values(3,547,'mitochondrial_chromosome');
 
 #Genbuild data
 insert into meta (meta_key,meta_value) values ('gencode.version', '999');
-insert into meta (meta_key,meta_value) values ('genebuild.id', '02');
+insert into meta (meta_key,meta_value) values ('genebuild.last_geneset_update', '02');
