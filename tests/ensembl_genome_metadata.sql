@@ -344,7 +344,7 @@ CREATE TABLE `genome_dataset` (
   `genome_dataset_id` int NOT NULL AUTO_INCREMENT,
   `dataset_id` int NOT NULL,
   `genome_id` int NOT NULL,
-  `release_id` int DEFAULT NULL,
+  `release_id` int(11) DEFAULT NULL,
   `is_current` tinyint(1) NOT NULL,
   PRIMARY KEY (`genome_dataset_id`),
   KEY `ensembl_metadata_gen_dataset_id_26d7bac7_fk_dataset_d` (`dataset_id`),
