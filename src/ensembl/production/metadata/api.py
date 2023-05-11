@@ -230,6 +230,8 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_accession=None,
             ensembl_name=None,
             taxonomy_id=None,
+            group=None,
+            group_type=None,
             unreleased_only=False,
             site_name=None,
             release_type=None,
@@ -241,11 +243,22 @@ class GenomeAdaptor(BaseAdaptor):
         assembly_accession = check_parameter(assembly_accession)
         ensembl_name = check_parameter(ensembl_name)
         taxonomy_id = check_parameter(taxonomy_id)
+        group = check_parameter(group)
+        group_type = check_parameter(group_type)
 
         genome_select = db.select(
-            Genome, Organism, Assembly
+          Genome, Organism, Assembly
         ).join(Genome.assembly).join(Genome.organism)
-        #TODO: Modify this to accept
+        
+        if group :
+          group_type = group_type if group_type else ['division']
+          genome_select = db.select(
+              Genome, Organism, Assembly, OrganismGroupMember, OrganismGroup
+          ).join(Genome.assembly).join(Genome.organism) \
+            .join(Organism.organism_group_members) \
+            .join(OrganismGroupMember.organism_group) \
+            .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
+
         if unreleased_only:
             genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
                 GenomeRelease.genome_id == None
@@ -284,7 +297,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
-            return session.execute(genome_select).all()
+            return session.execute(genome_select.order_by("ensembl_name")).all()
 
     def fetch_genomes_by_genome_uuid(
             self,
@@ -424,7 +437,4 @@ class GenomeAdaptor(BaseAdaptor):
         return self.fetch_sequences(
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
-
-
-
-
+                
