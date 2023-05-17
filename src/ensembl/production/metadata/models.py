@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from sqlalchemy import Column, DECIMAL, Date, DateTime, ForeignKey, Index, Integer, String
+from sqlalchemy import Column, DECIMAL, Date, DateTime, ForeignKey, Index, Integer, String, Enum, text
 from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship, sessionmaker, backref
 from sqlalchemy.ext.declarative import declarative_base
@@ -32,7 +32,7 @@ class Assembly(Base):
     name = Column(String(128), nullable=False)
     accession_body = Column(String(32))
     assembly_default = Column(String(32))
-    tolid = Column(String(32), unique=True)
+    to_lid = Column(String(32), unique=True)
     created = Column(DateTime)
     ensembl_name = Column(String(255), unique=True)
 #One to many relationships
@@ -50,7 +50,7 @@ class AssemblySequence(Base):
     )
 
     assembly_sequence_id = Column(Integer, primary_key=True)
-    name = Column(String(128))
+    name = Column(String(128), unique=True)
     assembly_id = Column(ForeignKey('assembly.assembly_id'), nullable=False, index=True)
     accession = Column(String(32), nullable=False)
     chromosomal = Column(TINYINT(1), nullable=False)
@@ -72,6 +72,7 @@ class Attribute(Base):
     name = Column(String(128), nullable=False)
     label = Column(String(128), nullable=False)
     description = Column(String(255))
+    type = Column(String(32), nullable=False)
     #One to many relationships
     #attribute_id within dataset attribute
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
@@ -89,6 +90,7 @@ class Dataset(Base):
     created = Column(DATETIME(fsp=6), nullable=False)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
+    status = Column(Enum('Submitted', 'Progressing', 'Processed'), server_default=text("'Submitted'"))
 
     #One to many relationships
     #dataset_id to dataset attribute and genome dataset
@@ -108,7 +110,6 @@ class DatasetAttribute(Base):
     )
 
     dataset_attribute_id = Column(Integer, primary_key=True)
-    type = Column(String(32), nullable=False)
     value = Column(String(128), nullable=False)
     attribute_id = Column(ForeignKey('attribute.attribute_id'), nullable=False, index=True)
     dataset_id = Column(ForeignKey('dataset.dataset_id'), nullable=False, index=True)
