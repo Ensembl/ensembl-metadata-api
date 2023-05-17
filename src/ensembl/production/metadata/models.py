@@ -32,7 +32,7 @@ class Assembly(Base):
     name = Column(String(128), nullable=False)
     accession_body = Column(String(32))
     assembly_default = Column(String(32))
-    to_lid = Column(String(32), unique=True)
+    tol_id = Column(String(32), unique=True)
     created = Column(DateTime)
     ensembl_name = Column(String(255), unique=True)
 #One to many relationships
