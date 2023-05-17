@@ -106,7 +106,8 @@ class Dataset(Base):
 class DatasetAttribute(Base):
     __tablename__ = 'dataset_attribute'
     __table_args__ = (
-        Index('dataset_attribute_dataset_id_attribute_id__d3b34d8c_uniq', 'dataset_id', 'attribute_id', 'type', 'value', unique=True),
+        Index('dataset_attribute_dataset_id_attribute_id__d3b34d8c_uniq', 'dataset_id', 'attribute_id', 'value',
+              unique=True),
     )
 
     dataset_attribute_id = Column(Integer, primary_key=True)
