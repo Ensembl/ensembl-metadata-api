@@ -258,7 +258,7 @@ class GenomeAdaptor(BaseAdaptor):
             .join(Organism.organism_group_members) \
             .join(OrganismGroupMember.organism_group) \
             .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
-            
+
         if unreleased_only:
             genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
                 GenomeRelease.genome_id == None
