@@ -38,12 +38,12 @@ CREATE TABLE `assembly` (
   `name` varchar(128) NOT NULL,
   `accession_body` varchar(32) DEFAULT NULL,
   `assembly_default` varchar(32) DEFAULT NULL,
-  `tolid` varchar(32) DEFAULT NULL,
+  `tol_id` varchar(32) DEFAULT NULL,
   `created` datetime DEFAULT NULL,
   `ensembl_name` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`assembly_id`),
   UNIQUE KEY `accession` (`accession`),
-  UNIQUE KEY `tol_id_key` (`tolid`),
+  UNIQUE KEY `tol_id_key` (`tol_id`),
   UNIQUE KEY `assembly_ensembl_name_uindex` (`ensembl_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
