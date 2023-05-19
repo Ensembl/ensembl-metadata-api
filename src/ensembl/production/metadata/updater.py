@@ -472,6 +472,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             created=func.now(),
             dataset_source_id=None,  # extract from dataset_source
             label=self.assembly.accession,
+            status='Submitted',
         )
 
     def new_assembly_sequence(self):
@@ -573,6 +574,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             created=func.now(),
             dataset_source_id=None,  # extract from dataset_source
             label=label,
+            status='Submitted',
         ))
         # Protein Features
 

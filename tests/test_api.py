@@ -29,24 +29,23 @@ def test_load_database():
 
 def test_fetch_releases():
     conn = ReleaseAdaptor(DB_NAME)
-    TEST = conn.fetch_releases(release_id=1)
+    TEST = conn.fetch_releases(release_id=2)
     # Test the one to many connection
-    assert TEST[0].EnsemblSite.name == '2020-map'
+    assert TEST[0].EnsemblSite.name == 'Test'
     # Test the direct access.
-    assert TEST[0].EnsemblRelease.label == '2020 MAP 7 species'
+    assert TEST[0].EnsemblRelease.label == 'New'
 
 
 # currently only have one release, so the testing is not comprehensive
 def test_fetch_releases_for_genome():
     conn = ReleaseAdaptor(DB_NAME)
-    TEST = conn.fetch_releases_for_genome('a733574a-93e7-11ec-a39d-005056b38ce3')
-    assert TEST[0].EnsemblSite.name == '2020-map'
-
+    TEST = conn.fetch_releases_for_genome('a73351f7-93e7-11ec-a39d-005056b38ce3')
+    assert TEST[0].EnsemblSite.name == 'Test'
 
 def test_fetch_releases_for_dataset():
     conn = ReleaseAdaptor(DB_NAME)
-    TEST = conn.fetch_releases_for_dataset('76ffa505-948d-11ec-a39d-005056b38ce3')
-    assert TEST[0].EnsemblSite.name == '2020-map'
+    TEST = conn.fetch_releases_for_dataset('3316fe1a-83e7-46da-8a56-cf2b693d8060')
+    assert TEST[0].EnsemblSite.name == 'Test'
 
 
 def test_fetch_taxonomy_names():
@@ -83,7 +82,7 @@ def test_fetch_genomes_by_genome_uuid():
 def test_fetch_genomes_by_assembly_accession():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes_by_assembly_accession('GCA_000005845.2')
-    assert TEST[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12'
+    assert TEST[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)'
 
 
 def test_fetch_genomes_by_ensembl_name():
@@ -107,4 +106,4 @@ def test_fetch_genomes_by_scientific_name():
 def test_fetch_sequences():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_sequences()
-    assert TEST[0].AssemblySequence.accession == 'CM000663.2'
+    assert TEST[0].AssemblySequence.accession == 'KI270757.1'
