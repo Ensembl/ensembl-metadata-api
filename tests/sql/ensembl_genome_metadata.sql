@@ -1,4 +1,3 @@
-use ensembl_genome_metadata;
 
 -- MySQL dump 10.13  Distrib 5.6.51, for linux-glibc2.12 (x86_64)
 --
@@ -16,6 +15,11 @@ use ensembl_genome_metadata;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ensembl_genome_metadata` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+use ensembl_genome_metadata;
 
 --
 -- Table structure for table `assembly`
