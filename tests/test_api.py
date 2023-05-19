@@ -107,3 +107,54 @@ def test_fetch_sequences():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_sequences()
     assert TEST[0].AssemblySequence.accession == 'KI270757.1'
+    
+def test_fetch_genome_dataset_default_topic_assembly():
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    TEST = conn.fetch_genome_datasets()
+    assert TEST[0][3].topic == 'assembly'
+
+def test_fetch_genome_dataset_uuid():
+    uuid = '559d7660-d92d-47e1-924e-e741151c2cef'
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    TEST = conn.fetch_genome_datasets(dataset_uuid=uuid)
+    assert TEST[0][2].dataset_uuid == uuid
+    
+def test_fetch_genome_dataset_genome_uuid():
+    uuid = 'a7335667-93e7-11ec-a39d-005056b38ce3'
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    TEST = conn.fetch_genome_datasets(genome_uuid=uuid)
+    assert TEST[0][0].genome_uuid == uuid
+
+def test_fetch_genome_dataset_unreleased():
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    TEST = conn.fetch_genome_datasets(unreleased_datasets=True)
+    assert TEST[0][1].release_id is None
+    assert TEST[0][1].is_current == False
+
+def test_fetch_genome_info():
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    TEST = conn.fetch_genome_datasets(unreleased_datasets=True)
+    assert TEST[0][1].release_id is None
+    assert TEST[0][1].is_current == False
+    
+def test_fetch_genome_info_unreleased():
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    TEST = conn.fetch_genome_datasets(unreleased_datasets=True)
+    assert TEST[0][1].release_id is None
+    assert TEST[0][1].is_current == False
+
+
+def test_fetch_genome_info():
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    TEST = conn.fetch_genomes_info()
+    result = next(TEST)[0]
+    assert 'genome' in result
+    assert 'datasets' in result
+
+def test_fetch_genome_info_genome_uuid():
+    uuid = 'a7335667-93e7-11ec-a39d-005056b38ce3'
+    conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
+    TEST = conn.fetch_genomes_info(genome_uuid=uuid)
+    result = next(TEST)[0]
+    assert result['genome'][0].genome_uuid == uuid
+    assert result['datasets'][0][0].genome_uuid == uuid    
