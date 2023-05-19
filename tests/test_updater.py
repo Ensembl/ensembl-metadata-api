@@ -41,7 +41,7 @@ def test_new_organism():
         (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '01')
     )
     row = engine.execute(query).fetchone()
-    assert row[-1] == '01'
+    assert row[-2] == '01'
 
 
 #
@@ -73,4 +73,4 @@ def test_update_geneset():
         (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '02')
     )
     row = engine.execute(query).fetchone()
-    assert row[-1] == '02'
+    assert row[-2] == '02'
