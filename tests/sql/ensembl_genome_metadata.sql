@@ -1,4 +1,4 @@
-use ensembl_genome_metadata
+use ensembl_genome_metadata;
 
 -- MySQL dump 10.13  Distrib 5.6.51, for linux-glibc2.12 (x86_64)
 --
