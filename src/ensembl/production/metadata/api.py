@@ -443,6 +443,7 @@ class GenomeAdaptor(BaseAdaptor):
           genome_id=None,
           genome_uuid=None,
           unreleased_datasets=False, 
+          dataset_uuid=None,
           dataset_topic=None,
           dataset_source=None
     ):
@@ -465,6 +466,7 @@ class GenomeAdaptor(BaseAdaptor):
         
         genome_id = check_parameter(genome_id)
         genome_uuid = check_parameter(genome_uuid)
+        dataset_uuid = check_parameter(dataset_uuid)
         dataset_topic = check_parameter(dataset_topic)
         dataset_source = check_parameter(dataset_source)
     
@@ -474,6 +476,9 @@ class GenomeAdaptor(BaseAdaptor):
         if genome_uuid is not None:
           genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
 
+        if dataset_uuid is not None:
+          genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
+          
         if unreleased_datasets:
           genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
                                           .filter(GenomeDataset.is_current==0)
@@ -522,7 +527,7 @@ class GenomeAdaptor(BaseAdaptor):
         genomes = self.fetch_genomes(
                           genome_id=genome_id,
                           genome_uuid=genome_uuid,
-                          unreleased_only=False,
+                          unreleased_only=unreleased_genomes,
                           ensembl_name=ensembl_name,
                           group=group,
                           group_type=group_type,
@@ -538,4 +543,4 @@ class GenomeAdaptor(BaseAdaptor):
           yield [{'genome': genome, 'datasets': dataset}]
       except Exception as e:
         raise ValueError(str(e)) 
-      
+    
