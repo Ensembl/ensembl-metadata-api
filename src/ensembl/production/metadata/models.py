@@ -52,7 +52,7 @@ class AssemblySequence(Base):
     assembly_sequence_id = Column(Integer, primary_key=True)
     name = Column(String(128), unique=True)
     assembly_id = Column(ForeignKey('assembly.assembly_id'), nullable=False, index=True)
-    accession = Column(String(32), nullable=False)
+    accession = Column(String(128), nullable=False)
     chromosomal = Column(TINYINT(1), nullable=False)
     length = Column(Integer, nullable=False)
     sequence_location = Column(String(10))
