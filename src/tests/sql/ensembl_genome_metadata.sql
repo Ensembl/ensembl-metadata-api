@@ -16,10 +16,10 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+DROP DATABASE IF EXISTS `test_ensembl_genome_metadata`;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `test_ensembl_genome_metadata` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ensembl_genome_metadata` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-
-use ensembl_genome_metadata;
+use test_ensembl_genome_metadata;
 
 --
 -- Table structure for table `assembly`

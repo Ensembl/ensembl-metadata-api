@@ -1,6 +1,7 @@
 ################################################################
 ############## Section for new organism          ###############
 ################################################################
+DROP DATABASE IF EXISTS `test_core_1`;
 create database test_core_1;
 use test_core_1;
 CREATE TABLE `meta` (
@@ -100,7 +101,7 @@ insert into meta (meta_key,meta_value) values ('genebuild.last_geneset_update', 
 ################################################################
 #Values changed:
 #insert into meta (meta_key,meta_value) values ('species.scientific_name','carol_jabberwocky');
-
+DROP DATABASE IF EXISTS `test_core_2`;
 create database test_core_2;
 use test_core_2;
 CREATE TABLE `meta` (
@@ -203,6 +204,7 @@ insert into meta (meta_key,meta_value) values ('genebuild.last_geneset_update', 
 # insert into meta (meta_key,meta_value) values ('assembly.accession', 'weird01');
 # insert into meta (meta_key,meta_value) values ('assembly.name', 'jaber01');
 # insert into meta (meta_key,meta_value) values ('assembly.default', 'jaber01');
+DROP DATABASE IF EXISTS `test_core_3`;
 create database test_core_3;
 use test_core_3;
 CREATE TABLE `meta` (
@@ -304,6 +306,7 @@ insert into meta (meta_key,meta_value) values ('genebuild.last_geneset_update', 
 #Values changed:
 # insert into meta (meta_key,meta_value) values ('gencode.version', '999');
 # insert into meta (meta_key,meta_value) values ('genebuild.last_geneset_update', '02');
+DROP DATABASE IF EXISTS `test_core_4`;
 create database test_core_4;
 use test_core_4;
 CREATE TABLE `meta` (

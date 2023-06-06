@@ -22,6 +22,7 @@ from sqlalchemy import create_engine, MetaData, inspect
 Base = declarative_base()
 metadata = Base.metadata
 
+
 class Assembly(Base):
     __tablename__ = 'assembly'
 
@@ -35,13 +36,15 @@ class Assembly(Base):
     tol_id = Column(String(32), unique=True)
     created = Column(DateTime)
     ensembl_name = Column(String(255), unique=True)
-#One to many relationships
-#assembly_id within assembly_sequence
+    # One to many relationships
+    # assembly_id within assembly_sequence
     assembly_sequences = relationship("AssemblySequence", back_populates="assembly")
-#assembly_id within genome
+    # assembly_id within genome
     genomes = relationship("Genome", back_populates="assembly")
-#many to one relationships
-#none
+
+
+# many to one relationships
+# none
 
 class AssemblySequence(Base):
     __tablename__ = 'assembly_sequence'
@@ -58,10 +61,10 @@ class AssemblySequence(Base):
     sequence_location = Column(String(10))
     sequence_checksum = Column(String(32))
     ga4gh_identifier = Column(String(32))
-    #One to many relationships
-    #none
-    #many to one relationships
-    #assembly_id within assembly
+    # One to many relationships
+    # none
+    # many to one relationships
+    # assembly_id within assembly
     assembly = relationship('Assembly', back_populates="assembly_sequences")
 
 
@@ -72,12 +75,13 @@ class Attribute(Base):
     name = Column(String(128), nullable=False)
     label = Column(String(128), nullable=False)
     description = Column(String(255))
-    type = Column(Enum('string', 'percent', 'float','integer','bp'), server_default=text("'string'"))
-    #One to many relationships
-    #attribute_id within dataset attribute
+    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp'), server_default=text("'string'"))
+    # One to many relationships
+    # attribute_id within dataset attribute
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
-    #many to one relationships
-    #none
+    # many to one relationships
+    # none
+
 
 class Dataset(Base):
     __tablename__ = 'dataset'
@@ -92,14 +96,14 @@ class Dataset(Base):
     label = Column(String(128), nullable=False)
     status = Column(Enum('Submitted', 'Progressing', 'Processed'), server_default=text("'Submitted'"))
 
-    #One to many relationships
-    #dataset_id to dataset attribute and genome dataset
+    # One to many relationships
+    # dataset_id to dataset attribute and genome dataset
     dataset_attributes = relationship("DatasetAttribute", back_populates='dataset')
     genome_datasets = relationship("GenomeDataset", back_populates='dataset')
-    #many to one relationships
-    #dataset_type_id to dataset_type
+    # many to one relationships
+    # dataset_type_id to dataset_type
     dataset_type = relationship('DatasetType', back_populates="datasets")
-    #dataset_source_id to dataset source
+    # dataset_source_id to dataset source
     dataset_source = relationship('DatasetSource', back_populates="datasets")
 
 
@@ -114,12 +118,12 @@ class DatasetAttribute(Base):
     value = Column(String(128), nullable=False)
     attribute_id = Column(ForeignKey('attribute.attribute_id'), nullable=False, index=True)
     dataset_id = Column(ForeignKey('dataset.dataset_id'), nullable=False, index=True)
-    #One to many relationships
-    #none
-    #many to one relationships
-    #dataset_attribute_id to dataset
+    # One to many relationships
+    # none
+    # many to one relationships
+    # dataset_attribute_id to dataset
     attribute = relationship('Attribute', back_populates="dataset_attributes")
-    #attribute_id to attribute
+    # attribute_id to attribute
     dataset = relationship('Dataset', back_populates="dataset_attributes")
 
 
@@ -129,11 +133,12 @@ class DatasetSource(Base):
     dataset_source_id = Column(Integer, primary_key=True)
     type = Column(String(32), nullable=False)
     name = Column(String(255), nullable=False, unique=True)
-    #One to many relationships
-    #dataset_source_id to dataset
+    # One to many relationships
+    # dataset_source_id to dataset
     datasets = relationship('Dataset', back_populates='dataset_source')
-    #many to one relationships
-    #none
+    # many to one relationships
+    # none
+
 
 class DatasetType(Base):
     __tablename__ = 'dataset_type'
@@ -144,11 +149,12 @@ class DatasetType(Base):
     topic = Column(String(32), nullable=False)
     description = Column(String(255))
     details_uri = Column(String(255))
-    #One to many relationships
-    #dataset_type_id to dataset
+    # One to many relationships
+    # dataset_type_id to dataset
     datasets = relationship('Dataset', back_populates='dataset_type')
-    #many to one relationships
-    #none
+    # many to one relationships
+    # none
+
 
 class EnsemblSite(Base):
     __tablename__ = 'ensembl_site'
@@ -157,11 +163,12 @@ class EnsemblSite(Base):
     name = Column(String(64), nullable=False)
     label = Column(String(64), nullable=False)
     uri = Column(String(64), nullable=False)
-    #One to many relationships
-    #site_id to ensembl_release
+    # One to many relationships
+    # site_id to ensembl_release
     ensembl_releases = relationship('EnsemblRelease', back_populates='ensembl_site')
-    #many to one relationships
-    #none
+    # many to one relationships
+    # none
+
 
 class EnsemblRelease(Base):
     __tablename__ = 'ensembl_release'
@@ -176,12 +183,12 @@ class EnsemblRelease(Base):
     is_current = Column(TINYINT(1), nullable=False)
     site_id = Column(ForeignKey('ensembl_site.site_id'), index=True)
     release_type = Column(String(16), nullable=False)
-    #One to many relationships
-    #release_id to genome dataset and genome release
+    # One to many relationships
+    # release_id to genome dataset and genome release
     genome_datasets = relationship('GenomeDataset', back_populates='ensembl_release')
     genome_releases = relationship('GenomeRelease', back_populates='ensembl_release')
-    #many to one relationships
-    #site_id to ensembl_site
+    # many to one relationships
+    # site_id to ensembl_site
     ensembl_site = relationship('EnsemblSite', back_populates='ensembl_releases')
 
 
@@ -212,14 +219,14 @@ class GenomeDataset(Base):
     genome_id = Column(ForeignKey('genome.genome_id'), nullable=False, index=True)
     release_id = Column(ForeignKey('ensembl_release.release_id'), index=True)
     is_current = Column(TINYINT(1), nullable=False)
-    #One to many relationships
-    #none
-    #many to one relationships
-    #genome_dataset_id to genome
+    # One to many relationships
+    # none
+    # many to one relationships
+    # genome_dataset_id to genome
     dataset = relationship('Dataset', back_populates="genome_datasets")
-    #genome_id to genome
+    # genome_id to genome
     genome = relationship('Genome', back_populates="genome_datasets")
-    #release_id to release
+    # release_id to release
     ensembl_release = relationship('EnsemblRelease', back_populates="genome_datasets")
 
 
@@ -230,12 +237,12 @@ class GenomeRelease(Base):
     genome_id = Column(ForeignKey('genome.genome_id'), nullable=False, index=True)
     release_id = Column(ForeignKey('ensembl_release.release_id'), nullable=False, index=True)
     is_current = Column(TINYINT(1), nullable=False)
-    #One to many relationships
-    #none
-    #many to one relationships
-    #genome_release_id to genome_release
+    # One to many relationships
+    # none
+    # many to one relationships
+    # genome_release_id to genome_release
     genome = relationship('Genome', back_populates='genome_releases')
-    #release_id to ensembl release
+    # release_id to ensembl release
     ensembl_release = relationship('EnsemblRelease', back_populates='genome_releases')
 
 
@@ -251,16 +258,18 @@ class Organism(Base):
     url_name = Column(String(128), nullable=False)
     ensembl_name = Column(String(128), nullable=False, unique=True)
     scientific_parlance_name = Column(String(255))
-    #One to many relationships
-    #Organism_id to organism_group_member and genome
+    # One to many relationships
+    # Organism_id to organism_group_member and genome
     genomes = relationship('Genome', back_populates='organism')
     organism_group_members = relationship('OrganismGroupMember', back_populates='organism')
-    #many to one relationships
-    #organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
+
+    # many to one relationships
+    # organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
     def __repr__(self):
         return f'organism_id={self.organism_id}, taxonomy_id={self.taxonomy_id}, species_taxonomy_id={self.species_taxonomy_id}, ' \
                f'display_name={self.display_name}, strain={self.strain}, scientific_name={self.scientific_name}, ' \
                f'url_name={self.url_name}, ensembl_name={self.ensembl_name}, scientific_parlance_name={self.scientific_parlance_name}'
+
 
 class OrganismGroup(Base):
     __tablename__ = 'organism_group'
@@ -272,30 +281,33 @@ class OrganismGroup(Base):
     type = Column(String(32), nullable=False)
     name = Column(String(255), nullable=False)
     code = Column(String(48), unique=True)
-    #One to many relationships
-    #Organism_group_id to organism_group_member
+    # One to many relationships
+    # Organism_group_id to organism_group_member
     organism_group_members = relationship('OrganismGroupMember', back_populates='organism_group')
-    #many to one relationships
-    #none
+
+    # many to one relationships
+    # none
     def __repr__(self):
         return f'organism_group_id={self.organism_group_id}, type={self.type}, name={self.name}, ' \
                f'code={self.code}'
 
+
 class OrganismGroupMember(Base):
     __tablename__ = 'organism_group_member'
     __table_args__ = (
-        Index('organism_group_member_organism_id_organism_gro_fe8f49ac_uniq', 'organism_id', 'organism_group_id', unique=True),
+        Index('organism_group_member_organism_id_organism_gro_fe8f49ac_uniq', 'organism_id', 'organism_group_id',
+              unique=True),
     )
 
     organism_group_member_id = Column(Integer, primary_key=True)
     is_reference = Column(TINYINT(1), nullable=False)
     organism_id = Column(ForeignKey('organism.organism_id'), nullable=False)
     organism_group_id = Column(ForeignKey('organism_group.organism_group_id'), nullable=False, index=True)
-    #One to many relationships
-    #none
-    #many to one relationships
-    #Organism_group_id to organism_group_member
-    #organism_id to organism
+    # One to many relationships
+    # none
+    # many to one relationships
+    # Organism_group_id to organism_group_member
+    # organism_id to organism
     organism_group = relationship('OrganismGroup', back_populates='organism_group_members')
     organism = relationship('Organism', back_populates='organism_group_members')
 

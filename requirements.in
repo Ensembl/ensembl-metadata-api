@@ -1,6 +1,5 @@
 mysqlclient
-pymysql
 sqlalchemy~=1.4
 types-pymysql
-git+https://github.com/Ensembl/ensembl-py.git#egg=ensembl-py@1.0.0dev1
+git+https://github.com/Ensembl/ensembl-py.git#egg=ensembl-py
 mysql

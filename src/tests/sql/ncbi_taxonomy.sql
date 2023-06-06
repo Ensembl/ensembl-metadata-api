@@ -15,9 +15,10 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `ncbi_taxonomy` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+DROP DATABASE IF EXISTS `test_ncbi_taxonomy`;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `test_ncbi_taxonomy` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
-USE `ncbi_taxonomy`;
+USE `test_ncbi_taxonomy`;
 
 --
 -- Table structure for table `ncbi_taxa_name`
