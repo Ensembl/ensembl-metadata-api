@@ -4,7 +4,7 @@ python:
   - '3.8'
   - '3.9'
 env:
-  - TESTENV=test DB_HOST='root:@127.0.0.1:3306'
+  - TESTENV=test DB_HOST='root:@127.0.0.1:3306' MYSQL_USER='root'
 services:
   - mysql
 before_script:
@@ -12,6 +12,6 @@ before_script:
   - pip install -r requirements-test.txt
   - pip install .
   - export PYTHONPATH=$PYTHONPATH:$PWD/src
-  - mysql -u root -h 127.0.0.1 -e 'CREATE DATABASE ncbi_taxonomy; CREATE DATABASE ensembl_genome_metadata; use ncbi_taxonomy; source tests/sql/ncbi_taxonomy.sql; use ensembl_genome_metadata; source tests/sql/ensembl_genome_metadata.sql; source tests/sql/core_test_databases.sql;'
+
 script:
   - coverage run -m pytest

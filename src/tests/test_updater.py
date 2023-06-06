@@ -13,8 +13,8 @@ import os
 from ensembl.production.metadata.updater import *
 
 DB_HOST = os.getenv('DB_HOST', 'ensembl@127.0.0.1:3306')
-MD_NAME = f'mysql://{DB_HOST}/ensembl_genome_metadata'
-TX_NAME = f'mysql://{DB_HOST}/ncbi_taxonomy'
+MD_NAME = f'mysql://{DB_HOST}/test_ensembl_genome_metadata'
+TX_NAME = f'mysql://{DB_HOST}/test_ncbi_taxonomy'
 DB_NAME1 = f'mysql://{DB_HOST}/test_core_1'
 DB_NAME2 = f'mysql://{DB_HOST}/test_core_2'
 DB_NAME3 = f'mysql://{DB_HOST}/test_core_3'
