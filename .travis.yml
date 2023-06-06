@@ -4,7 +4,7 @@ python:
   - '3.8'
   - '3.9'
 env:
-  - TESTENV=test DB_HOST='root:@127.0.0.1:3306'
+  - TESTENV=test DB_HOST='root:@127.0.0.1:3306' MYSQL_USER='root'
 services:
   - mysql
 before_script:
@@ -12,5 +12,6 @@ before_script:
   - pip install -r requirements-test.txt
   - pip install .
   - export PYTHONPATH=$PYTHONPATH:$PWD/src
+
 script:
   - coverage run -m pytest
