@@ -501,13 +501,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
             # If the name does not match normal accession formating, then use that name.
             name = None
-            if re.match('^[a-zA-Z]+\\d+\.\\d+', data[0]):
+            if re.match('^[a-zA-Z]+\\d+\\.\\d+', data[0]):
                 name = None
             else:
                 name = data[0]
             # Nab accession from the seq region synonym or else the name.
             accession = None
-            if data[1] is not None and re.match('^[a-zA-Z]+\\d+\.\\d+', data[1]):
+            if data[1] is not None and re.match('^[a-zA-Z]+\\d+\\.\\d+', data[1]):
                 accession = data[1]
             elif name is not None:
                 accession = name
