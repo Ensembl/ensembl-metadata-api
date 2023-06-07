@@ -45,7 +45,7 @@ sqlalchemy==1.4.48
     #   -r requirements.in
     #   ensembl-py
     #   sqlalchemy-utils
-sqlalchemy-utils==0.39.0
+sqlalchemy-utils==0.38.3
     # via ensembl-py
 tomli==2.0.1
     # via pytest
