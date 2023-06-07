@@ -21,9 +21,7 @@ idna==3.4
 iniconfig==2.0.0
     # via pytest
 mysqlclient==2.1.1
-    # via
-    #   -r requirements.in
-    #   ensembl-py
+    # via ensembl-py
 packaging==23.1
     # via pytest
 pluggy==1.0.0
@@ -42,14 +40,11 @@ requests==2.31.0
     # via ensembl-py
 sqlalchemy==1.4.48
     # via
-    #   -r requirements.in
     #   ensembl-py
     #   sqlalchemy-utils
 sqlalchemy-utils==0.38.3
     # via ensembl-py
 tomli==2.0.1
     # via pytest
-types-pymysql==1.0.19.7
-    # via -r requirements.in
 urllib3==2.0.3
     # via requests
