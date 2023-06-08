@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 from setuptools import find_namespace_packages, setup
 
 with open('README.md') as f:

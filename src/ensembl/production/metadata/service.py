@@ -160,7 +160,7 @@ def get_genomes_from_assembly_accession_iterator(metadata_db, assembly_accession
         genome_release).join(release).join(assembly).join(organism).where(
         assembly.c.accession == assembly_accession)
     genome_results = session.execute(genome_select).all()
-    print(genome_select)
+    # print(genome_select)
     for genome in genome_results:
         yield create_genome(genome)
 
