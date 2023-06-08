@@ -4,12 +4,9 @@ os: linux
 python:
   - "3.8"
 
-env:
-  - TESTENV=test
-
 install:
   - pip install -r requirements-test.txt
   - pip install -e .
 
 script:
-  - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi
+  - coverage run -m pytest

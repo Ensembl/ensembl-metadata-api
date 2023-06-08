@@ -14,7 +14,7 @@ from concurrent import futures
 import grpc
 import logging
 import sqlalchemy as db
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.orm import Session
 
 from ensembl.production.metadata import ensembl_metadata_pb2_grpc
@@ -24,11 +24,10 @@ from ensembl.production.metadata.config import MetadataConfig as cfg
 
 
 def load_database(uri=None):
-    
-    if uri is None:    
+    if uri is None:
         uri = cfg.metadata_uri
         taxonomy_uri = cfg.taxon_uri
-        
+
     try:
         engine = db.create_engine(uri, pool_size=cfg.pool_size, max_overflow=cfg.max_overflow)
         taxonomy_engine = db.create_engine(taxonomy_uri, pool_size=cfg.pool_size, max_overflow=cfg.max_overflow)
@@ -58,11 +57,11 @@ def get_karyotype_information(metadata_db, genome_uuid):
     assembly = db.Table('assembly', md, autoload_with=metadata_db)
     assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
     karyotype_info = db.select([
-            assembly.c.level,
-            assembly_sequence.c.chromosomal,
-            assembly_sequence.c.sequence_location,
+        assembly.c.level,
+        assembly_sequence.c.chromosomal,
+        assembly_sequence.c.sequence_location,
     ]).where(genome.c.genome_uuid == genome_uuid) \
-        .where(genome.c.assembly_id == assembly_sequence.c.assembly_id)\
+        .where(genome.c.assembly_id == assembly_sequence.c.assembly_id) \
         .where(assembly_sequence.c.assembly_id == assembly.c.assembly_id)
 
     karyotype_results = session.execute(karyotype_info).all()
@@ -87,10 +86,10 @@ def get_top_level_statistics(metadata_db, organism_id):
     attribute = db.Table('attribute', md, autoload_with=metadata_db)
 
     stats_info = db.select([
-            dataset_attribute.c.type,
-            dataset_attribute.c.value,
-            attribute.c.name,
-            attribute.c.label
+        attribute.c.type,
+        dataset_attribute.c.value,
+        attribute.c.name,
+        attribute.c.label
     ]).select_from(genome).select_from(genome_dataset).select_from(dataset_attribute) \
         .where(genome.c.organism_id == organism_id) \
         .where(genome.c.genome_id == genome_dataset.c.genome_id) \
@@ -125,21 +124,21 @@ def get_assembly_information(metadata_db, assembly_id):
     assembly = db.Table('assembly', md, autoload_with=metadata_db)
     assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
     assembly_info = db.select([
-            assembly.c.accession,
-            assembly.c.level,
-            assembly.c.name,
-            assembly_sequence.c.chromosomal,
-            assembly_sequence.c.length,
-            assembly_sequence.c.sequence_location,
-            assembly_sequence.c.sequence_checksum,
-            assembly_sequence.c.ga4gh_identifier
+        assembly.c.accession,
+        assembly.c.level,
+        assembly.c.name,
+        assembly_sequence.c.chromosomal,
+        assembly_sequence.c.length,
+        assembly_sequence.c.sequence_location,
+        assembly_sequence.c.sequence_checksum,
+        assembly_sequence.c.ga4gh_identifier
     ]).join(assembly_sequence).where(assembly.c.assembly_id == assembly_id)
 
     assembly_results = session.execute(assembly_info).all()
-    assembly_results = dict(assembly_results[0])
-    assembly_results['assembly_id'] = assembly_id
 
     if len(assembly_results) > 0:
+        assembly_results = dict(assembly_results[0])
+        assembly_results['assembly_id'] = assembly_id
         return create_assembly(assembly_results)
     else:
         return create_assembly()
@@ -161,7 +160,7 @@ def get_genomes_from_assembly_accession_iterator(metadata_db, assembly_accession
         genome_release).join(release).join(assembly).join(organism).where(
         assembly.c.accession == assembly_accession)
     genome_results = session.execute(genome_select).all()
-
+    print(genome_select)
     for genome in genome_results:
         yield create_genome(genome)
 
@@ -177,15 +176,15 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
     organism = md.tables['organism']
 
     genome_select = db.select(
-            organism.c.ensembl_name,
-            organism.c.display_name,
-            organism.c.taxonomy_id,
-            organism.c.scientific_name,
-            organism.c.strain,
-            organism.c.scientific_parlance_name
-        ).select_from(genome).filter_by(
-            genome_uuid=genome_uuid
-        ).join(organism)
+        organism.c.ensembl_name,
+        organism.c.display_name,
+        organism.c.taxonomy_id,
+        organism.c.scientific_name,
+        organism.c.strain,
+        organism.c.scientific_parlance_name
+    ).select_from(genome).filter_by(
+        genome_uuid=genome_uuid
+    ).join(organism)
 
     species_results = session.execute(genome_select).all()
     if len(species_results) == 1:
@@ -229,11 +228,11 @@ def get_sub_species_info(metadata_db, organism_id):
     organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
 
     sub_species_select = db.select(
-            organism_group.c.type,
-            organism_group.c.name,
-        ).select_from(organism_group_member).filter_by(
-            organism_id=organism_id
-        ).join(organism_group)
+        organism_group.c.type,
+        organism_group.c.name,
+    ).select_from(organism_group_member).filter_by(
+        organism_id=organism_id
+    ).join(organism_group)
 
     sub_species_results = session.execute(sub_species_select).fetchall()
     species_name = []
@@ -264,11 +263,11 @@ def get_grouping_info(metadata_db, organism_id):
     organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
 
     grouping_select = db.select(
-            organism_group.c.type,
-            organism_group.c.name,
-        ).select_from(organism_group_member).filter_by(
-            organism_id=organism_id
-        ).join(organism_group)
+        organism_group.c.type,
+        organism_group.c.name,
+    ).select_from(organism_group_member).filter_by(
+        organism_id=organism_id
+    ).join(organism_group)
 
     grouping_results = session.execute(grouping_select).all()
 
@@ -302,8 +301,8 @@ def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
     assembly = sqlalchemy_md.tables['assembly']
     organism = sqlalchemy_md.tables['organism']
 
-    genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome)\
-        .join(assembly).join(organism).outerjoin(genome_release).outerjoin(release)\
+    genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome) \
+        .join(assembly).join(organism).outerjoin(genome_release).outerjoin(release) \
         .where(genome.c.genome_uuid == genome_uuid)
 
     if release_version == 0:
@@ -329,24 +328,25 @@ def get_genomes_by_keyword_iterator(metadata_db, keyword, release_version):
     assembly = sqlalchemy_md.tables['assembly']
     organism = sqlalchemy_md.tables['organism']
 
-    genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome)\
-        .outerjoin(assembly)\
-        .outerjoin(organism)\
-        .outerjoin(genome_release)\
+    genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome) \
+        .outerjoin(assembly) \
+        .outerjoin(organism) \
+        .outerjoin(genome_release) \
         .outerjoin(release) \
-        .where(or_(assembly.c.tolid == keyword,
-                   assembly.c.accession == keyword,
-                   assembly.c.name == keyword,
-                   assembly.c.ensembl_name == keyword,
-                   organism.c.scientific_name == keyword,
-                   organism.c.scientific_parlance_name == keyword,
-                   organism.c.species_taxonomy_id == keyword))
+        .where(or_(func.lower(assembly.c.tol_id) == keyword.lower(),
+                   func.lower(assembly.c.accession) == keyword.lower(),
+                   func.lower(assembly.c.name) == keyword.lower(),
+                   func.lower(assembly.c.ensembl_name) == keyword.lower(),
+                   func.lower(organism.c.display_name) == keyword.lower(),
+                   func.lower(organism.c.scientific_name) == keyword.lower(),
+                   func.lower(organism.c.scientific_parlance_name) == keyword.lower(),
+                   func.lower(organism.c.species_taxonomy_id) == keyword.lower()))
     if release_version == 0:
         genome_query = genome_query.where(release.c.is_current == 1)
     else:
         genome_query = genome_query.where(release.c.version <= release_version)
     genome_results = session.execute(genome_query).all()
-
+    # print(str(genome_query))
     most_recent_genomes = []
     for _, genome_release_group in itertools.groupby(genome_results, lambda r: r["assembly_accession"]):
         most_recent_genome = sorted(genome_release_group, key=lambda g: g["release_version"], reverse=True)[0]
@@ -382,9 +382,8 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
         genome_select = genome_select.join(genome_release).join(release).filter_by(
             version=release_version)
 
-    genome_select = genome_select.join(site).filter_by(
-        name=site_name)
-
+    genome_select = genome_select.join(site).filter_by(name=site_name).distinct()
+    # print(genome_select)
     genome_results = session.execute(genome_select).all()
 
     if len(genome_results) == 1:
@@ -395,15 +394,15 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
 
 def populate_dataset_info(data):
     return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid = data['dataset_uuid'],
-        dataset_name = data['dataset_name'],
-        dataset_version = data['dataset_version'],
-        dataset_label = data['dataset_label'],
-        version = int(data['version'])
+        dataset_uuid=data['dataset_uuid'],
+        dataset_name=data['dataset_name'],
+        dataset_version=data['dataset_version'],
+        dataset_label=data['dataset_label'],
+        version=int(data['version'])
     )
 
 
-def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version):
+def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version=0):
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
     session = Session(metadata_db, future=True)
@@ -424,10 +423,8 @@ def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version):
         dataset.c.version.label('dataset_version'),
         dataset.c.label.label('dataset_label'),
         ensembl_release.c.version
-        ).select_from(
-            genome
-        ).join(genome_dataset).join(dataset) \
-        .join(dataset_type).join(ensembl_release) \
+    ).select_from(genome).join(genome_dataset).join(dataset) \
+        .join(dataset_type).join(ensembl_release, isouter=True) \
         .where(genome.c.genome_uuid == genome_uuid) \
         .where(genome_dataset.c.is_current == 1) \
         .distinct()
@@ -464,7 +461,7 @@ def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version):
             dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
                 dataset_infos=ds_obj_dict[dataset_type_key]
             )
-                        
+
         return create_datasets({
             'genome_uuid': genome_uuid,
             'datasets': dataset_object_dict
@@ -472,6 +469,7 @@ def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version):
 
     else:
         return create_datasets()
+
 
 def get_genome_query(genome, genome_release, release, assembly, organism):
     return db.select(
@@ -510,14 +508,14 @@ def genome_sequence_iterator(metadata_db, genome_uuid, chromosomal_only):
     assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
 
     seq_select = db.select(
-            assembly_sequence.c.accession,
-            assembly_sequence.c.name,
-            assembly_sequence.c.sequence_location,
-            assembly_sequence.c.length,
-            assembly_sequence.c.chromosomal
-        ).select_from(genome).filter_by(
-            genome_uuid=genome_uuid
-        ).join(assembly).join(assembly_sequence)
+        assembly_sequence.c.accession,
+        assembly_sequence.c.name,
+        assembly_sequence.c.sequence_location,
+        assembly_sequence.c.length,
+        assembly_sequence.c.chromosomal
+    ).select_from(genome).filter_by(
+        genome_uuid=genome_uuid
+    ).join(assembly).join(assembly_sequence)
     if chromosomal_only == 1:
         seq_select = seq_select.filter_by(chromosomal=True)
 
@@ -535,14 +533,14 @@ def release_iterator(metadata_db, site_name, release_version, current_only):
     site = md.tables['ensembl_site']
 
     release_select = db.select(
-            release.c.version.label('release_version'),
-            db.cast(release.c.release_date, db.String),
-            release.c.label.label('release_label'),
-            release.c.is_current,
-            site.c.name.label('site_name'),
-            site.c.label.label('site_label'),
-            site.c.uri.label('site_uri')
-        ).select_from(release)
+        release.c.version.label('release_version'),
+        db.cast(release.c.release_date, db.String),
+        release.c.label.label('release_label'),
+        release.c.is_current,
+        site.c.name.label('site_name'),
+        site.c.label.label('site_label'),
+        site.c.uri.label('site_uri')
+    ).select_from(release)
     if len(release_version) > 0:
         release_select = release_select.filter(release.c.version.in_(release_version))
     if current_only == 1:
@@ -573,16 +571,16 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
     site = md.tables['ensembl_site']
 
     release_select = db.select(
-            release.c.version.label('release_version'),
-            db.cast(release.c.release_date, db.String),
-            release.c.label.label('release_label'),
-            release.c.is_current,
-            site.c.name.label('site_name'),
-            site.c.label.label('site_label'),
-            site.c.uri.label('site_uri')
-        ).select_from(genome).filter_by(
-            genome_uuid=genome_uuid
-        ).join(genome_release).join(release).join(site)
+        release.c.version.label('release_version'),
+        db.cast(release.c.release_date, db.String),
+        release.c.label.label('release_label'),
+        release.c.is_current,
+        site.c.name.label('site_name'),
+        site.c.label.label('site_label'),
+        site.c.uri.label('site_uri')
+    ).select_from(genome).filter_by(
+        genome_uuid=genome_uuid
+    ).join(genome_release).join(release).join(site)
 
     release_results = session.execute(release_select).all()
 
@@ -605,15 +603,15 @@ def get_dataset_by_genome_id(metadata_db, genome_uuid, requested_dataset_type):
     ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
 
     dataset_select = db.select(
-                               dataset.c.dataset_uuid,
-                               dataset.c.name.label('dataset_name'),
-                               attribute.c.name,
-                               dataset_attribute.c.type,
-                               dataset.c.version.label('dataset_version'),
-                               dataset.c.label.label('dataset_label'),
-                               ensembl_release.c.version,
-                               dataset_attribute.c.value
-                               ) \
+        dataset.c.dataset_uuid,
+        dataset.c.name.label('dataset_name'),
+        attribute.c.name,
+        attribute.c.type,
+        dataset.c.version.label('dataset_version'),
+        dataset.c.label.label('dataset_label'),
+        ensembl_release.c.version,
+        dataset_attribute.c.value
+    ) \
         .select_from(genome).filter_by(genome_uuid=genome_uuid) \
         .join(genome_dataset) \
         .join(ensembl_release) \
@@ -625,6 +623,7 @@ def get_dataset_by_genome_id(metadata_db, genome_uuid, requested_dataset_type):
         .order_by(dataset_type.c.name, dataset.c.name) \
         .distinct()
 
+    # print(str(dataset_select))
     dataset_results = session.execute(dataset_select).all()
     return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
 
@@ -790,6 +789,7 @@ def create_datasets(data=None):
         datasets=data['datasets']
     )
 
+
 def create_dataset_info(data=None):
     if data is None:
         return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
@@ -847,7 +847,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
                                   request.site_name,
                                   request.release_version
                                   )
-    
+
     def GetRelease(self, request, context):
         return release_iterator(self.db,
                                 request.site_name,
@@ -868,9 +868,10 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetDatasetsListByUUID(self, request, context):
         return get_datasets_list_by_uuid(self.db,
-                                    request.genome_uuid,
-                                    request.release_version
-                                    )
+                                         request.genome_uuid,
+                                         request.release_version
+                                         )
+
     def GetDatasetInformation(self, request, context):
         return get_dataset_by_genome_id(self.db, request.genome_uuid, request.dataset_type)
 

@@ -13,6 +13,7 @@
 Unit tests for service module
 """
 import datetime
+import os.path
 
 import sqlalchemy as db
 import json
@@ -22,23 +23,32 @@ import sqlite3
 from tempfile import TemporaryDirectory
 
 from ensembl.production.metadata import service, ensembl_metadata_pb2
+import glob
 
 
 class TestClass:
-    dirpath = TemporaryDirectory()
-    connection = sqlite3.connect(f'{dirpath.name}/test.db')
+    dir_path = TemporaryDirectory()
+    connection = sqlite3.connect(f'{dir_path.name}/test.db')
     cursor = connection.cursor()
 
-    sql_file = open("sampledb.sql")
-
+    sql_file = open(f"{os.path.dirname(__file__)}/databases/tables.sql")
     sql_as_string = sql_file.read()
+
     cursor.executescript(sql_as_string)
 
+    file_pattern = 'insert.*.sql'
+    file_list = glob.glob(f'{os.path.dirname(__file__)}/databases/{file_pattern}')
+    connection.execute("PRAGMA foreign_keys = OFF;")
+    for file_path in file_list:
+        with open(file_path, 'r') as sql_file:
+            sql_as_string = sql_file.read()
+            cursor.executescript(sql_as_string)
+    connection.execute("PRAGMA foreign_keys = ON;")
     connection.commit()
     connection.close()
 
     try:
-        engine = db.create_engine(f'sqlite:////{dirpath.name}/test.db')
+        engine = db.create_engine(f'sqlite:////{dir_path.name}/test.db')
     except AttributeError:
         raise ValueError(f'Could not connect to database. Check METADATA_URI env variable.')
 
@@ -52,7 +62,7 @@ class TestClass:
         input_dict = {
             'genome_uuid': 'f9d8c1dc-45dd-11ec-81d3-0242ac130003',
             'created': datetime.date(2022, 8, 15),
-            'ensembl_name':  'some name',
+            'ensembl_name': 'some name',
             'url_name': 'http://url_name.com',
             'display_name': 'Display Name',
             'is_current': True,
@@ -102,17 +112,16 @@ class TestClass:
         output = json_format.MessageToJson(service.create_genome(input_dict))
         assert json.loads(output) == expected_output
 
-
     def test_create_assembly(self):
         input_dict = {
             'assembly_id': '1234',
             'accession': 'XE.1234',
             'level': '5',
             'name': 'test name',
-            'chromosomal':1223,
+            'chromosomal': 1223,
             'length': 5,
             'sequence_location': 'location',
-            'sequence_checksum':'checksum',
+            'sequence_checksum': 'checksum',
             'ga4gh_identifier': 'test identifier'
         }
 
@@ -131,7 +140,6 @@ class TestClass:
         output = json_format.MessageToJson(service.create_assembly(input_dict))
         assert json.loads(output) == expected_output
 
-
     def test_create_karyotype(self):
         input_dict = {
             'genome_uuid': 'f9d8c1dc-45dd-11ec-81d3-0242ac130003',
@@ -149,7 +157,6 @@ class TestClass:
 
         output = json_format.MessageToJson(service.create_karyotype(input_dict))
         assert json.loads(output) == expected_output
-
 
     def test_create_species(self):
         input_dict = {
@@ -174,7 +181,6 @@ class TestClass:
 
         output = json_format.MessageToJson(service.create_species(input_dict))
         assert json.loads(output) == expected_output
-
 
     def test_create_top_level_statistics(self):
         input_dict = {
@@ -204,15 +210,14 @@ class TestClass:
                 'statisticValue': '5873'
             },
                 {
-                'label': 'Pseudogenic transcript',
-                'name': 'transcript_genomic_pseudogene',
-                'statisticType': 'length_bp',
-                'statisticValue': '3305648'}
+                    'label': 'Pseudogenic transcript',
+                    'name': 'transcript_genomic_pseudogene',
+                    'statisticType': 'length_bp',
+                    'statisticValue': '3305648'}
             ]
         }
         output = json_format.MessageToJson(service.create_top_level_statistics(input_dict))
         assert json.loads(output) == expected_output
-
 
     def test_create_genome_sequence(self):
         input_dict = {
@@ -231,7 +236,6 @@ class TestClass:
         }
         output = json_format.MessageToJson(service.create_genome_sequence(input_dict))
         assert json.loads(output) == expected_output
-
 
     def test_create_release(self):
         input_dict = {
@@ -254,120 +258,75 @@ class TestClass:
         output = json_format.MessageToJson(service.create_release(input_dict))
         assert json.loads(output) == expected_output
 
-
     def test_karyotype_information(self):
         output = json_format.MessageToJson(
             service.get_karyotype_information(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883'))
         expected_output = {}
         assert json.loads(output) == expected_output
 
-
     def test_assembly_information(self):
-        output = json_format.MessageToJson(service.get_assembly_information(self.engine, '2'))
-        expected_output = {
-            'assemblyId': "2",
-            'accession': "GCA_009873245.2",
-            'level': "chromosome",
-            'name': "mBalMus1.v2",
-            'chromosomal': 1,
-            'length': 185157308,
-            'sequenceLocation': "SO:0000738",
-            'sequenceChecksum': "bb967773a69d45e191a5e0fcfe277f7c"
-        }
+        output = json_format.MessageToJson(service.get_assembly_information(self.engine, '1'))
+        expected_output = {'accession': 'GCA_000001405.28',
+                           'assemblyId': '1',
+                           'length': 71251,
+                           'level': 'chromosome',
+                           'name': 'GRCh38.p13',
+                           'sequenceLocation': 'SO:0000738'}
         assert json.loads(output) == expected_output
-
 
     def test_get_genomes_from_assembly_accession_iterator(self):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-            service.get_genomes_from_assembly_accession_iterator(self.engine, "test accession")]
-        expected_output = [
-            {
-                'assembly': {
-                    'accession': 'test accession',
-                    'level': 'test level',
-                    'name': 'test name',
-                    'ensemblName': 'test assembly ensembl name'
-                },
-                'created': '2021-07-19 13:22:26',
-                'genomeUuid': '3c52097a-fb69-11eb-8dac-005056b32883',
-                'organism': {
-                    'displayName': 'Sus scrofa (Pig) - GCA_000003025.6',
-                    'ensemblName': 'sus_scrofa_gca000003025v6',
-                    'scientificName': 'Sus scrofa',
-                    'scientificParlanceName': 'Sus scrofa',
-                    'urlName': 'Sus_scrofa_GCA_000003025.6'
-                },
-                'release': {
-                    'isCurrent': True,
-                    'releaseDate': '2021-06-30',
-                    'releaseVersion': 24.0
-                },
-                'taxon': {
-                    'scientificName': 'Sus scrofa',
-                    'taxonomyId': 9823
-                }
-            },
-            {
-                'assembly': {
-                    'accession': 'test accession',
-                    'level': 'test level',
-                    'name': 'test name'
-                },
-                'created': '2021-07-19 13:22:26',
-                'genomeUuid': '244fdac6-729f-4c05-a2e9-38021f9593dd',
-                'organism': {
-                    'displayName': 'test organism',
-                    'ensemblName': 'test_organism_gca000003025v6',
-                    'scientificName': 'test organism',
-                    'scientificParlanceName': 'test organism',
-                    'urlName': 'test_organism_GCA_000003025.6'
-                },
-                'release': {
-                    'isCurrent': True,
-                    'releaseDate': '2021-03-25',
-                    'releaseVersion': 104.0
-                },
-                'taxon': {
-                    'scientificName': 'test organism',
-                    'taxonomyId': 9823
-                }
-            }
-        ]
+                  service.get_genomes_from_assembly_accession_iterator(self.engine, "GCA_000005845.2")]
+        expected_output = [{'assembly': {'accession': 'GCA_000005845.2',
+                                         'ensemblName': 'ASM584v2',
+                                         'level': 'chromosome',
+                                         'name': 'ASM584v2'},
+                            'created': '2023-05-12 13:32:14',
+                            'genomeUuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
+                            'organism': {'displayName': 'Escherichia coli str. K-12 substr. MG1655 str. '
+                                                        'K12 (GCA_000005845)',
+                                         'ensemblName': 'escherichia_coli_str_k_12_substr_mg1655_gca_000005845',
+                                         'scientificName': 'Escherichia coli str. K-12 substr. MG1655 '
+                                                           'str. K12 (GCA_000005845)',
+                                         'urlName': 'Escherichia_coli_str_k_12_substr_mg1655_gca_000005845'},
+                            'release': {'isCurrent': True,
+                                        'releaseDate': '2023-06-05',
+                                        'releaseLabel': 'Release 110',
+                                        'releaseVersion': 110.0},
+                            'taxon': {'scientificName': 'Escherichia coli str. K-12 substr. MG1655 str. '
+                                                        'K12 (GCA_000005845)',
+                                      'taxonomyId': 511145}}]
         assert output == expected_output
-
 
     def test_get_genomes_from_assembly_accession_iterator_null(self):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-            service.get_genomes_from_assembly_accession_iterator(self.engine, None)]
+                  service.get_genomes_from_assembly_accession_iterator(self.engine, None)]
         assert output == []
-
 
     def test_get_genomes_from_assembly_accession_iterator_no_matches(self):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-            service.get_genomes_from_assembly_accession_iterator(self.engine, "asdfasdfadf")]
+                  service.get_genomes_from_assembly_accession_iterator(self.engine, "asdfasdfadf")]
         assert output == []
 
-
     def test_sub_species_info(self):
-        output = json_format.MessageToJson(service.get_sub_species_info(self.engine, '41'))
+        output = json_format.MessageToJson(service.get_sub_species_info(self.engine, '1'))
         expected_output = {
-            'organismId': "41",
-            'speciesType': ["breeds"],
-            'speciesName': ["Dog breeds"]
+            'organismId': '1',
+            'speciesName': ['EnsemblVertebrates', 'Western Europe'],
+            'speciesType': ['Division', 'Population']
         }
         assert json.loads(output) == expected_output
 
         output2 = json_format.MessageToJson(service.get_grouping_info(self.engine, '51'))
         expected_output2 = {}
         assert json.loads(output2) == expected_output2
-
 
     def test_get_grouping_info(self):
-        output = json_format.MessageToJson(service.get_grouping_info(self.engine, '41'))
+        output = json_format.MessageToJson(service.get_grouping_info(self.engine, '1'))
         expected_output = {
-            'organismId': "41",
-            'speciesType': ["breeds"],
-            'speciesName': ["Dog breeds"]
+            'organismId': "1",
+            'speciesType': ['Division', 'Population'],
+            'speciesName': ["EnsemblVertebrates", "Western Europe"]
         }
         assert json.loads(output) == expected_output
 
@@ -375,162 +334,47 @@ class TestClass:
         expected_output2 = {}
         assert json.loads(output2) == expected_output2
 
-
     def test_get_top_level_statistics(self):
-        output = json_format.MessageToJson(service.get_top_level_statistics(self.engine, '41'))
+        output = json_format.MessageToJson(service.get_top_level_statistics(self.engine, '4'))
         output = json.loads(output)
         print(output)
-        assert len(output['statistics']) == 138
+        assert len(output['statistics']) == 94
         assert output['statistics'][0] == {
-            'name': "ungapped_genome",
-            'label': "Base pairs",
-            'statisticType': "length_bp",
-            'statisticValue': "2410429933"
+            'label': 'Contig N50',
+            'name': 'contig_n50',
+            'statisticType': 'bp',
+            'statisticValue': '51842'
         }
         assert output['statistics'][1] == {
-            'name': "gene_lnoncoding",
-            'label': "Long ncRNA gene",
-            'statisticType': "count",
-            'statisticValue': "1817"
+            'label': 'Total genome length',
+            'name': 'total_genome_length',
+            'statisticType': 'bp',
+            'statisticValue': '14547261565'
         }
-        assert output['statistics'][2] == {
-            'name': "gene_coding",
-            'label': "Protein-coding gene",
-            'statisticType': "count",
-            'statisticValue': "20804"
-        }
-        assert output['statistics'][3] == {
-            'name': "exon_mnoncoding",
-            'label': "Non-coding exon",
-            'statisticType': "count",
-            'statisticValue': "22"
-        }
-
 
     def test_get_datasets_list_by_uuid(self):
-        output = json_format.MessageToJson(service.get_datasets_list_by_uuid(self.engine, '3c51ff24-fb69-11eb-8dac-005056b32883', 103.0))
 
-        expected_output = {
-            "genomeUuid": "3c51ff24-fb69-11eb-8dac-005056b32883",
-            "datasets": {
-                "assembly": {
-                "datasetInfos": [
-                    {
-                    "datasetUuid": "40aa7070-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "assembly",
-                    "datasetLabel": "GCA_902859565.1",
-                    "version": 103
-                    }
-                ]
-                },
-                "checksum_xrefs": {
-                "datasetInfos": [
-                    {
-                    "datasetUuid": "56cc017f-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "uniparc_checksum",
-                    "datasetVersion": "2021-05-01",
-                    "datasetLabel": "UniParc",
-                    "version": 103
-                    }
-                ]
-                },
-                "go_terms": {
-                "datasetInfos": [
-                    {
-                    "datasetUuid": "56ce6e0b-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "interpro2go",
-                    "datasetVersion": "2021-04-10",
-                    "datasetLabel": "InterPro2GO mapping",
-                    "version": 103
-                    }
-                ]
-                },
-                "repeat_features": {
-                "datasetInfos": [
-                    {
-                    "datasetUuid": "56d08e6e-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "dust",
-                    "datasetVersion": "2021-02-16",
-                    "datasetLabel": "Low complexity (Dust)",
-                    "version": 103
-                    },
-                    {
-                    "datasetUuid": "56d08ed9-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "repeatdetector_annotated",
-                    "datasetVersion": "2.17-r974-dirty",
-                    "datasetLabel": "Repeats: Red (annotated)",
-                    "version": 103
-                    },
-                    {
-                    "datasetUuid": "56d08f3c-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "repeatdetector",
-                    "datasetVersion": "2.0",
-                    "datasetLabel": "Repeats: Red",
-                    "version": 103
-                    },
-                    {
-                    "datasetUuid": "56d08fa1-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "repeatmask_nrplants",
-                    "datasetVersion": "4.0.5",
-                    "datasetLabel": "Repeats: nrplants",
-                    "version": 103
-                    },
-                    {
-                    "datasetUuid": "56d09002-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "repeatmask_redat",
-                    "datasetVersion": "4.0.5",
-                    "datasetLabel": "Repeats: REdat",
-                    "version": 103
-                    },
-                    {
-                    "datasetUuid": "56d09060-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "repeatmask_repbase",
-                    "datasetVersion": "4.0.5",
-                    "datasetLabel": "Repeats: Repbase",
-                    "version": 103
-                    },
-                    {
-                    "datasetUuid": "56d090c2-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "trf",
-                    "datasetVersion": "4.0",
-                    "datasetLabel": "Tandem repeats (TRF)",
-                    "version": 103
-                    }
-                ]
-                },
-                "protein_features": {
-                "datasetInfos": [
-                    {
-                    "datasetUuid": "56cf650f-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "interproscan",
-                    "datasetVersion": "5.51-85.0",
-                    "datasetLabel": "InterProScan",
-                    "version": 103
-                    },
-                    {
-                    "datasetUuid": "56cf656f-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "seg",
-                    "datasetLabel": "seg",
-                    "version": 103
-                    }
-                ]
-                },
-                "geneset": {
-                "datasetInfos": [
-                    {
-                    "datasetUuid": "43ed89eb-fb69-11eb-8dac-005056b32883",
-                    "datasetName": "gene_core",
-                    "datasetLabel": "2021-01-KAUST",
-                    "version": 103
-                    }
-                ]
-                }
-            }
-        }
+        output = json_format.MessageToJson(
+            service.get_datasets_list_by_uuid(self.engine, 'a73356e1-93e7-11ec-a39d-005056b38ce3'))
+
+        expected_output = {'datasets': {'assembly': {'datasetInfos': [{'datasetLabel': 'GCA_000002765.2',
+                                                                       'datasetName': 'assembly',
+                                                                       'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                                                       'version': 110.0}]},
+                                        'genebuild': {'datasetInfos': [{'datasetLabel': '2017-10',
+                                                                        'datasetName': 'genebuild',
+                                                                        'datasetUuid': 'e33e0506-dc12-47c7-b291-a1a8ee6c17b6',
+                                                                        'version': 110.0}]},
+                                        'homologies': {'datasetInfos': [{'datasetLabel': 'Manual Add',
+                                                                         'datasetName': 'homologies',
+                                                                         'datasetUuid': '24d31c67-412e-44cc-8790-f196a16629ec',
+                                                                         'version': 110.0}]}},
+                           'genomeUuid': 'a73356e1-93e7-11ec-a39d-005056b38ce3'}
+
         assert json.loads(output) == expected_output
 
-
     def test_get_datasets_list_by_uuid_no_results(self):
+
         output = json_format.MessageToJson(
             service.get_datasets_list_by_uuid(self.engine, 'some-random-uuid-f00-b4r', 103.0)
         )
@@ -538,221 +382,223 @@ class TestClass:
         expected_output = {}
         assert output == expected_output
 
-
     def test_get_dataset_by_genome_id(self):
-        output = json_format.MessageToJson(service.get_dataset_by_genome_id(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883', 'assembly'))
-        output = json.loads(output)
-        assert output == {'genomeUuid': '3c4cec7f-fb69-11eb-8dac-005056b32883', 'datasetType': 'assembly',
-                          'datasetInfos': [
-                              {
-                                  'datasetUuid': '40a98446-fb69-11eb-8dac-005056b32883',
-                                  'datasetName': 'assembly',
-                                  'name': 'ungapped_genome',
-                                  'type': 'length_bp',
-                                  'datasetLabel': 'GCA_009873245.2',
-                                  'version': 22,
-                                  'value': '2379995981'
-                              }]
-                          }
 
+        output = json_format.MessageToJson(
+            service.get_dataset_by_genome_id(self.engine, 'a73356e1-93e7-11ec-a39d-005056b38ce3', 'assembly'))
+        output = json.loads(output)
+        assert output == {'datasetInfos': [{'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'total_genome_length',
+                                            'type': 'bp',
+                                            'value': '23292622',
+                                            'version': 110.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'total_coding_sequence_length',
+                                            'type': 'bp',
+                                            'value': '12309897',
+                                            'version': 110.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'total_gap_length',
+                                            'type': 'bp',
+                                            'value': '0',
+                                            'version': 110.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'spanned_gaps',
+                                            'type': 'integer',
+                                            'value': '0',
+                                            'version': 110.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'chromosomes',
+                                            'type': 'integer',
+                                            'value': '14',
+                                            'version': 110.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'toplevel_sequences',
+                                            'type': 'integer',
+                                            'value': '14',
+                                            'version': 110.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'component_sequences',
+                                            'type': 'integer',
+                                            'value': '14',
+                                            'version': 110.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'gc_percentage',
+                                            'type': 'percent',
+                                            'value': '19.34',
+                                            'version': 110.0}],
+                          'datasetType': 'assembly',
+                          'genomeUuid': 'a73356e1-93e7-11ec-a39d-005056b38ce3'}
 
     def test_get_dataset_by_genome_id_no_results(self):
+
         output = json_format.MessageToJson(
-            service.get_dataset_by_genome_id(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883', 'blah blah blah'))
+            service.get_dataset_by_genome_id(self.engine, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'blah blah blah'))
         output = json.loads(output)
         assert output == {}
 
     def test_get_genome_by_uuid(self):
-        output = json_format.MessageToJson(service.get_genome_by_uuid(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883', 1.0))
-        expected_output = {
-            "genomeUuid": "3c4cec7f-fb69-11eb-8dac-005056b32883",
-            "assembly": {
-                "accession": "GCA_009873245.2",
-                "name": "mBalMus1.v2",
-                "level": "chromosome"
-            },
-            "taxon": {
-                "taxonomyId": 9771,
-                "scientificName": "Balaenoptera musculus"
-            },
-            "created": "2020-05-01 13:28:33",
-            "organism": {
-                "displayName": "Balaenoptera musculus (Blue whale) - GCA_009873245.2",
-                "scientificName": "Balaenoptera musculus",
-                "urlName": "Balaenoptera_musculus_GCA_009873245.2",
-                "ensemblName": "balaenoptera_musculus",
-                "scientificParlanceName": "Balaenoptera musculus"
-            },
-            "release": {
-                "releaseVersion": 1,
-                "releaseDate": "2020-06-04"
-            }
-        }
-        assert json.loads(output) == expected_output
 
+        output = json_format.MessageToJson(
+            service.get_genome_by_uuid(self.engine, 'a7335667-93e7-11ec-a39d-005056b38ce3', 110.0))
+        expected_output = {'assembly': {'accession': 'GCA_000001405.28',
+                                        'ensemblName': 'GRCh38.p13',
+                                        'level': 'chromosome',
+                                        'name': 'GRCh38.p13',
+                                        'ucscName': 'hg38'},
+                           'created': '2023-05-12 13:30:58',
+                           'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3',
+                           'organism': {'displayName': 'Human',
+                                        'ensemblName': 'homo_sapiens',
+                                        'scientificName': 'Homo sapiens',
+                                        'urlName': 'Homo_sapiens'},
+                           'release': {'isCurrent': True,
+                                       'releaseDate': '2023-06-05',
+                                       'releaseLabel': 'Release 110',
+                                       'releaseVersion': 110.0},
+                           'taxon': {'scientificName': 'Homo sapiens', 'taxonomyId': 9606}
+                           }
+        assert json.loads(output) == expected_output
 
     def test_genome_by_uuid_release_version_unspecified(self):
-        output = json_format.MessageToJson(service.get_genome_by_uuid(self.engine, '3c52097a-fb69-11eb-8dac-005056b32883', 0.0))
-        expected_output = {
-            "genomeUuid": "3c52097a-fb69-11eb-8dac-005056b32883",
-            "assembly": {
-                "accession": "test accession",
-                "name": "test name",
-                "level": "test level",
-                "ensemblName": "test assembly ensembl name"
-            },
-            "taxon": {
-                "taxonomyId": 9823,
-                "scientificName": "Sus scrofa"
-            },
-            "created": "2021-07-19 13:22:26",
-            "organism": {
-                "displayName": "Sus scrofa (Pig) - GCA_000003025.6",
-                "scientificName": "Sus scrofa",
-                "scientificParlanceName": "Sus scrofa",
-                "urlName": "Sus_scrofa_GCA_000003025.6",
-                "ensemblName": "sus_scrofa_gca000003025v6"
-            },
-            "release": {
-                "releaseVersion": 24,
-                "releaseDate": "2021-06-30",
-                "isCurrent": True
-            }
-        }
+
+        output = json_format.MessageToJson(
+            service.get_genome_by_uuid(self.engine, 'a733574a-93e7-11ec-a39d-005056b38ce3', 0.0))
+        expected_output = {'assembly': {'accession': 'GCA_000146045.2',
+                                        'ensemblName': 'R64-1-1',
+                                        'level': 'chromosome',
+                                        'name': 'R64-1-1'},
+                           'created': '2023-05-12 13:32:46',
+                           'genomeUuid': 'a733574a-93e7-11ec-a39d-005056b38ce3',
+                           'organism': {'displayName': 'Saccharomyces cerevisiae',
+                                        'ensemblName': 'saccharomyces_cerevisiae',
+                                        'scientificName': 'Saccharomyces cerevisiae S288c',
+                                        'strain': 'S288C',
+                                        'urlName': 'Saccharomyces_cerevisiae'},
+                           'release': {'isCurrent': True,
+                                       'releaseDate': '2023-06-05',
+                                       'releaseLabel': 'Release 110',
+                                       'releaseVersion': 110.0},
+                           'taxon': {'scientificName': 'Saccharomyces cerevisiae S288c',
+                                     'strain': 'S288C',
+                                     'taxonomyId': 559292}}
         assert json.loads(output) == expected_output
 
-
-
     def test_get_genomes_by_uuid_null(self):
+
         output = service.get_genome_by_uuid(self.engine, None, 0)
         assert output == ensembl_metadata_pb2.Genome()
 
-
     def test_get_genomes_by_keyword(self):
-        output = [json.loads(json_format.MessageToJson(response)) for response in service.get_genomes_by_keyword_iterator(self.engine, 'Melitaea cinxia', 23.0)]
-        expected_output = [
-            {
-                'assembly': {},
-                'created': '2021-06-08 19:37:40',
-                'genomeUuid': '3c52036e-fb69-11eb-8dac-005056b32883',
-                'organism': {
-                    'displayName': 'Melitaea cinxia (Glanville fritillary) - '
-                                   'GCA_905220565.1',
-                    'ensemblName': 'melitaea_cinxia_gca905220565v1',
-                    'scientificName': 'Melitaea cinxia',
-                    'scientificParlanceName': 'Melitaea cinxia',
-                    'urlName': 'Melitaea_cinxia_GCA_905220565.1'
-                },
-                'release': {
-                    'releaseDate': '2021-06-17',
-                    'releaseVersion': 23.0
-                },
-                'taxon': {
-                    'scientificName': 'Melitaea cinxia',
-                    'taxonomyId': 113334
-                }
-            }
-        ]
-        assert output == expected_output
 
+        output = [json.loads(json_format.MessageToJson(response)) for response in
+                  service.get_genomes_by_keyword_iterator(self.engine, 'Human', 110.0)]
+        expected_output = [{'assembly': {'accession': 'GCA_000001405.28',
+                                         'ensemblName': 'GRCh38.p13',
+                                         'level': 'chromosome',
+                                         'name': 'GRCh38.p13',
+                                         'ucscName': 'hg38'},
+                            'created': '2023-05-12 13:30:58',
+                            'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3',
+                            'organism': {'displayName': 'Human',
+                                         'ensemblName': 'homo_sapiens',
+                                         'scientificName': 'Homo sapiens',
+                                         'urlName': 'Homo_sapiens'},
+                            'release': {'isCurrent': True,
+                                        'releaseDate': '2023-06-05',
+                                        'releaseLabel': 'Release 110',
+                                        'releaseVersion': 110.0},
+                            'taxon': {'scientificName': 'Homo sapiens', 'taxonomyId': 9606}}]
+        assert output == expected_output
 
     def test_get_genomes_by_keyword_release_unspecified(self):
-        output = [json.loads(json_format.MessageToJson(response)) for response in service.get_genomes_by_keyword_iterator(self.engine, 'Sus scrofa', 0.0)]
-        expected_output = [
-            {
-                'genomeUuid': '3c52097a-fb69-11eb-8dac-005056b32883',
-                'assembly': {
-                    'accession': 'test accession',
-                    'name': 'test name',
-                    'level': 'test level',
-                    'ensemblName': 'test assembly ensembl name'
-                },
-                'taxon': {
-                    'taxonomyId': 9823,
-                    'scientificName': 'Sus scrofa'
-                },
-                'created': '2021-07-19 13:22:26',
-                'organism': {
-                    'displayName': 'Sus scrofa (Pig) - GCA_000003025.6',
-                    'scientificName': 'Sus scrofa',
-                    'scientificParlanceName': 'Sus scrofa',
-                    'urlName': 'Sus_scrofa_GCA_000003025.6',
-                    'ensemblName': 'sus_scrofa_gca000003025v6'
-                },
-                'release': {
-                    'releaseVersion': 24,
-                    'releaseDate': '2021-06-30',
-                    'isCurrent': True
-                }
-            }
-        ]
+
+        output = [json.loads(json_format.MessageToJson(response)) for response in
+                  service.get_genomes_by_keyword_iterator(self.engine, 'Homo Sapiens', 0.0)]
+        expected_output = [{'assembly': {'accession': 'GCA_000001405.28',
+                                         'ensemblName': 'GRCh38.p13',
+                                         'level': 'chromosome',
+                                         'name': 'GRCh38.p13',
+                                         'ucscName': 'hg38'},
+                            'created': '2023-05-12 13:30:58',
+                            'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3',
+                            'organism': {'displayName': 'Human',
+                                         'ensemblName': 'homo_sapiens',
+                                         'scientificName': 'Homo sapiens',
+                                         'urlName': 'Homo_sapiens'},
+                            'release': {'isCurrent': True,
+                                        'releaseDate': '2023-06-05',
+                                        'releaseLabel': 'Release 110',
+                                        'releaseVersion': 110.0},
+                            'taxon': {'scientificName': 'Homo sapiens', 'taxonomyId': 9606}}]
         assert output == expected_output
 
-
     def test_get_genomes_by_keyword_null(self):
+
         output = list(service.get_genomes_by_keyword_iterator(self.engine, None, 0))
         assert output == []
 
-
     def test_get_genomes_by_keyword_no_matches(self):
+
         output = list(service.get_genomes_by_keyword_iterator(self.engine, "bigfoot", 1))
         assert output == []
 
-
     def test_get_genomes_by_name(self):
-        output = json_format.MessageToJson(service.get_genome_by_name(self.engine, 'balaenoptera_musculus', 'vertebrates', 1.0))
-        expected_output = {
-            "genomeUuid": "3c4cec7f-fb69-11eb-8dac-005056b32883",
-            "assembly": {
-                "accession": "GCA_009873245.2",
-                "name": "mBalMus1.v2",
-                "level": "chromosome"
-            },
-            "taxon": {
-                "taxonomyId": 9771,
-                "scientificName": "Balaenoptera musculus"
-            },
-            "created": "2020-05-01 13:28:33",
-            "organism": {
-                "displayName": "Balaenoptera musculus (Blue whale) - GCA_009873245.2",
-                "scientificName": "Balaenoptera musculus",
-                "scientificParlanceName": "Balaenoptera musculus",
-                "urlName": "Balaenoptera_musculus_GCA_009873245.2",
-                "ensemblName": "balaenoptera_musculus"
-            },
-            "release": {
-                "releaseVersion": 1,
-                "releaseDate": "2020-06-04"
-            }
-        }
+
+        output = json_format.MessageToJson(
+            service.get_genome_by_name(self.engine, 'homo_sapiens', 'beta', 110.0))
+        expected_output = {'assembly': {'accession': 'GCA_000001405.28',
+                                        'ensemblName': 'GRCh38.p13',
+                                        'level': 'chromosome',
+                                        'name': 'GRCh38.p13',
+                                        'ucscName': 'hg38'},
+                           'created': '2023-05-12 13:30:58',
+                           'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3',
+                           'organism': {'displayName': 'Human',
+                                        'ensemblName': 'homo_sapiens',
+                                        'scientificName': 'Homo sapiens',
+                                        'urlName': 'Homo_sapiens'},
+                           'release': {'isCurrent': True,
+                                       'releaseDate': '2023-06-05',
+                                       'releaseLabel': 'Release 110',
+                                       'releaseVersion': 110.0},
+                           'taxon': {'scientificName': 'Homo sapiens', 'taxonomyId': 9606}}
         assert json.loads(output) == expected_output
 
     def test_get_genomes_by_name_release_unspecified(self):
-        output = json_format.MessageToJson(service.get_genome_by_name(self.engine, 'sus_scrofa_gca000003025v6', 'vertebrates', 0.0))
-        expected_output = {
-            'genomeUuid': '3c52097a-fb69-11eb-8dac-005056b32883',
-            'assembly': {
-                'accession': 'test accession',
-                'name': 'test name',
-                'level': 'test level',
-                'ensemblName': 'test assembly ensembl name'
-            },
-            'taxon': {
-                'taxonomyId': 9823,
-                'scientificName': 'Sus scrofa'
-            },
-            'created': '2021-07-19 13:22:26',
-            'organism': {
-                'displayName': 'Sus scrofa (Pig) - GCA_000003025.6',
-                'scientificName': 'Sus scrofa',
-                'scientificParlanceName': 'Sus scrofa',
-                'urlName': 'Sus_scrofa_GCA_000003025.6',
-                'ensemblName': 'sus_scrofa_gca000003025v6'
-            },
-            'release': {
-                'releaseVersion': 24,
-                'releaseDate': '2021-06-30',
-                'isCurrent': True
-            }
-        }
+
+        output = json_format.MessageToJson(
+            service.get_genome_by_name(self.engine, 'homo_sapiens', 'beta', 0.0))
+        expected_output = {'assembly': {'accession': 'GCA_000001405.28',
+                                        'ensemblName': 'GRCh38.p13',
+                                        'level': 'chromosome',
+                                        'name': 'GRCh38.p13',
+                                        'ucscName': 'hg38'},
+                           'created': '2023-05-12 13:30:58',
+                           'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3',
+                           'organism': {'displayName': 'Human',
+                                        'ensemblName': 'homo_sapiens',
+                                        'scientificName': 'Homo sapiens',
+                                        'urlName': 'Homo_sapiens'},
+                           'release': {'isCurrent': True,
+                                       'releaseDate': '2023-06-05',
+                                       'releaseLabel': 'Release 110',
+                                       'releaseVersion': 110.0},
+                           'taxon': {'scientificName': 'Homo sapiens', 'taxonomyId': 9606}}
         assert json.loads(output) == expected_output

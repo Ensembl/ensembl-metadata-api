@@ -1,0 +1,10 @@
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (1, 'core', 'homo_sapiens_core_108_38');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (2, 'core', 'homo_sapiens_37_core_108_37');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (3, 'core', 'bacteria_0_collection_core_55_108_1');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (4, 'core', 'plasmodium_falciparum_core_55_108_1');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (5, 'core', 'triticum_aestivum_core_55_108_4');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (6, 'core', 'saccharomyces_cerevisiae_core_55_108_4');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (7, 'core', 'caenorhabditis_elegans_core_55_108_282');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (10, 'variation', 'gathered_data_1');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (11, 'compara', 'gathered_data_2');
+INSERT INTO dataset_source (dataset_source_id, type, name) VALUES (12, 'regulation', 'gathered_data_3');

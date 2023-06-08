@@ -138,6 +138,7 @@ message Assembly {
   string ucsc_name = 3;
   string level = 4;
   string ensembl_name = 5;
+  string tol_id = 6;
 }
 
 /*
