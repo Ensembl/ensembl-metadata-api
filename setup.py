@@ -1,13 +1,17 @@
 import os
 from setuptools import find_namespace_packages, setup
 
-
 with open('README.md') as f:
     readme = f.read()
 
-
 with open('VERSION') as f:
     version = f.read()
+
+
+def import_requirements():
+    """Import ``requirements.txt`` file located at the root of the repository."""
+    with open(Path(__file__).parent / 'requirements.txt') as file:
+        return [line.rstrip() for line in file.readlines()]
 
 
 setup(
@@ -25,8 +29,12 @@ setup(
     include_package_data=True,
     python_requires='>=3.8',
     install_requires=[
-        'grpcio'
+        'grpcio',
+        'protobuf==3.20'
     ],
+    extras_require={
+        'service': import_requirements(),
+    },
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
