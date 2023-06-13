@@ -9,11 +9,15 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import logging
+
 import sqlalchemy as db
 
 from ensembl.production.metadata.api.base import check_parameter, BaseAdaptor
 from ensembl.production.metadata.api.models import EnsemblRelease, EnsemblSite, GenomeRelease, Genome, GenomeDataset, \
     Dataset
+
+logger = logging.getLogger(__name__)
 
 
 class ReleaseAdaptor(BaseAdaptor):
@@ -62,6 +66,7 @@ class ReleaseAdaptor(BaseAdaptor):
             release_select = release_select.filter(
                 EnsemblSite.name.in_(site_name)
             )
+        logger.debug(f"Query: {release_select}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(release_select).all()

@@ -6,7 +6,7 @@ select
   'rnaseq_alignments' as dataset_type,
   concat('datafiles_', lower(data_file.file_type)) as dataset_name,
   'name' as type,
-  'sample' as name,
+  'databases' as name,
   'RNA-seq samples' as label,
   replace(display_label, ' RNA-seq BWA alignments', '') as value
 from

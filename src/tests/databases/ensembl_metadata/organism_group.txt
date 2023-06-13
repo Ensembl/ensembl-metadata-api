@@ -1,0 +1,6 @@
+1	Division	EnsemblVertebrates	vertebrates
+2	Division	EnsemblBacteria	bacteria
+3	Division	EnsemblProtists	protists
+4	Division	EnsemblPlants	plants
+5	Division	EnsemblFungi	fungi
+6	Division	EnsemblMetazoa	metazoa

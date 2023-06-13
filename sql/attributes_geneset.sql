@@ -218,7 +218,7 @@ from
 where
   m1.meta_key = 'schema_version' and
   m2.meta_key = 'species.production_name' and
-  m3.meta_key = 'sample.gene_param'
+  m3.meta_key = 'databases.gene_param'
 ;
 
 select
@@ -238,5 +238,5 @@ from
 where
   m1.meta_key = 'schema_version' and
   m2.meta_key = 'species.production_name' and
-  m3.meta_key = 'sample.location_param'
+  m3.meta_key = 'databases.location_param'
 ;

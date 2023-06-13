@@ -1,0 +1,30 @@
+1	559d7660-d92d-47e1-924e-e741151c2cef	1	assembly	\N	2023-05-12 13:30:58	1	GCA_000001405.28	Submitted
+2	230896ef-d1ab-4620-b688-432394c9ed6e	2	genebuild	GENCODE 42	2023-05-12 13:30:58	1	2022-07	Submitted
+3	6e82999b-7a8c-429c-a2af-8d77a59a2e81	1	assembly	\N	2023-05-12 13:32:06	2	GCA_000001405.14	Submitted
+4	e87aff52-f343-42cf-8dc4-62263a38dd83	2	genebuild	GENCODE 19	2023-05-12 13:32:06	2	2013-09	Submitted
+5	c98064f7-9861-4797-a2b9-30ad1567d816	1	assembly	\N	2023-05-12 13:32:14	3	GCA_000005845.2	Submitted
+6	3316fe1a-83e7-46da-8a56-cf2b693d8060	2	genebuild	\N	2023-05-12 13:32:14	3	2018-09	Submitted
+7	29dbda41-5188-4323-9318-ce546a87eee7	1	assembly	\N	2023-05-12 13:32:25	4	GCA_000002765.2	Submitted
+8	e33e0506-dc12-47c7-b291-a1a8ee6c17b6	2	genebuild	\N	2023-05-12 13:32:25	4	2017-10	Submitted
+9	b4ff55e3-d06a-4772-bb13-81c3207669e3	1	assembly	\N	2023-05-12 13:32:36	5	GCA_900519105.1	Submitted
+10	0dc05c6e-2910-4dbd-879a-719ba97d5824	2	genebuild	\N	2023-05-12 13:32:36	5	2018-04-IWGSC	Submitted
+11	ce23b201-653e-42f0-b9e0-56198b9421da	1	assembly	\N	2023-05-12 13:32:46	6	GCA_000146045.2	Submitted
+12	96088e8c-a69c-4335-a407-92d6d7a84d15	2	genebuild	\N	2023-05-12 13:32:46	6	2018-10	Submitted
+13	5f73aa4e-9551-4ddf-a10a-2a07065cc5ce	1	assembly	\N	2023-05-12 13:32:52	7	GCA_000002985.3	Submitted
+14	feaa37ea-4217-4d9d-afca-576bdae11b36	2	genebuild	\N	2023-05-12 13:32:52	7	2014-10	Submitted
+15	7b698c4f-7db9-4fc6-945c-fffed512ea88	3	variation	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
+16	a9a2fdb2-e11b-491a-82e6-2b9bc372f22f	4	evidence	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
+17	b76475c4-84c4-470d-86c8-4700f259fd99	5	regulation_build	\N	2023-06-02 13:32:52	12	Manual Add	Submitted
+18	e04a7fd3-f992-4fec-b6c8-4ea643c8c624	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
+19	fa3aeee8-f389-4790-9450-c2b1f8f546dd	3	variation	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
+20	78e12239-0600-4e41-a95c-4c340c9df136	4	evidence	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
+21	fd28616e-0773-4919-94fd-c5afce0e0839	5	regulation_build	\N	2023-06-02 13:32:52	12	Manual Add	Submitted
+26	8238c625-11f5-455f-8938-438d3d06cb0b	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
+30	24d31c67-412e-44cc-8790-f196a16629ec	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
+31	4d411e2d-676e-4fe0-b0d7-65a9e33fd47f	3	variation	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
+32	64a66f22-07a9-476e-9816-785e2ccb9c30	4	evidence	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
+34	e67ca09d-2e7b-4135-a990-6a2d1bca7285	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
+35	3875fa2e-e99f-46c8-81d4-f65e883dd8a8	3	variation	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
+36	1068ba70-0088-4927-98bd-8fabcfb9a384	4	evidence	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
+38	47d54c33-80d6-4174-8620-52b6c8506db2	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
+42	ea044d8e-33f1-4c9f-9b9f-8c0bd1dcf642	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted

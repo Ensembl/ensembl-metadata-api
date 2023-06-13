@@ -16,10 +16,8 @@ import os
 with open('README.md') as f:
     readme = f.read()
 
-
 with open('VERSION') as f:
     version = f.read()
-
 
 setup(
     name='ensembl_metadata_api',
@@ -35,6 +33,7 @@ setup(
     package_dir={'': 'src'},
     include_package_data=True,
     python_requires='>=3.8',
+    package_data={'fixtures': ['src/tests/databases/*', ]},
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",

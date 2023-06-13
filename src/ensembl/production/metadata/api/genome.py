@@ -17,7 +17,9 @@ from ensembl.production.metadata.api.base import BaseAdaptor, check_parameter
 from ensembl.production.metadata.api.config import get_taxonomy_uri
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource
+import logging
 
+logger = logging.getLogger(__name__)
 
 class GenomeAdaptor(BaseAdaptor):
     def __init__(self, metadata_uri=None, taxonomy_uri=None):
@@ -74,6 +76,7 @@ class GenomeAdaptor(BaseAdaptor):
                 NCBITaxaName.name == taxon
             )
             with self.taxonomy_db.session_scope() as session:
+                logger.debug(taxa_name_select)
                 taxid = session.execute(taxa_name_select).one()
                 taxids.append(taxid[0])
         return taxids
@@ -289,7 +292,7 @@ class GenomeAdaptor(BaseAdaptor):
 
             if dataset_source is not None:
                 genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
-
+            print(genome_select)
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
                 return session.execute(genome_select).all()
