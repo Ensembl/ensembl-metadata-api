@@ -444,7 +444,7 @@ class GenomeAdaptor(BaseAdaptor):
           genome_uuid=None,
           unreleased_datasets=False, 
           dataset_uuid=None,
-          dataset_topic=None,
+          dataset_name=None,
           dataset_source=None
     ):
       try:    
@@ -460,14 +460,14 @@ class GenomeAdaptor(BaseAdaptor):
                               .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
                               .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
                               
-        #set default group topic as 'assembly' to fetch unique datasource
-        if dataset_topic is None:
-          dataset_topic = "assembly"
+        #set default dataset name as 'assembly' to fetch unique datasource
+        if dataset_name is None:
+          dataset_name = "assembly"
         
         genome_id = check_parameter(genome_id)
         genome_uuid = check_parameter(genome_uuid)
         dataset_uuid = check_parameter(dataset_uuid)
-        dataset_topic = check_parameter(dataset_topic)
+        dataset_name = check_parameter(dataset_name)
         dataset_source = check_parameter(dataset_source)
     
         if genome_id is not None:
@@ -482,8 +482,8 @@ class GenomeAdaptor(BaseAdaptor):
         if unreleased_datasets:
           genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
                                           .filter(GenomeDataset.is_current==0)
-        if dataset_topic is not None:
-          genome_select = genome_select.filter(DatasetType.topic.in_(dataset_topic))
+        if dataset_name is not None:
+          genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
           
         if dataset_source is not None:
             genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
@@ -505,7 +505,7 @@ class GenomeAdaptor(BaseAdaptor):
             group=None,
             group_type=None,
             unreleased_datasets=False,
-            dataset_topic=None,
+            dataset_name=None,
             dataset_source=None
     ):
       try:
@@ -514,7 +514,7 @@ class GenomeAdaptor(BaseAdaptor):
         ensembl_name   = check_parameter(ensembl_name)
         group          = check_parameter(group)
         group_type     = check_parameter(group_type)
-        dataset_topic  = check_parameter(dataset_topic)
+        dataset_name   = check_parameter(dataset_name)
         dataset_source = check_parameter(dataset_source)
         
         if group is None:
@@ -537,10 +537,9 @@ class GenomeAdaptor(BaseAdaptor):
           dataset = self.fetch_genome_datasets(
                             genome_uuid=genome[0].genome_uuid,
                             unreleased_datasets=unreleased_datasets,
-                            dataset_topic=dataset_topic,
+                            dataset_name=dataset_name,
                             dataset_source=dataset_source
                     )
           yield [{'genome': genome, 'datasets': dataset}]
       except Exception as e:
         raise ValueError(str(e)) 
-    
