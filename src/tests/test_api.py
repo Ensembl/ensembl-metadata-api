@@ -13,6 +13,10 @@
 Unit tests for api module
 """
 import os
+
+import ensembl.production.metadata.models.assembly
+import ensembl.production.metadata.models.organism
+import ensembl.production.metadata.models.release
 from ensembl.production.metadata.api import *
 
 DB_HOST = os.getenv('DB_HOST', 'ensembl@127.0.0.1:3306')
@@ -32,22 +36,22 @@ def test_fetch_releases():
     conn = ReleaseAdaptor(DB_NAME)
     TEST = conn.fetch_releases(release_id=2)
     # Test the one to many connection
-    assert TEST[0].EnsemblSite.name == 'Test'
+    assert ensembl.production.metadata.models.release.EnsemblSite.name == 'Test'
     # Test the direct access.
-    assert TEST[0].EnsemblRelease.label == 'New'
+    assert ensembl.production.metadata.models.release.EnsemblRelease.label == 'New'
 
 
 # currently only have one release, so the testing is not comprehensive
 def test_fetch_releases_for_genome():
     conn = ReleaseAdaptor(DB_NAME)
     TEST = conn.fetch_releases_for_genome('a73351f7-93e7-11ec-a39d-005056b38ce3')
-    assert TEST[0].EnsemblSite.name == 'Test'
+    assert ensembl.production.metadata.models.release.EnsemblSite.name == 'Test'
 
 
 def test_fetch_releases_for_dataset():
     conn = ReleaseAdaptor(DB_NAME)
     TEST = conn.fetch_releases_for_dataset('3316fe1a-83e7-46da-8a56-cf2b693d8060')
-    assert TEST[0].EnsemblSite.name == 'Test'
+    assert ensembl.production.metadata.models.release.EnsemblSite.name == 'Test'
 
 
 def test_fetch_taxonomy_names():
@@ -65,7 +69,7 @@ def test_fetch_taxonomy_ids():
 def test_fetch_genomes():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes()
-    assert TEST[0].Organism.scientific_name == 'Caenorhabditis elegans'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'Caenorhabditis elegans'
 
 
 def test_fetch_genomes_by_group_division():
@@ -80,37 +84,37 @@ def test_fetch_genomes_by_group_division():
 def test_fetch_genomes_by_genome_uuid():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes_by_genome_uuid('a733550b-93e7-11ec-a39d-005056b38ce3')
-    assert TEST[0].Organism.scientific_name == 'Caenorhabditis elegans'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'Caenorhabditis elegans'
 
 
 def test_fetch_genomes_by_assembly_accession():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes_by_assembly_accession('GCA_000005845.2')
-    assert TEST[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)'
 
 
 def test_fetch_genomes_by_ensembl_name():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes_by_ensembl_name('caenorhabditis_elegans')
-    assert TEST[0].Organism.scientific_name == 'Caenorhabditis elegans'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'Caenorhabditis elegans'
 
 
 def test_fetch_genomes_by_taxonomy_id():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes_by_taxonomy_id(6239)
-    assert TEST[0].Organism.scientific_name == 'Caenorhabditis elegans'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'Caenorhabditis elegans'
 
 
 def test_fetch_genomes_by_scientific_name():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_genomes_by_scientific_name('Caenorhabditis elegans')
-    assert TEST[0].Organism.scientific_name == 'Caenorhabditis elegans'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'Caenorhabditis elegans'
 
 
 def test_fetch_sequences():
     conn = GenomeAdaptor(metadata_uri=DB_NAME, taxonomy_uri=TX_NAME)
     TEST = conn.fetch_sequences()
-    assert TEST[0].AssemblySequence.accession == 'KI270757.1'
+    assert ensembl.production.metadata.models.assembly.AssemblySequence.accession == 'KI270757.1'
 
 
 def test_fetch_genome_dataset_default_topic_assembly():

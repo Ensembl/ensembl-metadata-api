@@ -9,12 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import os
+from sqlalchemy.ext.declarative import declarative_base
 
-
-def get_metadata_uri():
-    return os.environ.get("METADATA_URI", None)
-
-
-def get_taxonomy_uri():
-    return os.environ.get("TAXONOMY_URI", None)
+Base = declarative_base()
+metadata = Base.metadata

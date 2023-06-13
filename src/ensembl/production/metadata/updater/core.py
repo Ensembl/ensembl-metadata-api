@@ -1,59 +1,14 @@
-# See the NOTICE file distributed with this work for additional information
-#   regarding copyright ownership.
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#       http://www.apache.org/licenses/LICENSE-2.0
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-
-
-# TODO: ensure tests run well.
-
 import logging
 import re
 import uuid
 
+from ensembl.core.models import Meta, Assembly, CoordSystem, SeqRegionAttrib, SeqRegion, SeqRegionSynonym
 from sqlalchemy import select, update, func, and_
-from sqlalchemy.engine.url import make_url
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import aliased
 
-import ensembl.production.metadata.models
-from ensembl.core.models import *
-from ensembl.production.metadata.api import *
-
-
-class BaseMetaUpdater:
-    def __init__(self, db_uri, metadata_uri=None, release=None):
-        self.db_uri = db_uri
-        self.db = DBConnection(self.db_uri)
-        self.species = None
-        self.db_type = None
-        if metadata_uri is None:
-            metadata_uri = get_metadata_uri()
-            # We will add a release later. For now, the release must be specified for it to be used.
-        if release is None:
-            self.listed_release = None
-            self.listed_release_is_current = None
-        else:
-            self.listed_release = release
-            self.listed_release_is_current = \
-                ReleaseAdaptor(metadata_uri).fetch_releases(release_id=self.listed_release)[
-                    0].EnsemblRelease.is_current
-        self.metadata_db = DBConnection(metadata_uri)
-
-    # Basic API for the meta table in the submission database.
-    def get_meta_single_meta_key(self, species_id, parameter):
-        with self.db.session_scope() as session:
-            result = (session.execute(db.select(Meta.meta_value).filter(
-                Meta.meta_key == parameter).filter(Meta.species_id == species_id)).one_or_none())
-            if result is None:
-                return None
-            else:
-                return result[0]
+import ensembl.production
+from ensembl.production.metadata.updater.base import BaseMetaUpdater
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
@@ -139,21 +94,21 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 session.expire_on_commit = False
                 test_organism = session.execute(db.select(Organism).filter(
                     Organism.ensembl_name == self.organism.ensembl_name)).one_or_none()
-            self.organism.organism_id = test_organism.Organism.organism_id
-            self.organism.scientific_parlance_name = test_organism.Organism.scientific_parlance_name
+            self.organism.organism_id = ensembl.production.metadata.models.organism.Organism.organism_id
+            self.organism.scientific_parlance_name = ensembl.production.metadata.models.organism.Organism.scientific_parlance_name
 
-            if int(test_organism.Organism.species_taxonomy_id) == int(self.organism.species_taxonomy_id) and \
-                    int(test_organism.Organism.taxonomy_id) == int(self.organism.taxonomy_id) and \
-                    str(test_organism.Organism.display_name) == str(self.organism.display_name) and \
-                    str(test_organism.Organism.scientific_name) == str(self.organism.scientific_name) and \
-                    str(test_organism.Organism.url_name) == str(self.organism.url_name) and \
-                    str(test_organism.Organism.strain) == str(self.organism.strain):
+            if int(ensembl.production.metadata.models.organism.Organism.species_taxonomy_id) == int(self.organism.species_taxonomy_id) and \
+                    int(ensembl.production.metadata.models.organism.Organism.taxonomy_id) == int(self.organism.taxonomy_id) and \
+                    str(ensembl.production.metadata.models.organism.Organism.display_name) == str(self.organism.display_name) and \
+                    str(ensembl.production.metadata.models.organism.Organism.scientific_name) == str(self.organism.scientific_name) and \
+                    str(ensembl.production.metadata.models.organism.Organism.url_name) == str(self.organism.url_name) and \
+                    str(ensembl.production.metadata.models.organism.Organism.strain) == str(self.organism.strain):
                 logging.info("Old Organism with no change. No update to organism table")
                 ################################################################
                 ##### Assembly Check and Update
                 ################################################################
                 with self.metadata_db.session_scope() as session:
-                    assembly_acc = session.execute(db.select(ensembl.production.metadata.models.Assembly
+                    assembly_acc = session.execute(db.select(ensembl.production.metadata.models.assembly.Assembly
                                                              ).join(Genome.assembly).join(Genome.organism).filter(
                         Organism.ensembl_name == self.organism.ensembl_name)).all()
                     new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")
@@ -204,8 +159,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
             self.new_organism_group_and_members(session)
             # Add in the new assembly here
             # assembly sequence, assembly, genome, genome release.
-            assembly_test = session.execute(db.select(ensembl.production.metadata.models.Assembly).filter(
-                ensembl.production.metadata.models.Assembly.accession == self.assembly.accession)).one_or_none()
+            assembly_test = session.execute(db.select(ensembl.production.metadata.models.assembly.Assembly).filter(
+                ensembl.production.metadata.models.assembly.Assembly.accession == self.assembly.accession)).one_or_none()
             if assembly_test is not None:
                 Exception(
                     "Error, existing name but, assembly accession already found. Please update the Ensembl Name in the Meta field manually")
@@ -450,7 +405,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             level = (session.execute(db.select(CoordSystem.name).filter(
                 CoordSystem.species_id == self.species).order_by(CoordSystem.rank)).all())[0][0]
 
-        self.assembly = ensembl.production.metadata.models.Assembly(
+        self.assembly = ensembl.production.metadata.models.assembly.Assembly(
             assembly_id=None,  # Should be autogenerated upon insertion
             ucsc_name=self.get_meta_single_meta_key(self.species, "assembly.ucsc_alias"),
             accession=self.get_meta_single_meta_key(self.species, "assembly.accession"),
@@ -577,37 +532,3 @@ class CoreMetaUpdater(BaseMetaUpdater):
             status='Submitted',
         ))
         # Protein Features
-
-
-## Section will be moved to the hive pipeline and nextflow. Do not delete until both are done!
-## Tests will need to be altered at that point.
-def meta_factory(db_uri, metadata_uri=None):
-    db_url = make_url(db_uri)
-    if '_compara_' in db_url.database:
-        raise Exception("compara not implemented yet")
-    # !DP!#
-    # NOT DONE#######################Worry about this after the core et al are done. Don't delete it yet.
-    #     elif '_collection_' in db_url.database:
-    #        self.db_type = "collection"
-    ################################################################
-    elif '_variation_' in db_url.database:
-        raise Exception("variation not implemented yet")
-    elif '_funcgen_' in db_url.database:
-        raise Exception("funcgen not implemented yet")
-    elif '_core_' in db_url.database:
-        return CoreMetaUpdater(db_uri, metadata_uri)
-    elif '_otherfeatures_' in db_url.database:
-        raise Exception("otherfeatures not implemented yet")
-    elif '_rnaseq_' in db_url.database:
-        raise Exception("rnaseq not implemented yet")
-    elif '_cdna_' in db_url.database:
-        raise Exception("cdna not implemented yet")
-    # Dealing with other versionned databases like mart, ontology,...
-    elif re.match(r'^\w+_?\d*_\d+$', db_url.database):
-        raise Exception("other not implemented yet")
-    elif re.match(
-            '^ensembl_accounts|ensembl_archive|ensembl_autocomplete|ensembl_metadata|ensembl_production|ensembl_stable_ids|ncbi_taxonomy|ontology|website',
-            db_url.database):
-        raise Exception("other not implemented yet")
-    else:
-        raise "Can't find data_type for database " + db_url.database

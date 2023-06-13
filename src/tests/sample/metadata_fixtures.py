@@ -9,12 +9,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import os
 
-
-def get_metadata_uri():
-    return os.environ.get("METADATA_URI", None)
-
-
-def get_taxonomy_uri():
-    return os.environ.get("TAXONOMY_URI", None)
+"""
+Metadata sample fixtures to be reused by other packages for testing their usage
+@author: Marc Chakiachvili
+"""

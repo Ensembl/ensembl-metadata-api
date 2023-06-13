@@ -9,12 +9,19 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import os
+from ensembl.database import DBConnection
+
+from ensembl.production.metadata.config import get_metadata_uri
 
 
-def get_metadata_uri():
-    return os.environ.get("METADATA_URI", None)
+class BaseAdaptor:
+    def __init__(self, metadata_uri=None):
+        if metadata_uri is None:
+            metadata_uri = get_metadata_uri()
+        self.metadata_db = DBConnection(metadata_uri)
 
 
-def get_taxonomy_uri():
-    return os.environ.get("TAXONOMY_URI", None)
+def check_parameter(param):
+    if param is not None and not isinstance(param, list):
+        param = [param]
+    return param

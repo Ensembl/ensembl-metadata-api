@@ -10,6 +10,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import os
+
+import ensembl.production.metadata.models.assembly
+import ensembl.production.metadata.models.organism
 from ensembl.production.metadata.updater import *
 
 DB_HOST = os.getenv('DB_HOST', 'ensembl@127.0.0.1:3306')
@@ -30,9 +33,9 @@ def test_new_organism():
     conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
     # Test the species
     TEST_Collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert TEST_Collect[0].Organism.scientific_name == 'carol_jabberwocky'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'carol_jabberwocky'
     # Test the Assembly
-    assert TEST_Collect[0].Assembly.accession == 'weird01'
+    assert ensembl.production.metadata.models.assembly.Assembly.accession == 'weird01'
     # select * from genebuild where version = 999 and name = 'genebuild and label =01
     engine = create_engine(MD_NAME)
     metadata = MetaData()
@@ -50,7 +53,7 @@ def test_update_organism():
     TEST.process_core()
     conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
     TEST_Collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert TEST_Collect[0].Organism.scientific_name == 'lewis_carol'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'lewis_carol'
 
 
 def test_update_assembly():
@@ -58,8 +61,8 @@ def test_update_assembly():
     TEST.process_core()
     conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
     TEST_Collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert TEST_Collect[1].Organism.scientific_name == 'lewis_carol'
-    assert TEST_Collect[1].Assembly.accession == 'weird02'
+    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'lewis_carol'
+    assert ensembl.production.metadata.models.assembly.Assembly.accession == 'weird02'
 
 
 #
