@@ -460,7 +460,7 @@ class GenomeAdaptor(BaseAdaptor):
                               .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
                               .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
                               
-        #set default group topic as 'assembly' to fetch unique datasource
+        #set default dataset name as 'assembly' to fetch unique datasource
         if dataset_name is None:
           dataset_name = "assembly"
         
