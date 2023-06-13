@@ -9,11 +9,13 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import sqlalchemy as db
 
 from ensembl.core.models import Meta
-from ensembl.production.metadata import config
+from ensembl.production.metadata.api import config
 from ensembl.database import DBConnection
-from ensembl.production.metadata.models import EnsemblRelease
+from ensembl.production.metadata.api.models import EnsemblRelease
+
 
 class BaseMetaUpdater:
     def __init__(self, db_uri, metadata_uri=None, release=None):

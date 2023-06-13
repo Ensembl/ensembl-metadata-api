@@ -13,7 +13,7 @@ from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
 
-from ensembl.production.metadata.models.base import Base
+from ensembl.production.metadata.api.models.base import Base
 
 
 class Attribute(Base):

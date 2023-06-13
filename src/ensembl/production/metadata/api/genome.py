@@ -14,8 +14,8 @@ from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
 
 from ensembl.production.metadata.api.base import BaseAdaptor, check_parameter
-from ensembl.production.metadata.config import get_taxonomy_uri
-from ensembl.production.metadata.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
+from ensembl.production.metadata.api.config import get_taxonomy_uri
+from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource
 
 
@@ -78,21 +78,9 @@ class GenomeAdaptor(BaseAdaptor):
                 taxids.append(taxid[0])
         return taxids
 
-    def fetch_genomes(
-            self,
-            genome_id=None,
-            genome_uuid=None,
-            assembly_accession=None,
-            ensembl_name=None,
-            taxonomy_id=None,
-            group=None,
-            group_type=None,
-            unreleased_only=False,
-            site_name=None,
-            release_type=None,
-            release_version=None,
-            current_only=True,
-    ):
+    def fetch_genomes(self, genome_id=None, genome_uuid=None, assembly_accession=None, ensembl_name=None,
+                      taxonomy_id=None, group=None, group_type=None, unreleased_only=False, site_name=None,
+                      release_type=None, release_version=None, current_only=True):
         genome_id = check_parameter(genome_id)
         genome_uuid = check_parameter(genome_uuid)
         assembly_accession = check_parameter(assembly_accession)
@@ -102,17 +90,17 @@ class GenomeAdaptor(BaseAdaptor):
         group_type = check_parameter(group_type)
 
         genome_select = db.select(
-          Genome, Organism, Assembly
+            Genome, Organism, Assembly
         ).join(Genome.assembly).join(Genome.organism)
 
-        if group :
-          group_type = group_type if group_type else ['Division']
-          genome_select = db.select(
-              Genome, Organism, Assembly, OrganismGroup
-          ).join(Genome.assembly).join(Genome.organism) \
-            .join(Organism.organism_group_members) \
-            .join(OrganismGroupMember.organism_group) \
-            .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
+        if group:
+            group_type = group_type if group_type else ['Division']
+            genome_select = db.select(
+                Genome, Organism, Assembly, OrganismGroup
+            ).join(Genome.assembly).join(Genome.organism) \
+                .join(Organism.organism_group_members) \
+                .join(OrganismGroupMember.organism_group) \
+                .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
 
         if unreleased_only:
             genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
@@ -154,15 +142,8 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("ensembl_name")).all()
 
-    def fetch_genomes_by_genome_uuid(
-            self,
-            genome_uuid,
-            unreleased_only=False,
-            site_name=None,
-            release_type=None,
-            release_version=None,
-            current_only=True,
-    ):
+    def fetch_genomes_by_genome_uuid(self, genome_uuid, unreleased_only=False, site_name=None, release_type=None,
+                                     release_version=None, current_only=True):
         return self.fetch_genomes(
             genome_uuid=genome_uuid,
             unreleased_only=unreleased_only,
@@ -172,15 +153,8 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_genomes_by_assembly_accession(
-            self,
-            assembly_accession,
-            unreleased_only=False,
-            site_name=None,
-            release_type=None,
-            release_version=None,
-            current_only=True,
-    ):
+    def fetch_genomes_by_assembly_accession(self, assembly_accession, unreleased_only=False, site_name=None,
+                                            release_type=None, release_version=None, current_only=True):
         return self.fetch_genomes(
             assembly_accession=assembly_accession,
             unreleased_only=unreleased_only,
@@ -190,15 +164,8 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_genomes_by_ensembl_name(
-            self,
-            ensembl_name,
-            unreleased_only=False,
-            site_name=None,
-            release_type=None,
-            release_version=None,
-            current_only=True,
-    ):
+    def fetch_genomes_by_ensembl_name(self, ensembl_name, unreleased_only=False, site_name=None, release_type=None,
+                                      release_version=None, current_only=True):
         return self.fetch_genomes(
             ensembl_name=ensembl_name,
             unreleased_only=unreleased_only,
@@ -208,15 +175,8 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_genomes_by_taxonomy_id(
-            self,
-            taxonomy_id,
-            unreleased_only=False,
-            site_name=None,
-            release_type=None,
-            release_version=None,
-            current_only=True,
-    ):
+    def fetch_genomes_by_taxonomy_id(self, taxonomy_id, unreleased_only=False, site_name=None, release_type=None,
+                                     release_version=None, current_only=True):
         return self.fetch_genomes(
             taxonomy_id=taxonomy_id,
             unreleased_only=unreleased_only,
@@ -246,13 +206,7 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_sequences(
-            self,
-            genome_id=None,
-            genome_uuid=None,
-            assembly_accession=None,
-            chromosomal_only=False,
-    ):
+    def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_accession=None, chromosomal_only=False):
         genome_id = check_parameter(genome_id)
         genome_uuid = check_parameter(genome_uuid)
         assembly_accession = check_parameter(assembly_accession)
@@ -293,63 +247,55 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
 
-    def fetch_genome_datasets(
-          self,
-          genome_id=None,
-          genome_uuid=None,
-          unreleased_datasets=False,
-          dataset_uuid=None,
-          dataset_topic=None,
-          dataset_source=None
-    ):
-      try:
-        genome_select = db.select(
-                              Genome,
-                              GenomeDataset,
-                              Dataset,
-                              DatasetType,
-                              DatasetSource
-                          ).select_from(Genome) \
-                              .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
-                              .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
-                              .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
-                              .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
+    def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, unreleased_datasets=False, dataset_uuid=None,
+                              dataset_topic=None, dataset_source=None):
+        try:
+            genome_select = db.select(
+                Genome,
+                GenomeDataset,
+                Dataset,
+                DatasetType,
+                DatasetSource
+            ).select_from(Genome) \
+                .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
+                .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
+                .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
+                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
 
-        #set default group topic as 'assembly' to fetch unique datasource
-        if dataset_topic is None:
-          dataset_topic = "assembly"
+            # set default group topic as 'assembly' to fetch unique datasource
+            if dataset_topic is None:
+                dataset_topic = "assembly"
 
-        genome_id = check_parameter(genome_id)
-        genome_uuid = check_parameter(genome_uuid)
-        dataset_uuid = check_parameter(dataset_uuid)
-        dataset_topic = check_parameter(dataset_topic)
-        dataset_source = check_parameter(dataset_source)
+            genome_id = check_parameter(genome_id)
+            genome_uuid = check_parameter(genome_uuid)
+            dataset_uuid = check_parameter(dataset_uuid)
+            dataset_topic = check_parameter(dataset_topic)
+            dataset_source = check_parameter(dataset_source)
 
-        if genome_id is not None:
-          genome_select = genome_select.filter(Genome.genome_id == genome_id)
+            if genome_id is not None:
+                genome_select = genome_select.filter(Genome.genome_id == genome_id)
 
-        if genome_uuid is not None:
-          genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
+            if genome_uuid is not None:
+                genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
 
-        if dataset_uuid is not None:
-          genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
+            if dataset_uuid is not None:
+                genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
 
-        if unreleased_datasets:
-          genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
-                                          .filter(GenomeDataset.is_current==0)
-        if dataset_topic is not None:
-          genome_select = genome_select.filter(DatasetType.topic.in_(dataset_topic))
+            if unreleased_datasets:
+                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
+                    .filter(GenomeDataset.is_current == 0)
+            if dataset_topic is not None:
+                genome_select = genome_select.filter(DatasetType.topic.in_(dataset_topic))
 
-        if dataset_source is not None:
-            genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
+            if dataset_source is not None:
+                genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
 
-        with self.metadata_db.session_scope() as session:
-          session.expire_on_commit = False
-          return session.execute(genome_select).all()
+            with self.metadata_db.session_scope() as session:
+                session.expire_on_commit = False
+                return session.execute(genome_select).all()
 
-      except Exception as e:
-        raise ValueError(str(e))
-
+        except Exception as e:
+            raise ValueError(str(e))
 
     def fetch_genomes_info(
             self,
@@ -363,38 +309,39 @@ class GenomeAdaptor(BaseAdaptor):
             dataset_topic=None,
             dataset_source=None
     ):
-      try:
-        genome_id      = check_parameter(genome_id)
-        genome_uuid    = check_parameter(genome_uuid)
-        ensembl_name   = check_parameter(ensembl_name)
-        group          = check_parameter(group)
-        group_type     = check_parameter(group_type)
-        dataset_topic  = check_parameter(dataset_topic)
-        dataset_source = check_parameter(dataset_source)
+        try:
+            genome_id = check_parameter(genome_id)
+            genome_uuid = check_parameter(genome_uuid)
+            ensembl_name = check_parameter(ensembl_name)
+            group = check_parameter(group)
+            group_type = check_parameter(group_type)
+            dataset_topic = check_parameter(dataset_topic)
+            dataset_source = check_parameter(dataset_source)
 
-        if group is None:
-          group_type = group_type if group_type else ['Division']
-          with self.metadata_db.session_scope() as session:
-              session.expire_on_commit = False
-              group = [ org_type[0] for org_type in session.execute(db.select(OrganismGroup.name).filter(OrganismGroup.type.in_(group_type))).all()  ]
+            if group is None:
+                group_type = group_type if group_type else ['Division']
+                with self.metadata_db.session_scope() as session:
+                    session.expire_on_commit = False
+                    group = [org_type[0] for org_type in session.execute(
+                        db.select(OrganismGroup.name).filter(OrganismGroup.type.in_(group_type))).all()]
 
-        #get genome, assembly and organism information
-        genomes = self.fetch_genomes(
-                          genome_id=genome_id,
-                          genome_uuid=genome_uuid,
-                          unreleased_only=unreleased_genomes,
-                          ensembl_name=ensembl_name,
-                          group=group,
-                          group_type=group_type,
-        )
+            # get genome, assembly and organism information
+            genomes = self.fetch_genomes(
+                genome_id=genome_id,
+                genome_uuid=genome_uuid,
+                unreleased_only=unreleased_genomes,
+                ensembl_name=ensembl_name,
+                group=group,
+                group_type=group_type,
+            )
 
-        for genome in genomes:
-          dataset = self.fetch_genome_datasets(
-                            genome_uuid=genome[0].genome_uuid,
-                            unreleased_datasets=unreleased_datasets,
-                            dataset_topic=dataset_topic,
-                            dataset_source=dataset_source
-                    )
-          yield [{'genome': genome, 'datasets': dataset}]
-      except Exception as e:
-        raise ValueError(str(e))
+            for genome in genomes:
+                dataset = self.fetch_genome_datasets(
+                    genome_uuid=genome[0].genome_uuid,
+                    unreleased_datasets=unreleased_datasets,
+                    dataset_topic=dataset_topic,
+                    dataset_source=dataset_source
+                )
+                yield [{'genome': genome, 'datasets': dataset}]
+        except Exception as e:
+            raise ValueError(str(e))

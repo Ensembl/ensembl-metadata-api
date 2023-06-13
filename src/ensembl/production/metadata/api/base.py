@@ -11,7 +11,7 @@
 #   limitations under the License.
 from ensembl.database import DBConnection
 
-from ensembl.production.metadata.config import get_metadata_uri
+from ensembl.production.metadata.api.config import get_metadata_uri
 
 
 class BaseAdaptor:

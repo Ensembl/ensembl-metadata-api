@@ -11,9 +11,12 @@
 #   limitations under the License.
 import os
 
-import ensembl.production.metadata.models.assembly
-import ensembl.production.metadata.models.organism
-from ensembl.production.metadata.updater import *
+from sqlalchemy import create_engine, MetaData, Table, select
+
+import ensembl.production.metadata.api.models.assembly
+import ensembl.production.metadata.api.models.organism
+from ensembl.production.metadata.api.factory import meta_factory
+from ensembl.production.metadata.api.genome import GenomeAdaptor
 
 DB_HOST = os.getenv('DB_HOST', 'ensembl@127.0.0.1:3306')
 MD_NAME = f'mysql://{DB_HOST}/test_ensembl_genome_metadata'
@@ -26,16 +29,17 @@ DB_NAME4 = f'mysql://{DB_HOST}/test_core_4'
 os.environ["METADATA_URI"] = MD_NAME
 os.environ["TAXONOMY_URI"] = TX_NAME
 
+
 def test_new_organism():
-    TEST = meta_factory(DB_NAME1, MD_NAME)
-    TEST.process_core()
+    test = meta_factory(DB_NAME1, MD_NAME)
+    test.process_core()
     # Look for organism, assembly and geneset
     conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
     # Test the species
-    TEST_Collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'carol_jabberwocky'
+    test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
+    assert test_collect[0].Organism.scientific_name == 'carol_jabberwocky'
     # Test the Assembly
-    assert ensembl.production.metadata.models.assembly.Assembly.accession == 'weird01'
+    assert test_collect[0].Assembly.accession == 'weird01'
     # select * from genebuild where version = 999 and name = 'genebuild and label =01
     engine = create_engine(MD_NAME)
     metadata = MetaData()
@@ -49,20 +53,20 @@ def test_new_organism():
 
 #
 def test_update_organism():
-    TEST = meta_factory(DB_NAME2, MD_NAME)
-    TEST.process_core()
+    test = meta_factory(DB_NAME2, MD_NAME)
+    test.process_core()
     conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
-    TEST_Collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'lewis_carol'
+    test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
+    assert test_collect[0].Organism.scientific_name == 'lewis_carol'
 
 
 def test_update_assembly():
-    TEST = meta_factory(DB_NAME3, MD_NAME)
-    TEST.process_core()
+    test = meta_factory(DB_NAME3, MD_NAME)
+    test.process_core()
     conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
-    TEST_Collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert ensembl.production.metadata.models.organism.Organism.scientific_name == 'lewis_carol'
-    assert ensembl.production.metadata.models.assembly.Assembly.accession == 'weird02'
+    test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
+    assert test_collect[1].Organism.scientific_name == 'lewis_carol'
+    assert test_collect[1].Assembly.accession == 'weird02'
 
 
 #

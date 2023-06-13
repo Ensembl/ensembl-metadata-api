@@ -13,7 +13,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Index, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
-from ensembl.production.metadata.models.base import Base
+from ensembl.production.metadata.api.models.base import Base
 
 
 class Assembly(Base):

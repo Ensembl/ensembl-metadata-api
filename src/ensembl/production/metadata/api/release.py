@@ -12,7 +12,7 @@
 import sqlalchemy as db
 
 from ensembl.production.metadata.api.base import check_parameter, BaseAdaptor
-from ensembl.production.metadata.models import EnsemblRelease, EnsemblSite, GenomeRelease, Genome, GenomeDataset, \
+from ensembl.production.metadata.api.models import EnsemblRelease, EnsemblSite, GenomeRelease, Genome, GenomeDataset, \
     Dataset
 
 
@@ -143,14 +143,14 @@ class NewReleaseAdaptor(BaseAdaptor):
 
     #     new_genomes (list of new genomes in the new release)
     def fetch_new_genomes(self):
+        # TODO: this code must be never called yet, because it would never work!!!!
         with self.metadata_db.session_scope() as session:
             genome_selector = db.select(
                 EnsemblRelease, EnsemblSite
             ).join(EnsemblRelease.ensembl_site)
             old_genomes = session.execute(
                 db.select(EnsemblRelease.version).filter(EnsemblRelease.version < current_version)).all()
-        new_genomes = []
-        novel_old_genomes = []
-        novel_new_genomes = []
-
-        return session.execute(release_select).all()
+            new_genomes = []
+            novel_old_genomes = []
+            novel_new_genomes = []
+            return session.execute(release_select).all()
