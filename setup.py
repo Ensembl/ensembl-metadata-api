@@ -42,8 +42,5 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         "Programming Language :: Python :: 3.8",
-    ],
-    install_requires=[
-         'ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git',
     ]
 )
