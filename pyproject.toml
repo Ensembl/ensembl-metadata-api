@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 testpaths = ["src/tests"]
+log_cli_level = "DEBUG"
 
 [tool.mypy]
 python_version = 3.8
@@ -12,5 +13,3 @@ ignore_missing_imports = true
 
 [tool.coverage.run]
 source = ["src/ensembl"]
-
-

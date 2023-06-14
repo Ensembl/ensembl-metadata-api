@@ -1,0 +1,10 @@
+1	core	homo_sapiens_core_108_38
+2	core	homo_sapiens_37_core_108_37
+3	core	bacteria_0_collection_core_55_108_1
+4	core	plasmodium_falciparum_core_55_108_1
+5	core	triticum_aestivum_core_55_108_4
+6	core	saccharomyces_cerevisiae_core_55_108_4
+7	core	caenorhabditis_elegans_core_55_108_282
+10	variation	gathered_data_1
+11	compara	gathered_data_2
+12	regulation	gathered_data_3

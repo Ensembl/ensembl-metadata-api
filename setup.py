@@ -16,10 +16,8 @@ import os
 with open('README.md') as f:
     readme = f.read()
 
-
 with open('VERSION') as f:
     version = f.read()
-
 
 setup(
     name='ensembl_metadata_api',
