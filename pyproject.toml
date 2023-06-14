@@ -5,7 +5,6 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 testpaths = ["src/tests"]
 log_cli_level = "DEBUG"
-addopts = "-s"
 
 [tool.mypy]
 python_version = 3.8
