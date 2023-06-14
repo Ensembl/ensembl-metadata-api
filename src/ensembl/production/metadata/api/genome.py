@@ -26,10 +26,6 @@ logger = logging.getLogger(__name__)
 class GenomeAdaptor(BaseAdaptor):
     def __init__(self, metadata_uri, taxonomy_uri=None):
         super().__init__(metadata_uri)
-        if taxonomy_uri is None:
-            # if no taxonomy, consider it to be on same server as the one of metadata
-            db_url = make_url(metadata_uri)
-            self.taxonomy_uri = db_url.set(database='ncbi_taxonomy')
         self.taxonomy_db = DBConnection(taxonomy_uri)
 
     def fetch_taxonomy_names(self, taxonomy_ids):

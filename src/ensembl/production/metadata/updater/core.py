@@ -25,7 +25,7 @@ from ensembl.production.metadata.updater.base import BaseMetaUpdater
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
-    def __init__(self, db_uri, metadata_uri, taxonomy_uri=None, release=None):
+    def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None):
         # Each of these objects represents a table in the database to store data in as either an array or a single object.
         self.organism = None
         self.organism_group_member = None

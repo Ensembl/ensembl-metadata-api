@@ -26,7 +26,8 @@ class TestUpdater:
     dbc = None  # type: UnitTestDB
 
     def test_new_organism(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_1'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url)
+        test = meta_factory(multi_dbs['core_1'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+                            multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
         # Look for organism, assembly and geneset
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -48,7 +49,8 @@ class TestUpdater:
 
     #
     def test_update_organism(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url)
+        test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+                            multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
@@ -56,7 +58,8 @@ class TestUpdater:
         assert test_collect[0].Organism.scientific_name == 'lewis_carol'
 
     def test_update_assembly(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_3'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url)
+        test = meta_factory(multi_dbs['core_3'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+                            multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
@@ -66,7 +69,8 @@ class TestUpdater:
 
     #
     def test_update_geneset(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_4'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url)
+        test = meta_factory(multi_dbs['core_4'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+                            multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
         engine = create_engine(multi_dbs['ensembl_metadata'].dbc.url)
         metadata = MetaData()

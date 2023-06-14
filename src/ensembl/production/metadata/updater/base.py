@@ -18,7 +18,7 @@ from ensembl.production.metadata.api.models import EnsemblRelease
 
 
 class BaseMetaUpdater:
-    def __init__(self, db_uri, metadata_uri, taxonomy_uri=None, release=None):
+    def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None):
         self.db_uri = db_uri
         self.db = DBConnection(self.db_uri)
         self.species = None
@@ -31,10 +31,7 @@ class BaseMetaUpdater:
             self.listed_release = release
             self.listed_release_is_current = EnsemblRelease.is_current
         self.metadata_db = DBConnection(metadata_uri)
-        if taxonomy_uri is None:
-            # if no taxonomy, consider it to be on same server as the one of metadata
-            db_url = make_url(metadata_uri)
-            self.taxonomy_uri = db_url.set(database='ncbi_taxonomy')
+        self.taxonomy_uri = taxonomy_uri
 
     # Basic API for the meta table in the submission database.
     def get_meta_single_meta_key(self, species_id, parameter):

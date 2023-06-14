@@ -16,7 +16,7 @@ from sqlalchemy.engine import make_url
 from ensembl.production.metadata.updater.core import CoreMetaUpdater
 
 
-def meta_factory(db_uri, metadata_uri=None):
+def meta_factory(db_uri, metadata_uri, taxonomy_uri):
     db_url = make_url(db_uri)
     if '_compara_' in db_url.database:
         raise Exception("compara not implemented yet")
@@ -30,7 +30,7 @@ def meta_factory(db_uri, metadata_uri=None):
     elif '_funcgen_' in db_url.database:
         raise Exception("funcgen not implemented yet")
     elif '_core_' in db_url.database:
-        return CoreMetaUpdater(db_uri, metadata_uri)
+        return CoreMetaUpdater(db_uri, metadata_uri, taxonomy_uri)
     elif '_otherfeatures_' in db_url.database:
         raise Exception("otherfeatures not implemented yet")
     elif '_rnaseq_' in db_url.database:
