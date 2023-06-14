@@ -33,7 +33,6 @@ setup(
     package_dir={'': 'src'},
     include_package_data=True,
     python_requires='>=3.8',
-    package_data={'metadata-api': ['src/tests/databases/*', ]},
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",

@@ -9,18 +9,22 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import os
+from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, MetaData, Table, select
-from ensembl.database import UnitTestDB
 
+from ensembl.database import UnitTestDB
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.genome import GenomeAdaptor
 
+db_directory = Path(__file__).parent / 'databases'
+db_directory = db_directory.resolve()
+
 
 @pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'},
-                                        {'src': 'core_1'}, {'src': 'core_2'}, {'src': 'core_3'}, {'src': 'core_4'}]],
+                                        {'src': db_directory / 'core_1'}, {'src': db_directory / 'core_2'},
+                                        {'src': db_directory / 'core_3'}, {'src': db_directory / 'core_4'}]],
                          indirect=True)
 class TestUpdater:
     dbc = None  # type: UnitTestDB
@@ -80,4 +84,3 @@ class TestUpdater:
         )
         row = engine.execute(query).fetchone()
         assert row[-2] == '02'
-
