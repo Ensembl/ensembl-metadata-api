@@ -16,15 +16,9 @@ from pathlib import Path
 import pytest
 from _pytest.config import Config
 
-host = os.getenv('MYSQL_HOST', "localhost")
-port = os.getenv('MYSQL_PORT', 3306)
-password = os.getenv('MYSQL_PASSWORD', "")
-user = os.getenv('MYSQL_USER', "ensembl")
-
 pytest_plugins = ("ensembl.plugins.pytest_unittest",)
 
 
 def pytest_configure(config: Config) -> None:
     pytest.dbs_dir = Path(__file__).parent / 'src' / 'tests' / 'databases'
-    config.option.server = f'mysql://{user}@{host}:{port}'
 
