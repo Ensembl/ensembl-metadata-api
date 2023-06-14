@@ -126,19 +126,19 @@ class GenomeAdaptor(BaseAdaptor):
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
         if genome_id is not None:
-            genome_select = genome_select.filter(Genome.genome_id == genome_id)
+            genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
 
         elif genome_uuid is not None:
-            genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
+            genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid) )
 
         elif assembly_accession is not None:
-            genome_select = genome_select.filter(Assembly.accession == assembly_accession)
+            genome_select = genome_select.filter(Assembly.accession.in_(assembly_accession))
 
         elif ensembl_name is not None:
-            genome_select = genome_select.filter(Organism.ensembl_name == ensembl_name)
+            genome_select = genome_select.filter(Organism.ensembl_name.in_(ensembl_name))
 
         elif taxonomy_id is not None:
-            genome_select = genome_select.filter(Organism.taxonomy_id == taxonomy_id)
+            genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
 
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
@@ -275,13 +275,13 @@ class GenomeAdaptor(BaseAdaptor):
             dataset_source = check_parameter(dataset_source)
 
             if genome_id is not None:
-                genome_select = genome_select.filter(Genome.genome_id == genome_id)
+                genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
 
             if genome_uuid is not None:
-                genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
+                genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
 
             if dataset_uuid is not None:
-                genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
+                genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
                 genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
