@@ -13,7 +13,6 @@ import sqlalchemy as db
 from sqlalchemy.engine import make_url
 
 from ensembl.core.models import Meta
-from ensembl.production.metadata.api import config
 from ensembl.database import DBConnection
 from ensembl.production.metadata.api.models import EnsemblRelease
 

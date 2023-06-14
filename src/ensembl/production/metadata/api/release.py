@@ -126,7 +126,7 @@ class NewReleaseAdaptor(BaseAdaptor):
                 session.execute(db.select(EnsemblRelease.release_id).filter(EnsemblRelease.is_current == 1)).one()[0])
         if self.current_release_id == "":
             raise Exception("Current release not found")
-        #   print (self.current_release_id)
+        logger.debug(f'Release ID: {self.current_release_id}')
 
         # Get last release ID from ensembl_release
         with self.metadata_db.session_scope() as session:

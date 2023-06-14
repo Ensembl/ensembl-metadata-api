@@ -295,7 +295,7 @@ class GenomeAdaptor(BaseAdaptor):
 
             if dataset_source is not None:
                 genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
-            print(genome_select)
+            logger.debug(genome_select)
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
                 return session.execute(genome_select).all()

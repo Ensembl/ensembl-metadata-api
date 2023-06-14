@@ -25,6 +25,6 @@ pytest_plugins = ("ensembl.plugins.pytest_unittest",)
 
 
 def pytest_configure(config: Config) -> None:
-    pytest.dbs_dir = Path(__file__).parent / 'databases'
+    pytest.dbs_dir = Path(__file__).parent / 'src' / 'tests' / 'databases'
     config.option.server = f'mysql://{user}@{host}:{port}'
 
