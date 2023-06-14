@@ -50,119 +50,116 @@ def get_karyotype_information(metadata_db, genome_uuid):
         return create_genome()
 
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', md, autoload_with=metadata_db)
+        assembly = db.Table('assembly', md, autoload_with=metadata_db)
+        assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
+        karyotype_info = db.select([
+            assembly.c.level,
+            assembly_sequence.c.chromosomal,
+            assembly_sequence.c.sequence_location,
+        ]).where(genome.c.genome_uuid == genome_uuid) \
+            .where(genome.c.assembly_id == assembly_sequence.c.assembly_id) \
+            .where(assembly_sequence.c.assembly_id == assembly.c.assembly_id)
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', md, autoload_with=metadata_db)
-    assembly = db.Table('assembly', md, autoload_with=metadata_db)
-    assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
-    karyotype_info = db.select([
-        assembly.c.level,
-        assembly_sequence.c.chromosomal,
-        assembly_sequence.c.sequence_location,
-    ]).where(genome.c.genome_uuid == genome_uuid) \
-        .where(genome.c.assembly_id == assembly_sequence.c.assembly_id) \
-        .where(assembly_sequence.c.assembly_id == assembly.c.assembly_id)
-
-    karyotype_results = session.execute(karyotype_info).all()
-    if len(karyotype_results) == 1:
-        karyotype_data = dict(karyotype_results[0])
-        karyotype_data['genome_uuid'] = genome_uuid
-        return create_karyotype(karyotype_data)
-    else:
-        return create_karyotype()
+        karyotype_results = session.execute(karyotype_info).all()
+        if len(karyotype_results) == 1:
+            karyotype_data = dict(karyotype_results[0])
+            karyotype_data['genome_uuid'] = genome_uuid
+            return create_karyotype(karyotype_data)
+        else:
+            return create_karyotype()
 
 
 def get_top_level_statistics(metadata_db, organism_id):
     if organism_id is None:
         return create_assembly()
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', md, autoload_with=metadata_db)
-    genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
-    dataset_attribute = db.Table('dataset_attribute', md, autoload_with=metadata_db)
-    attribute = db.Table('attribute', md, autoload_with=metadata_db)
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', md, autoload_with=metadata_db)
+        genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
+        dataset_attribute = db.Table('dataset_attribute', md, autoload_with=metadata_db)
+        attribute = db.Table('attribute', md, autoload_with=metadata_db)
 
-    stats_info = db.select([
-        attribute.c.type,
-        dataset_attribute.c.value,
-        attribute.c.name,
-        attribute.c.label
-    ]).select_from(genome).select_from(genome_dataset).select_from(dataset_attribute) \
-        .where(genome.c.organism_id == organism_id) \
-        .where(genome.c.genome_id == genome_dataset.c.genome_id) \
-        .where(genome_dataset.c.dataset_id == dataset_attribute.c.dataset_id) \
-        .where(dataset_attribute.c.attribute_id == attribute.c.attribute_id)
+        stats_info = db.select([
+            attribute.c.type,
+            dataset_attribute.c.value,
+            attribute.c.name,
+            attribute.c.label
+        ]).select_from(genome).select_from(genome_dataset).select_from(dataset_attribute) \
+            .where(genome.c.organism_id == organism_id) \
+            .where(genome.c.genome_id == genome_dataset.c.genome_id) \
+            .where(genome_dataset.c.dataset_id == dataset_attribute.c.dataset_id) \
+            .where(dataset_attribute.c.attribute_id == attribute.c.attribute_id)
 
-    stats_results = session.execute(stats_info).all()
-    statistics = []
-    if len(stats_results) > 0:
-        for stat_type, stat_value, name, label in stats_results:
-            statistics.append({
-                'name': name,
-                'label': label,
-                'statistic_type': stat_type,
-                'statistic_value': stat_value
+        stats_results = session.execute(stats_info).all()
+        statistics = []
+        if len(stats_results) > 0:
+            for stat_type, stat_value, name, label in stats_results:
+                statistics.append({
+                    'name': name,
+                    'label': label,
+                    'statistic_type': stat_type,
+                    'statistic_value': stat_value
+                })
+            return create_top_level_statistics({
+                'organism_id': organism_id,
+                'statistics': statistics
             })
-        return create_top_level_statistics({
-            'organism_id': organism_id,
-            'statistics': statistics
-        })
-    else:
-        return create_top_level_statistics()
+        else:
+            return create_top_level_statistics()
 
 
 def get_assembly_information(metadata_db, assembly_id):
     if assembly_id is None:
         return create_assembly()
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        assembly = db.Table('assembly', md, autoload_with=metadata_db)
+        assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
+        assembly_info = db.select([
+            assembly.c.accession,
+            assembly.c.level,
+            assembly.c.name,
+            assembly_sequence.c.chromosomal,
+            assembly_sequence.c.length,
+            assembly_sequence.c.sequence_location,
+            assembly_sequence.c.sequence_checksum,
+            assembly_sequence.c.ga4gh_identifier
+        ]).join(assembly_sequence).where(assembly.c.assembly_id == assembly_id)
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    assembly = db.Table('assembly', md, autoload_with=metadata_db)
-    assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
-    assembly_info = db.select([
-        assembly.c.accession,
-        assembly.c.level,
-        assembly.c.name,
-        assembly_sequence.c.chromosomal,
-        assembly_sequence.c.length,
-        assembly_sequence.c.sequence_location,
-        assembly_sequence.c.sequence_checksum,
-        assembly_sequence.c.ga4gh_identifier
-    ]).join(assembly_sequence).where(assembly.c.assembly_id == assembly_id)
+        assembly_results = session.execute(assembly_info).all()
 
-    assembly_results = session.execute(assembly_info).all()
-
-    if len(assembly_results) > 0:
-        assembly_results = dict(assembly_results[0])
-        assembly_results['assembly_id'] = assembly_id
-        return create_assembly(assembly_results)
-    else:
-        return create_assembly()
+        if len(assembly_results) > 0:
+            assembly_results = dict(assembly_results[0])
+            assembly_results['assembly_id'] = assembly_id
+            return create_assembly(assembly_results)
+        else:
+            return create_assembly()
 
 
 def get_genomes_from_assembly_accession_iterator(metadata_db, assembly_accession):
     if assembly_accession is None:
         return
     sqlalchemy_md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
+        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
+        genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
+        release = sqlalchemy_md.tables['ensembl_release']
+        assembly = sqlalchemy_md.tables['assembly']
+        organism = sqlalchemy_md.tables['organism']
 
-    genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
-    genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
-    release = sqlalchemy_md.tables['ensembl_release']
-    assembly = sqlalchemy_md.tables['assembly']
-    organism = sqlalchemy_md.tables['organism']
-
-    genome_select = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome).join(
-        genome_release).join(release).join(assembly).join(organism).where(
-        assembly.c.accession == assembly_accession)
-    genome_results = session.execute(genome_select).all()
-    # print(genome_select)
-    for genome in genome_results:
-        yield create_genome(genome)
+        genome_select = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome).join(
+            genome_release).join(release).join(assembly).join(organism).where(
+            assembly.c.accession == assembly_accession)
+        genome_results = session.execute(genome_select).all()
+        # print(genome_select)
+        for genome in genome_results:
+            yield create_genome(genome)
 
 
 def get_species_information(metadata_db, taxonomy_db, genome_uuid):
@@ -170,50 +167,50 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
         return create_genome()
 
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
 
-    genome = db.Table('genome', md, autoload_with=metadata_db)
-    organism = md.tables['organism']
+        genome = db.Table('genome', md, autoload_with=metadata_db)
+        organism = md.tables['organism']
 
-    genome_select = db.select(
-        organism.c.ensembl_name,
-        organism.c.display_name,
-        organism.c.taxonomy_id,
-        organism.c.scientific_name,
-        organism.c.strain,
-        organism.c.scientific_parlance_name
-    ).select_from(genome).filter_by(
-        genome_uuid=genome_uuid
-    ).join(organism)
+        genome_select = db.select(
+            organism.c.ensembl_name,
+            organism.c.display_name,
+            organism.c.taxonomy_id,
+            organism.c.scientific_name,
+            organism.c.strain,
+            organism.c.scientific_parlance_name
+        ).select_from(genome).filter_by(
+            genome_uuid=genome_uuid
+        ).join(organism)
 
-    species_results = session.execute(genome_select).all()
-    if len(species_results) == 1:
-        species_data = dict(species_results[0])
-        species_data['genome_uuid'] = genome_uuid
-        td = db.MetaData()
-        session = Session(taxonomy_db, future=True)
-        tax_name = db.Table('ncbi_taxa_name', td, autoload_with=taxonomy_db)
-        tax_names = db.select([tax_name.c.name, tax_name.c.name_class]).where(
-            tax_name.c.taxon_id == species_data['taxonomy_id'])
-        taxo_results = session.execute(tax_names).all()
-        common_names = []
-        # Get the common name and alternative names
-        species_data['ncbi_common_name'] = None
-        if len(taxo_results) > 0:
-            for item in taxo_results:
-                if item[1] is not None and item[0] is not None:
-                    if item[1] == 'genbank common name':
-                        species_data['ncbi_common_name'] = item[0]
-                    if item[1] == 'common name':
-                        common_names.append(item[1])
-            species_data['alternative_names'] = common_names
-            if len(common_names) > 0:
-                species_data['common_name'] = common_names[0]
-            else:
-                species_data['common_name'] = None
-        return create_species(species_data)
-    else:
-        return create_species()
+        species_results = session.execute(genome_select).all()
+        if len(species_results) == 1:
+            species_data = dict(species_results[0])
+            species_data['genome_uuid'] = genome_uuid
+            td = db.MetaData()
+            with Session(metadata_db, future=True) as session_tax:
+                tax_name = db.Table('ncbi_taxa_name', td, autoload_with=taxonomy_db)
+                tax_names = db.select([tax_name.c.name, tax_name.c.name_class]).where(
+                    tax_name.c.taxon_id == species_data['taxonomy_id'])
+                taxo_results = session_tax.execute(tax_names).all()
+                common_names = []
+                # Get the common name and alternative names
+                species_data['ncbi_common_name'] = None
+                if len(taxo_results) > 0:
+                    for item in taxo_results:
+                        if item[1] is not None and item[0] is not None:
+                            if item[1] == 'genbank common name':
+                                species_data['ncbi_common_name'] = item[0]
+                            if item[1] == 'common name':
+                                common_names.append(item[1])
+                    species_data['alternative_names'] = common_names
+                    if len(common_names) > 0:
+                        species_data['common_name'] = common_names[0]
+                    else:
+                        species_data['common_name'] = None
+                return create_species(species_data)
+        else:
+            return create_species()
 
 
 def get_sub_species_info(metadata_db, organism_id):
@@ -221,34 +218,34 @@ def get_sub_species_info(metadata_db, organism_id):
         return create_sub_species()
 
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    organism_group_member = db.Table('organism_group_member', md, autoload_with=metadata_db)
-    organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        organism_group_member = db.Table('organism_group_member', md, autoload_with=metadata_db)
+        organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
 
-    sub_species_select = db.select(
-        organism_group.c.type,
-        organism_group.c.name,
-    ).select_from(organism_group_member).filter_by(
-        organism_id=organism_id
-    ).join(organism_group)
+        sub_species_select = db.select(
+            organism_group.c.type,
+            organism_group.c.name,
+        ).select_from(organism_group_member).filter_by(
+            organism_id=organism_id
+        ).join(organism_group)
 
-    sub_species_results = session.execute(sub_species_select).fetchall()
-    species_name = []
-    species_type = []
-    if len(sub_species_results) > 0:
-        for key, value in sub_species_results:
-            species_type.append(key)
-            species_name.append(value)
+        sub_species_results = session.execute(sub_species_select).fetchall()
+        species_name = []
+        species_type = []
+        if len(sub_species_results) > 0:
+            for key, value in sub_species_results:
+                species_type.append(key)
+                species_name.append(value)
 
-        return create_sub_species({
-            'organism_id': organism_id,
-            'species_type': species_type,
-            'species_name': species_name
-        })
-    else:
-        return create_sub_species()
+            return create_sub_species({
+                'organism_id': organism_id,
+                'species_type': species_type,
+                'species_name': species_name
+            })
+        else:
+            return create_sub_species()
 
 
 def get_grouping_info(metadata_db, organism_id):
@@ -256,35 +253,34 @@ def get_grouping_info(metadata_db, organism_id):
         return create_grouping()
 
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        organism_group_member = db.Table('organism_group_member', md, autoload_with=metadata_db)
+        organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    organism_group_member = db.Table('organism_group_member', md, autoload_with=metadata_db)
-    organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
+        grouping_select = db.select(
+            organism_group.c.type,
+            organism_group.c.name,
+        ).select_from(organism_group_member).filter_by(
+            organism_id=organism_id
+        ).join(organism_group)
 
-    grouping_select = db.select(
-        organism_group.c.type,
-        organism_group.c.name,
-    ).select_from(organism_group_member).filter_by(
-        organism_id=organism_id
-    ).join(organism_group)
+        grouping_results = session.execute(grouping_select).all()
 
-    grouping_results = session.execute(grouping_select).all()
+        species_name = []
+        species_type = []
+        if len(grouping_results) > 0:
+            for key, value in grouping_results:
+                species_type.append(key)
+                species_name.append(value)
 
-    species_name = []
-    species_type = []
-    if len(grouping_results) > 0:
-        for key, value in grouping_results:
-            species_type.append(key)
-            species_name.append(value)
-
-        return create_grouping({
-            'organism_id': organism_id,
-            'species_type': species_type,
-            'species_name': species_name
-        })
-    else:
-        return create_grouping()
+            return create_grouping({
+                'organism_id': organism_id,
+                'species_type': species_type,
+                'species_name': species_name
+            })
+        else:
+            return create_grouping()
 
 
 def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
@@ -292,68 +288,68 @@ def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
         return create_genome()
 
     sqlalchemy_md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
-    genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
-    release = sqlalchemy_md.tables['ensembl_release']
-    assembly = sqlalchemy_md.tables['assembly']
-    organism = sqlalchemy_md.tables['organism']
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
+        genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
+        release = sqlalchemy_md.tables['ensembl_release']
+        assembly = sqlalchemy_md.tables['assembly']
+        organism = sqlalchemy_md.tables['organism']
 
-    genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome) \
-        .join(assembly).join(organism).outerjoin(genome_release).outerjoin(release) \
-        .where(genome.c.genome_uuid == genome_uuid)
+        genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome) \
+            .join(assembly).join(organism).outerjoin(genome_release).outerjoin(release) \
+            .where(genome.c.genome_uuid == genome_uuid)
 
-    if release_version == 0:
-        genome_query = genome_query.where(release.c.is_current == 1)
-    else:
-        genome_query = genome_query.where(release.c.version == release_version)
-    genome_results = session.execute(genome_query).all()
-    if len(genome_results) == 1:
-        return create_genome(genome_results[0])
-    return create_genome()
+        if release_version == 0:
+            genome_query = genome_query.where(release.c.is_current == 1)
+        else:
+            genome_query = genome_query.where(release.c.version == release_version)
+        genome_results = session.execute(genome_query).all()
+        if len(genome_results) == 1:
+            return create_genome(genome_results[0])
+        return create_genome()
 
 
 def get_genomes_by_keyword_iterator(metadata_db, keyword, release_version):
     if not keyword:
         return
     sqlalchemy_md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
-    genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
-    release = sqlalchemy_md.tables['ensembl_release']
-    assembly = sqlalchemy_md.tables['assembly']
-    organism = sqlalchemy_md.tables['organism']
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
+        genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
+        release = sqlalchemy_md.tables['ensembl_release']
+        assembly = sqlalchemy_md.tables['assembly']
+        organism = sqlalchemy_md.tables['organism']
 
-    genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome) \
-        .outerjoin(assembly) \
-        .outerjoin(organism) \
-        .outerjoin(genome_release) \
-        .outerjoin(release) \
-        .where(or_(func.lower(assembly.c.tol_id) == keyword.lower(),
-                   func.lower(assembly.c.accession) == keyword.lower(),
-                   func.lower(assembly.c.name) == keyword.lower(),
-                   func.lower(assembly.c.ensembl_name) == keyword.lower(),
-                   func.lower(organism.c.display_name) == keyword.lower(),
-                   func.lower(organism.c.scientific_name) == keyword.lower(),
-                   func.lower(organism.c.scientific_parlance_name) == keyword.lower(),
-                   func.lower(organism.c.species_taxonomy_id) == keyword.lower()))
-    if release_version == 0:
-        genome_query = genome_query.where(release.c.is_current == 1)
-    else:
-        genome_query = genome_query.where(release.c.version <= release_version)
-    genome_results = session.execute(genome_query).all()
-    # print(str(genome_query))
-    most_recent_genomes = []
-    for _, genome_release_group in itertools.groupby(genome_results, lambda r: r["assembly_accession"]):
-        most_recent_genome = sorted(genome_release_group, key=lambda g: g["release_version"], reverse=True)[0]
-        most_recent_genomes.append(most_recent_genome)
+        genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome) \
+            .outerjoin(assembly) \
+            .outerjoin(organism) \
+            .outerjoin(genome_release) \
+            .outerjoin(release) \
+            .where(or_(func.lower(assembly.c.tol_id) == keyword.lower(),
+                       func.lower(assembly.c.accession) == keyword.lower(),
+                       func.lower(assembly.c.name) == keyword.lower(),
+                       func.lower(assembly.c.ensembl_name) == keyword.lower(),
+                       func.lower(organism.c.display_name) == keyword.lower(),
+                       func.lower(organism.c.scientific_name) == keyword.lower(),
+                       func.lower(organism.c.scientific_parlance_name) == keyword.lower(),
+                       func.lower(organism.c.species_taxonomy_id) == keyword.lower()))
+        if release_version == 0:
+            genome_query = genome_query.where(release.c.is_current == 1)
+        else:
+            genome_query = genome_query.where(release.c.version <= release_version)
+        genome_results = session.execute(genome_query).all()
+        # print(str(genome_query))
+        most_recent_genomes = []
+        for _, genome_release_group in itertools.groupby(genome_results, lambda r: r["assembly_accession"]):
+            most_recent_genome = sorted(genome_release_group, key=lambda g: g["release_version"], reverse=True)[0]
+            most_recent_genomes.append(most_recent_genome)
 
-    for genome_row in most_recent_genomes:
-        yield create_genome(genome_row)
+        for genome_row in most_recent_genomes:
+            yield create_genome(genome_row)
 
 
 def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
@@ -362,34 +358,34 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
 
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', md, autoload_with=metadata_db)
-    genome_release = db.Table('genome_release', md, autoload_with=metadata_db)
-    assembly = md.tables['assembly']
-    organism = md.tables['organism']
-    release = md.tables['ensembl_release']
-    site = md.tables['ensembl_site']
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', md, autoload_with=metadata_db)
+        genome_release = db.Table('genome_release', md, autoload_with=metadata_db)
+        assembly = md.tables['assembly']
+        organism = md.tables['organism']
+        release = md.tables['ensembl_release']
+        site = md.tables['ensembl_site']
 
-    genome_select = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome).join(
-        assembly).join(organism).filter_by(ensembl_name=ensembl_name)
+        genome_select = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome).join(
+            assembly).join(organism).filter_by(ensembl_name=ensembl_name)
 
-    if release_version == 0:
-        genome_select = genome_select.join(genome_release).join(release).filter_by(
-            is_current=True)
-    else:
-        genome_select = genome_select.join(genome_release).join(release).filter_by(
-            version=release_version)
+        if release_version == 0:
+            genome_select = genome_select.join(genome_release).join(release).filter_by(
+                is_current=True)
+        else:
+            genome_select = genome_select.join(genome_release).join(release).filter_by(
+                version=release_version)
 
-    genome_select = genome_select.join(site).filter_by(name=site_name).distinct()
-    # print(genome_select)
-    genome_results = session.execute(genome_select).all()
+        genome_select = genome_select.join(site).filter_by(name=site_name).distinct()
+        # print(genome_select)
+        genome_results = session.execute(genome_select).all()
 
-    if len(genome_results) == 1:
-        return create_genome(genome_results[0])
-    else:
-        return create_genome()
+        if len(genome_results) == 1:
+            return create_genome(genome_results[0])
+        else:
+            return create_genome()
 
 
 def populate_dataset_info(data):
@@ -405,70 +401,69 @@ def populate_dataset_info(data):
 def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version=0):
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', md, autoload_with=metadata_db)
+        dataset = db.Table('dataset', md, autoload_with=metadata_db)
+        genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
+        dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
+        ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', md, autoload_with=metadata_db)
-    dataset = db.Table('dataset', md, autoload_with=metadata_db)
-    genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
-    dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
-    ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
+        datasets_select = db.select(
+            genome.c.genome_uuid,
+            dataset.c.dataset_uuid,
+            # The label here should be identical to what's in proto file
+            dataset_type.c.name.label('data_set_type'),
+            dataset.c.name.label('dataset_name'),
+            dataset.c.version.label('dataset_version'),
+            dataset.c.label.label('dataset_label'),
+            ensembl_release.c.version
+        ).select_from(genome).join(genome_dataset).join(dataset) \
+            .join(dataset_type).join(ensembl_release, isouter=True) \
+            .where(genome.c.genome_uuid == genome_uuid) \
+            .where(genome_dataset.c.is_current == 1) \
+            .distinct()
 
-    datasets_select = db.select(
-        genome.c.genome_uuid,
-        dataset.c.dataset_uuid,
-        # The label here should be identical to what's in proto file
-        dataset_type.c.name.label('data_set_type'),
-        dataset.c.name.label('dataset_name'),
-        dataset.c.version.label('dataset_version'),
-        dataset.c.label.label('dataset_label'),
-        ensembl_release.c.version
-    ).select_from(genome).join(genome_dataset).join(dataset) \
-        .join(dataset_type).join(ensembl_release, isouter=True) \
-        .where(genome.c.genome_uuid == genome_uuid) \
-        .where(genome_dataset.c.is_current == 1) \
-        .distinct()
+        if release_version > 0:
+            datasets_select = datasets_select.filter_by(version=release_version)
+            # TODO: Marc comment: Might be interesting to do a <=, because I am still not sure whether
+            # we'll replicate version attachment for everything every time we do a new release.
+        else:
+            # if the release is not specified, we return the latest by default
+            datasets_select = datasets_select.filter_by(is_current=1)
 
-    if release_version > 0:
-        datasets_select = datasets_select.filter_by(version=release_version)
-        # TODO: Marc comment: Might be interesting to do a <=, because I am still not sure whether 
-        # we'll replicate version attachment for everything every time we do a new release.
-    else:
-        # if the release is not specified, we return the latest by default
-        datasets_select = datasets_select.filter_by(is_current=1)
+        # print("SQL QUERY ===> ", str(datasets_select))
+        datasets_results = session.execute(datasets_select).all()
+        # print("len of datasets_results ===> ", len(datasets_results))
 
-    # print("SQL QUERY ===> ", str(datasets_select))
-    datasets_results = session.execute(datasets_select).all()
-    # print("len of datasets_results ===> ", len(datasets_results)) 
+        if len(datasets_results) > 0:
+            # ds_obj_dict where all datasets are stored as:
+            # { dataset_type_1: [datasets_dt1_1, datasets_dt1_2], dataset_type_2: [datasets_dt2_1] }
+            ds_obj_dict = {}
+            for result in datasets_results:
+                dataset_type = result['data_set_type']
+                # Populate the objects bottom up
+                datasets_info = populate_dataset_info(result)
+                # Construct the datasets dictionary
+                if dataset_type in ds_obj_dict:
+                    ds_obj_dict[dataset_type].append(datasets_info)
+                else:
+                    ds_obj_dict[dataset_type] = [datasets_info]
 
-    if len(datasets_results) > 0:
-        # ds_obj_dict where all datasets are stored as:
-        # { dataset_type_1: [datasets_dt1_1, datasets_dt1_2], dataset_type_2: [datasets_dt2_1] }
-        ds_obj_dict = {}
-        for result in datasets_results:
-            dataset_type = result['data_set_type']
-            # Populate the objects bottom up
-            datasets_info = populate_dataset_info(result)
-            # Construct the datasets dictionary
-            if dataset_type in ds_obj_dict:
-                ds_obj_dict[dataset_type].append(datasets_info)
-            else:
-                ds_obj_dict[dataset_type] = [datasets_info]
+            dataset_object_dict = {}
+            # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetInfos
+            for dataset_type_key in ds_obj_dict:
+                dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
+                    dataset_infos=ds_obj_dict[dataset_type_key]
+                )
 
-        dataset_object_dict = {}
-        # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetInfos
-        for dataset_type_key in ds_obj_dict:
-            dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
-                dataset_infos=ds_obj_dict[dataset_type_key]
-            )
+            return create_datasets({
+                'genome_uuid': genome_uuid,
+                'datasets': dataset_object_dict
+            })
 
-        return create_datasets({
-            'genome_uuid': genome_uuid,
-            'datasets': dataset_object_dict
-        })
-
-    else:
-        return create_datasets()
+        else:
+            return create_datasets()
 
 
 def get_genome_query(genome, genome_release, release, assembly, organism):
@@ -500,60 +495,58 @@ def genome_sequence_iterator(metadata_db, genome_uuid, chromosomal_only):
 
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', md, autoload_with=metadata_db)
+        assembly = md.tables['assembly']
+        assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', md, autoload_with=metadata_db)
-    assembly = md.tables['assembly']
-    assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
+        seq_select = db.select(
+            assembly_sequence.c.accession,
+            assembly_sequence.c.name,
+            assembly_sequence.c.sequence_location,
+            assembly_sequence.c.length,
+            assembly_sequence.c.chromosomal
+        ).select_from(genome).filter_by(
+            genome_uuid=genome_uuid
+        ).join(assembly).join(assembly_sequence)
+        if chromosomal_only == 1:
+            seq_select = seq_select.filter_by(chromosomal=True)
 
-    seq_select = db.select(
-        assembly_sequence.c.accession,
-        assembly_sequence.c.name,
-        assembly_sequence.c.sequence_location,
-        assembly_sequence.c.length,
-        assembly_sequence.c.chromosomal
-    ).select_from(genome).filter_by(
-        genome_uuid=genome_uuid
-    ).join(assembly).join(assembly_sequence)
-    if chromosomal_only == 1:
-        seq_select = seq_select.filter_by(chromosomal=True)
-
-    for result in session.execute(seq_select):
-        yield create_genome_sequence(dict(result))
+        for result in session.execute(seq_select):
+            yield create_genome_sequence(dict(result))
 
 
 def release_iterator(metadata_db, site_name, release_version, current_only):
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        release = db.Table('ensembl_release', md, autoload_with=metadata_db)
+        site = md.tables['ensembl_site']
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    release = db.Table('ensembl_release', md, autoload_with=metadata_db)
-    site = md.tables['ensembl_site']
+        release_select = db.select(
+            release.c.version.label('release_version'),
+            db.cast(release.c.release_date, db.String),
+            release.c.label.label('release_label'),
+            release.c.is_current,
+            site.c.name.label('site_name'),
+            site.c.label.label('site_label'),
+            site.c.uri.label('site_uri')
+        ).select_from(release)
+        if len(release_version) > 0:
+            release_select = release_select.filter(release.c.version.in_(release_version))
+        if current_only == 1:
+            release_select = release_select.filter_by(is_current=1)
 
-    release_select = db.select(
-        release.c.version.label('release_version'),
-        db.cast(release.c.release_date, db.String),
-        release.c.label.label('release_label'),
-        release.c.is_current,
-        site.c.name.label('site_name'),
-        site.c.label.label('site_label'),
-        site.c.uri.label('site_uri')
-    ).select_from(release)
-    if len(release_version) > 0:
-        release_select = release_select.filter(release.c.version.in_(release_version))
-    if current_only == 1:
-        release_select = release_select.filter_by(is_current=1)
+        release_select = release_select.join(site)
+        if len(site_name) > 0:
+            release_select = release_select.filter(site.c.name.in_(site_name))
 
-    release_select = release_select.join(site)
-    if len(site_name) > 0:
-        release_select = release_select.filter(site.c.name.in_(site_name))
+        release_results = session.execute(release_select).all()
 
-    release_results = session.execute(release_select).all()
-
-    for result in release_results:
-        yield create_release(dict(result))
+        for result in release_results:
+            yield create_release(dict(result))
 
 
 def release_by_uuid_iterator(metadata_db, genome_uuid):
@@ -562,70 +555,70 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
 
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', md, autoload_with=metadata_db)
-    genome_release = db.Table('genome_release', md, autoload_with=metadata_db)
-    release = md.tables['ensembl_release']
-    site = md.tables['ensembl_site']
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', md, autoload_with=metadata_db)
+        genome_release = db.Table('genome_release', md, autoload_with=metadata_db)
+        release = md.tables['ensembl_release']
+        site = md.tables['ensembl_site']
 
-    release_select = db.select(
-        release.c.version.label('release_version'),
-        db.cast(release.c.release_date, db.String),
-        release.c.label.label('release_label'),
-        release.c.is_current,
-        site.c.name.label('site_name'),
-        site.c.label.label('site_label'),
-        site.c.uri.label('site_uri')
-    ).select_from(genome).filter_by(
-        genome_uuid=genome_uuid
-    ).join(genome_release).join(release).join(site)
+        release_select = db.select(
+            release.c.version.label('release_version'),
+            db.cast(release.c.release_date, db.String),
+            release.c.label.label('release_label'),
+            release.c.is_current,
+            site.c.name.label('site_name'),
+            site.c.label.label('site_label'),
+            site.c.uri.label('site_uri')
+        ).select_from(genome).filter_by(
+            genome_uuid=genome_uuid
+        ).join(genome_release).join(release).join(site)
 
-    release_results = session.execute(release_select).all()
+        release_results = session.execute(release_select).all()
 
-    for result in release_results:
-        yield create_release(dict(result))
+        for result in release_results:
+            yield create_release(dict(result))
 
 
 def get_dataset_by_genome_id(metadata_db, genome_uuid, requested_dataset_type):
     # This is sqlalchemy's metadata, not Ensembl's!
     md = db.MetaData()
-    session = Session(metadata_db, future=True)
+    with Session(metadata_db, future=True) as session:
 
-    # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-    genome = db.Table('genome', md, autoload_with=metadata_db)
-    genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
-    dataset = db.Table('dataset', md, autoload_with=metadata_db)
-    dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
-    attribute = db.Table('attribute', md, autoload_with=metadata_db)
-    dataset_attribute = db.Table('dataset_attribute', md, autoload_with=metadata_db)
-    ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', md, autoload_with=metadata_db)
+        genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
+        dataset = db.Table('dataset', md, autoload_with=metadata_db)
+        dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
+        attribute = db.Table('attribute', md, autoload_with=metadata_db)
+        dataset_attribute = db.Table('dataset_attribute', md, autoload_with=metadata_db)
+        ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
 
-    dataset_select = db.select(
-        dataset.c.dataset_uuid,
-        dataset.c.name.label('dataset_name'),
-        attribute.c.name,
-        attribute.c.type,
-        dataset.c.version.label('dataset_version'),
-        dataset.c.label.label('dataset_label'),
-        ensembl_release.c.version,
-        dataset_attribute.c.value
-    ) \
-        .select_from(genome).filter_by(genome_uuid=genome_uuid) \
-        .join(genome_dataset) \
-        .join(ensembl_release) \
-        .join(dataset) \
-        .join(dataset_attribute) \
-        .join(attribute) \
-        .join(dataset_type) \
-        .where(dataset_type.c.name == requested_dataset_type) \
-        .order_by(dataset_type.c.name, dataset.c.name) \
-        .distinct()
+        dataset_select = db.select(
+            dataset.c.dataset_uuid,
+            dataset.c.name.label('dataset_name'),
+            attribute.c.name,
+            attribute.c.type,
+            dataset.c.version.label('dataset_version'),
+            dataset.c.label.label('dataset_label'),
+            ensembl_release.c.version,
+            dataset_attribute.c.value
+        ) \
+            .select_from(genome).filter_by(genome_uuid=genome_uuid) \
+            .join(genome_dataset) \
+            .join(ensembl_release) \
+            .join(dataset) \
+            .join(dataset_attribute) \
+            .join(attribute) \
+            .join(dataset_type) \
+            .where(dataset_type.c.name == requested_dataset_type) \
+            .order_by(dataset_type.c.name, dataset.c.name) \
+            .distinct()
 
-    # print(str(dataset_select))
-    dataset_results = session.execute(dataset_select).all()
-    return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
+        # print(str(dataset_select))
+        dataset_results = session.execute(dataset_select).all()
+        return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
 
 
 def create_species(data=None):
