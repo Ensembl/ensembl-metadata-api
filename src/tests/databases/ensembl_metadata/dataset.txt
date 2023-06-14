@@ -28,3 +28,6 @@
 36	1068ba70-0088-4927-98bd-8fabcfb9a384	4	evidence	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
 38	47d54c33-80d6-4174-8620-52b6c8506db2	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
 42	ea044d8e-33f1-4c9f-9b9f-8c0bd1dcf642	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
+44	feaa37ea-4217-4d9d-afca-599bdae11b36	2	genebuild	\N	2023-09-12 13:32:52.00	7	2023-05	Submitted
+45	feaa37ea-4217-4d9d-afca-600bdae11b36	1	asssembly	\N	2023-09-12 13:32:52.00	7	2023-05	Submitted
+

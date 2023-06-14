@@ -12,18 +12,15 @@
 """
 Unit tests for api module
 """
-import os
-from pathlib import Path
 
 import pytest
-from ensembl.database import UnitTestDB
 
+from ensembl.database import UnitTestDB
 from ensembl.production.metadata.api.genome import GenomeAdaptor
 from ensembl.production.metadata.api.release import ReleaseAdaptor
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'},
-                                        {'src': 'core_1'}, {'src': 'core_2'}, {'src': 'core_3'}, {'src': 'core_4'}]],
+@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'}]],
                          indirect=True)
 class TestMetadataDB:
     dbc = None  # type: UnitTestDB
@@ -119,15 +116,13 @@ class TestMetadataDB:
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genome_datasets(genome_uuid='a73357ab-93e7-11ec-a39d-005056b38ce3')
-        print(test)
         assert test[0][3].topic == 'Core Annotation'
 
     def test_fetch_genome_dataset_uuid(self, multi_dbs):
-        uuid = 'e33e0506-dc12-47c7-b291-a1a8ee6c17b6'
+        uuid = '0dc05c6e-2910-4dbd-879a-719ba97d5824'
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(dataset_uuid=uuid)
-        print(test)
+        test = conn.fetch_genome_datasets(dataset_uuid=uuid, dataset_name='genebuild')
         assert test[0][2].dataset_uuid == uuid
 
     def test_fetch_genome_dataset_genome_uuid(self, multi_dbs):
@@ -148,8 +143,9 @@ class TestMetadataDB:
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genome_datasets(unreleased_datasets=True)
+        print(test)
         assert test[0][1].release_id is None
-        assert test[0][1].is_current == False
+        assert test[0][1].is_current is False
 
     def test_fetch_genome_info_unreleased(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,

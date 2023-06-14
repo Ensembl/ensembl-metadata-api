@@ -10,6 +10,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import sqlalchemy as db
+from sqlalchemy.engine import make_url
 
 from ensembl.core.models import Meta
 from ensembl.production.metadata.api import config
@@ -18,14 +19,12 @@ from ensembl.production.metadata.api.models import EnsemblRelease
 
 
 class BaseMetaUpdater:
-    def __init__(self, db_uri, metadata_uri=None, release=None):
+    def __init__(self, db_uri, metadata_uri, taxonomy_uri=None, release=None):
         self.db_uri = db_uri
         self.db = DBConnection(self.db_uri)
         self.species = None
         self.db_type = None
-        if metadata_uri is None:
-            metadata_uri = config.get_metadata_uri()
-            # We will add a release later. For now, the release must be specified for it to be used.
+        # We will add a release later. For now, the release must be specified for it to be used.
         if release is None:
             self.listed_release = None
             self.listed_release_is_current = None
@@ -33,6 +32,10 @@ class BaseMetaUpdater:
             self.listed_release = release
             self.listed_release_is_current = EnsemblRelease.is_current
         self.metadata_db = DBConnection(metadata_uri)
+        if taxonomy_uri is None:
+            # if no taxonomy, consider it to be on same server as the one of metadata
+            db_url = make_url(metadata_uri)
+            self.taxonomy_uri = db_url.set(database='ncbi_taxonomy')
 
     # Basic API for the meta table in the submission database.
     def get_meta_single_meta_key(self, species_id, parameter):

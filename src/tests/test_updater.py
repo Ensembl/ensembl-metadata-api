@@ -11,73 +11,69 @@
 #   limitations under the License.
 import os
 
+import pytest
 from sqlalchemy import create_engine, MetaData, Table, select
+from ensembl.database import UnitTestDB
 
-import ensembl.production.metadata.api.models.assembly
-import ensembl.production.metadata.api.models.organism
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.genome import GenomeAdaptor
 
-DB_HOST = os.getenv('DB_HOST', 'ensembl@127.0.0.1:3306')
-MD_NAME = f'mysql://{DB_HOST}/test_ensembl_genome_metadata'
-TX_NAME = f'mysql://{DB_HOST}/test_ncbi_taxonomy'
-DB_NAME1 = f'mysql://{DB_HOST}/test_core_1'
-DB_NAME2 = f'mysql://{DB_HOST}/test_core_2'
-DB_NAME3 = f'mysql://{DB_HOST}/test_core_3'
-DB_NAME4 = f'mysql://{DB_HOST}/test_core_4'
 
-os.environ["METADATA_URI"] = MD_NAME
-os.environ["TAXONOMY_URI"] = TX_NAME
+@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'},
+                                        {'src': 'core_1'}, {'src': 'core_2'}, {'src': 'core_3'}, {'src': 'core_4'}]],
+                         indirect=True)
+class TestUpdater:
+    dbc = None  # type: UnitTestDB
 
+    def test_new_organism(self, multi_dbs):
+        test = meta_factory(multi_dbs['core_1'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url)
+        test.process_core()
+        # Look for organism, assembly and geneset
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        # Test the species
+        test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
+        assert test_collect[0].Organism.scientific_name == 'carol_jabberwocky'
+        # Test the Assembly
+        assert test_collect[0].Assembly.accession == 'weird01'
+        # select * from genebuild where version = 999 and name = 'genebuild and label =01
+        engine = create_engine(multi_dbs['ensembl_metadata'].dbc.url)
+        metadata = MetaData()
+        dataset = Table('dataset', metadata, autoload=True, autoload_with=engine)
+        query = select([dataset]).where(
+            (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '01')
+        )
+        row = engine.execute(query).fetchone()
+        assert row[-2] == '01'
 
-def test_new_organism():
-    test = meta_factory(DB_NAME1, MD_NAME)
-    test.process_core()
-    # Look for organism, assembly and geneset
-    conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
-    # Test the species
-    test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert test_collect[0].Organism.scientific_name == 'carol_jabberwocky'
-    # Test the Assembly
-    assert test_collect[0].Assembly.accession == 'weird01'
-    # select * from genebuild where version = 999 and name = 'genebuild and label =01
-    engine = create_engine(MD_NAME)
-    metadata = MetaData()
-    dataset = Table('dataset', metadata, autoload=True, autoload_with=engine)
-    query = select([dataset]).where(
-        (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '01')
-    )
-    row = engine.execute(query).fetchone()
-    assert row[-2] == '01'
+    #
+    def test_update_organism(self, multi_dbs):
+        test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url)
+        test.process_core()
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
+        assert test_collect[0].Organism.scientific_name == 'lewis_carol'
 
+    def test_update_assembly(self, multi_dbs):
+        test = meta_factory(multi_dbs['core_3'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url)
+        test.process_core()
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
+        assert test_collect[1].Organism.scientific_name == 'lewis_carol'
+        assert test_collect[1].Assembly.accession == 'weird02'
 
-#
-def test_update_organism():
-    test = meta_factory(DB_NAME2, MD_NAME)
-    test.process_core()
-    conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
-    test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert test_collect[0].Organism.scientific_name == 'lewis_carol'
+    #
+    def test_update_geneset(self, multi_dbs):
+        test = meta_factory(multi_dbs['core_4'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url)
+        test.process_core()
+        engine = create_engine(multi_dbs['ensembl_metadata'].dbc.url)
+        metadata = MetaData()
+        dataset = Table('dataset', metadata, autoload=True, autoload_with=engine)
+        query = select([dataset]).where(
+            (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '02')
+        )
+        row = engine.execute(query).fetchone()
+        assert row[-2] == '02'
 
-
-def test_update_assembly():
-    test = meta_factory(DB_NAME3, MD_NAME)
-    test.process_core()
-    conn = GenomeAdaptor(metadata_uri=MD_NAME, taxonomy_uri=TX_NAME)
-    test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-    assert test_collect[1].Organism.scientific_name == 'lewis_carol'
-    assert test_collect[1].Assembly.accession == 'weird02'
-
-
-#
-def test_update_geneset():
-    TEST = meta_factory(DB_NAME4, MD_NAME)
-    TEST.process_core()
-    engine = create_engine(MD_NAME)
-    metadata = MetaData()
-    dataset = Table('dataset', metadata, autoload=True, autoload_with=engine)
-    query = select([dataset]).where(
-        (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '02')
-    )
-    row = engine.execute(query).fetchone()
-    assert row[-2] == '02'

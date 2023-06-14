@@ -25,7 +25,7 @@ from ensembl.production.metadata.updater.base import BaseMetaUpdater
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
-    def __init__(self, db_uri, metadata_uri, release=None):
+    def __init__(self, db_uri, metadata_uri, taxonomy_uri=None, release=None):
         # Each of these objects represents a table in the database to store data in as either an array or a single object.
         self.organism = None
         self.organism_group_member = None
@@ -44,7 +44,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         self.dataset_attribute = None
         self.attribute = None
 
-        super().__init__(db_uri, metadata_uri, release)
+        super().__init__(db_uri, metadata_uri, taxonomy_uri, release)
         self.db_type = 'core'
 
     def process_core(self, **kwargs):
@@ -90,7 +90,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Species Check
         # Check for new species by checking if ensembl name is already present in the database
-        if not GenomeAdaptor(metadata_uri=self.metadata_db.url).fetch_genomes_by_ensembl_name(
+        if not GenomeAdaptor(metadata_uri=self.metadata_db.url,
+                             taxonomy_uri=self.taxonomy_uri).fetch_genomes_by_ensembl_name(
                 self.organism.ensembl_name):
             # Check if the assembly accesion is already present in the database
             new_assembly_acc = self.get_meta_single_meta_key(self.species, "assembly.accession")

@@ -11,13 +11,9 @@
 #   limitations under the License.
 from ensembl.database import DBConnection
 
-from ensembl.production.metadata.api.config import get_metadata_uri
-
 
 class BaseAdaptor:
-    def __init__(self, metadata_uri=None):
-        if metadata_uri is None:
-            metadata_uri = get_metadata_uri()
+    def __init__(self, metadata_uri):
         self.metadata_db = DBConnection(metadata_uri)
 
 
