@@ -4,7 +4,7 @@ python:
   - '3.8'
   - '3.9'
 env:
-  - TESTENV=test DB_HOST='mysql://travis@127.0.0.1:3306'
+  - DB_HOST=mysql://travis@127.0.0.1:3306
 services:
   - mysql
 before_script:
@@ -14,4 +14,5 @@ before_script:
   - export PYTHONPATH=$PYTHONPATH:$PWD/src
 
 script:
+  - echo "DB_HOST ENV $DB_HOST"
   - coverage run -m pytest
