@@ -13,51 +13,41 @@
 Unit tests for service module
 """
 import datetime
-import os.path
-
-import sqlalchemy as db
 import json
+import os.path
+from pathlib import Path
+
+import pkg_resources
+import pytest
 from google.protobuf import json_format
 
-import sqlite3
-from tempfile import TemporaryDirectory
-
 from ensembl.production.metadata import service, ensembl_metadata_pb2
-import glob
+import sqlalchemy as db
+
+distribution = pkg_resources.get_distribution('ensembl-metadata-api')
+sample_path = Path(distribution.location) / 'ensembl' / 'production' / 'metadata' / 'api' / 'sample'
 
 
+@pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_metadata'},
+                                        {'src': sample_path / 'ncbi_taxonomy'}]],
+                         indirect=True)
 class TestClass:
-    dir_path = TemporaryDirectory()
-    connection = sqlite3.connect(f'{dir_path.name}/test.db')
-    cursor = connection.cursor()
+    _engine = None
 
-    sql_file = open(f"{os.path.dirname(__file__)}/databases/tables.sql")
-    sql_as_string = sql_file.read()
+    @pytest.fixture(scope='class')
+    def setup(self, multi_dbs):
+        print("setup")
+        os.environ['METADATA_URI'] = multi_dbs['ensembl_metadata'].dbc.url
+        os.environ['TAXONOMY_URI'] = multi_dbs['ncbi_taxonomy'].dbc.url
+        yield
+        print("teardown")
 
-    cursor.executescript(sql_as_string)
+    def get_engine(self, uri):
+        if self._engine is None:
+            self._engine = db.create_engine(uri)
+        return self._engine
 
-    file_pattern = 'insert.*.sql'
-    file_list = glob.glob(f'{os.path.dirname(__file__)}/databases/{file_pattern}')
-    connection.execute("PRAGMA foreign_keys = OFF;")
-    for file_path in file_list:
-        with open(file_path, 'r') as sql_file:
-            sql_as_string = sql_file.read()
-            cursor.executescript(sql_as_string)
-    connection.execute("PRAGMA foreign_keys = ON;")
-    connection.commit()
-    connection.close()
-
-    try:
-        engine = db.create_engine(f'sqlite:////{dir_path.name}/test.db')
-    except AttributeError:
-        raise ValueError(f'Could not connect to database. Check METADATA_URI env variable.')
-
-    try:
-        connection = engine.connect()
-    except db.exc.OperationalError as err:
-        raise ValueError(f'Could not connect to database: {err}.') from err
-
-    def test_create_genome(self):
+    def test_create_genome(self, multi_dbs):
         """Test service.create_genome function"""
         input_dict = {
             'genome_uuid': 'f9d8c1dc-45dd-11ec-81d3-0242ac130003',
@@ -112,7 +102,7 @@ class TestClass:
         output = json_format.MessageToJson(service.create_genome(input_dict))
         assert json.loads(output) == expected_output
 
-    def test_create_assembly(self):
+    def test_create_assembly(self, multi_dbs):
         input_dict = {
             'assembly_id': '1234',
             'accession': 'XE.1234',
@@ -140,7 +130,7 @@ class TestClass:
         output = json_format.MessageToJson(service.create_assembly(input_dict))
         assert json.loads(output) == expected_output
 
-    def test_create_karyotype(self):
+    def test_create_karyotype(self, multi_dbs):
         input_dict = {
             'genome_uuid': 'f9d8c1dc-45dd-11ec-81d3-0242ac130003',
             'code': '5',
@@ -158,7 +148,7 @@ class TestClass:
         output = json_format.MessageToJson(service.create_karyotype(input_dict))
         assert json.loads(output) == expected_output
 
-    def test_create_species(self):
+    def test_create_species(self, multi_dbs):
         input_dict = {
             'genome_uuid': 'f9d8c1dc-45dd-11ec-81d3-0242ac130003',
             'common_name': 'cow',
@@ -182,7 +172,7 @@ class TestClass:
         output = json_format.MessageToJson(service.create_species(input_dict))
         assert json.loads(output) == expected_output
 
-    def test_create_top_level_statistics(self):
+    def test_create_top_level_statistics(self, multi_dbs):
         input_dict = {
             'organism_id': '41',
             'statistics': [
@@ -219,7 +209,7 @@ class TestClass:
         output = json_format.MessageToJson(service.create_top_level_statistics(input_dict))
         assert json.loads(output) == expected_output
 
-    def test_create_genome_sequence(self):
+    def test_create_genome_sequence(self, multi_dbs):
         input_dict = {
             'accession': 'XQ1234',
             'name': 'test_seq',
@@ -237,7 +227,7 @@ class TestClass:
         output = json_format.MessageToJson(service.create_genome_sequence(input_dict))
         assert json.loads(output) == expected_output
 
-    def test_create_release(self):
+    def test_create_release(self, multi_dbs):
         input_dict = {
             'release_version': 5,
             'release_date': '12-10-2020',
@@ -258,14 +248,16 @@ class TestClass:
         output = json_format.MessageToJson(service.create_release(input_dict))
         assert json.loads(output) == expected_output
 
-    def test_karyotype_information(self):
+    def test_karyotype_information(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_karyotype_information(self.engine, '3c4cec7f-fb69-11eb-8dac-005056b32883'))
+            service.get_karyotype_information(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                              '3c4cec7f-fb69-11eb-8dac-005056b32883'))
         expected_output = {}
         assert json.loads(output) == expected_output
 
-    def test_assembly_information(self):
-        output = json_format.MessageToJson(service.get_assembly_information(self.engine, '1'))
+    def test_assembly_information(self, multi_dbs):
+        output = json_format.MessageToJson(
+            service.get_assembly_information(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), '1'))
         expected_output = {'accession': 'GCA_000001405.28',
                            'assemblyId': '1',
                            'length': 71251,
@@ -274,9 +266,10 @@ class TestClass:
                            'sequenceLocation': 'SO:0000738'}
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_from_assembly_accession_iterator(self):
+    def test_get_genomes_from_assembly_accession_iterator(self, multi_dbs):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_from_assembly_accession_iterator(self.engine, "GCA_000005845.2")]
+                  service.get_genomes_from_assembly_accession_iterator(
+                      self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), "GCA_000005845.2")]
         expected_output = [{'assembly': {'accession': 'GCA_000005845.2',
                                          'ensemblName': 'ASM584v2',
                                          'level': 'chromosome',
@@ -289,56 +282,57 @@ class TestClass:
                                          'scientificName': 'Escherichia coli str. K-12 substr. MG1655 '
                                                            'str. K12 (GCA_000005845)',
                                          'urlName': 'Escherichia_coli_str_k_12_substr_mg1655_gca_000005845'},
-                            'release': {'isCurrent': True,
-                                        'releaseDate': '2023-06-05',
-                                        'releaseLabel': 'Release 110',
-                                        'releaseVersion': 110.0},
+                            'release': {'releaseDate': '2023-05-15',
+                                        'releaseLabel': 'Beta Release 1',
+                                        'releaseVersion': 108.0},
                             'taxon': {'scientificName': 'Escherichia coli str. K-12 substr. MG1655 str. '
                                                         'K12 (GCA_000005845)',
                                       'taxonomyId': 511145}}]
         assert output == expected_output
 
-    def test_get_genomes_from_assembly_accession_iterator_null(self):
+    def test_get_genomes_from_assembly_accession_iterator_null(self, multi_dbs):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_from_assembly_accession_iterator(self.engine, None)]
+                  service.get_genomes_from_assembly_accession_iterator(
+                      self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), None)]
         assert output == []
 
-    def test_get_genomes_from_assembly_accession_iterator_no_matches(self):
+    def test_get_genomes_from_assembly_accession_iterator_no_matches(self, multi_dbs):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_from_assembly_accession_iterator(self.engine, "asdfasdfadf")]
+                  service.get_genomes_from_assembly_accession_iterator(
+                      self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), "asdfasdfadf")]
         assert output == []
 
-    def test_sub_species_info(self):
-        output = json_format.MessageToJson(service.get_sub_species_info(self.engine, '1'))
-        expected_output = {
-            'organismId': '1',
-            'speciesName': ['EnsemblVertebrates', 'Western Europe'],
-            'speciesType': ['Division', 'Population']
-        }
+    def test_sub_species_info(self, multi_dbs):
+        output = json_format.MessageToJson(
+            service.get_sub_species_info(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), '1'))
+        expected_output = {'organismId': '1',
+                           'speciesName': ['EnsemblVertebrates'],
+                           'speciesType': ['Division']}
         assert json.loads(output) == expected_output
 
-        output2 = json_format.MessageToJson(service.get_grouping_info(self.engine, '51'))
+        output2 = json_format.MessageToJson(
+            service.get_grouping_info(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), '51'))
         expected_output2 = {}
         assert json.loads(output2) == expected_output2
 
-    def test_get_grouping_info(self):
-        output = json_format.MessageToJson(service.get_grouping_info(self.engine, '1'))
-        expected_output = {
-            'organismId': "1",
-            'speciesType': ['Division', 'Population'],
-            'speciesName': ["EnsemblVertebrates", "Western Europe"]
-        }
+    def test_get_grouping_info(self, multi_dbs):
+        output = json_format.MessageToJson(
+            service.get_grouping_info(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), '1'))
+        expected_output = {'organismId': '1',
+                           'speciesName': ['EnsemblVertebrates'],
+                           'speciesType': ['Division']}
         assert json.loads(output) == expected_output
 
-        output2 = json_format.MessageToJson(service.get_grouping_info(self.engine, '51'))
+        output2 = json_format.MessageToJson(
+            service.get_grouping_info(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), '51'))
         expected_output2 = {}
         assert json.loads(output2) == expected_output2
 
-    def test_get_top_level_statistics(self):
-        output = json_format.MessageToJson(service.get_top_level_statistics(self.engine, '4'))
+    def test_get_top_level_statistics(self, multi_dbs):
+        output = json_format.MessageToJson(
+            service.get_top_level_statistics(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), '4'))
         output = json.loads(output)
-        print(output)
-        assert len(output['statistics']) == 94
+        assert len(output['statistics']) == 51
         assert output['statistics'][0] == {
             'label': 'Contig N50',
             'name': 'contig_n50',
@@ -352,10 +346,10 @@ class TestClass:
             'statisticValue': '14547261565'
         }
 
-    def test_get_datasets_list_by_uuid(self):
-
+    def test_get_datasets_list_by_uuid(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_datasets_list_by_uuid(self.engine, 'a73356e1-93e7-11ec-a39d-005056b38ce3'))
+            service.get_datasets_list_by_uuid(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                              '0dc05c6e-2910-4dbd-879a-719ba97d5824'))
 
         expected_output = {'datasets': {'assembly': {'datasetInfos': [{'datasetLabel': 'GCA_000002765.2',
                                                                        'datasetName': 'assembly',
@@ -373,90 +367,90 @@ class TestClass:
 
         assert json.loads(output) == expected_output
 
-    def test_get_datasets_list_by_uuid_no_results(self):
-
+    def test_get_datasets_list_by_uuid_no_results(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_datasets_list_by_uuid(self.engine, 'some-random-uuid-f00-b4r', 103.0)
+            service.get_datasets_list_by_uuid(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                              'some-random-uuid-f00-b4r', 103.0)
         )
         output = json.loads(output)
         expected_output = {}
         assert output == expected_output
 
-    def test_get_dataset_by_genome_id(self):
-
+    def test_get_dataset_by_genome_id(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_dataset_by_genome_id(self.engine, 'a73356e1-93e7-11ec-a39d-005056b38ce3', 'assembly'))
+            service.get_dataset_by_genome_id(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                             'a73356e1-93e7-11ec-a39d-005056b38ce3', 'assembly'))
         output = json.loads(output)
         assert output == {'datasetInfos': [{'datasetLabel': 'GCA_000002765.2',
-                                            'datasetName': 'assembly',
-                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
-                                            'name': 'total_genome_length',
-                                            'type': 'bp',
-                                            'value': '23292622',
-                                            'version': 110.0},
-                                           {'datasetLabel': 'GCA_000002765.2',
-                                            'datasetName': 'assembly',
-                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
-                                            'name': 'total_coding_sequence_length',
-                                            'type': 'bp',
-                                            'value': '12309897',
-                                            'version': 110.0},
-                                           {'datasetLabel': 'GCA_000002765.2',
-                                            'datasetName': 'assembly',
-                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
-                                            'name': 'total_gap_length',
-                                            'type': 'bp',
-                                            'value': '0',
-                                            'version': 110.0},
-                                           {'datasetLabel': 'GCA_000002765.2',
-                                            'datasetName': 'assembly',
-                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
-                                            'name': 'spanned_gaps',
-                                            'type': 'integer',
-                                            'value': '0',
-                                            'version': 110.0},
-                                           {'datasetLabel': 'GCA_000002765.2',
-                                            'datasetName': 'assembly',
-                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
-                                            'name': 'chromosomes',
-                                            'type': 'integer',
-                                            'value': '14',
-                                            'version': 110.0},
-                                           {'datasetLabel': 'GCA_000002765.2',
                                             'datasetName': 'assembly',
                                             'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
                                             'name': 'toplevel_sequences',
                                             'type': 'integer',
                                             'value': '14',
-                                            'version': 110.0},
+                                            'version': 108.0},
                                            {'datasetLabel': 'GCA_000002765.2',
                                             'datasetName': 'assembly',
                                             'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
-                                            'name': 'component_sequences',
-                                            'type': 'integer',
-                                            'value': '14',
-                                            'version': 110.0},
+                                            'name': 'total_genome_length',
+                                            'type': 'bp',
+                                            'value': '23292622',
+                                            'version': 108.0},
                                            {'datasetLabel': 'GCA_000002765.2',
                                             'datasetName': 'assembly',
                                             'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
                                             'name': 'gc_percentage',
                                             'type': 'percent',
                                             'value': '19.34',
-                                            'version': 110.0}],
+                                            'version': 108.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'total_gap_length',
+                                            'type': 'bp',
+                                            'value': '0',
+                                            'version': 108.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'chromosomes',
+                                            'type': 'integer',
+                                            'value': '14',
+                                            'version': 108.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'component_sequences',
+                                            'type': 'integer',
+                                            'value': '14',
+                                            'version': 108.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'total_coding_sequence_length',
+                                            'type': 'bp',
+                                            'value': '12309897',
+                                            'version': 108.0},
+                                           {'datasetLabel': 'GCA_000002765.2',
+                                            'datasetName': 'assembly',
+                                            'datasetUuid': '29dbda41-5188-4323-9318-ce546a87eee7',
+                                            'name': 'spanned_gaps',
+                                            'type': 'integer',
+                                            'value': '0',
+                                            'version': 108.0}],
                           'datasetType': 'assembly',
                           'genomeUuid': 'a73356e1-93e7-11ec-a39d-005056b38ce3'}
 
-    def test_get_dataset_by_genome_id_no_results(self):
-
+    def test_get_dataset_by_genome_id_no_results(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_dataset_by_genome_id(self.engine, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'blah blah blah'))
+            service.get_dataset_by_genome_id(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                             'a7335667-93e7-11ec-a39d-005056b38ce3', 'blah blah blah'))
         output = json.loads(output)
         assert output == {}
 
-    def test_get_genome_by_uuid(self):
-
+    def test_get_genome_by_uuid(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_genome_by_uuid(self.engine, 'a7335667-93e7-11ec-a39d-005056b38ce3', 110.0))
+            service.get_genome_by_uuid(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                       'a73357ab-93e7-11ec-a39d-005056b38ce3', 110.0))
         expected_output = {'assembly': {'accession': 'GCA_000001405.28',
                                         'ensemblName': 'GRCh38.p13',
                                         'level': 'chromosome',
@@ -476,10 +470,10 @@ class TestClass:
                            }
         assert json.loads(output) == expected_output
 
-    def test_genome_by_uuid_release_version_unspecified(self):
-
+    def test_genome_by_uuid_release_version_unspecified(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_genome_by_uuid(self.engine, 'a733574a-93e7-11ec-a39d-005056b38ce3', 0.0))
+            service.get_genome_by_uuid(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                       'a73357ab-93e7-11ec-a39d-005056b38ce3', 0.0))
         expected_output = {'assembly': {'accession': 'GCA_000146045.2',
                                         'ensemblName': 'R64-1-1',
                                         'level': 'chromosome',
@@ -500,15 +494,14 @@ class TestClass:
                                      'taxonomyId': 559292}}
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_by_uuid_null(self):
-
-        output = service.get_genome_by_uuid(self.engine, None, 0)
+    def test_get_genomes_by_uuid_null(self, multi_dbs):
+        output = service.get_genome_by_uuid(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), None, 0)
         assert output == ensembl_metadata_pb2.Genome()
 
-    def test_get_genomes_by_keyword(self):
-
+    def test_get_genomes_by_keyword(self, multi_dbs):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_by_keyword_iterator(self.engine, 'Human', 110.0)]
+                  service.get_genomes_by_keyword_iterator(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                                          'Human', 108.0)]
         expected_output = [{'assembly': {'accession': 'GCA_000001405.28',
                                          'ensemblName': 'GRCh38.p13',
                                          'level': 'chromosome',
@@ -527,10 +520,10 @@ class TestClass:
                             'taxon': {'scientificName': 'Homo sapiens', 'taxonomyId': 9606}}]
         assert output == expected_output
 
-    def test_get_genomes_by_keyword_release_unspecified(self):
-
+    def test_get_genomes_by_keyword_release_unspecified(self, multi_dbs):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_by_keyword_iterator(self.engine, 'Homo Sapiens', 0.0)]
+                  service.get_genomes_by_keyword_iterator(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url),
+                                                          'Homo Sapiens', 0.0)]
         expected_output = [{'assembly': {'accession': 'GCA_000001405.28',
                                          'ensemblName': 'GRCh38.p13',
                                          'level': 'chromosome',
@@ -549,20 +542,21 @@ class TestClass:
                             'taxon': {'scientificName': 'Homo sapiens', 'taxonomyId': 9606}}]
         assert output == expected_output
 
-    def test_get_genomes_by_keyword_null(self):
-
-        output = list(service.get_genomes_by_keyword_iterator(self.engine, None, 0))
+    def test_get_genomes_by_keyword_null(self, multi_dbs):
+        output = list(
+            service.get_genomes_by_keyword_iterator(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), None, 0))
         assert output == []
 
-    def test_get_genomes_by_keyword_no_matches(self):
-
-        output = list(service.get_genomes_by_keyword_iterator(self.engine, "bigfoot", 1))
+    def test_get_genomes_by_keyword_no_matches(self, multi_dbs):
+        output = list(
+            service.get_genomes_by_keyword_iterator(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), "bigfoot",
+                                                    1))
         assert output == []
 
-    def test_get_genomes_by_name(self):
-
+    def test_get_genomes_by_name(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_genome_by_name(self.engine, 'homo_sapiens', 'beta', 110.0))
+            service.get_genome_by_name(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), 'homo_sapiens', 'beta',
+                                       110.0))
         expected_output = {'assembly': {'accession': 'GCA_000001405.28',
                                         'ensemblName': 'GRCh38.p13',
                                         'level': 'chromosome',
@@ -581,10 +575,10 @@ class TestClass:
                            'taxon': {'scientificName': 'Homo sapiens', 'taxonomyId': 9606}}
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_by_name_release_unspecified(self):
-
+    def test_get_genomes_by_name_release_unspecified(self, multi_dbs):
         output = json_format.MessageToJson(
-            service.get_genome_by_name(self.engine, 'homo_sapiens', 'beta', 0.0))
+            service.get_genome_by_name(self.get_engine(multi_dbs['ensembl_metadata'].dbc.url), 'homo_sapiens', 'beta',
+                                       0.0))
         expected_output = {'assembly': {'accession': 'GCA_000001405.28',
                                         'ensemblName': 'GRCh38.p13',
                                         'level': 'chromosome',
