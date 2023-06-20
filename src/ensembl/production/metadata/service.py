@@ -675,10 +675,9 @@ def get_dataset_by_genome_id(metadata_db, genome_uuid, requested_dataset_type):
             .join(attribute) \
             .join(dataset_type) \
             .where(dataset_type.c.name == requested_dataset_type) \
-            .order_by(dataset_type.c.name, dataset.c.name) \
+            .order_by(dataset.c.name, attribute.c.name) \
             .distinct()
 
-        # print(str(dataset_select))
         dataset_results = session.execute(dataset_select).all()
         return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
 

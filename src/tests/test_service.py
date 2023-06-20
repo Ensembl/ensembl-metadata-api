@@ -13,21 +13,17 @@
 Unit tests for service module
 """
 import datetime
+import json
 import os.path
 from pathlib import Path
-import pytest
-import pkg_resources
-import sqlalchemy as db
-import json
 
+import pkg_resources
+import pytest
+import sqlalchemy as db
 from ensembl.database import UnitTestDB
 from google.protobuf import json_format
 
-import sqlite3
-from tempfile import TemporaryDirectory
-
 from ensembl.production.metadata import service, ensembl_metadata_pb2
-import glob
 
 distribution = pkg_resources.get_distribution("ensembl-metadata-api")
 sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
@@ -37,7 +33,6 @@ sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata
                                         {"src": sample_path / "ncbi_taxonomy"}]],
                          indirect=True)
 class TestClass:
-    _engine = None
     dbc = None  # type: UnitTestDB
 
     @pytest.fixture(scope="class")
@@ -421,41 +416,6 @@ class TestClass:
         assert output == {"datasetInfos": [{"datasetLabel": "GCA_000002765.2",
                                             "datasetName": "assembly",
                                             "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "spanned_gaps",
-                                            "type": "integer",
-                                            "value": "0",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "toplevel_sequences",
-                                            "type": "integer",
-                                            "value": "14",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "total_genome_length",
-                                            "type": "bp",
-                                            "value": "23292622",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "gc_percentage",
-                                            "type": "percent",
-                                            "value": "19.34",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "total_gap_length",
-                                            "type": "bp",
-                                            "value": "0",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
                                             "name": "chromosomes",
                                             "type": "integer",
                                             "value": "14",
@@ -470,9 +430,44 @@ class TestClass:
                                            {"datasetLabel": "GCA_000002765.2",
                                             "datasetName": "assembly",
                                             "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
+                                            "name": "gc_percentage",
+                                            "type": "percent",
+                                            "value": "19.34",
+                                            "version": 108.0},
+                                           {"datasetLabel": "GCA_000002765.2",
+                                            "datasetName": "assembly",
+                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
+                                            "name": "spanned_gaps",
+                                            "type": "integer",
+                                            "value": "0",
+                                            "version": 108.0},
+                                           {"datasetLabel": "GCA_000002765.2",
+                                            "datasetName": "assembly",
+                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
+                                            "name": "toplevel_sequences",
+                                            "type": "integer",
+                                            "value": "14",
+                                            "version": 108.0},
+                                           {"datasetLabel": "GCA_000002765.2",
+                                            "datasetName": "assembly",
+                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
                                             "name": "total_coding_sequence_length",
                                             "type": "bp",
                                             "value": "12309897",
+                                            "version": 108.0},
+                                           {"datasetLabel": "GCA_000002765.2",
+                                            "datasetName": "assembly",
+                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
+                                            "name": "total_gap_length",
+                                            "type": "bp",
+                                            "value": "0",
+                                            "version": 108.0},
+                                           {"datasetLabel": "GCA_000002765.2",
+                                            "datasetName": "assembly",
+                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
+                                            "name": "total_genome_length",
+                                            "type": "bp",
+                                            "value": "23292622",
                                             "version": 108.0}],
                           "datasetType": "assembly",
                           "genomeUuid": "a73356e1-93e7-11ec-a39d-005056b38ce3"}
