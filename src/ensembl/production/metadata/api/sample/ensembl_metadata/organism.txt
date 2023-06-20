@@ -1,6 +1,6 @@
-1	9606	9606	Human	\N	Homo sapiens	Homo_sapiens	homo_sapiens
-2	511145	562	Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)	\N	Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)	Escherichia_coli_str_k_12_substr_mg1655_gca_000005845	escherichia_coli_str_k_12_substr_mg1655_gca_000005845
-3	36329	5833	Plasmodium falciparum 3D7	\N	Plasmodium falciparum 3D7	Plasmodium_falciparum	plasmodium_falciparum
-4	4565	4565	Triticum aestivum	reference (Chinese spring)	Triticum aestivum	Triticum_aestivum	triticum_aestivum	
-5	559292	4932	Saccharomyces cerevisiae	S288C	Saccharomyces cerevisiae S288c	Saccharomyces_cerevisiae	saccharomyces_cerevisiae	
-6	6239	6239	Caenorhabditis elegans (PRJNA13758)	N2	Caenorhabditis elegans	Caenorhabditis_elegans	caenorhabditis_elegans	
+1	db2a5f09-2db8-429b-a407-c15a4ca2876d	9606	9606	Human	\N	Homo sapiens	Homo_sapiens	homo_sapiens
+2	21279e3e-e651-43e1-a6fc-79e390b9e8a8	511145	562	Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)	\N	Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)	Escherichia_coli_str_k_12_substr_mg1655_gca_000005845	escherichia_coli_str_k_12_substr_mg1655_gca_000005845
+3	e61faf49-0964-4d0e-8f3a-b2ffa3514698	36329	5833	Plasmodium falciparum 3D7	\N	Plasmodium falciparum 3D7	Plasmodium_falciparum	plasmodium_falciparum
+4	d64c34ca-b37a-476b-83b5-f21d07a3ae67	4565	4565	Triticum aestivum	reference (Chinese spring)	Triticum aestivum	Triticum_aestivum	triticum_aestivum
+5	0dc46f87-0b61-403a-8cd3-86b7e0cce8f0	559292	4932	Saccharomyces cerevisiae	S288C	Saccharomyces cerevisiae S288c	Saccharomyces_cerevisiae	saccharomyces_cerevisiae
+6	0f4aad7b-db15-4a72-af1e-82bbae54226	6239	6239	Caenorhabditis elegans (PRJNA13758)	N2	Caenorhabditis elegans	Caenorhabditis_elegans	caenorhabditis_elegans

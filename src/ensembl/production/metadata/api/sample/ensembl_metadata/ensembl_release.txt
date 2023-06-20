@@ -1,4 +1,4 @@
-1	108.0	2023-05-15	Beta Release 1	0	1	integrated
+1	108.0	2023-05-15	Beta Release 1	1	1	integrated
 2	108.1	2023-09-15	Scaling Phase 1	0	1	partial
 3	108.2	2023-11-15	Scaling Phase 2	0	1	partial
-4	109.0	2023-12-15	MVP Release 1	1	integrated
+4	110.0	2023-12-15	MVP Release 1	0	1	integrated

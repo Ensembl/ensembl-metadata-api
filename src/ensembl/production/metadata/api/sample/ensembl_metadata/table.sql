@@ -1,7 +1,7 @@
 CREATE TABLE assembly
 (
-    assembly_id      int auto_increment
-        primary key,
+    assembly_id      int auto_increment primary key,
+    assembly_uuid     varchar(128) not null,
     ucsc_name        varchar(16)  null,
     accession        varchar(16)  not null,
     level            varchar(32)  not null,
@@ -11,6 +11,8 @@ CREATE TABLE assembly
     tol_id           varchar(32)  null,
     created          datetime     null,
     ensembl_name     varchar(255) null,
+    constraint assembly_uuid
+        unique (assembly_uuid),
     constraint accession
         unique (accession),
     constraint assembly_ensembl_name_uindex
@@ -147,6 +149,7 @@ CREATE TABLE organism
 (
     organism_id              int auto_increment
         primary key,
+    organism_uuid            varchar(128) not null,
     taxonomy_id              int          not null,
     species_taxonomy_id      int          null,
     display_name             varchar(128) not null,
@@ -155,6 +158,8 @@ CREATE TABLE organism
     url_name                 varchar(128) not null,
     ensembl_name             varchar(128) not null,
     scientific_parlance_name varchar(255) null,
+    constraint organism_uuid
+        unique (organism_uuid),
     constraint ensembl_name
         unique (ensembl_name)
 );
