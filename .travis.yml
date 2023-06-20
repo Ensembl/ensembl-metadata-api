@@ -4,12 +4,12 @@ os: linux
 python:
   - "3.8"
 
-env:
-  - TESTENV=test
+services:
+  - mysql
 
 install:
   - pip install -r requirements-test.txt
   - pip install -e .
 
 script:
-  - if [[ "$TESTENV" == "test" ]]; then coverage run -m pytest; fi
+  - coverage run -m pytest --server mysql://travis@127.0.0.1:3306

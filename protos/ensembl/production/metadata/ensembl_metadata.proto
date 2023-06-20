@@ -45,6 +45,9 @@ service EnsemblMetadata {
   // Get top level statistics
   rpc GetTopLevelStatistics(OrganismIDRequest) returns (TopLevelStatistics) {}
 
+  // Get top level statistics by UUID
+  rpc GetTopLevelStatisticsByUUID(GenomeUUIDRequest) returns (TopLevelStatisticsByUUID) {}
+
   // Retrieve genome by Ensembl name and site, and optionally release.
   rpc GetGenomeByName(GenomeNameRequest) returns (Genome) {}
 
@@ -95,7 +98,7 @@ message Species {
 }
 
 message AssemblyInfo {
-  string assembly_id = 1;
+  string assembly_uuid = 1;
   string accession = 2;
   string level = 3;
   string name = 4;
@@ -119,7 +122,18 @@ message Grouping {
 }
 
 message TopLevelStatistics {
-  string organism_id = 1;
+  string organism_uuid = 1;
+  message AttributeStatistics {
+    string name = 2;
+    string label = 3;
+    string statistic_type = 4;
+    string statistic_value = 5;
+  }
+  repeated AttributeStatistics statistics = 2;
+}
+
+message TopLevelStatisticsByUUID {
+  string genome_uuid = 1;
   message AttributeStatistics {
     string name = 2;
     string label = 3;
@@ -138,6 +152,7 @@ message Assembly {
   string ucsc_name = 3;
   string level = 4;
   string ensembl_name = 5;
+  string tol_id = 6;
 }
 
 /*
@@ -170,6 +185,7 @@ message Organism {
   string url_name = 4;
   string ensembl_name = 5;
   string scientific_parlance_name = 6;
+  string organism_uuid = 7;
 }
 
 /*
@@ -253,7 +269,7 @@ message GenomeNameRequest {
 Assembly ID filter
  */
 message AssemblyIDRequest {
-  string assembly_id = 1; // Mandatory
+  string assembly_uuid = 1; // Mandatory
 }
 
 /*
@@ -264,7 +280,7 @@ message AssemblyAccessionIDRequest {
 }
 
 message OrganismIDRequest {
-  string organism_id = 1;
+  string organism_uuid = 1;
 }
 
 /*
