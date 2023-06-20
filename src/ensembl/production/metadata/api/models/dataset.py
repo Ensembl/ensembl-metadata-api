@@ -12,6 +12,7 @@
 from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
+import uuid
 
 from ensembl.production.metadata.api.models.base import Base
 
@@ -35,7 +36,7 @@ class Dataset(Base):
     __tablename__ = 'dataset'
 
     dataset_id = Column(Integer, primary_key=True)
-    dataset_uuid = Column(String(128), nullable=False, unique=True)
+    dataset_uuid = Column(String(128), nullable=False, unique=True, default=str(uuid.uuid4))
     dataset_type_id = Column(ForeignKey('dataset_type.dataset_type_id'), nullable=False, index=True)
     name = Column(String(128), nullable=False)
     version = Column(String(128))

@@ -9,6 +9,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import uuid
+
 from sqlalchemy import Column, Integer, String, DateTime, Index, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
@@ -20,6 +22,7 @@ class Assembly(Base):
     __tablename__ = 'assembly'
 
     assembly_id = Column(Integer, primary_key=True)
+    assembly_uuid = Column(String(128), unique=True, nullable=False, default=uuid.uuid4)
     ucsc_name = Column(String(16))
     accession = Column(String(16), nullable=False, unique=True)
     level = Column(String(32), nullable=False)
