@@ -21,6 +21,9 @@ service EnsemblMetadata {
   // Retrieve genome by its UUID.
   rpc GetGenomeByUUID(GenomeUUIDRequest) returns (Genome) {}
 
+  // Retrieve genome UUID by providing production name and assembly id.
+  rpc GetGenomeUUID(GenomeInfoRequest) returns (GenomeUUID) {}
+
   // Retrieve genomes by keyword search
   rpc GetGenomesByKeyword(GenomeByKeywordRequest) returns (stream Genome) {}
 
@@ -232,6 +235,13 @@ message Datasets {
 }
 
 /*
+Genome UUID
+ */
+message GenomeUUID {
+  string genome_uuid = 1;
+}
+
+/*
 The messages below are used to request data - required-ness is not enforced
 by protocol buffers, but in practice some fields are mandatory in order to
 receive a non-empty response, so this is indicated with a comment.
@@ -315,4 +325,12 @@ Genome datatype filter
 message GenomeDatatypeRequest {
   string genome_uuid = 1;     // Mandatory
   string dataset_type = 2;    // Mandatory
+}
+
+/*
+Genome info filter used by Compara (EA-1090)
+ */
+message GenomeInfoRequest {
+  string ensembl_name = 1;     // Mandatory
+  string assembly_name = 2;    // Mandatory
 }

@@ -340,6 +340,30 @@ def get_grouping_info(metadata_db, organism_id):
             return create_grouping()
 
 
+def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
+    if ensembl_name is None or assembly_name is None:
+        return create_genome_uuid()
+
+    sqlalchemy_md = db.MetaData()
+    with Session(metadata_db, future=True) as session:
+        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
+        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
+        assembly = sqlalchemy_md.tables['assembly']
+        organism = sqlalchemy_md.tables['organism']
+
+        genome_uuid_query = get_genome_uuid_query(genome, assembly, organism).select_from(genome) \
+            .join(assembly).join(organism) \
+            .where(organism.c.ensembl_name == ensembl_name) \
+            .where(assembly.c.name == assembly_name)
+
+        genome_uuid_result = session.execute(genome_uuid_query).all()
+
+        if len(genome_uuid_result) == 1:
+            return create_genome_uuid(genome_uuid_result[0])
+
+        return create_genome_uuid()
+
+
 def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
     if genome_uuid is None:
         return create_genome()
@@ -545,6 +569,14 @@ def get_genome_query(genome, genome_release, release, assembly, organism):
         release.c.label.label("release_label"),
         release.c.is_current,
     ).where(genome_release.c.is_current == 1)
+
+
+def get_genome_uuid_query(genome, assembly, organism):
+    return db.select(
+        genome.c.genome_uuid,
+        organism.c.ensembl_name,
+        assembly.c.name.label("assembly_name"),
+    )
 
 
 def genome_sequence_iterator(metadata_db, genome_uuid, chromosomal_only):
@@ -770,6 +802,16 @@ def create_assembly(data=None):
     return assembly
 
 
+def create_genome_uuid(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.GenomeUUID()
+
+    genome_uuid = ensembl_metadata_pb2.GenomeUUID(
+        genome_uuid=data["genome_uuid"]
+    )
+    return genome_uuid
+
+
 def create_genome(data=None):
     if data is None:
         return ensembl_metadata_pb2.Genome()
@@ -899,6 +941,9 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetTopLevelStatisticsByUUID(self, request, context):
         return get_top_level_statistics_by_uuid(self.db, request.genome_uuid)
+
+    def GetGenomeUUID(self, request, context):
+        return get_genome_uuid(self.db, request.ensembl_name, request.assembly_name)
 
     def GetGenomeByUUID(self, request, context):
         return get_genome_by_uuid(self.db, request.genome_uuid, request.release_version)

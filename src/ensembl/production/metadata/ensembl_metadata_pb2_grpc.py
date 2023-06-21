@@ -23,6 +23,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
                 )
+        self.GetGenomeUUID = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetGenomeUUID',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeInfoRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
+                )
         self.GetGenomesByKeyword = channel.unary_stream(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomesByKeyword',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.SerializeToString,
@@ -109,6 +114,13 @@ class EnsemblMetadataServicer(object):
 
     def GetGenomeByUUID(self, request, context):
         """Retrieve genome by its UUID.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetGenomeUUID(self, request, context):
+        """Retrieve genome UUID by providing production name, assembly id and genebuild id.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -227,6 +239,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.SerializeToString,
             ),
+            'GetGenomeUUID': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetGenomeUUID,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeInfoRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUID.SerializeToString,
+            ),
             'GetGenomesByKeyword': grpc.unary_stream_rpc_method_handler(
                     servicer.GetGenomesByKeyword,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.FromString,
@@ -330,6 +347,23 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeByUUID',
             ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetGenomeUUID(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeUUID',
+            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeInfoRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
