@@ -11,6 +11,8 @@ CREATE TABLE assembly
     tol_id           varchar(32)  null,
     created          datetime     null,
     ensembl_name     varchar(255) null,
+    alt_accession    varchar(16)  null,
+
     constraint assembly_uuid
         unique (assembly_uuid),
     constraint accession
