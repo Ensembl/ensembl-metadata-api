@@ -202,7 +202,7 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_genome_by_ensembl_and_assembly_name(self, ensembl_name, assembly_name, genebuild_id,
+    def fetch_genome_by_ensembl_and_assembly_name(self, ensembl_name, assembly_name, genebuild_id=None,
                                                   unreleased_only=False, site_name=None, release_type=None,
                                                   release_version=None, current_only=True):
         """

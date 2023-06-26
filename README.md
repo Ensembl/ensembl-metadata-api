@@ -77,21 +77,21 @@ coverage report -m
 ### Automatic Formatting
 ```
 cd ensembl-metadata-api
-black --check src tests
+black --check src
 ```
 Use `--diff` to print a diff of what Black would change, without actually changing the files.
 
-To actually reformat all files contained in `src` and `test`:
+To actually reformat all files contained in `src`:
 ```
 cd ensembl-metadata-api
-black src tests
+black src
 ```
 
 ### Linting and type checking
 ```
 cd ensembl-metadata-api
-pylint src tests
-mypy src tests
+pylint src
+mypy src
 ```
 Pylint will check the code for syntax, name errors and formatting style.
 Mypy will use type hints to statically type check the code.
