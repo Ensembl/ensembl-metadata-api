@@ -32,6 +32,7 @@ class Assembly(Base):
     tol_id = Column(String(32), unique=True)
     created = Column(DateTime)
     ensembl_name = Column(String(255), unique=True)
+    alt_accession = Column(String(16), nullable=True)
     # One to many relationships
     # assembly_id within assembly_sequence
     assembly_sequences = relationship("AssemblySequence", back_populates="assembly")
