@@ -80,9 +80,46 @@ class GenomeAdaptor(BaseAdaptor):
                 taxids.append(taxid[0])
         return taxids
 
-    def fetch_genomes(self, genome_id=None, genome_uuid=None, assembly_accession=None, ensembl_name=None,
-                      taxonomy_id=None, group=None, group_type=None, unreleased_only=False, site_name=None,
-                      release_type=None, release_version=None, current_only=True):
+    def fetch_genomes(self, genome_id=None, genome_uuid=None, assembly_accession=None, assembly_name=None,
+                      ensembl_name=None, genebuild_id=None, taxonomy_id=None, group=None, group_type=None,
+                      unreleased_only=False, site_name=None, release_type=None, release_version=None,
+                      current_only=True):
+        """
+        Fetches genome information based on the specified parameters.
+
+        Args:
+            genome_id (Union[int, List[int]]): The ID(s) of the genome(s) to fetch.
+            genome_uuid (Union[str, List[str]]): The UUID(s) of the genome(s) to fetch.
+            assembly_accession (Union[str, List[str]]): The accession number(s) of the assembly(s) to fetch.
+            assembly_name (Union[str, List[str]]): The name(s) of the assembly(s) to fetch.
+            ensembl_name (Union[str, List[str]]): The Ensembl name(s) of the organism(s) to fetch.
+            genebuild_id (Union[str, List[str]]): The gene build ID(s) of the genome(s) to fetch.
+            taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
+            group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
+            group_type (Union[str, List[str]]): The type(s) of the organism group(s) to filter by.
+            unreleased_only (bool): Whether to fetch only genomes that have not been released.
+            site_name (str): The name of the Ensembl site to filter by.
+            release_type (str): The type of the Ensembl release to filter by.
+            release_version (int): The maximum version of the Ensembl release to filter by.
+            current_only (bool): Whether to fetch only current genomes.
+
+        Returns:
+            List[Tuple[Genome, Organism, Assembly]]: A list of tuples containing the fetched genome information.
+            Each tuple contains the following elements:
+                - Genome: An instance of the Genome class.
+                - Organism: An instance of the Organism class.
+                - Assembly: An instance of the Assembly class.
+
+        Notes:
+            - The parameters are mutually exclusive, meaning only one of them should be provided at a time.
+              Except when both assembly_name and ensembl_name are provided (and genebuild_id when added later)
+            - The function uses a database session to execute the query and returns the results as a list of tuples.
+            - The results are ordered by the Ensembl name.
+
+        Example usage:
+            genome_info = fetch_genomes(genome_id=12345)
+        """
+        # Parameter validation
         genome_id = check_parameter(genome_id)
         genome_uuid = check_parameter(genome_uuid)
         assembly_accession = check_parameter(assembly_accession)
@@ -91,10 +128,12 @@ class GenomeAdaptor(BaseAdaptor):
         group = check_parameter(group)
         group_type = check_parameter(group_type)
 
+        # Construct the initial database query
         genome_select = db.select(
             Genome, Organism, Assembly
         ).join(Genome.assembly).join(Genome.organism)
 
+        # Apply group filtering if group parameter is provided
         if group:
             group_type = group_type if group_type else ['Division']
             genome_select = db.select(
@@ -104,6 +143,7 @@ class GenomeAdaptor(BaseAdaptor):
                 .join(OrganismGroupMember.organism_group) \
                 .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
 
+        # Apply additional filters based on the provided parameters
         if unreleased_only:
             genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
                 GenomeRelease.genome_id == None
@@ -129,10 +169,17 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
 
         elif genome_uuid is not None:
-            genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid) )
+            genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
 
         elif assembly_accession is not None:
             genome_select = genome_select.filter(Assembly.accession.in_(assembly_accession))
+
+        # Handle when both assembly_name and ensembl_name are provided
+        # Todo: add genebuild_id once it's in the metadata DB (EA-1090)
+        if assembly_name is not None and ensembl_name is not None:
+            genome_select = genome_select.filter(
+                db.and_(Assembly.name.in_([assembly_name]), Organism.ensembl_name.in_([ensembl_name]))
+            )
 
         elif ensembl_name is not None:
             genome_select = genome_select.filter(Organism.ensembl_name.in_(ensembl_name))
@@ -148,6 +195,38 @@ class GenomeAdaptor(BaseAdaptor):
                                      release_version=None, current_only=True):
         return self.fetch_genomes(
             genome_uuid=genome_uuid,
+            unreleased_only=unreleased_only,
+            site_name=site_name,
+            release_type=release_type,
+            release_version=release_version,
+            current_only=current_only,
+        )
+
+    def fetch_genome_by_ensembl_and_assembly_name(self, ensembl_name, assembly_name, genebuild_id,
+                                                  unreleased_only=False, site_name=None, release_type=None,
+                                                  release_version=None, current_only=True):
+        """
+        Fetches genome(s) based on the provided Ensembl name and assembly name.
+
+        Args:
+            ensembl_name (str): The Ensembl name of the genome(s) to fetch.
+            assembly_name (str): The assembly name of the genome(s) to fetch.
+            genebuild_id: (To be added later)
+            unreleased_only (bool, optional): If True, fetches only unreleased genomes. Defaults to False.
+            site_name (str, optional): The name of the Ensembl site. If provided, restricts the fetch to the specified site.
+            release_type (str, optional): The type of release to filter by. If provided, fetches genomes with the specified release type.
+            release_version (str, optional): The maximum release version to fetch. If provided, fetches genomes with release versions up to and including the specified version.
+            current_only (bool, optional): If True, fetches only genomes marked as current releases. Defaults to True.
+
+        Returns:
+            list: A list of fetched genome objects matching the provided Ensembl name and assembly name.
+
+        Note:
+            The `genebuild_id` parameter is not currently used in the function and will be added in a future update.
+        """
+        return self.fetch_genomes(
+            ensembl_name=ensembl_name,
+            assembly_name=assembly_name,
             unreleased_only=unreleased_only,
             site_name=site_name,
             release_type=release_type,

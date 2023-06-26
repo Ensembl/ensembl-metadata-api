@@ -82,6 +82,12 @@ class TestMetadataDB:
         test = conn.fetch_genomes_by_genome_uuid('a733550b-93e7-11ec-a39d-005056b38ce3')
         assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
 
+    def test_fetch_genome_by_ensembl_and_assembly_name(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genome_by_ensembl_and_assembly_name('caenorhabditis_elegans', 'WBcel235')
+        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+
     def test_fetch_genomes_by_assembly_accession(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
