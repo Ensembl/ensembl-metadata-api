@@ -22,7 +22,10 @@ from ensembl.production.metadata import ensembl_metadata_pb2
 
 from ensembl.production.metadata.config import MetadataConfig as cfg
 
+from ensembl.production.metadata.api.genome import GenomeAdaptor
 
+
+# This function will be replaced with connect_to_db() below
 def load_database(uri=None):
     if uri is None:
         uri = cfg.metadata_uri
@@ -49,6 +52,14 @@ def load_database(uri=None):
     connection.close()
     taxonomy_connection.close()
     return engine, taxonomy_engine
+
+
+def connect_to_db():
+    conn = GenomeAdaptor(
+        metadata_uri=cfg.metadata_uri,
+        taxonomy_uri=cfg.taxon_uri
+    )
+    return conn  # conn.metadata_db, conn.taxonomy_db
 
 
 def get_karyotype_information(metadata_db, genome_uuid):
@@ -344,24 +355,18 @@ def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
     if ensembl_name is None or assembly_name is None:
         return create_genome_uuid()
 
-    sqlalchemy_md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
-        assembly = sqlalchemy_md.tables['assembly']
-        organism = sqlalchemy_md.tables['organism']
+    conn = connect_to_db()
+    genome_uuid_result = conn.fetch_genomes(
+        assembly_accession=assembly_name,
+        ensembl_name=ensembl_name
+    )
 
-        genome_uuid_query = get_genome_uuid_query(genome, assembly, organism).select_from(genome) \
-            .join(assembly).join(organism) \
-            .where(organism.c.ensembl_name == ensembl_name) \
-            .where(assembly.c.name == assembly_name)
+    if len(genome_uuid_result) == 1:
+        return create_genome_uuid(
+            {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
+        )
 
-        genome_uuid_result = session.execute(genome_uuid_query).all()
-
-        if len(genome_uuid_result) == 1:
-            return create_genome_uuid(genome_uuid_result[0])
-
-        return create_genome_uuid()
+    return create_genome_uuid()
 
 
 def get_genome_by_uuid(metadata_db, genome_uuid, release_version):

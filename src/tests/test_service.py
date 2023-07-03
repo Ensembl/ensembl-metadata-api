@@ -479,6 +479,16 @@ class TestClass:
         output = json.loads(output)
         assert output == {}
 
+    def test_get_genome_uuid(self, engine):
+        output = json_format.MessageToJson(
+            service.get_genome_uuid(
+                engine,
+                "homo_sapiens", "GRCh37.p13"))
+        expected_output = {
+            "genome_uuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"
+        }
+        assert json.loads(output) == expected_output
+
     def test_get_genome_by_uuid(self, engine):
         output = json_format.MessageToJson(
             service.get_genome_by_uuid(engine,
