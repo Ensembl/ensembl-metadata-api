@@ -29,6 +29,45 @@ class TestMetadataDB:
         db_test = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
         assert db_test, "DB should not be empty"
 
+    def fetch_all_genomes(self, multi_dbs):
+        conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
+        test = conn.fetch_genomes()
+        assert len(test) == 7
+
+    def fetch_with_all_args_no_conflict(self, multi_dbs):
+        conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
+        test = conn.fetch_genomes(
+            genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
+            assembly_accession="GCA_000002985.3",
+            assembly_name="WBcel235",
+            ensembl_name="caenorhabditis_elegans",
+            taxonomy_id="6239",
+            group="EnsemblMetazoa",
+            unreleased_only=False,
+            site_name="Ensembl",
+            release_type="integrated",
+            release_version="108.0",
+            current_only=True
+        )
+        assert len(test) == 0
+
+    def fetch_with_all_args_conflict(self, multi_dbs):
+        conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
+        test = conn.fetch_genomes(
+            genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
+            assembly_accession="GCA_000002985.3",
+            assembly_name="WBcel235",
+            ensembl_name="caenorhabditis_elegans",
+            taxonomy_id="9606",  # Conflicting taxonomy_id
+            group="EnsemblBacteria",  # Conflicting group
+            unreleased_only=False,
+            site_name="Ensembl",
+            release_type="integrated",
+            release_version="108.0",
+            current_only=True
+        )
+        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+
     def test_fetch_releases(self, multi_dbs):
         conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
         test = conn.fetch_releases(release_id=2)
