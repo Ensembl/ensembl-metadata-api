@@ -357,7 +357,7 @@ def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
 
     conn = connect_to_db()
     genome_uuid_result = conn.fetch_genomes(
-        assembly_accession=assembly_name,
+        assembly_name=assembly_name,
         ensembl_name=ensembl_name
     )
 
