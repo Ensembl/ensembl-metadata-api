@@ -120,7 +120,7 @@ class EnsemblMetadataServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetGenomeUUID(self, request, context):
-        """Retrieve genome UUID by providing production name, assembly id and genebuild id.
+        """Retrieve genome UUID by providing production name and assembly id.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

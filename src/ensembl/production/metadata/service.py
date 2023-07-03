@@ -256,7 +256,7 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
             species_data = dict(species_results[0])
             species_data['genome_uuid'] = genome_uuid
             td = db.MetaData()
-            with Session(metadata_db, future=True) as session_tax:
+            with Session(taxonomy_db, future=True) as session_tax:
                 tax_name = db.Table('ncbi_taxa_name', td, autoload_with=taxonomy_db)
                 tax_names = db.select([tax_name.c.name, tax_name.c.name_class]).where(
                     tax_name.c.taxon_id == species_data['taxonomy_id'])
@@ -925,7 +925,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return get_species_information(self.db, self.taxo_db, request.genome_uuid)
 
     def GetAssemblyInformation(self, request, context):
-        return get_assembly_information(self.db, request.assembly_id)
+        return get_assembly_information(self.db, request.assembly_uuid)
 
     def GetGenomesByAssemblyAccessionID(self, request, context):
         return get_genomes_from_assembly_accession_iterator(
@@ -933,16 +933,16 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         )
 
     def GetSubSpeciesInformation(self, request, context):
-        return get_sub_species_info(self.db, request.organism_id)
+        return get_sub_species_info(self.db, request.organism_uuid)
 
     def GetGroupingInformation(self, request, context):
-        return get_sub_species_info(self.db, request.organism_id)
+        return get_sub_species_info(self.db, request.organism_uuid)
 
     def GetKaryotypeInformation(self, request, context):
         return get_sub_species_info(self.db, request.genome_uuid)
 
     def GetTopLevelStatistics(self, request, context):
-        return get_top_level_statistics(self.db, request.organism_id)
+        return get_top_level_statistics(self.db, request.organism_uuid)
 
     def GetTopLevelStatisticsByUUID(self, request, context):
         return get_top_level_statistics_by_uuid(self.db, request.genome_uuid)

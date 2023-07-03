@@ -23,6 +23,7 @@ from ensembl_metadata_pb2 import (
     OrganismIDRequest,
     DatasetsRequest,
     GenomeDatatypeRequest,
+    GenomeInfoRequest
 )
 
 import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
@@ -157,7 +158,7 @@ def get_species_information_by_uuid(stub):
 
 
 def get_assembly_information(stub):
-    request1 = AssemblyIDRequest(assembly_id="2")
+    request1 = AssemblyIDRequest(assembly_uuid="3142a1c4-0f6a-11ee-bfb4-005056b370fb")
     releases1 = stub.GetAssemblyInformation(request1)
     print("**** Assembly information ****")
     print(releases1)
@@ -177,14 +178,14 @@ def get_genomes_by_assembly_accession(stub):
 
 
 def get_sub_species_info(stub):
-    request1 = OrganismIDRequest(organism_id="3")
+    request1 = OrganismIDRequest(organism_uuid="317e356e-0f6a-11ee-bfb4-005056b370fb")
     releases1 = stub.GetSubSpeciesInformation(request1)
     print("**** Sub species information ****")
     print(releases1)
 
 
 def get_grouping_info(stub):
-    request1 = OrganismIDRequest(organism_id="3")
+    request1 = OrganismIDRequest(organism_uuid="317e356e-0f6a-11ee-bfb4-005056b370fb")
     releases1 = stub.GetGroupingInformation(request1)
     print("**** Grouping information ****")
     print(releases1)
@@ -198,7 +199,7 @@ def get_karyotype_information(stub):
 
 
 def get_top_level_statistics(stub):
-    request1 = OrganismIDRequest(organism_id="3")
+    request1 = OrganismIDRequest(organism_uuid="317e356e-0f6a-11ee-bfb4-005056b370fb")
     releases1 = stub.GetTopLevelStatistics(request1)
     print("**** Top level statistics ****")
     print(releases1)
@@ -215,7 +216,7 @@ def get_top_level_statistics_by_uuid(stub):
 
 def get_datasets_list_by_uuid(stub):
     request1 = DatasetsRequest(
-        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3", release_version=2020.0
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3", release_version=108.0
     )
     datasets = stub.GetDatasetsListByUUID(request1)
     print(datasets)
@@ -223,10 +224,18 @@ def get_datasets_list_by_uuid(stub):
 
 def get_dataset_infos_by_dataset_type(stub):
     request1 = GenomeDatatypeRequest(
-        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", dataset_type="geneset"
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", dataset_type="assembly"
     )
     datasets1 = stub.GetDatasetInformation(request1)
     print(datasets1.dataset_infos)
+
+
+def get_genome_uuid(stub):
+    request1 = GenomeInfoRequest(
+        ensembl_name="homo_sapiens", assembly_name="GRCh37.p13"
+    )
+    genome_uuid = stub.GetGenomeUUID(request1)
+    print(genome_uuid)
 
 
 def run():
@@ -262,6 +271,8 @@ def run():
         get_datasets_list_by_uuid(stub)
         print("-------------- List Dataset information for Genome --------------")
         get_dataset_infos_by_dataset_type(stub)
+        print("-------------- Get Genome UUID --------------")
+        get_genome_uuid(stub)
 
 
 if __name__ == "__main__":
