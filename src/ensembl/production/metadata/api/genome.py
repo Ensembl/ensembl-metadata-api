@@ -102,11 +102,12 @@ class GenomeAdaptor(BaseAdaptor):
             current_only (bool): Whether to fetch only current genomes.
 
         Returns:
-            List[Tuple[Genome, Organism, Assembly]]: A list of tuples containing the fetched genome information.
+            List[Tuple[Genome, Organism, Assembly, EnsemblRelease]]: A list of tuples containing the fetched genome information.
             Each tuple contains the following elements:
                 - Genome: An instance of the Genome class.
                 - Organism: An instance of the Organism class.
                 - Assembly: An instance of the Assembly class.
+                - EnsemblRelease: An instance of the EnsemblRelease class.
 
         Notes:
             - The parameters are not mutually exclusive, meaning more than one of them can be provided at a time.
@@ -128,7 +129,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Construct the initial database query
         genome_select = db.select(
-            Genome, Organism, Assembly
+            Genome, Organism, Assembly, EnsemblRelease
         ).join(Genome.assembly).join(Genome.organism)
 
         # Apply group filtering if group parameter is provided
@@ -158,7 +159,7 @@ class GenomeAdaptor(BaseAdaptor):
             if current_only:
                 genome_select = genome_select.filter(GenomeRelease.is_current == 1)
 
-            if release_version is not None:
+            if release_version != 0.0:
                 genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
         # These options are in order of decreasing specificity,
