@@ -251,11 +251,23 @@ class GenomeAdaptor(BaseAdaptor):
         )
 
     def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_accession=None, chromosomal_only=False):
+        """
+        Fetches sequences based on the provided parameters.
+
+        Args:
+            genome_id (int or None): Genome ID to filter by.
+            genome_uuid (str or None): Genome UUID to filter by.
+            assembly_accession (str or None): Assembly accession to filter by.
+            chromosomal_only (bool): Flag indicating whether to fetch only chromosomal sequences.
+
+        Returns:
+            list: A list of fetched sequences.
+        """
         genome_id = check_parameter(genome_id)
         genome_uuid = check_parameter(genome_uuid)
         assembly_accession = check_parameter(assembly_accession)
 
-        seq_select = db.select(AssemblySequence, )
+        seq_select = db.select(AssemblySequence, Genome, Assembly)
 
         if chromosomal_only:
             seq_select = seq_select.filter(AssemblySequence.chromosomal == 1)

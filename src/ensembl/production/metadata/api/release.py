@@ -30,6 +30,19 @@ class ReleaseAdaptor(BaseAdaptor):
             release_type=None,
             site_name=None,
     ):
+        """
+        Fetches releases based on the provided parameters.
+
+        Args:
+            release_id (int or list or None): Release ID(s) to filter by.
+            release_version (str or list or None): Release version(s) to filter by.
+            current_only (bool): Flag indicating whether to fetch only current releases.
+            release_type (str or list or None): Release type(s) to filter by.
+            site_name (str or list or None): Name(s) of the Ensembl site to filter by.
+
+        Returns:
+            list: A list of fetched releases.
+        """
         release_id = check_parameter(release_id)
         release_version = check_parameter(release_version)
         release_type = check_parameter(release_type)
@@ -45,12 +58,12 @@ class ReleaseAdaptor(BaseAdaptor):
                 EnsemblRelease.release_id.in_(release_id)
             )
         # WHERE ensembl_release.version = :version_1
-        elif release_version is not None:
+        if release_version is not None:
             release_select = release_select.filter(
                 EnsemblRelease.version.in_(release_version)
             )
         # WHERE ensembl_release.is_current =:is_current_1
-        elif current_only:
+        if current_only:
             release_select = release_select.filter(
                 EnsemblRelease.is_current == 1
             )
