@@ -55,9 +55,9 @@ def get_genomes_by_keyword(stub, genome_request):
 
 
 def get_genomes(stub):
-    request1 = GenomeUUIDRequest(genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3")
+    request1 = GenomeUUIDRequest(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
     request2 = GenomeUUIDRequest(genome_uuid="rhubarb")
-    request3 = GenomeNameRequest(ensembl_name="accipiter_gentilis", site_name="rapid")
+    request3 = GenomeNameRequest(ensembl_name="caenorhabditis_elegans", site_name="Ensembl")
     request4 = GenomeNameRequest(
         ensembl_name="accipiter_gentilis", site_name="rapid", release_version=13.0
     )

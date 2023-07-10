@@ -23,6 +23,7 @@ from ensembl.production.metadata import ensembl_metadata_pb2
 from ensembl.production.metadata.config import MetadataConfig as cfg
 
 from ensembl.production.metadata.api.genome import GenomeAdaptor
+from ensembl.production.metadata.api.release import ReleaseAdaptor
 
 
 # This function will be replaced with connect_to_db() below
@@ -66,27 +67,15 @@ def get_karyotype_information(metadata_db, genome_uuid):
     if genome_uuid is None:
         return create_genome()
 
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', md, autoload_with=metadata_db)
-        assembly = db.Table('assembly', md, autoload_with=metadata_db)
-        assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
-        karyotype_info = db.select([
-            assembly.c.level,
-            assembly_sequence.c.chromosomal,
-            assembly_sequence.c.sequence_location,
-        ]).where(genome.c.genome_uuid == genome_uuid) \
-            .where(genome.c.assembly_id == assembly_sequence.c.assembly_id) \
-            .where(assembly_sequence.c.assembly_id == assembly.c.assembly_id)
+    conn = connect_to_db()
+    karyotype_info_result = conn.fetch_sequences(
+        genome_uuid=genome_uuid
+    )
 
-        karyotype_results = session.execute(karyotype_info).all()
-        if len(karyotype_results) == 1:
-            karyotype_data = dict(karyotype_results[0])
-            karyotype_data['genome_uuid'] = genome_uuid
-            return create_karyotype(karyotype_data)
-        else:
-            return create_karyotype()
+    if len(karyotype_info_result) == 1:
+        return create_karyotype(karyotype_info_result[0])
+    else:
+        return create_karyotype()
 
 
 def get_top_level_statistics(metadata_db, organism_uuid):
@@ -357,8 +346,8 @@ def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
 
     conn = connect_to_db()
     genome_uuid_result = conn.fetch_genomes(
-        assembly_name=assembly_name,
-        ensembl_name=ensembl_name
+        ensembl_name=ensembl_name,
+        assembly_name=assembly_name
     )
 
     if len(genome_uuid_result) == 1:
@@ -373,31 +362,19 @@ def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
     if genome_uuid is None:
         return create_genome()
 
-    sqlalchemy_md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
+    conn = connect_to_db()
+    genome_results = conn.fetch_genomes(
+        genome_uuid=genome_uuid,
+        release_version=release_version
+    )
 
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
-        genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
-        release = sqlalchemy_md.tables['ensembl_release']
-        assembly = sqlalchemy_md.tables['assembly']
-        organism = sqlalchemy_md.tables['organism']
-
-        genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome) \
-            .join(assembly).join(organism).outerjoin(genome_release).outerjoin(release) \
-            .where(genome.c.genome_uuid == genome_uuid)
-
-        if release_version == 0:
-            genome_query = genome_query.where(release.c.is_current == 1)
-        else:
-            genome_query = genome_query.where(release.c.version == release_version)
-        genome_results = session.execute(genome_query).all()
-        if len(genome_results) == 1:
-            return create_genome(genome_results[0])
-        return create_genome()
+    if len(genome_results) == 1:
+        return create_genome(genome_results[0])
+    return create_genome()
 
 
 def get_genomes_by_keyword_iterator(metadata_db, keyword, release_version):
+    # TODO: implement an API for this function in the metadata API
     if not keyword:
         return
     sqlalchemy_md = db.MetaData()
@@ -442,36 +419,15 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
     if ensembl_name is None and site_name is None:
         return create_genome()
 
-    # This is sqlalchemy's metadata, not Ensembl's!
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', md, autoload_with=metadata_db)
-        genome_release = db.Table('genome_release', md, autoload_with=metadata_db)
-        assembly = md.tables['assembly']
-        organism = md.tables['organism']
-        release = md.tables['ensembl_release']
-        site = md.tables['ensembl_site']
-
-        genome_select = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome).join(
-            assembly).join(organism).filter_by(ensembl_name=ensembl_name)
-
-        if release_version == 0:
-            genome_select = genome_select.join(genome_release).join(release).filter_by(
-                is_current=True)
-        else:
-            genome_select = genome_select.join(genome_release).join(release).filter_by(
-                version=release_version)
-
-        genome_select = genome_select.join(site).filter_by(name=site_name).distinct()
-        print(genome_select)
-        genome_results = session.execute(genome_select).all()
-
-        if len(genome_results) == 1:
-            return create_genome(genome_results[0])
-        else:
-            return create_genome()
+    conn = connect_to_db()
+    genome_results = conn.fetch_genomes(
+        ensembl_name=ensembl_name,
+        site_name=site_name,
+        release_version=release_version
+    )
+    if len(genome_results) == 1:
+        return create_genome(genome_results[0])
+    return create_genome()
 
 
 def populate_dataset_info(data):
@@ -588,96 +544,43 @@ def genome_sequence_iterator(metadata_db, genome_uuid, chromosomal_only):
     if genome_uuid is None:
         return
 
-    # This is sqlalchemy's metadata, not Ensembl's!
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', md, autoload_with=metadata_db)
-        assembly = md.tables['assembly']
-        assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
-
-        seq_select = (
-            db.select(
-                assembly_sequence.c.accession,
-                assembly_sequence.c.name,
-                assembly_sequence.c.sequence_location,
-                assembly_sequence.c.length,
-                assembly_sequence.c.chromosomal,
-            )
-            .select_from(genome)
-            .filter_by(genome_uuid=genome_uuid)
-            .join(assembly)
-            .join(assembly_sequence)
-        )
-        if chromosomal_only == 1:
-            seq_select = seq_select.filter_by(chromosomal=True)
-
-        for result in session.execute(seq_select):
-            yield create_genome_sequence(dict(result))
+    conn = connect_to_db()
+    assembly_sequence_results = conn.fetch_sequences(
+        genome_uuid=genome_uuid,
+        chromosomal_only=chromosomal_only,
+    )
+    for result in assembly_sequence_results:
+        yield create_genome_sequence(result)
 
 
 def release_iterator(metadata_db, site_name, release_version, current_only):
-    # This is sqlalchemy's metadata, not Ensembl's!
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        release = db.Table('ensembl_release', md, autoload_with=metadata_db)
-        site = md.tables['ensembl_site']
+    conn = ReleaseAdaptor(metadata_uri=cfg.metadata_uri)
 
-        release_select = db.select(
-            release.c.version.label('release_version'),
-            db.cast(release.c.release_date, db.String),
-            release.c.label.label('release_label'),
-            release.c.is_current,
-            site.c.name.label('site_name'),
-            site.c.label.label('site_label'),
-            site.c.uri.label('site_uri')
-        ).select_from(release)
-        if len(release_version) > 0:
-            release_select = release_select.filter(release.c.version.in_(release_version))
-        if current_only == 1:
-            release_select = release_select.filter_by(is_current=1)
+    # set release_version/site_name to None if it's an empty list
+    release_version = release_version or None
+    site_name = site_name or None
 
-        release_select = release_select.join(site)
-        if len(site_name) > 0:
-            release_select = release_select.filter(site.c.name.in_(site_name))
+    release_results = conn.fetch_releases(
+        release_version=release_version,
+        current_only=current_only,
+        site_name=site_name
+    )
 
-        release_results = session.execute(release_select).all()
-
-        for result in release_results:
-            yield create_release(dict(result))
+    for result in release_results:
+        yield create_release(result)
 
 
 def release_by_uuid_iterator(metadata_db, genome_uuid):
     if genome_uuid is None:
         return
 
-    # This is sqlalchemy's metadata, not Ensembl's!
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
+    conn = ReleaseAdaptor(metadata_uri=cfg.metadata_uri)
+    release_results = conn.fetch_releases_for_genome(
+        genome_uuid=genome_uuid,
+    )
 
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', md, autoload_with=metadata_db)
-        genome_release = db.Table('genome_release', md, autoload_with=metadata_db)
-        release = md.tables['ensembl_release']
-        site = md.tables['ensembl_site']
-
-        release_select = db.select(
-            release.c.version.label('release_version'),
-            db.cast(release.c.release_date, db.String),
-            release.c.label.label('release_label'),
-            release.c.is_current,
-            site.c.name.label('site_name'),
-            site.c.label.label('site_label'),
-            site.c.uri.label('site_uri')
-        ).select_from(genome).filter_by(
-            genome_uuid=genome_uuid
-        ).join(genome_release).join(release).join(site)
-
-        release_results = session.execute(release_select).all()
-
-        for result in release_results:
-            yield create_release(dict(result))
+    for result in release_results:
+        yield create_release(result)
 
 
 def get_dataset_by_genome_id(metadata_db, genome_uuid, requested_dataset_type):
@@ -760,10 +663,10 @@ def create_karyotype(data=None):
         return ensembl_metadata_pb2.Karyotype()
 
     karyotype = ensembl_metadata_pb2.Karyotype(
-        genome_uuid=data["genome_uuid"],
-        code=data["code"],
-        chromosomal=data["chromosomal"],
-        location=data["location"],
+        genome_uuid=data.Genome.genome_uuid,
+        code=data.Assembly.level,
+        chromosomal=str(data.AssemblySequence.chromosomal),
+        location=data.AssemblySequence.sequence_location,
     )
     return karyotype
 
@@ -821,45 +724,90 @@ def create_genome(data=None):
     if data is None:
         return ensembl_metadata_pb2.Genome()
 
-    assembly = ensembl_metadata_pb2.Assembly(
-        accession=data["assembly_accession"],
-        name=data["assembly_name"],
-        ucsc_name=data["assembly_ucsc_name"],
-        level=data["assembly_level"],
-        ensembl_name=data["assembly_ensembl_name"],
-    )
+    try:
+        # try to construct the object using Metadata API models
+        assembly = ensembl_metadata_pb2.Assembly(
+            accession=data.Assembly.accession,
+            name=data.Assembly.name,
+            ucsc_name=data.Assembly.ucsc_name,
+            level=data.Assembly.level,
+            ensembl_name=data.Assembly.ensembl_name,
+        )
 
-    taxon = ensembl_metadata_pb2.Taxon(
-        taxonomy_id=data["taxonomy_id"],
-        scientific_name=data["scientific_name"],
-        strain=data["strain"],
-    )
-    # TODO: fetch common_name(s) from ncbi_taxonomy database
+        taxon = ensembl_metadata_pb2.Taxon(
+            taxonomy_id=data.Organism.taxonomy_id,
+            scientific_name=data.Organism.scientific_name,
+            strain=data.Organism.strain,
+        )
+        # TODO: fetch common_name(s) from ncbi_taxonomy database
 
-    organism = ensembl_metadata_pb2.Organism(
-        display_name=data["display_name"],
-        strain=data["strain"],
-        scientific_name=data["scientific_name"],
-        url_name=data["url_name"],
-        ensembl_name=data["ensembl_name"],
-        scientific_parlance_name=data["scientific_parlance_name"],
-    )
+        organism = ensembl_metadata_pb2.Organism(
+            display_name=data.Organism.display_name,
+            strain=data.Organism.strain,
+            scientific_name=data.Organism.scientific_name,
+            url_name=data.Organism.url_name,
+            ensembl_name=data.Organism.ensembl_name,
+            scientific_parlance_name=data.Organism.scientific_parlance_name,
+        )
 
-    release = ensembl_metadata_pb2.Release(
-        release_version=data["release_version"],
-        release_date=str(data["release_date"]),
-        release_label=data["release_label"],
-        is_current=data["is_current"],
-    )
+        release = ensembl_metadata_pb2.Release(
+            release_version=data.EnsemblRelease.version,
+            release_date=str(data.EnsemblRelease.release_date),
+            release_label=data.EnsemblRelease.label,
+            is_current=data.EnsemblRelease.is_current,
+        )
 
-    genome = ensembl_metadata_pb2.Genome(
-        genome_uuid=data["genome_uuid"],
-        created=str(data["created"]),
-        assembly=assembly,
-        taxon=taxon,
-        organism=organism,
-        release=release,
-    )
+        genome = ensembl_metadata_pb2.Genome(
+            genome_uuid=data.Genome.genome_uuid,
+            created=str(data.Genome.created),
+            assembly=assembly,
+            taxon=taxon,
+            organism=organism,
+            release=release,
+        )
+    except AttributeError:
+        # Otherwise (e.g: when calling get_genomes_by_keyword_iterator())
+        # use the old approach
+        # TODO: get rid of this section
+        assembly = ensembl_metadata_pb2.Assembly(
+            accession=data["assembly_accession"],
+            name=data["assembly_name"],
+            ucsc_name=data["assembly_ucsc_name"],
+            level=data["assembly_level"],
+            ensembl_name=data["assembly_ensembl_name"],
+        )
+
+        taxon = ensembl_metadata_pb2.Taxon(
+            taxonomy_id=data["taxonomy_id"],
+            scientific_name=data["scientific_name"],
+            strain=data["strain"],
+        )
+        # TODO: fetch common_name(s) from ncbi_taxonomy database
+
+        organism = ensembl_metadata_pb2.Organism(
+            display_name=data["display_name"],
+            strain=data["strain"],
+            scientific_name=data["scientific_name"],
+            url_name=data["url_name"],
+            ensembl_name=data["ensembl_name"],
+            scientific_parlance_name=data["scientific_parlance_name"],
+        )
+
+        release = ensembl_metadata_pb2.Release(
+            release_version=data["release_version"],
+            release_date=str(data["release_date"]),
+            release_label=data["release_label"],
+            is_current=data["is_current"],
+        )
+
+        genome = ensembl_metadata_pb2.Genome(
+            genome_uuid=data["genome_uuid"],
+            created=str(data["created"]),
+            assembly=assembly,
+            taxon=taxon,
+            organism=organism,
+            release=release,
+        )
     return genome
 
 
@@ -867,12 +815,13 @@ def create_genome_sequence(data=None):
     if data is None:
         return ensembl_metadata_pb2.GenomeSequence()
 
-    genome_sequence = ensembl_metadata_pb2.GenomeSequence()
-
-    # The following relies on keys matching exactly the message attributes.
-    for k, v in data.items():
-        if v is not None:
-            setattr(genome_sequence, k, v)
+    genome_sequence = ensembl_metadata_pb2.GenomeSequence(
+        accession=data.AssemblySequence.accession,
+        name=data.AssemblySequence.name,
+        sequence_location=data.AssemblySequence.sequence_location,
+        length=data.AssemblySequence.length,
+        chromosomal=data.AssemblySequence.chromosomal
+    )
 
     return genome_sequence
 
@@ -881,12 +830,15 @@ def create_release(data=None):
     if data is None:
         return ensembl_metadata_pb2.Release()
 
-    release = ensembl_metadata_pb2.Release()
-
-    # The following relies on keys matching exactly the message attributes.
-    for k, v in data.items():
-        if v is not None:
-            setattr(release, k, v)
+    release = ensembl_metadata_pb2.Release(
+        release_version=data.EnsemblRelease.version,
+        release_date=str(data.EnsemblRelease.release_date),
+        release_label=data.EnsemblRelease.label,
+        is_current=data.EnsemblRelease.is_current,
+        site_name=data.EnsemblSite.name,
+        site_label=data.EnsemblSite.label,
+        site_uri=data.EnsemblSite.uri
+    )
 
     return release
 
@@ -939,7 +891,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return get_sub_species_info(self.db, request.organism_uuid)
 
     def GetKaryotypeInformation(self, request, context):
-        return get_sub_species_info(self.db, request.genome_uuid)
+        return get_karyotype_information(self.db, request.genome_uuid)
 
     def GetTopLevelStatistics(self, request, context):
         return get_top_level_statistics(self.db, request.organism_uuid)
