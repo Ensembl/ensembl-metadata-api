@@ -304,7 +304,7 @@ class GenomeAdaptor(BaseAdaptor):
         )
 
     def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, unreleased_datasets=False, dataset_uuid=None,
-                              dataset_name=None, dataset_source=None):
+                              dataset_name=None, dataset_source=None, release_version=None):
         """
         Fetches genome datasets based on the provided parameters.
 
@@ -313,11 +313,11 @@ class GenomeAdaptor(BaseAdaptor):
             genome_uuid (str or list or None): Genome UUID(s) to filter by.
             unreleased_datasets (bool): Flag indicating whether to fetch only unreleased datasets.
             dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
-            dataset_name (str or None): Dataset name to filter by.
+            dataset_name (str or None): Dataset name to filter by, default is 'assembly'.
             dataset_source (str or None): Dataset source to filter by.
 
         Returns:
-            List[Tuple[Genome, GenomeDataset, Dataset, DatasetType, DatasetSource]]: A list of tuples
+            List[Tuple[Genome, GenomeDataset, Dataset, DatasetType, DatasetSource, EnsemblRelease]]: A list of tuples
             containing the fetched genome information.
             Each tuple contains the following elements:
                 - Genome: An instance of the Genome class.
@@ -325,6 +325,7 @@ class GenomeAdaptor(BaseAdaptor):
                 - Dataset: An instance of the Dataset class.
                 - DatasetType: An instance of the DatasetType class.
                 - DatasetSource: An instance of the DatasetSource class.
+                - EnsemblRelease: An instance of the EnsemblRelease class.
 
         Raises:
             ValueError: If an exception occurs during the fetch process.
@@ -336,12 +337,14 @@ class GenomeAdaptor(BaseAdaptor):
                 GenomeDataset,
                 Dataset,
                 DatasetType,
-                DatasetSource
+                DatasetSource,
+                EnsemblRelease
             ).select_from(Genome) \
                 .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
-                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
+                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id) \
+                .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
 
             # set default group topic as 'assembly' to fetch unique datasource
             if not dataset_name:
@@ -370,6 +373,10 @@ class GenomeAdaptor(BaseAdaptor):
 
             if dataset_source is not None:
                 genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
+
+            if release_version != 0.0:
+                genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+
             logger.debug(genome_select)
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
