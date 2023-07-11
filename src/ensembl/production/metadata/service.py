@@ -557,42 +557,15 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
 
 
 def get_dataset_by_genome_id(metadata_db, genome_uuid, requested_dataset_type):
-    # This is sqlalchemy's metadata, not Ensembl's!
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
+    if genome_uuid is None:
+        return create_dataset_infos()
 
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', md, autoload_with=metadata_db)
-        genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
-        dataset = db.Table('dataset', md, autoload_with=metadata_db)
-        dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
-        attribute = db.Table('attribute', md, autoload_with=metadata_db)
-        dataset_attribute = db.Table('dataset_attribute', md, autoload_with=metadata_db)
-        ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
-
-        dataset_select = db.select(
-            dataset.c.dataset_uuid,
-            dataset.c.name.label('dataset_name'),
-            attribute.c.name,
-            attribute.c.type,
-            dataset.c.version.label('dataset_version'),
-            dataset.c.label.label('dataset_label'),
-            ensembl_release.c.version,
-            dataset_attribute.c.value
-        ) \
-            .select_from(genome).filter_by(genome_uuid=genome_uuid) \
-            .join(genome_dataset) \
-            .join(ensembl_release) \
-            .join(dataset) \
-            .join(dataset_attribute) \
-            .join(attribute) \
-            .join(dataset_type) \
-            .where(dataset_type.c.name == requested_dataset_type) \
-            .order_by(dataset.c.name, attribute.c.name) \
-            .distinct()
-
-        dataset_results = session.execute(dataset_select).all()
-        return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
+    conn = connect_to_db()
+    dataset_results = conn.fetch_genome_datasets(
+        genome_uuid=genome_uuid,
+        dataset_type=requested_dataset_type
+    )
+    return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
 
 
 def create_species(data=None):
@@ -828,12 +801,23 @@ def create_datasets(data=None):
 def create_dataset_info(data=None):
     if data is None:
         return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
-    return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(**dict(data))
+
+    return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
+        dataset_uuid=data.Dataset.dataset_uuid,
+        dataset_name=data.Dataset.name,
+        name=data.Attribute.name,
+        type=data.Attribute.type,
+        dataset_version=data.Dataset.version,
+        dataset_label=data.Dataset.label,
+        version=int(data.EnsemblRelease.version),
+        value=data.DatasetAttribute.value,
+    )
 
 
-def create_dataset_infos(genome_uuid, requested_dataset_type, data=None):
+def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=None):
     if data is None or data == []:
         return ensembl_metadata_pb2.DatasetInfos()
+
     dataset_infos = [create_dataset_info(result) for result in data]
     return ensembl_metadata_pb2.DatasetInfos(
         genome_uuid=genome_uuid,
