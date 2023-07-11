@@ -432,80 +432,53 @@ def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
 
 def populate_dataset_info(data):
     return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid=data["dataset_uuid"],
-        dataset_name=data["dataset_name"],
-        dataset_version=data["dataset_version"],
-        dataset_label=data["dataset_label"],
-        version=int(data["version"]),
+        dataset_uuid=data.Dataset.dataset_uuid,
+        dataset_name=data.Dataset.name,
+        dataset_version=data.Dataset.version,
+        dataset_label=data.Dataset.label,
+        version=int(data.EnsemblRelease.version),
     )
 
 
 def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version=0):
-    # This is sqlalchemy's metadata, not Ensembl's!
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', md, autoload_with=metadata_db)
-        dataset = db.Table('dataset', md, autoload_with=metadata_db)
-        genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
-        dataset_type = db.Table('dataset_type', md, autoload_with=metadata_db)
-        ensembl_release = db.Table('ensembl_release', md, autoload_with=metadata_db)
+    if genome_uuid is None:
+        return create_datasets()
 
-        datasets_select = db.select(
-            genome.c.genome_uuid,
-            dataset.c.dataset_uuid,
-            # The label here should be identical to what's in proto file
-            dataset_type.c.name.label('data_set_type'),
-            dataset.c.name.label('dataset_name'),
-            dataset.c.version.label('dataset_version'),
-            dataset.c.label.label('dataset_label'),
-            ensembl_release.c.version
-        ).select_from(genome).join(genome_dataset).join(dataset) \
-            .join(dataset_type).join(ensembl_release, isouter=True) \
-            .where(genome.c.genome_uuid == genome_uuid) \
-            .where(genome_dataset.c.is_current == 1) \
-            .distinct()
+    conn = connect_to_db()
+    datasets_results = conn.fetch_genome_datasets(
+        genome_uuid=genome_uuid,
+        # fetch all datasets, default is 'assembly' only
+        dataset_name="all",
+        release_version=release_version
+    )
 
-        if release_version > 0:
-            datasets_select = datasets_select.filter_by(version=release_version)
-            # TODO: Marc comment: Might be interesting to do a <=, because I am still not sure whether
-            # we'll replicate version attachment for everything every time we do a new release.
-        else:
-            # if the release is not specified, we return the latest by default
-            datasets_select = datasets_select.filter_by(is_current=1)
+    if len(datasets_results) > 0:
+        # ds_obj_dict where all datasets are stored as:
+        # { dataset_type_1: [datasets_dt1_1, datasets_dt1_2], dataset_type_2: [datasets_dt2_1] }
+        ds_obj_dict = {}
+        for result in datasets_results:
+            dataset_type = result.Dataset.name
+            # Populate the objects bottom up
+            datasets_info = populate_dataset_info(result)
+            # Construct the datasets dictionary
+            if dataset_type in ds_obj_dict:
+                ds_obj_dict[dataset_type].append(datasets_info)
+            else:
+                ds_obj_dict[dataset_type] = [datasets_info]
 
-        # print("SQL QUERY ===> ", str(datasets_select))
-        datasets_results = session.execute(datasets_select).all()
-        # print("len of datasets_results ===> ", len(datasets_results))
+        dataset_object_dict = {}
+        # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetInfos
+        for dataset_type_key in ds_obj_dict:
+            dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
+                dataset_infos=ds_obj_dict[dataset_type_key]
+            )
 
-        if len(datasets_results) > 0:
-            # ds_obj_dict where all datasets are stored as:
-            # { dataset_type_1: [datasets_dt1_1, datasets_dt1_2], dataset_type_2: [datasets_dt2_1] }
-            ds_obj_dict = {}
-            for result in datasets_results:
-                dataset_type = result['data_set_type']
-                # Populate the objects bottom up
-                datasets_info = populate_dataset_info(result)
-                # Construct the datasets dictionary
-                if dataset_type in ds_obj_dict:
-                    ds_obj_dict[dataset_type].append(datasets_info)
-                else:
-                    ds_obj_dict[dataset_type] = [datasets_info]
+        return create_datasets({
+            'genome_uuid': genome_uuid,
+            'datasets': dataset_object_dict
+        })
 
-            dataset_object_dict = {}
-            # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetInfos
-            for dataset_type_key in ds_obj_dict:
-                dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
-                    dataset_infos=ds_obj_dict[dataset_type_key]
-                )
-
-            return create_datasets({
-                'genome_uuid': genome_uuid,
-                'datasets': dataset_object_dict
-            })
-
-        else:
-            return create_datasets()
+    return create_datasets()
 
 
 def get_genome_query(genome, genome_release, release, assembly, organism):
