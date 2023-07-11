@@ -17,7 +17,8 @@ from ensembl.ncbi_taxonomy.models import NCBITaxaName
 
 from ensembl.production.metadata.api.base import BaseAdaptor, check_parameter
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
-    GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource
+    GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
+    Attribute, DatasetAttribute
 import logging
 
 logger = logging.getLogger(__name__)
@@ -304,7 +305,7 @@ class GenomeAdaptor(BaseAdaptor):
         )
 
     def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, unreleased_datasets=False, dataset_uuid=None,
-                              dataset_name=None, dataset_source=None, release_version=None):
+                              dataset_name=None, dataset_source=None, dataset_type=None, release_version=None):
         """
         Fetches genome datasets based on the provided parameters.
 
@@ -315,10 +316,14 @@ class GenomeAdaptor(BaseAdaptor):
             dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
             dataset_name (str or None): Dataset name to filter by, default is 'assembly'.
             dataset_source (str or None): Dataset source to filter by.
+            dataset_type (str or None): Dataset type to filter by.
+            release_version (float or None): EnsemblRelease version to filter by.
 
         Returns:
-            List[Tuple[Genome, GenomeDataset, Dataset, DatasetType, DatasetSource, EnsemblRelease]]: A list of tuples
-            containing the fetched genome information.
+            List[Tuple[
+                    Genome, GenomeDataset, Dataset, DatasetType,
+                    DatasetSource, EnsemblRelease, DatasetAttribute, Attribute
+                ]]: A list of tuples containing the fetched genome information.
             Each tuple contains the following elements:
                 - Genome: An instance of the Genome class.
                 - GenomeDataset: An instance of the GenomeDataset class.
@@ -326,6 +331,8 @@ class GenomeAdaptor(BaseAdaptor):
                 - DatasetType: An instance of the DatasetType class.
                 - DatasetSource: An instance of the DatasetSource class.
                 - EnsemblRelease: An instance of the EnsemblRelease class.
+                - DatasetAttribute: An instance of the DatasetAttribute class.
+                - Attribute: An instance of the Attribute class.
 
         Raises:
             ValueError: If an exception occurs during the fetch process.
@@ -338,13 +345,17 @@ class GenomeAdaptor(BaseAdaptor):
                 Dataset,
                 DatasetType,
                 DatasetSource,
-                EnsemblRelease
+                EnsemblRelease,
+                DatasetAttribute,
+                Attribute
             ).select_from(Genome) \
                 .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
                 .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id) \
-                .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
+                .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id) \
+                .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
+                .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id)
 
             # set default group topic as 'assembly' to fetch unique datasource
             if not dataset_name:
@@ -355,6 +366,7 @@ class GenomeAdaptor(BaseAdaptor):
             dataset_uuid = check_parameter(dataset_uuid)
             dataset_name = check_parameter(dataset_name)
             dataset_source = check_parameter(dataset_source)
+            dataset_type = check_parameter(dataset_type)
 
             if genome_id is not None:
                 genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
@@ -374,7 +386,10 @@ class GenomeAdaptor(BaseAdaptor):
             if dataset_source is not None:
                 genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
 
-            if release_version != 0.0:
+            if dataset_type is not None:
+                genome_select = genome_select.filter(DatasetType.name.in_(dataset_type))
+
+            if release_version:
                 genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
             logger.debug(genome_select)
