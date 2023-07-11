@@ -130,18 +130,20 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Construct the initial database query
         genome_select = db.select(
-            Genome, Organism, Assembly, EnsemblRelease
-        ).join(Genome.assembly).join(Genome.organism)
+            Genome, Organism, Assembly, EnsemblRelease, OrganismGroupMember, OrganismGroup
+        ).select_from(Genome) \
+            .join(Organism, Organism.organism_id == Genome.organism_id) \
+            .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
+            .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
+            .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
+            .join(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id) \
+            .join(OrganismGroupMember, OrganismGroupMember.organism_id == Organism.organism_id) \
+            .join(OrganismGroup, OrganismGroup.organism_group_id == OrganismGroupMember.organism_group_id) \
 
         # Apply group filtering if group parameter is provided
         if group:
             group_type = group_type if group_type else ['Division']
-            genome_select = db.select(
-                Genome, Organism, Assembly, OrganismGroup
-            ).join(Genome.assembly).join(Genome.organism) \
-                .join(Organism.organism_group_members) \
-                .join(OrganismGroupMember.organism_group) \
-                .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
+            genome_select = genome_select.filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
 
         # Apply additional filters based on the provided parameters
         if unreleased_only:
@@ -149,10 +151,7 @@ class GenomeAdaptor(BaseAdaptor):
                 GenomeRelease.genome_id == None
             )
         if site_name is not None:
-            genome_select = genome_select.join(
-                Genome.genome_releases).join(
-                GenomeRelease.ensembl_release).join(
-                EnsemblRelease.ensembl_site).filter(EnsemblSite.name == site_name)
+            genome_select = genome_select.filter(EnsemblSite.name == site_name)
 
             if release_type is not None:
                 genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
