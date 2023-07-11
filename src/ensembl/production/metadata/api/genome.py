@@ -343,6 +343,10 @@ class GenomeAdaptor(BaseAdaptor):
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
                 .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
 
+            # set default group topic as 'assembly' to fetch unique datasource
+            if not dataset_name:
+                dataset_name = "assembly"
+
             genome_id = check_parameter(genome_id)
             genome_uuid = check_parameter(genome_uuid)
             dataset_uuid = check_parameter(dataset_uuid)
@@ -361,7 +365,7 @@ class GenomeAdaptor(BaseAdaptor):
             if unreleased_datasets:
                 genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
                     .filter(GenomeDataset.is_current == 0)
-            if dataset_name is not None:
+            if dataset_name is not None and "all" not in dataset_name:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
 
             if dataset_source is not None:
