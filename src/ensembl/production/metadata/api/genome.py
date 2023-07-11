@@ -305,6 +305,31 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, unreleased_datasets=False, dataset_uuid=None,
                               dataset_name=None, dataset_source=None):
+        """
+        Fetches genome datasets based on the provided parameters.
+
+        Args:
+            genome_id (int or list or None): Genome ID(s) to filter by.
+            genome_uuid (str or list or None): Genome UUID(s) to filter by.
+            unreleased_datasets (bool): Flag indicating whether to fetch only unreleased datasets.
+            dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
+            dataset_name (str or None): Dataset name to filter by.
+            dataset_source (str or None): Dataset source to filter by.
+
+        Returns:
+            List[Tuple[Genome, GenomeDataset, Dataset, DatasetType, DatasetSource]]: A list of tuples
+            containing the fetched genome information.
+            Each tuple contains the following elements:
+                - Genome: An instance of the Genome class.
+                - GenomeDataset: An instance of the GenomeDataset class.
+                - Dataset: An instance of the Dataset class.
+                - DatasetType: An instance of the DatasetType class.
+                - DatasetSource: An instance of the DatasetSource class.
+
+        Raises:
+            ValueError: If an exception occurs during the fetch process.
+
+        """
         try:
             genome_select = db.select(
                 Genome,
@@ -317,10 +342,6 @@ class GenomeAdaptor(BaseAdaptor):
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
                 .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
-
-            # set default group topic as 'assembly' to fetch unique datasource
-            if not dataset_name:
-                dataset_name = "assembly"
 
             genome_id = check_parameter(genome_id)
             genome_uuid = check_parameter(genome_uuid)
