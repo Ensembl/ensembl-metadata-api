@@ -13,6 +13,7 @@ import sqlalchemy as db
 from sqlalchemy.engine import make_url
 
 from ensembl.core.models import Meta
+from ensembl.production.metadata.api.models import DatasetSource
 from ensembl.database import DBConnection
 from ensembl.production.metadata.api.models import EnsemblRelease
 
@@ -21,8 +22,7 @@ class BaseMetaUpdater:
     def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None):
         self.db_uri = db_uri
         self.db = DBConnection(self.db_uri)
-        self.species = None
-        self.db_type = None
+        self.metadata_db = DBConnection(metadata_uri)
         # We will add a release later. For now, the release must be specified for it to be used.
         if release is None:
             self.listed_release = None
@@ -30,8 +30,7 @@ class BaseMetaUpdater:
         else:
             self.listed_release = release
             self.listed_release_is_current = EnsemblRelease.is_current
-        self.metadata_db = DBConnection(metadata_uri)
-        self.taxonomy_uri = taxonomy_uri
+
 
     # Basic API for the meta table in the submission database.
     def get_meta_single_meta_key(self, species_id, parameter):
@@ -43,4 +42,14 @@ class BaseMetaUpdater:
             else:
                 return result[0]
 
-
+    def get_or_new_source(self, meta_session, db_uri, db_type):
+        name = make_url(db_uri).database
+        dataset_source = meta_session.query(DatasetSource).filter(DatasetSource.name == name).one_or_none()
+        if dataset_source is None:
+            dataset_source = DatasetSource(
+                type=db_type,  # core/fungen etc
+                name=name  # dbname
+            )
+            return dataset_source, "new"
+        else:
+            return dataset_source, "existing"
