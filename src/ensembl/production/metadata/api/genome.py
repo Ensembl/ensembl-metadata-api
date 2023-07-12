@@ -90,7 +90,7 @@ class GenomeAdaptor(BaseAdaptor):
         Args:
             genome_id (Union[int, List[int]]): The ID(s) of the genome(s) to fetch.
             genome_uuid (Union[str, List[str]]): The UUID(s) of the genome(s) to fetch.
-            assembly_accession (Union[str, List[str]]): The accession number(s) of the assembly(s) to fetch.
+            assembly_accession (Union[str, List[str]]): The assenbly accession of the assembly(s) to fetch.
             assembly_name (Union[str, List[str]]): The name(s) of the assembly(s) to fetch.
             ensembl_name (Union[str, List[str]]): The Ensembl name(s) of the organism(s) to fetch.
             taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
@@ -250,13 +250,15 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_accession=None, chromosomal_only=False):
+    def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None,
+                        assembly_accession=None, chromosomal_only=False):
         """
         Fetches sequences based on the provided parameters.
 
         Args:
             genome_id (int or None): Genome ID to filter by.
             genome_uuid (str or None): Genome UUID to filter by.
+            assembly_uuid (Union[str, List[str]]): The assembly_uuid of the assembly(s) to fetch.
             assembly_accession (str or None): Assembly accession to filter by.
             chromosomal_only (bool): Flag indicating whether to fetch only chromosomal sequences.
 
@@ -265,9 +267,14 @@ class GenomeAdaptor(BaseAdaptor):
         """
         genome_id = check_parameter(genome_id)
         genome_uuid = check_parameter(genome_uuid)
+        assembly_uuid = check_parameter(assembly_uuid)
         assembly_accession = check_parameter(assembly_accession)
 
-        seq_select = db.select(AssemblySequence, Genome, Assembly)
+        seq_select = db.select(
+            Genome, Assembly, AssemblySequence
+        ).select_from(Genome) \
+            .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
+            .join(AssemblySequence, AssemblySequence.assembly_id == Assembly.assembly_id)
 
         if chromosomal_only:
             seq_select = seq_select.filter(AssemblySequence.chromosomal == 1)
@@ -275,16 +282,15 @@ class GenomeAdaptor(BaseAdaptor):
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
         if genome_id is not None:
-            seq_select = seq_select.join(AssemblySequence.assembly).join(Assembly.genomes).filter(
-                Genome.genome_id == genome_id
-            )
+            seq_select = seq_select.filter(Genome.genome_id == genome_id)
 
-        elif genome_uuid is not None:
-            seq_select = seq_select.join(AssemblySequence.assembly).join(Assembly.genomes).filter(
-                Genome.genome_uuid == genome_uuid
-            )
+        if genome_uuid is not None:
+            seq_select = seq_select.filter(Genome.genome_uuid == genome_uuid)
 
-        elif assembly_accession is not None:
+        if assembly_uuid is not None:
+            seq_select = seq_select.filter(Assembly.assembly_uuid.in_(assembly_uuid))
+
+        if assembly_accession is not None:
             seq_select = seq_select.filter(Assembly.accession == assembly_accession)
 
         with self.metadata_db.session_scope() as session:
