@@ -74,149 +74,87 @@ def get_karyotype_information(metadata_db, genome_uuid):
 
     if len(karyotype_info_result) == 1:
         return create_karyotype(karyotype_info_result[0])
-    else:
-        return create_karyotype()
+
+    return create_karyotype()
 
 
 def get_top_level_statistics(metadata_db, organism_uuid):
     if organism_uuid is None:
-        return create_assembly()
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
+        return create_top_level_statistics()
 
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', md, autoload_with=metadata_db)
-        genome_dataset = db.Table('genome_dataset', md, autoload_with=metadata_db)
-        dataset_attribute = db.Table('dataset_attribute', md, autoload_with=metadata_db)
-        attribute = db.Table('attribute', md, autoload_with=metadata_db)
-        organism = db.Table('organism', md, autoload_with=metadata_db)
+    conn = connect_to_db()
+    stats_results = conn.fetch_genome_datasets(
+        organism_uuid=organism_uuid,
+        dataset_name="all"
+    )
 
-        stats_info = db.select([
-            attribute.c.type,
-            dataset_attribute.c.value,
-            attribute.c.name,
-            attribute.c.label
-        ]).select_from(genome).select_from(organism).select_from(genome_dataset).select_from(dataset_attribute) \
-            .where(genome.c.organism_id == organism.c.organism_id) \
-            .where(genome.c.genome_id == genome_dataset.c.genome_id) \
-            .where(genome_dataset.c.dataset_id == dataset_attribute.c.dataset_id) \
-            .where(dataset_attribute.c.attribute_id == attribute.c.attribute_id) \
-            .where(organism.c.organism_uuid == organism_uuid)
-        print(stats_info)
-        stats_results = session.execute(stats_info).all()
-        statistics = []
-        if len(stats_results) > 0:
-            for stat_type, stat_value, name, label in stats_results:
-                statistics.append({
-                    'name': name,
-                    'label': label,
-                    'statistic_type': stat_type,
-                    'statistic_value': stat_value
+    statistics = []
+    if len(stats_results) > 0:
+        for result in stats_results:
+            statistics.append({
+                    'name': result.Attribute.name,
+                    'label': result.Attribute.label,
+                    'statistic_type': result.Attribute.type,
+                    'statistic_value': result.DatasetAttribute.value
                 })
-            return create_top_level_statistics({
-                'organism_uuid': organism_uuid,
-                'statistics': statistics
-            })
-        else:
-            return create_top_level_statistics()
+        return create_top_level_statistics({
+            'organism_uuid': organism_uuid,
+            'statistics': statistics
+        })
+
+    return create_top_level_statistics()
 
 
 def get_top_level_statistics_by_uuid(metadata_db, genome_uuid):
     if genome_uuid is None:
-        return create_genome()
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
+        return create_top_level_statistics_by_uuid()
 
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table("genome", md, autoload_with=metadata_db)
-        genome_dataset = db.Table("genome_dataset", md, autoload_with=metadata_db)
-        dataset_attribute = db.Table("dataset_attribute", md, autoload_with=metadata_db)
-        attribute = db.Table("attribute", md, autoload_with=metadata_db)
+    conn = connect_to_db()
+    stats_results = conn.fetch_genome_datasets(
+        genome_uuid=genome_uuid,
+        dataset_name="all"
+    )
 
-        stats_info = (
-            db.select(
-                [
-                    attribute.c.type,
-                    dataset_attribute.c.value,
-                    attribute.c.name,
-                    attribute.c.label,
-                ]
-            )
-            .select_from(genome)
-            .select_from(genome_dataset)
-            .select_from(dataset_attribute)
-            .where(genome.c.genome_uuid == genome_uuid)
-            .where(genome.c.genome_id == genome_dataset.c.genome_id)
-            .where(genome_dataset.c.dataset_id == dataset_attribute.c.dataset_id)
-            .where(dataset_attribute.c.attribute_id == attribute.c.attribute_id)
+    statistics = []
+    if len(stats_results) > 0:
+        for result in stats_results:
+            statistics.append({
+                'name': result.Attribute.name,
+                'label': result.Attribute.label,
+                'statistic_type': result.Attribute.type,
+                'statistic_value': result.DatasetAttribute.value
+            })
+        return create_top_level_statistics_by_uuid(
+            ({"genome_uuid": genome_uuid, "statistics": statistics})
         )
 
-        stats_results = session.execute(stats_info).all()
-        statistics = []
-        if len(stats_results) > 0:
-            for stat_type, stat_value, name, label in stats_results:
-                statistics.append(
-                    {
-                        "name": name,
-                        "label": label,
-                        "statistic_type": stat_type,
-                        "statistic_value": stat_value,
-                    }
-                )
-            return create_top_level_statistics_by_uuid(
-                ({"genome_uuid": genome_uuid, "statistics": statistics})
-            )
-        else:
-            return create_top_level_statistics_by_uuid()
+    return create_top_level_statistics_by_uuid()
 
 
 def get_assembly_information(metadata_db, assembly_uuid):
     if assembly_uuid is None:
         return create_assembly()
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        assembly = db.Table('assembly', md, autoload_with=metadata_db)
-        assembly_sequence = db.Table('assembly_sequence', md, autoload_with=metadata_db)
-        assembly_info = db.select([
-            assembly.c.accession,
-            assembly.c.level,
-            assembly.c.name,
-            assembly_sequence.c.chromosomal,
-            assembly_sequence.c.length,
-            assembly_sequence.c.sequence_location,
-            assembly_sequence.c.sequence_checksum,
-            assembly_sequence.c.ga4gh_identifier
-        ]).join(assembly_sequence).where(assembly.c.assembly_uuid == assembly_uuid)
 
-        assembly_results = session.execute(assembly_info).all()
-        print(assembly_info)
-        if len(assembly_results) > 0:
-            assembly_results = dict(assembly_results[0])
-            assembly_results['assembly_uuid'] = assembly_uuid
-            return create_assembly(assembly_results)
-        else:
-            return create_assembly()
+    conn = connect_to_db()
+    assembly_results = conn.fetch_sequences(
+        assembly_uuid=assembly_uuid
+    )
+    if len(assembly_results) > 0:
+        return create_assembly(assembly_results[0])
+
+    return create_assembly()
 
 
 def get_genomes_from_assembly_accession_iterator(metadata_db, assembly_accession):
     if assembly_accession is None:
-        return
-    sqlalchemy_md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
-        genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
-        release = sqlalchemy_md.tables['ensembl_release']
-        assembly = sqlalchemy_md.tables['assembly']
-        organism = sqlalchemy_md.tables['organism']
+        return create_genome()
 
-        genome_select = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome).join(
-            genome_release).join(release).join(assembly).join(organism).where(
-            assembly.c.accession == assembly_accession)
-        genome_results = session.execute(genome_select).all()
-        # print(genome_select)
-        for genome in genome_results:
-            yield create_genome(genome)
+    conn = connect_to_db()
+    genome_results = conn.fetch_genomes(
+        assembly_accession=assembly_accession
+    )
+    for genome in genome_results:
+        yield create_genome(genome)
 
 
 def get_species_information(metadata_db, taxonomy_db, genome_uuid):
@@ -642,16 +580,17 @@ def create_sub_species(data=None):
 def create_assembly(data=None):
     if data is None:
         return ensembl_metadata_pb2.AssemblyInfo()
+
     assembly = ensembl_metadata_pb2.AssemblyInfo(
-        assembly_uuid=data["assembly_uuid"],
-        accession=data["accession"],
-        level=data["level"],
-        name=data["name"],
-        chromosomal=data["chromosomal"],
-        length=data["length"],
-        sequence_location=data["sequence_location"],
-        sequence_checksum=data["sequence_checksum"],
-        ga4gh_identifier=data["ga4gh_identifier"],
+        assembly_uuid=data.Assembly.assembly_uuid,
+        accession=data.Assembly.accession,
+        level=data.Assembly.level,
+        name=data.Assembly.name,
+        chromosomal=data.AssemblySequence.chromosomal,
+        length=data.AssemblySequence.length,
+        sequence_location=data.AssemblySequence.sequence_location,
+        sequence_checksum=data.AssemblySequence.sequence_checksum,
+        ga4gh_identifier=data.AssemblySequence.ga4gh_identifier,
     )
     return assembly
 
