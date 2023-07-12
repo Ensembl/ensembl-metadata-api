@@ -309,14 +309,16 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
 
-    def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, unreleased_datasets=False, dataset_uuid=None,
-                              dataset_name=None, dataset_source=None, dataset_type=None, release_version=None):
+    def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, unreleased_datasets=False,
+                              dataset_uuid=None, dataset_name=None, dataset_source=None, dataset_type=None,
+                              release_version=None):
         """
         Fetches genome datasets based on the provided parameters.
 
         Args:
             genome_id (int or list or None): Genome ID(s) to filter by.
             genome_uuid (str or list or None): Genome UUID(s) to filter by.
+            organism_uuid (str or list or None): Organism UUID(s) to filter by.
             unreleased_datasets (bool): Flag indicating whether to fetch only unreleased datasets.
             dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
             dataset_name (str or None): Dataset name to filter by, default is 'assembly'.
@@ -331,6 +333,7 @@ class GenomeAdaptor(BaseAdaptor):
                 ]]: A list of tuples containing the fetched genome information.
             Each tuple contains the following elements:
                 - Genome: An instance of the Genome class.
+                - Organism: An instance of the Organism class.
                 - GenomeDataset: An instance of the GenomeDataset class.
                 - Dataset: An instance of the Dataset class.
                 - DatasetType: An instance of the DatasetType class.
@@ -346,6 +349,7 @@ class GenomeAdaptor(BaseAdaptor):
         try:
             genome_select = db.select(
                 Genome,
+                Organism,
                 GenomeDataset,
                 Dataset,
                 DatasetType,
@@ -354,6 +358,7 @@ class GenomeAdaptor(BaseAdaptor):
                 DatasetAttribute,
                 Attribute
             ).select_from(Genome) \
+                .join(Organism, Organism.organism_id == Genome.organism_id) \
                 .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
@@ -368,6 +373,7 @@ class GenomeAdaptor(BaseAdaptor):
 
             genome_id = check_parameter(genome_id)
             genome_uuid = check_parameter(genome_uuid)
+            organism_uuid = check_parameter(organism_uuid)
             dataset_uuid = check_parameter(dataset_uuid)
             dataset_name = check_parameter(dataset_name)
             dataset_source = check_parameter(dataset_source)
@@ -379,12 +385,16 @@ class GenomeAdaptor(BaseAdaptor):
             if genome_uuid is not None:
                 genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
 
+            if organism_uuid is not None:
+                genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
+
             if dataset_uuid is not None:
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
                 genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
                     .filter(GenomeDataset.is_current == 0)
+
             if dataset_name is not None and "all" not in dataset_name:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
 
