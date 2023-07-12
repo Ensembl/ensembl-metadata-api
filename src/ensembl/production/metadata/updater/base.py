@@ -42,6 +42,21 @@ class BaseMetaUpdater:
             else:
                 return result[0]
 
+    def get_meta_list_from_prefix_meta_key(self, species_id, prefix):
+        with self.db.session_scope() as session:
+            query = session.query(Meta.meta_key, Meta.meta_value).filter(
+                Meta.meta_key.like(f'{prefix}%'),
+                Meta.species_id == species_id
+            )
+            result = query.all()
+            if not result:
+                return None
+            else:
+                # Build a dictionary out of the results.
+                result_dict = {key: value for key, value in result}
+                return result_dict
+
+
     def get_or_new_source(self, meta_session, db_uri, db_type):
         name = make_url(db_uri).database
         dataset_source = meta_session.query(DatasetSource).filter(DatasetSource.name == name).one_or_none()
