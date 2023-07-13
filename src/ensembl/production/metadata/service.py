@@ -159,88 +159,45 @@ def get_genomes_from_assembly_accession_iterator(metadata_db, assembly_accession
 
 def get_species_information(metadata_db, taxonomy_db, genome_uuid):
     if genome_uuid is None:
-        return create_genome()
+        return create_species()
 
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
+    conn = connect_to_db()
+    species_results = conn.fetch_genomes(
+        genome_uuid=genome_uuid
+    )
+    if len(species_results) == 1:
+        tax_id = species_results[0].Organism.taxonomy_id
+        taxo_results = conn.fetch_taxonomy_names(tax_id)
+        return create_species(species_results[0], taxo_results[tax_id])
 
-        genome = db.Table('genome', md, autoload_with=metadata_db)
-        organism = md.tables['organism']
-
-        genome_select = db.select(
-            organism.c.ensembl_name,
-            organism.c.display_name,
-            organism.c.taxonomy_id,
-            organism.c.scientific_name,
-            organism.c.strain,
-            organism.c.scientific_parlance_name
-        ).select_from(genome).filter_by(
-            genome_uuid=genome_uuid
-        ).join(organism)
-
-        species_results = session.execute(genome_select).all()
-        if len(species_results) == 1:
-            species_data = dict(species_results[0])
-            species_data['genome_uuid'] = genome_uuid
-            td = db.MetaData()
-            with Session(taxonomy_db, future=True) as session_tax:
-                tax_name = db.Table('ncbi_taxa_name', td, autoload_with=taxonomy_db)
-                tax_names = db.select([tax_name.c.name, tax_name.c.name_class]).where(
-                    tax_name.c.taxon_id == species_data['taxonomy_id'])
-                taxo_results = session_tax.execute(tax_names).all()
-                common_names = []
-                # Get the common name and alternative names
-                species_data['ncbi_common_name'] = None
-                if len(taxo_results) > 0:
-                    for item in taxo_results:
-                        if item[1] is not None and item[0] is not None:
-                            if item[1] == 'genbank common name':
-                                species_data['ncbi_common_name'] = item[0]
-                            if item[1] == 'common name':
-                                common_names.append(item[1])
-                    species_data['alternative_names'] = common_names
-                    if len(common_names) > 0:
-                        species_data['common_name'] = common_names[0]
-                    else:
-                        species_data['common_name'] = None
-                return create_species(species_data)
-        else:
-            return create_species()
+    return create_species()
 
 
-def get_sub_species_info(metadata_db, organism_id):
-    if organism_id is None:
+def get_sub_species_info(metadata_db, organism_uuid):
+    if organism_uuid is None:
         return create_sub_species()
 
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
+    conn = connect_to_db()
+    sub_species_results = conn.fetch_genomes(
+        organism_uuid=organism_uuid
+    )
 
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        organism_group_member = db.Table('organism_group_member', md, autoload_with=metadata_db)
-        organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
+    species_name = []
+    species_type = []
+    if len(sub_species_results) > 0:
+        for result in sub_species_results:
+            if result.OrganismGroup.type not in species_type:
+                species_type.append(result.OrganismGroup.type)
+            if result.OrganismGroup.name not in species_name:
+                species_name.append(result.OrganismGroup.name)
 
-        sub_species_select = db.select(
-            organism_group.c.type,
-            organism_group.c.name,
-        ).select_from(organism_group_member).filter_by(
-            organism_id=organism_id
-        ).join(organism_group)
+        return create_sub_species({
+            'organism_uuid': organism_uuid,
+            'species_type': species_type,
+            'species_name': species_name
+        })
 
-        sub_species_results = session.execute(sub_species_select).fetchall()
-        species_name = []
-        species_type = []
-        if len(sub_species_results) > 0:
-            for key, value in sub_species_results:
-                species_type.append(key)
-                species_name.append(value)
-
-            return create_sub_species({
-                'organism_id': organism_id,
-                'species_type': species_type,
-                'species_name': species_name
-            })
-        else:
-            return create_sub_species()
+    return create_sub_species()
 
 
 def get_grouping_info(metadata_db, organism_id):
@@ -506,20 +463,20 @@ def get_dataset_by_genome_id(metadata_db, genome_uuid, requested_dataset_type):
     return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
 
 
-def create_species(data=None):
-    if data is None:
+def create_species(species_data=None, taxo_info=None):
+    if species_data is None:
         return ensembl_metadata_pb2.Species()
+
     species = ensembl_metadata_pb2.Species(
-        genome_uuid=data["genome_uuid"],
-        common_name=data["common_name"],
-        ncbi_common_name=data["ncbi_common_name"],
-        scientific_name=data["scientific_name"],
-        alternative_names=data["alternative_names"],
-        taxon_id=data["taxonomy_id"],
-        scientific_parlance_name=data["scientific_parlance_name"],
+        genome_uuid=species_data.Genome.genome_uuid,
+        taxon_id=species_data.Organism.taxonomy_id,
+        scientific_name=species_data.Organism.scientific_name,
+        scientific_parlance_name=species_data.Organism.scientific_parlance_name,
+        ncbi_common_name=taxo_info["ncbi_common_name"],
+        common_name=taxo_info["common_name"],
+        alternative_names=taxo_info["alternative_names"],
     )
     return species
-    # return json_format.MessageToJson(species)
 
 
 def create_top_level_statistics(data=None):
@@ -570,7 +527,8 @@ def create_sub_species(data=None):
     if data is None:
         return ensembl_metadata_pb2.SubSpecies()
     sub_species = ensembl_metadata_pb2.SubSpecies(
-        organism_id=data["organism_id"],
+        # Todo: change id to uuid
+        organism_id=data["organism_uuid"],
         species_name=data["species_name"],
         species_type=data["species_type"],
     )
@@ -784,7 +742,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return get_sub_species_info(self.db, request.organism_uuid)
 
     def GetGroupingInformation(self, request, context):
-        return get_sub_species_info(self.db, request.organism_uuid)
+        return get_grouping_info(self.db, request.organism_uuid)
 
     def GetKaryotypeInformation(self, request, context):
         return get_karyotype_information(self.db, request.genome_uuid)
