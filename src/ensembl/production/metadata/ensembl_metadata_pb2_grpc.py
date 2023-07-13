@@ -53,11 +53,6 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.SubSpecies.FromString,
                 )
-        self.GetGroupingInformation = channel.unary_unary(
-                '/ensembl_metadata.EnsemblMetadata/GetGroupingInformation',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Grouping.FromString,
-                )
         self.GetKaryotypeInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
@@ -156,13 +151,6 @@ class EnsemblMetadataServicer(object):
 
     def GetSubSpeciesInformation(self, request, context):
         """Get subspecies information
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetGroupingInformation(self, request, context):
-        """Get grouping information
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -268,11 +256,6 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetSubSpeciesInformation,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.SubSpecies.SerializeToString,
-            ),
-            'GetGroupingInformation': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetGroupingInformation,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Grouping.SerializeToString,
             ),
             'GetKaryotypeInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetKaryotypeInformation,
@@ -449,23 +432,6 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetSubSpeciesInformation',
             ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.SubSpecies.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def GetGroupingInformation(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGroupingInformation',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Grouping.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

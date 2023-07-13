@@ -39,9 +39,6 @@ service EnsemblMetadata {
   // Get subspecies information
   rpc GetSubSpeciesInformation(OrganismIDRequest) returns (SubSpecies) {}
 
-  // Get grouping information
-  rpc GetGroupingInformation(OrganismIDRequest) returns (Grouping) {}
-
   // Get karyotype information
   rpc GetKaryotypeInformation(GenomeUUIDRequest) returns (Karyotype) {}
 
@@ -113,12 +110,6 @@ message AssemblyInfo {
 }
 
 message SubSpecies {
-  string organism_id = 1;
-  repeated string species_type = 2;
-  repeated string species_name = 3;
-}
-
-message Grouping {
   string organism_id = 1;
   repeated string species_type = 2;
   repeated string species_name = 3;

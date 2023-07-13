@@ -184,13 +184,6 @@ def get_sub_species_info(stub):
     print(releases1)
 
 
-def get_grouping_info(stub):
-    request1 = OrganismIDRequest(organism_uuid="317e356e-0f6a-11ee-bfb4-005056b370fb")
-    releases1 = stub.GetGroupingInformation(request1)
-    print("**** Grouping information ****")
-    print(releases1)
-
-
 def get_karyotype_information(stub):
     request1 = GenomeUUIDRequest(genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3")
     releases1 = stub.GetKaryotypeInformation(request1)
@@ -251,8 +244,6 @@ def run():
         get_genomes_by_assembly_accession(stub)
         print("---------------Get Subspecies Information-----------")
         get_sub_species_info(stub)
-        print("---------------Get Grouping Information-----------")
-        get_grouping_info(stub)
         print("---------------Get Karyotype Information-----------")
         get_karyotype_information(stub)
         print("---------------Get Top Level Statistics-----------")
