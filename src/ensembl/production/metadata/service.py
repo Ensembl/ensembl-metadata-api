@@ -14,8 +14,6 @@ from concurrent import futures
 import grpc
 import logging
 import sqlalchemy as db
-from sqlalchemy import or_, func
-from sqlalchemy.orm import Session
 
 from ensembl.production.metadata import ensembl_metadata_pb2_grpc
 from ensembl.production.metadata import ensembl_metadata_pb2
@@ -234,45 +232,31 @@ def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
 
 
 def get_genomes_by_keyword_iterator(metadata_db, keyword, release_version):
-    # TODO: implement an API for this function in the metadata API
     if not keyword:
-        return
-    sqlalchemy_md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
+        return create_genome()
 
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
-        genome_release = db.Table('genome_release', sqlalchemy_md, autoload_with=metadata_db)
-        release = sqlalchemy_md.tables['ensembl_release']
-        assembly = sqlalchemy_md.tables['assembly']
-        organism = sqlalchemy_md.tables['organism']
+    conn = connect_to_db()
+    genome_results = conn.fetch_genome_by_keyword(
+        keyword=keyword,
+        release_version=release_version
+    )
 
-        genome_query = get_genome_query(genome, genome_release, release, assembly, organism).select_from(genome) \
-            .outerjoin(assembly) \
-            .outerjoin(organism) \
-            .outerjoin(genome_release) \
-            .outerjoin(release) \
-            .where(or_(func.lower(assembly.c.tol_id) == keyword.lower(),
-                       func.lower(assembly.c.accession) == keyword.lower(),
-                       func.lower(assembly.c.name) == keyword.lower(),
-                       func.lower(assembly.c.ensembl_name) == keyword.lower(),
-                       func.lower(organism.c.display_name) == keyword.lower(),
-                       func.lower(organism.c.scientific_name) == keyword.lower(),
-                       func.lower(organism.c.scientific_parlance_name) == keyword.lower(),
-                       func.lower(organism.c.species_taxonomy_id) == keyword.lower()))
-        if release_version == 0:
-            genome_query = genome_query.where(release.c.is_current == 1)
-        else:
-            genome_query = genome_query.where(release.c.version <= release_version)
-        genome_results = session.execute(genome_query).all()
-        # print(str(genome_query))
+    if len(genome_results) > 0:
+        # Create an empty list to store the most recent genomes
         most_recent_genomes = []
-        for _, genome_release_group in itertools.groupby(genome_results, lambda r: r["assembly_accession"]):
-            most_recent_genome = sorted(genome_release_group, key=lambda g: g["release_version"], reverse=True)[0]
+        # Group `genome_results` based on the `assembly_accession` field
+        for _, genome_release_group in itertools.groupby(genome_results, lambda r: r.Assembly.accession):
+            # Sort the genomes in each group based on the `release_version` field in descending order
+            sorted_genomes = sorted(genome_release_group, key=lambda g: g.EnsemblRelease.version, reverse=True)
+            # Select the most recent genome from the sorted group (first element)
+            most_recent_genome = sorted_genomes[0]
+            # Add the most recent genome to the `most_recent_genomes` list
             most_recent_genomes.append(most_recent_genome)
 
         for genome_row in most_recent_genomes:
             yield create_genome(genome_row)
+
+        return create_genome()
 
 
 def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
@@ -339,38 +323,6 @@ def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version=0):
         })
 
     return create_datasets()
-
-
-def get_genome_query(genome, genome_release, release, assembly, organism):
-    return db.select(
-        genome.c.genome_uuid,
-        genome.c.created,
-        organism.c.ensembl_name,
-        organism.c.url_name,
-        organism.c.display_name,
-        organism.c.taxonomy_id,
-        organism.c.scientific_name,
-        organism.c.strain,
-        organism.c.scientific_parlance_name,
-        organism.c.organism_id,
-        assembly.c.accession.label("assembly_accession"),
-        assembly.c.name.label("assembly_name"),
-        assembly.c.ucsc_name.label("assembly_ucsc_name"),
-        assembly.c.level.label("assembly_level"),
-        assembly.c.ensembl_name.label("assembly_ensembl_name"),
-        release.c.version.label("release_version"),
-        release.c.release_date,
-        release.c.label.label("release_label"),
-        release.c.is_current,
-    ).where(genome_release.c.is_current == 1)
-
-
-def get_genome_uuid_query(genome, assembly, organism):
-    return db.select(
-        genome.c.genome_uuid,
-        organism.c.ensembl_name,
-        assembly.c.name.label("assembly_name"),
-    )
 
 
 def genome_sequence_iterator(metadata_db, genome_uuid, chromosomal_only):
@@ -457,6 +409,7 @@ def create_top_level_statistics(data=None):
 def create_top_level_statistics_by_uuid(data=None):
     if data is None:
         return ensembl_metadata_pb2.TopLevelStatisticsByUUID()
+
     species = ensembl_metadata_pb2.TopLevelStatisticsByUUID(
         genome_uuid=data["genome_uuid"],
         statistics=data["statistics"],
@@ -520,90 +473,50 @@ def create_genome(data=None):
     if data is None:
         return ensembl_metadata_pb2.Genome()
 
-    try:
-        # try to construct the object using Metadata API models
-        assembly = ensembl_metadata_pb2.Assembly(
-            accession=data.Assembly.accession,
-            name=data.Assembly.name,
-            ucsc_name=data.Assembly.ucsc_name,
-            level=data.Assembly.level,
-            ensembl_name=data.Assembly.ensembl_name,
-        )
+    assembly = ensembl_metadata_pb2.Assembly(
+        accession=data.Assembly.accession,
+        name=data.Assembly.name,
+        ucsc_name=data.Assembly.ucsc_name,
+        level=data.Assembly.level,
+        ensembl_name=data.Assembly.ensembl_name,
+    )
 
-        taxon = ensembl_metadata_pb2.Taxon(
-            taxonomy_id=data.Organism.taxonomy_id,
-            scientific_name=data.Organism.scientific_name,
-            strain=data.Organism.strain,
-        )
-        # TODO: fetch common_name(s) from ncbi_taxonomy database
+    taxon = ensembl_metadata_pb2.Taxon(
+        taxonomy_id=data.Organism.taxonomy_id,
+        scientific_name=data.Organism.scientific_name,
+        strain=data.Organism.strain,
+    )
+    # TODO: fetch common_name(s) from ncbi_taxonomy database
 
-        organism = ensembl_metadata_pb2.Organism(
-            display_name=data.Organism.display_name,
-            strain=data.Organism.strain,
-            scientific_name=data.Organism.scientific_name,
-            url_name=data.Organism.url_name,
-            ensembl_name=data.Organism.ensembl_name,
-            scientific_parlance_name=data.Organism.scientific_parlance_name,
-        )
+    organism = ensembl_metadata_pb2.Organism(
+        display_name=data.Organism.display_name,
+        strain=data.Organism.strain,
+        scientific_name=data.Organism.scientific_name,
+        url_name=data.Organism.url_name,
+        ensembl_name=data.Organism.ensembl_name,
+        scientific_parlance_name=data.Organism.scientific_parlance_name,
+        organism_uuid=data.Organism.organism_uuid,
+    )
 
-        release = ensembl_metadata_pb2.Release(
-            release_version=data.EnsemblRelease.version,
-            release_date=str(data.EnsemblRelease.release_date),
-            release_label=data.EnsemblRelease.label,
-            is_current=data.EnsemblRelease.is_current,
-        )
+    release = ensembl_metadata_pb2.Release(
+        release_version=data.EnsemblRelease.version,
+        release_date=str(data.EnsemblRelease.release_date),
+        release_label=data.EnsemblRelease.label,
+        is_current=data.EnsemblRelease.is_current,
+        site_name=data.EnsemblSite.name,
+        site_label=data.EnsemblSite.label,
+        site_uri=data.EnsemblSite.uri,
+    )
 
-        genome = ensembl_metadata_pb2.Genome(
-            genome_uuid=data.Genome.genome_uuid,
-            created=str(data.Genome.created),
-            assembly=assembly,
-            taxon=taxon,
-            organism=organism,
-            release=release,
-        )
-    except AttributeError:
-        # Otherwise (e.g: when calling get_genomes_by_keyword_iterator())
-        # use the old approach
-        # TODO: get rid of this section
-        assembly = ensembl_metadata_pb2.Assembly(
-            accession=data["assembly_accession"],
-            name=data["assembly_name"],
-            ucsc_name=data["assembly_ucsc_name"],
-            level=data["assembly_level"],
-            ensembl_name=data["assembly_ensembl_name"],
-        )
+    genome = ensembl_metadata_pb2.Genome(
+        genome_uuid=data.Genome.genome_uuid,
+        created=str(data.Genome.created),
+        assembly=assembly,
+        taxon=taxon,
+        organism=organism,
+        release=release,
+    )
 
-        taxon = ensembl_metadata_pb2.Taxon(
-            taxonomy_id=data["taxonomy_id"],
-            scientific_name=data["scientific_name"],
-            strain=data["strain"],
-        )
-        # TODO: fetch common_name(s) from ncbi_taxonomy database
-
-        organism = ensembl_metadata_pb2.Organism(
-            display_name=data["display_name"],
-            strain=data["strain"],
-            scientific_name=data["scientific_name"],
-            url_name=data["url_name"],
-            ensembl_name=data["ensembl_name"],
-            scientific_parlance_name=data["scientific_parlance_name"],
-        )
-
-        release = ensembl_metadata_pb2.Release(
-            release_version=data["release_version"],
-            release_date=str(data["release_date"]),
-            release_label=data["release_label"],
-            is_current=data["is_current"],
-        )
-
-        genome = ensembl_metadata_pb2.Genome(
-            genome_uuid=data["genome_uuid"],
-            created=str(data["created"]),
-            assembly=assembly,
-            taxon=taxon,
-            organism=organism,
-            release=release,
-        )
     return genome
 
 

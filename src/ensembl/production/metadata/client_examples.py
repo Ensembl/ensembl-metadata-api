@@ -46,12 +46,10 @@ def get_genome(stub, genome_request):
 
 
 def get_genomes_by_keyword(stub, genome_request):
-    genome_uuids = [
-        genome.genome_uuid for genome in stub.GetGenomesByKeyword(genome_request)
-    ]
-    if not genome_uuids:
-        print("No genomes")
-        return
+    if isinstance(genome_request, GenomeByKeywordRequest):
+        genomes = stub.GetGenomesByKeyword(genome_request)
+        for genome in genomes:
+            print(genome)
 
 
 def get_genomes(stub):
