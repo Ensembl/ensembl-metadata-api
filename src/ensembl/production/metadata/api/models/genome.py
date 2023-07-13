@@ -36,6 +36,9 @@ class Genome(Base):
     # organism_id to organism
     organism = relationship("Organism", back_populates="genomes")
 
+    def __repr__(self):
+        return f"Genome(genome_id={self.genome_id}, genome_uuid='{self.genome_uuid}')"
+
 
 class GenomeDataset(Base):
     __tablename__ = "genome_dataset"
@@ -55,6 +58,9 @@ class GenomeDataset(Base):
     # release_id to release
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_datasets")
 
+    def __repr__(self):
+        return f"GenomeDataset(genome_id={self.genome_id}, dataset_id='{self.genome_uuid}')"
+
 
 class GenomeRelease(Base):
     __tablename__ = "genome_release"
@@ -70,3 +76,6 @@ class GenomeRelease(Base):
     genome = relationship("Genome", back_populates="genome_releases")
     # release_id to ensembl release
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_releases")
+
+    def __repr__(self):
+        return f"GenomeRelease(genome_id={self.genome_id}, genome_release_id='{self.genome_release_id}')"

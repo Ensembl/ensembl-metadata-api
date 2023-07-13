@@ -31,6 +31,14 @@ class Attribute(Base):
     # many to one relationships
     # none
 
+    def __repr__(self):
+        return f"Attribute(" \
+                   f"attribute_id={self.attribute_id}, " \
+                   f"name={self.name}, " \
+                   f"label={self.label}, " \
+                   f"type={self.type}" \
+               f")"
+
 
 class Dataset(Base):
     __tablename__ = 'dataset'
@@ -55,6 +63,14 @@ class Dataset(Base):
     # dataset_source_id to dataset source
     dataset_source = relationship('DatasetSource', back_populates="datasets")
 
+    def __repr__(self):
+        return f"Dataset(" \
+                   f"dataset_id={self.assembly_id}, " \
+                   f"dataset_uuid={self.assembly_uuid}, " \
+                   f"name='{self.name}, " \
+                   f"status='{self.status}'" \
+               f")"
+
 
 class DatasetAttribute(Base):
     __tablename__ = 'dataset_attribute'
@@ -75,6 +91,12 @@ class DatasetAttribute(Base):
     # attribute_id to attribute
     dataset = relationship('Dataset', back_populates="dataset_attributes")
 
+    def __repr__(self):
+        return f"DatasetAttribute(" \
+                   f"dataset_attribute_id={self.dataset_attribute_id}, " \
+                   f"value={self.value}" \
+               f")"
+
 
 class DatasetSource(Base):
     __tablename__ = 'dataset_source'
@@ -87,6 +109,13 @@ class DatasetSource(Base):
     datasets = relationship('Dataset', back_populates='dataset_source')
     # many to one relationships
     # none
+
+    def __repr__(self):
+        return f"DatasetSource(" \
+                   f"dataset_source_id={self.dataset_source_id}, " \
+                   f"type={self.type}, " \
+                   f"name={self.name}" \
+               f")"
 
 
 class DatasetType(Base):
@@ -103,3 +132,10 @@ class DatasetType(Base):
     datasets = relationship('Dataset', back_populates='dataset_type')
     # many to one relationships
     # none
+
+    def __repr__(self):
+        return f"DatasetType(" \
+                   f"dataset_type_id={self.dataset_source_id}, " \
+                   f"name={self.name}, " \
+                   f"topic={self.topic}" \
+               f")"

@@ -38,6 +38,14 @@ class Assembly(Base):
     # assembly_id within genome
     genomes = relationship("Genome", back_populates="assembly")
 
+    def __repr__(self):
+        return f"Assembly(" \
+                   f"assembly_id={self.assembly_id}, " \
+                   f"assembly_uuid={self.assembly_uuid}, " \
+                   f"accession='{self.accession}, " \
+                   f"ensembl_name='{self.ensembl_name}'" \
+               f")"
+
 
 class AssemblySequence(Base):
     __tablename__ = 'assembly_sequence'
@@ -59,3 +67,11 @@ class AssemblySequence(Base):
     # many to one relationships
     # assembly_id within assembly
     assembly = relationship('Assembly', back_populates="assembly_sequences")
+
+    def __repr__(self):
+        return f"AssemblySequence(" \
+                   f"assembly_sequence_id={self.assembly_uuid}, " \
+                   f"assembly_id='{self.accession}, " \
+                   f"chromosomal='{self.chromosomal}', " \
+                   f"length='{self.length}'" \
+               f")"
