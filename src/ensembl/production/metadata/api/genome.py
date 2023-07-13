@@ -30,6 +30,22 @@ class GenomeAdaptor(BaseAdaptor):
         self.taxonomy_db = DBConnection(taxonomy_uri)
 
     def fetch_taxonomy_names(self, taxonomy_ids):
+        """
+        Fetches taxonomy names for the given taxonomy IDs.
+
+        Args:
+            taxonomy_ids (list): List of taxonomy IDs to fetch names for.
+
+        Returns:
+            dict: Dictionary containing taxonomy IDs as keys and corresponding names and related information as values.
+                  Each taxonomy ID has a dictionary with keys "scientific_name", "synonym", "ncbi_common_name",
+                  "alternative_names", and "common_name". The "scientific_name" key holds the scientific name for
+                  the taxonomy ID, "synonym" key holds a list of synonymous names, "ncbi_common_name" key holds
+                  the GenBank common name, "alternative_names" key holds a list of common names, and "common_name" key
+                  holds the primary common name.
+        """
+        # Parameter validation
+        taxonomy_ids = check_parameter(taxonomy_ids)
 
         taxons = {}
         for tid in taxonomy_ids:
@@ -52,7 +68,7 @@ class GenomeAdaptor(BaseAdaptor):
             ]
 
             synonyms_select = db.select(
-                NCBITaxaName.name
+                NCBITaxaName.name, NCBITaxaName.name_class
             ).filter(
                 NCBITaxaName.taxon_id == taxon,
                 NCBITaxaName.name_class.in_(synonym_class),
@@ -62,8 +78,23 @@ class GenomeAdaptor(BaseAdaptor):
                 sci_name = session.execute(sci_name_select).one()
                 taxons[taxon]["scientific_name"] = sci_name[0]
                 synonyms = session.execute(synonyms_select).all()
+                common_names = []
+                taxons[taxon]['ncbi_common_name'] = None
                 for synonym in synonyms:
+                    # create a list of synonyms
                     taxons[taxon]["synonym"].append(synonym[0])
+                    # and fill the rest of the required key-values fields
+                    # these are required by get_species_information() in the metadata service
+                    if synonym[1] is not None and synonym[0] is not None:
+                        if synonym[1] == 'genbank common name':
+                            taxons[taxon]['ncbi_common_name'] = synonym[0]
+                        if synonym[1] == 'common name':
+                            common_names.append(synonym[1])
+                    taxons[taxon]['alternative_names'] = common_names
+                    if len(common_names) > 0:
+                        taxons[taxon]['common_name'] = common_names[0]
+                    else:
+                        taxons[taxon]['common_name'] = None
         return taxons
 
     def fetch_taxonomy_ids(self, taxonomy_names):
