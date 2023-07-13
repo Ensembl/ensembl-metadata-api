@@ -110,7 +110,7 @@ message AssemblyInfo {
 }
 
 message SubSpecies {
-  string organism_id = 1;
+  string organism_uuid = 1;
   repeated string species_type = 2;
   repeated string species_name = 3;
 }

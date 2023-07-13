@@ -200,41 +200,6 @@ def get_sub_species_info(metadata_db, organism_uuid):
     return create_sub_species()
 
 
-def get_grouping_info(metadata_db, organism_id):
-    if organism_id is None:
-        return create_grouping()
-
-    md = db.MetaData()
-    with Session(metadata_db, future=True) as session:
-        # Reflect existing tables, letting sqlalchemy load linked tables where possible.
-        organism_group_member = db.Table('organism_group_member', md, autoload_with=metadata_db)
-        organism_group = db.Table('organism_group', md, autoload_with=metadata_db)
-
-        grouping_select = db.select(
-            organism_group.c.type,
-            organism_group.c.name,
-        ).select_from(organism_group_member).filter_by(
-            organism_id=organism_id
-        ).join(organism_group)
-
-        grouping_results = session.execute(grouping_select).all()
-
-        species_name = []
-        species_type = []
-        if len(grouping_results) > 0:
-            for key, value in grouping_results:
-                species_type.append(key)
-                species_name.append(value)
-
-            return create_grouping({
-                'organism_id': organism_id,
-                'species_type': species_type,
-                'species_name': species_name
-            })
-        else:
-            return create_grouping()
-
-
 def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
     if ensembl_name is None or assembly_name is None:
         return create_genome_uuid()
@@ -512,23 +477,11 @@ def create_karyotype(data=None):
     return karyotype
 
 
-def create_grouping(data=None):
-    if data is None:
-        return ensembl_metadata_pb2.Grouping()
-    grouping = ensembl_metadata_pb2.Grouping(
-        organism_id=data["organism_id"],
-        species_name=data["species_name"],
-        species_type=data["species_type"],
-    )
-    return grouping
-
-
 def create_sub_species(data=None):
     if data is None:
         return ensembl_metadata_pb2.SubSpecies()
     sub_species = ensembl_metadata_pb2.SubSpecies(
-        # Todo: change id to uuid
-        organism_id=data["organism_uuid"],
+        organism_uuid=data["organism_uuid"],
         species_name=data["species_name"],
         species_type=data["species_type"],
     )
@@ -740,9 +693,6 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetSubSpeciesInformation(self, request, context):
         return get_sub_species_info(self.db, request.organism_uuid)
-
-    def GetGroupingInformation(self, request, context):
-        return get_grouping_info(self.db, request.organism_uuid)
 
     def GetKaryotypeInformation(self, request, context):
         return get_karyotype_information(self.db, request.genome_uuid)
