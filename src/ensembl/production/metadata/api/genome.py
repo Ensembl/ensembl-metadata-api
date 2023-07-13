@@ -164,7 +164,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Construct the initial database query
         genome_select = db.select(
-            Genome, Organism, Assembly, EnsemblRelease, OrganismGroupMember, OrganismGroup
+            Genome, Organism, Assembly, EnsemblRelease, OrganismGroupMember, OrganismGroup, EnsemblSite
         ).select_from(Genome) \
             .join(Organism, Organism.organism_id == Genome.organism_id) \
             .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
@@ -286,6 +286,46 @@ class GenomeAdaptor(BaseAdaptor):
             release_version=release_version,
             current_only=current_only,
         )
+
+    def fetch_genome_by_keyword(self, keyword=None, release_version=None):
+        """
+        Fetches genomes based on a keyword and release version.
+
+        Args:
+            keyword (str or None): Keyword to search for in various attributes of genomes, assemblies, and organisms.
+            release_version (int or None): Release version to filter by. If set to 0 or None, fetches only current genomes.
+
+        Returns:
+            list: A list of fetched genomes matching the keyword and release version.
+        """
+        genome_query = db.select(
+            Genome, GenomeRelease, EnsemblRelease, Assembly, Organism, EnsemblSite
+        ).select_from(Genome) \
+            .outerjoin(Organism, Organism.organism_id == Genome.organism_id) \
+            .outerjoin(Assembly, Assembly.assembly_id == Genome.assembly_id) \
+            .outerjoin(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
+            .outerjoin(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
+            .outerjoin(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id) \
+
+        if keyword is not None:
+            genome_query = genome_query.where(db.or_(db.func.lower(Assembly.tol_id) == keyword.lower(),
+                                                     db.func.lower(Assembly.accession) == keyword.lower(),
+                                                     db.func.lower(Assembly.name) == keyword.lower(),
+                                                     db.func.lower(Assembly.ensembl_name) == keyword.lower(),
+                                                     db.func.lower(Organism.display_name) == keyword.lower(),
+                                                     db.func.lower(Organism.scientific_name) == keyword.lower(),
+                                                     db.func.lower(
+                                                         Organism.scientific_parlance_name) == keyword.lower(),
+                                                     db.func.lower(Organism.species_taxonomy_id) == keyword.lower()))
+
+        if release_version == 0 or release_version is None:
+            genome_query = genome_query.where(EnsemblRelease.is_current == 1)
+        else:
+            genome_query = genome_query.where(EnsemblRelease.version <= release_version)
+
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            return session.execute(genome_query).all()
 
     def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None,
                         assembly_accession=None, chromosomal_only=False):
