@@ -24,49 +24,19 @@ from ensembl.production.metadata.api.genome import GenomeAdaptor
 from ensembl.production.metadata.api.release import ReleaseAdaptor
 
 
-# This function will be replaced with connect_to_db() below
-def load_database(uri=None):
-    if uri is None:
-        uri = cfg.metadata_uri
-        taxonomy_uri = cfg.taxon_uri
-
-    try:
-        engine = db.create_engine(
-            uri, pool_size=cfg.pool_size, max_overflow=cfg.max_overflow
-        )
-        taxonomy_engine = db.create_engine(
-            taxonomy_uri, pool_size=cfg.pool_size, max_overflow=cfg.max_overflow
-        )
-    except AttributeError:
-        raise ValueError(
-            f"Could not connect to database. Check metadata_uri env variable."
-        )
-
-    try:
-        connection = engine.connect()
-        taxonomy_connection = taxonomy_engine.connect()
-    except db.exc.OperationalError as err:
-        raise ValueError(f"Could not connect to database {uri}: {err}.") from err
-
-    connection.close()
-    taxonomy_connection.close()
-    return engine, taxonomy_engine
-
-
 def connect_to_db():
     conn = GenomeAdaptor(
         metadata_uri=cfg.metadata_uri,
         taxonomy_uri=cfg.taxon_uri
     )
-    return conn  # conn.metadata_db, conn.taxonomy_db
+    return conn
 
 
-def get_karyotype_information(metadata_db, genome_uuid):
+def get_karyotype_information(db_conn, genome_uuid):
     if genome_uuid is None:
         return create_genome()
 
-    conn = connect_to_db()
-    karyotype_info_result = conn.fetch_sequences(
+    karyotype_info_result = db_conn.fetch_sequences(
         genome_uuid=genome_uuid
     )
 
@@ -76,12 +46,11 @@ def get_karyotype_information(metadata_db, genome_uuid):
     return create_karyotype()
 
 
-def get_top_level_statistics(metadata_db, organism_uuid):
+def get_top_level_statistics(db_conn, organism_uuid):
     if organism_uuid is None:
         return create_top_level_statistics()
 
-    conn = connect_to_db()
-    stats_results = conn.fetch_genome_datasets(
+    stats_results = db_conn.fetch_genome_datasets(
         organism_uuid=organism_uuid,
         dataset_name="all"
     )
@@ -103,12 +72,11 @@ def get_top_level_statistics(metadata_db, organism_uuid):
     return create_top_level_statistics()
 
 
-def get_top_level_statistics_by_uuid(metadata_db, genome_uuid):
+def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
     if genome_uuid is None:
         return create_top_level_statistics_by_uuid()
 
-    conn = connect_to_db()
-    stats_results = conn.fetch_genome_datasets(
+    stats_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
         dataset_name="all"
     )
@@ -129,12 +97,11 @@ def get_top_level_statistics_by_uuid(metadata_db, genome_uuid):
     return create_top_level_statistics_by_uuid()
 
 
-def get_assembly_information(metadata_db, assembly_uuid):
+def get_assembly_information(db_conn, assembly_uuid):
     if assembly_uuid is None:
         return create_assembly()
 
-    conn = connect_to_db()
-    assembly_results = conn.fetch_sequences(
+    assembly_results = db_conn.fetch_sequences(
         assembly_uuid=assembly_uuid
     )
     if len(assembly_results) > 0:
@@ -143,40 +110,37 @@ def get_assembly_information(metadata_db, assembly_uuid):
     return create_assembly()
 
 
-def get_genomes_from_assembly_accession_iterator(metadata_db, assembly_accession):
+def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
     if assembly_accession is None:
         return create_genome()
 
-    conn = connect_to_db()
-    genome_results = conn.fetch_genomes(
+    genome_results = db_conn.fetch_genomes(
         assembly_accession=assembly_accession
     )
     for genome in genome_results:
         yield create_genome(genome)
 
 
-def get_species_information(metadata_db, taxonomy_db, genome_uuid):
+def get_species_information(db_conn, genome_uuid):
     if genome_uuid is None:
         return create_species()
 
-    conn = connect_to_db()
-    species_results = conn.fetch_genomes(
+    species_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid
     )
     if len(species_results) == 1:
         tax_id = species_results[0].Organism.taxonomy_id
-        taxo_results = conn.fetch_taxonomy_names(tax_id)
+        taxo_results = db_conn.fetch_taxonomy_names(tax_id)
         return create_species(species_results[0], taxo_results[tax_id])
 
     return create_species()
 
 
-def get_sub_species_info(metadata_db, organism_uuid):
+def get_sub_species_info(db_conn, organism_uuid):
     if organism_uuid is None:
         return create_sub_species()
 
-    conn = connect_to_db()
-    sub_species_results = conn.fetch_genomes(
+    sub_species_results = db_conn.fetch_genomes(
         organism_uuid=organism_uuid
     )
 
@@ -198,12 +162,11 @@ def get_sub_species_info(metadata_db, organism_uuid):
     return create_sub_species()
 
 
-def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
+def get_genome_uuid(db_conn, ensembl_name, assembly_name):
     if ensembl_name is None or assembly_name is None:
         return create_genome_uuid()
 
-    conn = connect_to_db()
-    genome_uuid_result = conn.fetch_genomes(
+    genome_uuid_result = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
         assembly_name=assembly_name
     )
@@ -216,12 +179,11 @@ def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
     return create_genome_uuid()
 
 
-def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
+def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     if genome_uuid is None:
         return create_genome()
 
-    conn = connect_to_db()
-    genome_results = conn.fetch_genomes(
+    genome_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
         release_version=release_version
     )
@@ -231,12 +193,11 @@ def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
     return create_genome()
 
 
-def get_genomes_by_keyword_iterator(metadata_db, keyword, release_version):
+def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
     if not keyword:
         return create_genome()
 
-    conn = connect_to_db()
-    genome_results = conn.fetch_genome_by_keyword(
+    genome_results = db_conn.fetch_genome_by_keyword(
         keyword=keyword,
         release_version=release_version
     )
@@ -259,12 +220,11 @@ def get_genomes_by_keyword_iterator(metadata_db, keyword, release_version):
         return create_genome()
 
 
-def get_genome_by_name(metadata_db, ensembl_name, site_name, release_version):
+def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
     if ensembl_name is None and site_name is None:
         return create_genome()
 
-    conn = connect_to_db()
-    genome_results = conn.fetch_genomes(
+    genome_results = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
         site_name=site_name,
         release_version=release_version
@@ -284,12 +244,11 @@ def populate_dataset_info(data):
     )
 
 
-def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version=0):
+def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version=0):
     if genome_uuid is None:
         return create_datasets()
 
-    conn = connect_to_db()
-    datasets_results = conn.fetch_genome_datasets(
+    datasets_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
         # fetch all datasets, default is 'assembly' only
         dataset_name="all",
@@ -325,12 +284,11 @@ def get_datasets_list_by_uuid(metadata_db, genome_uuid, release_version=0):
     return create_datasets()
 
 
-def genome_sequence_iterator(metadata_db, genome_uuid, chromosomal_only):
+def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
     if genome_uuid is None:
         return
 
-    conn = connect_to_db()
-    assembly_sequence_results = conn.fetch_sequences(
+    assembly_sequence_results = db_conn.fetch_sequences(
         genome_uuid=genome_uuid,
         chromosomal_only=chromosomal_only,
     )
@@ -368,12 +326,11 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
         yield create_release(result)
 
 
-def get_dataset_by_genome_id(metadata_db, genome_uuid, requested_dataset_type):
+def get_dataset_by_genome_id(db_conn, genome_uuid, requested_dataset_type):
     if genome_uuid is None:
         return create_dataset_infos()
 
-    conn = connect_to_db()
-    dataset_results = conn.fetch_genome_datasets(
+    dataset_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
         dataset_type=requested_dataset_type
     )
@@ -591,10 +548,10 @@ def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=Non
 
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):
     def __init__(self):
-        self.db, self.taxo_db = load_database()
+        self.db = connect_to_db()
 
     def GetSpeciesInformation(self, request, context):
-        return get_species_information(self.db, self.taxo_db, request.genome_uuid)
+        return get_species_information(self.db, request.genome_uuid)
 
     def GetAssemblyInformation(self, request, context):
         return get_assembly_information(self.db, request.assembly_uuid)
