@@ -26,7 +26,7 @@ from ensembl_metadata_pb2 import (
     GenomeInfoRequest
 )
 
-import ensembl.production.metadata.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
+import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
 
 def get_genome(stub, genome_request):
