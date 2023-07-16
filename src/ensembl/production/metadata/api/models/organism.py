@@ -33,7 +33,7 @@ class Organism(Base):
     scientific_parlance_name = Column(String(255))
     # One to many relationships
     # Organism_id to organism_group_member and genome
-    genomes = relationship("Genome", back_populates="organism")
+    genomes = relationship("Genome", back_populates="organism", cascade="all, delete, delete-orphan")
     organism_group_members = relationship("OrganismGroupMember", back_populates="organism")
 
     # many to one relationships

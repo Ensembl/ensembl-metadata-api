@@ -28,8 +28,8 @@ class Genome(Base):
     created = Column(DATETIME(fsp=6), nullable=False)
     # One to many relationships
     # genome_id to genome_dataset and genome release
-    genome_datasets = relationship("GenomeDataset", back_populates="genome")
-    genome_releases = relationship("GenomeRelease", back_populates="genome")
+    genome_datasets = relationship("GenomeDataset", back_populates="genome", cascade="all, delete, delete-orphan")
+    genome_releases = relationship("GenomeRelease", back_populates="genome", cascade="all, delete, delete-orphan")
     # many to one relationships
     # assembly_id to assembly
     assembly = relationship("Assembly", back_populates="genomes")

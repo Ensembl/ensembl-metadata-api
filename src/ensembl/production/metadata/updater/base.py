@@ -50,12 +50,11 @@ class BaseMetaUpdater:
             )
             result = query.all()
             if not result:
-                return None
+                return {}
             else:
                 # Build a dictionary out of the results.
                 result_dict = {key: value for key, value in result}
                 return result_dict
-
 
     def get_or_new_source(self, meta_session, db_uri, db_type):
         name = make_url(db_uri).database
@@ -65,6 +64,7 @@ class BaseMetaUpdater:
                 type=db_type,  # core/fungen etc
                 name=name  # dbname
             )
+            meta_session.add(dataset_source)  # Only add a new DatasetSource to the session if it doesn't exist
             return dataset_source, "new"
         else:
             return dataset_source, "existing"
