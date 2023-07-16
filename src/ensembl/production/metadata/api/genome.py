@@ -29,7 +29,6 @@ class GenomeAdaptor(BaseAdaptor):
         self.taxonomy_db = DBConnection(taxonomy_uri)
 
     def fetch_taxonomy_names(self, taxonomy_ids):
-        taxonomy_ids = [taxonomy_ids] if not isinstance(taxonomy_ids, list) else taxonomy_ids
         taxons = {}
         for tid in taxonomy_ids:
             names = {"scientific_name": None, "synonym": []}
