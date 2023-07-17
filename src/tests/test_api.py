@@ -70,12 +70,12 @@ class TestMetadataDB:
 
     def test_fetch_releases(self, multi_dbs):
         conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
-        test = conn.fetch_releases(release_id=2)
+        test = conn.fetch_releases(release_id=1)
         # test the one to many connection
         assert test[0].EnsemblSite.name == 'Ensembl'
         assert test[0].EnsemblSite.label == 'Ensembl Genome Browser'
         # test the direct access.
-        assert test[0].EnsemblRelease.label == 'Scaling Phase 1'
+        assert test[0].EnsemblRelease.label == 'Beta Release 1'
 
     # currently only have one release, so the testing is not comprehensive
     def test_fetch_releases_for_genome(self, multi_dbs):
@@ -91,7 +91,7 @@ class TestMetadataDB:
     def test_fetch_taxonomy_names(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_taxonomy_names(taxonomy_ids=(6239, 511145))
+        test = conn.fetch_taxonomy_names(taxonomy_ids=[6239, 511145])
         assert test[511145]['scientific_name'] == 'Escherichia coli str. K-12 substr. MG1655'
 
     def test_fetch_taxonomy_ids(self, multi_dbs):
@@ -104,14 +104,14 @@ class TestMetadataDB:
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes()
-        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+        assert test[0].Organism.scientific_name == 'Plasmodium falciparum 3D7'
 
     def test_fetch_genomes_by_group_division(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         division_filter = 'EnsemblVertebrates'
         test = conn.fetch_genomes(group=division_filter)
-        division_res = set([row[-1].name for row in test])
+        division_res = set([row[-2].name for row in test])
         assert len(division_res) == 1
         assert division_filter in division_res
 
@@ -154,28 +154,28 @@ class TestMetadataDB:
     def test_fetch_sequences(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_sequences()
-        assert test[0].AssemblySequence.accession == 'KI270757.1'
+        test = conn.fetch_sequences(assembly_uuid='3142a1c4-0f6a-11ee-bfb4-005056b370fb')
+        assert test[0].AssemblySequence.accession == 'CHR_HG107_PATCH'
 
     def test_fetch_genome_dataset_default_topic_assembly(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genome_datasets(genome_uuid='a73357ab-93e7-11ec-a39d-005056b38ce3')
-        assert test[0][3].topic == 'Core Annotation'
+        assert test[0].DatasetType.topic == 'Core Annotation'
 
     def test_fetch_genome_dataset_uuid(self, multi_dbs):
         uuid = '0dc05c6e-2910-4dbd-879a-719ba97d5824'
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genome_datasets(dataset_uuid=uuid, dataset_name='genebuild')
-        assert test[0][2].dataset_uuid == uuid
+        assert test[0].Dataset.dataset_uuid == uuid
 
     def test_fetch_genome_dataset_genome_uuid(self, multi_dbs):
         uuid = 'a73357ab-93e7-11ec-a39d-005056b38ce3'
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genome_datasets(genome_uuid=uuid)
-        assert test[0][0].genome_uuid == uuid
+        assert test[0].Genome.genome_uuid == uuid
 
     def test_fetch_genome_dataset_unreleased(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -213,5 +213,5 @@ class TestMetadataDB:
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes_info(genome_uuid=uuid)
         result = next(test)[0]
-        assert result['genome'][0].genome_uuid == uuid
-        assert result['datasets'][0][0].genome_uuid == uuid
+        assert result['genome'].Genome.genome_uuid == uuid
+        assert result['datasets'][0].Genome.genome_uuid == uuid
