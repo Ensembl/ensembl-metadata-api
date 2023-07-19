@@ -485,7 +485,7 @@ class TestClass:
                 engine,
                 "homo_sapiens", "GRCh37.p13"))
         expected_output = {
-            "genome_uuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"
+            "genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"
         }
         assert json.loads(output) == expected_output
 
