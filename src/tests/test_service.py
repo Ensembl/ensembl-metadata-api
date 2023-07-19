@@ -23,7 +23,7 @@ import sqlalchemy as db
 from ensembl.database import UnitTestDB
 from google.protobuf import json_format
 
-from ensembl.production.metadata import service, ensembl_metadata_pb2
+from ensembl.production.metadata.grpc import service, ensembl_metadata_pb2
 
 distribution = pkg_resources.get_distribution("ensembl-metadata-api")
 sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
