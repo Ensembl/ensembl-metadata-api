@@ -492,6 +492,72 @@ class GenomeAdaptor(BaseAdaptor):
         except Exception as e:
             raise ValueError(str(e))
 
+    def fetch_unreleased_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None,
+                                         unreleased_datasets=False, dataset_uuid=None, dataset_name=None,
+                                         dataset_source=None, dataset_type=None):
+        """
+        Same as fetch_genome_datasets() except that this function fetches unreleased datasets
+        """
+        try:
+            genome_select = db.select(
+                Genome,
+                Organism,
+                GenomeDataset,
+                Dataset,
+                DatasetType,
+                DatasetSource,
+            ).select_from(Genome) \
+                .join(Organism, Organism.organism_id == Genome.organism_id) \
+                .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
+                .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
+                .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
+                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id) \
+
+            # set default group topic as 'assembly' to fetch unique datasource
+            if not dataset_name:
+                dataset_name = "assembly"
+
+            genome_id = check_parameter(genome_id)
+            genome_uuid = check_parameter(genome_uuid)
+            organism_uuid = check_parameter(organism_uuid)
+            dataset_uuid = check_parameter(dataset_uuid)
+            dataset_name = check_parameter(dataset_name)
+            dataset_source = check_parameter(dataset_source)
+            dataset_type = check_parameter(dataset_type)
+
+            if genome_id is not None:
+                genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
+
+            if genome_uuid is not None:
+                genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
+
+            if organism_uuid is not None:
+                genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
+
+            if dataset_uuid is not None:
+                genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
+
+            if unreleased_datasets:
+                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
+                    .filter(GenomeDataset.is_current == 0)
+
+            if dataset_name is not None and "all" not in dataset_name:
+                genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
+
+            if dataset_source is not None:
+                genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
+
+            if dataset_type is not None:
+                genome_select = genome_select.filter(DatasetType.name.in_(dataset_type))
+
+            logger.debug(genome_select)
+            with self.metadata_db.session_scope() as session:
+                session.expire_on_commit = False
+                return session.execute(genome_select).all()
+
+        except Exception as e:
+            raise ValueError(str(e))
+
     def fetch_genomes_info(
             self,
             genome_id=None,

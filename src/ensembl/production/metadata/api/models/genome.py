@@ -59,7 +59,7 @@ class GenomeDataset(Base):
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_datasets")
 
     def __repr__(self):
-        return f"GenomeDataset(genome_id={self.genome_id}, dataset_id='{self.genome_uuid}')"
+        return f"GenomeDataset(genome_id={self.genome_id}, dataset_id='{self.dataset_id}')"
 
 
 class GenomeRelease(Base):

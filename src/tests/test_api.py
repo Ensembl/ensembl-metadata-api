@@ -154,8 +154,8 @@ class TestMetadataDB:
     def test_fetch_sequences(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_sequences(assembly_uuid='3142a1c4-0f6a-11ee-bfb4-005056b370fb')
-        assert test[0].AssemblySequence.accession == 'CHR_HG107_PATCH'
+        test = conn.fetch_sequences(assembly_uuid='eeaaa2bf-151c-4848-8b85-a05a9993101e')
+        assert test[0].AssemblySequence.accession == 'CHR_HG1_PATCH'
 
     def test_fetch_genome_dataset_default_topic_assembly(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -180,24 +180,27 @@ class TestMetadataDB:
     def test_fetch_genome_dataset_unreleased(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(unreleased_datasets=True)
-        assert test[0][1].release_id is None
-        assert test[0][1].is_current == False
+        test = conn.fetch_unreleased_genome_datasets(
+            dataset_name="all",
+            unreleased_datasets=True
+        )
+        assert test[0].GenomeDataset.release_id is None
+        assert test[0].GenomeDataset.is_current == False
 
     def test_fetch_genome_info(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(unreleased_datasets=True)
+        test = conn.fetch_unreleased_genome_datasets(unreleased_datasets=True)
         print(test)
-        assert test[0][1].release_id is None
-        assert test[0][1].is_current is False
+        assert test[0].GenomeDataset.release_id is None
+        assert test[0].GenomeDataset.is_current is False
 
     def test_fetch_genome_info_unreleased(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(unreleased_datasets=True)
-        assert test[0][1].release_id is None
-        assert test[0][1].is_current == False
+        test = conn.fetch_unreleased_genome_datasets(unreleased_datasets=True)
+        assert test[0].GenomeDataset.release_id is None
+        assert test[0].GenomeDataset.is_current == False
 
     def test_fetch_genome_info(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,

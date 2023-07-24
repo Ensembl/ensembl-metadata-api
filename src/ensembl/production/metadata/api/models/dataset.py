@@ -65,8 +65,8 @@ class Dataset(Base):
 
     def __repr__(self):
         return f"Dataset(" \
-                   f"dataset_id={self.assembly_id}, " \
-                   f"dataset_uuid={self.assembly_uuid}, " \
+                   f"dataset_id={self.dataset_id}, " \
+                   f"dataset_uuid={self.dataset_uuid}, " \
                    f"name='{self.name}, " \
                    f"status='{self.status}'" \
                f")"
@@ -135,7 +135,7 @@ class DatasetType(Base):
 
     def __repr__(self):
         return f"DatasetType(" \
-                   f"dataset_type_id={self.dataset_source_id}, " \
+                   f"dataset_type_id={self.dataset_type_id}, " \
                    f"name={self.name}, " \
                    f"topic={self.topic}" \
                f")"
