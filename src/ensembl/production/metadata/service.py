@@ -14,7 +14,7 @@ from concurrent import futures
 import grpc
 import logging
 import sqlalchemy as db
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, and_
 from sqlalchemy.orm import Session
 
 from ensembl.production.metadata import ensembl_metadata_pb2_grpc
@@ -245,7 +245,7 @@ def get_species_information(metadata_db, taxonomy_db, genome_uuid):
             species_data = dict(species_results[0])
             species_data['genome_uuid'] = genome_uuid
             td = db.MetaData()
-            with Session(metadata_db, future=True) as session_tax:
+            with Session(taxonomy_db, future=True) as session_tax:
                 tax_name = db.Table('ncbi_taxa_name', td, autoload_with=taxonomy_db)
                 tax_names = db.select([tax_name.c.name, tax_name.c.name_class]).where(
                     tax_name.c.taxon_id == species_data['taxonomy_id'])
@@ -338,6 +338,31 @@ def get_grouping_info(metadata_db, organism_id):
             })
         else:
             return create_grouping()
+
+
+def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
+    if ensembl_name is None or assembly_name is None:
+        return create_genome_uuid()
+
+    sqlalchemy_md = db.MetaData()
+    with Session(metadata_db, future=True) as session:
+        genome = db.Table('genome', sqlalchemy_md, autoload_with=metadata_db)
+        assembly = sqlalchemy_md.tables['assembly']
+        organism = sqlalchemy_md.tables['organism']
+
+    genome_uuid_query = get_genome_uuid_query(genome, assembly, organism).select_from(genome)\
+        .join(assembly).join(organism) \
+        .where(and_(func.lower(assembly.c.name) == assembly_name.lower(),
+                    func.lower(organism.c.ensembl_name) == ensembl_name.lower()))
+
+    genome_uuid_result = session.execute(genome_uuid_query).all()
+
+    if len(genome_uuid_result) == 1:
+        return create_genome_uuid(
+            {"genome_uuid": genome_uuid_result[0]["genome_uuid"]}
+        )
+
+    return create_genome_uuid()
 
 
 def get_genome_by_uuid(metadata_db, genome_uuid, release_version):
@@ -545,6 +570,14 @@ def get_genome_query(genome, genome_release, release, assembly, organism):
         release.c.label.label("release_label"),
         release.c.is_current,
     ).where(genome_release.c.is_current == 1)
+
+
+def get_genome_uuid_query(genome, assembly, organism):
+    return db.select(
+        genome.c.genome_uuid,
+        organism.c.ensembl_name,
+        assembly.c.name.label("assembly_name"),
+    )
 
 
 def genome_sequence_iterator(metadata_db, genome_uuid, chromosomal_only):
@@ -770,6 +803,16 @@ def create_assembly(data=None):
     return assembly
 
 
+def create_genome_uuid(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.GenomeUUID()
+
+    genome_uuid = ensembl_metadata_pb2.GenomeUUID(
+        genome_uuid=data["genome_uuid"]
+    )
+    return genome_uuid
+
+
 def create_genome(data=None):
     if data is None:
         return ensembl_metadata_pb2.Genome()
@@ -878,7 +921,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return get_species_information(self.db, self.taxo_db, request.genome_uuid)
 
     def GetAssemblyInformation(self, request, context):
-        return get_assembly_information(self.db, request.assembly_id)
+        return get_assembly_information(self.db, request.assembly_uuid)
 
     def GetGenomesByAssemblyAccessionID(self, request, context):
         return get_genomes_from_assembly_accession_iterator(
@@ -886,19 +929,22 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         )
 
     def GetSubSpeciesInformation(self, request, context):
-        return get_sub_species_info(self.db, request.organism_id)
+        return get_sub_species_info(self.db, request.organism_uuid)
 
     def GetGroupingInformation(self, request, context):
-        return get_sub_species_info(self.db, request.organism_id)
+        return get_sub_species_info(self.db, request.organism_uuid)
 
     def GetKaryotypeInformation(self, request, context):
         return get_sub_species_info(self.db, request.genome_uuid)
 
     def GetTopLevelStatistics(self, request, context):
-        return get_top_level_statistics(self.db, request.organism_id)
+        return get_top_level_statistics(self.db, request.organism_uuid)
 
     def GetTopLevelStatisticsByUUID(self, request, context):
         return get_top_level_statistics_by_uuid(self.db, request.genome_uuid)
+
+    def GetGenomeUUID(self, request, context):
+        return get_genome_uuid(self.db, request.ensembl_name, request.assembly_name)
 
     def GetGenomeByUUID(self, request, context):
         return get_genome_by_uuid(self.db, request.genome_uuid, request.release_version)
