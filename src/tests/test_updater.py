@@ -37,7 +37,7 @@ class TestUpdater:
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         # Test the species
-        test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
+        test_collect = conn.fetch_genomes(ensembl_name='Jabberwocky', is_released=False)
         assert test_collect[0].Organism.scientific_name == 'carol_jabberwocky'
         # Test the Assembly
         assert test_collect[0].Assembly.accession == 'weird01'
@@ -58,7 +58,7 @@ class TestUpdater:
         test.process_core()
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
+        test_collect = conn.fetch_genomes(ensembl_name='Jabberwocky', is_released=False)
         assert test_collect[0].Organism.scientific_name == 'lewis_carol'
 
     def test_update_assembly(self, multi_dbs):
@@ -67,9 +67,9 @@ class TestUpdater:
         test.process_core()
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-        assert test_collect[1].Organism.scientific_name == 'lewis_carol'
-        assert test_collect[1].Assembly.accession == 'weird02'
+        test_collect = conn.fetch_genomes(ensembl_name='Jabberwocky', is_released=False)
+        assert test_collect[0].Organism.scientific_name == 'lewis_carol'
+        assert test_collect[0].Assembly.accession == 'weird02'
 
     #
     def test_update_geneset(self, multi_dbs):

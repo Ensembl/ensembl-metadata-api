@@ -111,7 +111,7 @@ class TestMetadataDB:
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         division_filter = 'EnsemblVertebrates'
         test = conn.fetch_genomes(group=division_filter)
-        division_res = set([row[-2].name for row in test])
+        division_res = set([row.OrganismGroup.name for row in test])
         assert len(division_res) == 1
         assert division_filter in division_res
 

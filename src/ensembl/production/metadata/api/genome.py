@@ -114,8 +114,8 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genomes(self, genome_id=None, genome_uuid=None, organism_uuid=None, assembly_accession=None,
                       assembly_name=None, ensembl_name=None, taxonomy_id=None, group=None, group_type=None,
-                      unreleased_only=False, site_name=None, release_type=None, release_version=None,
-                      current_only=True):
+                      unreleased_only=False, is_released=True, site_name=None, release_type=None,
+                      release_version=None, current_only=True):
         """
         Fetches genome information based on the specified parameters.
 
@@ -129,7 +129,8 @@ class GenomeAdaptor(BaseAdaptor):
             taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
             group_type (Union[str, List[str]]): The type(s) of the organism group(s) to filter by.
-            unreleased_only (bool): Whether to fetch only genomes that have not been released.
+            unreleased_only (bool): Whether to fetch only genomes that have not been released (default: False).
+            is_released (bool): Whether to fetch released genomes that have been released (default: True).
             site_name (str): The name of the Ensembl site to filter by.
             release_type (str): The type of the Ensembl release to filter by.
             release_version (int): The maximum version of the Ensembl release to filter by.
@@ -164,13 +165,10 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Construct the initial database query
         genome_select = db.select(
-            Genome, Organism, Assembly, EnsemblRelease, OrganismGroupMember, OrganismGroup, EnsemblSite
+            Genome, Organism, Assembly, OrganismGroupMember, OrganismGroup
         ).select_from(Genome) \
             .join(Organism, Organism.organism_id == Genome.organism_id) \
             .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
-            .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
-            .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
-            .join(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id) \
             .join(OrganismGroupMember, OrganismGroupMember.organism_id == Organism.organism_id) \
             .join(OrganismGroup, OrganismGroup.organism_group_id == OrganismGroupMember.organism_group_id) \
 
@@ -181,9 +179,18 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Apply additional filters based on the provided parameters
         if unreleased_only:
+            # Question (Bilal): When adding unreleased genomes do we populate genome_releases table?
+            # if that's the case the test data doesn't do so (this will return en empty list)
             genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
                 GenomeRelease.genome_id == None
             )
+        if is_released:
+            # Include release related info only if is_released is True
+            genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
+                .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
+                .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
+                .join(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id)
+
         if site_name is not None:
             genome_select = genome_select.filter(EnsemblSite.name == site_name)
 
