@@ -180,9 +180,10 @@ class TestMetadataDB:
     def test_fetch_genome_dataset_unreleased(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_unreleased_genome_datasets(
+        test = conn.fetch_genome_datasets(
             dataset_name="all",
-            unreleased_datasets=True
+            unreleased_datasets=True,
+            is_released=False
         )
         assert test[0].GenomeDataset.release_id is None
         assert test[0].GenomeDataset.is_current == False
@@ -190,7 +191,11 @@ class TestMetadataDB:
     def test_fetch_genome_info(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_unreleased_genome_datasets(unreleased_datasets=True)
+        test = conn.fetch_genome_datasets(
+            dataset_name="all",
+            unreleased_datasets=True,
+            is_released=False
+        )
         print(test)
         assert test[0].GenomeDataset.release_id is None
         assert test[0].GenomeDataset.is_current is False
@@ -198,7 +203,11 @@ class TestMetadataDB:
     def test_fetch_genome_info_unreleased(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_unreleased_genome_datasets(unreleased_datasets=True)
+        test = conn.fetch_genome_datasets(
+            dataset_name="all",
+            unreleased_datasets=True,
+            is_released=False
+        )
         assert test[0].GenomeDataset.release_id is None
         assert test[0].GenomeDataset.is_current == False
 
