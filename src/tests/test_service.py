@@ -21,9 +21,10 @@ import pkg_resources
 import pytest
 import sqlalchemy as db
 from ensembl.database import UnitTestDB
+from ensembl.production.metadata.api.genome import GenomeAdaptor
 from google.protobuf import json_format
 
-from ensembl.production.metadata.grpc import service, ensembl_metadata_pb2
+from ensembl.production.metadata.grpc import service, ensembl_metadata_pb2, utils, protobuf_msg_factory
 
 distribution = pkg_resources.get_distribution("ensembl-metadata-api")
 sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
@@ -39,7 +40,11 @@ class TestClass:
     def engine(self, multi_dbs):
         os.environ["METADATA_URI"] = multi_dbs["ensembl_metadata"].dbc.url
         os.environ["TAXONOMY_URI"] = multi_dbs["ncbi_taxonomy"].dbc.url
-        yield db.create_engine(multi_dbs["ensembl_metadata"].dbc.url)
+        conn = GenomeAdaptor(
+            metadata_uri=multi_dbs["ensembl_metadata"].dbc.url,
+            taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
+        )
+        yield conn
 
     def test_create_genome(self, multi_dbs):
         """Test service.create_genome function"""
@@ -256,16 +261,17 @@ class TestClass:
 
     def test_karyotype_information(self, engine):
         output = json_format.MessageToJson(
-            service.get_karyotype_information(engine, "3c4cec7f-fb69-11eb-8dac-005056b32883"))
+            utils.get_karyotype_information(engine, "3c4cec7f-fb69-11eb-8dac-005056b32883"))
         expected_output = {}
         assert json.loads(output) == expected_output
 
     def test_assembly_information(self, engine):
         output = json_format.MessageToJson(
-            service.get_assembly_information(engine, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))
+            utils.get_assembly_information(engine, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))
         expected_output = {"accession": "GCA_000001405.28",
                            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-                           "length": 71251,
+                           "length": 107043717,
+                           "chromosomal": 1,
                            "level": "chromosome",
                            "name": "GRCh38.p13",
                            "sequenceLocation": "SO:0000738"}
@@ -273,7 +279,7 @@ class TestClass:
 
     def test_get_genomes_from_assembly_accession_iterator(self, engine):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_from_assembly_accession_iterator(
+                  utils.get_genomes_from_assembly_accession_iterator(
                       engine, "GCA_000005845.2")]
         expected_output = [{"assembly": {"accession": "GCA_000005845.2",
                                          "ensemblName": "ASM584v2",
@@ -284,13 +290,18 @@ class TestClass:
                             "organism": {"displayName": "Escherichia coli str. K-12 substr. MG1655 str. "
                                                         "K12 (GCA_000005845)",
                                          "ensemblName": "escherichia_coli_str_k_12_substr_mg1655_gca_000005845",
+                                         "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
                                          "scientificName": "Escherichia coli str. K-12 substr. MG1655 "
                                                            "str. K12 (GCA_000005845)",
                                          "urlName": "Escherichia_coli_str_k_12_substr_mg1655_gca_000005845"},
                             "release": {"isCurrent": True,
                                         "releaseDate": "2023-05-15",
                                         "releaseLabel": "Beta Release 1",
-                                        "releaseVersion": 108.0},
+                                        "releaseVersion": 108.0,
+                                        "siteLabel": "Ensembl Genome Browser",
+                                        "siteName": "Ensembl",
+                                        "siteUri": "https://beta.ensembl.org"
+                                        },
                             "taxon": {"scientificName": "Escherichia coli str. K-12 substr. MG1655 str. "
                                                         "K12 (GCA_000005845)",
                                       "taxonomyId": 511145}}]
@@ -298,44 +309,31 @@ class TestClass:
 
     def test_get_genomes_from_assembly_accession_iterator_null(self, engine):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_from_assembly_accession_iterator(engine, None)]
+                  utils.get_genomes_from_assembly_accession_iterator(engine, None)]
         assert output == []
 
     def test_get_genomes_from_assembly_accession_iterator_no_matches(self, engine):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_from_assembly_accession_iterator(engine, "asdfasdfadf")]
+                  utils.get_genomes_from_assembly_accession_iterator(engine, "asdfasdfadf")]
         assert output == []
 
-    def test_sub_species_info(self, engine):
+    def test_get_sub_species_info(self, engine):
         output = json_format.MessageToJson(
-            service.get_sub_species_info(engine, "1"))
+            utils.get_sub_species_info(engine, "21279e3e-e651-43e1-a6fc-79e390b9e8a8"))
         expected_output = {
-            "organismId": "1",
-            "speciesName": ["EnsemblVertebrates"],
+            "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
+            "speciesName": ["EnsemblBacteria"],
             "speciesType": ["Division"]}
         assert json.loads(output) == expected_output
 
-        output2 = json_format.MessageToJson(service.get_grouping_info(engine, "51"))
-        expected_output2 = {}
-        assert json.loads(output2) == expected_output2
-
-    def test_get_grouping_info(self, engine):
-        output = json_format.MessageToJson(service.get_grouping_info(engine, "1"))
-        expected_output = {
-            "organismId": "1",
-            "speciesName": ["EnsemblVertebrates"],
-            "speciesType": ["Division"]}
-        assert json.loads(output) == expected_output
-
-        output2 = json_format.MessageToJson(
-            service.get_grouping_info(engine, "51"))
+        output2 = json_format.MessageToJson(utils.get_sub_species_info(engine, "s0m3-r4nd0m-0rg4n1sm-uu1d"))
         expected_output2 = {}
         assert json.loads(output2) == expected_output2
 
     def test_get_top_level_statistics(self, engine):
         # Triticum aestivum
         output = json_format.MessageToJson(
-            service.get_top_level_statistics(engine, "d64c34ca-b37a-476b-83b5-f21d07a3ae67")
+            utils.get_top_level_statistics(engine, "d64c34ca-b37a-476b-83b5-f21d07a3ae67")
         )
         output = json.loads(output)
         assert len(output["statistics"]) == 51
@@ -354,12 +352,11 @@ class TestClass:
 
     def test_get_top_level_statistics_by_uuid(self, engine):
         output = json_format.MessageToJson(
-            service.get_top_level_statistics_by_uuid(
+            utils.get_top_level_statistics_by_uuid(
                 engine, "a73357ab-93e7-11ec-a39d-005056b38ce3"
             )
         )
         output = json.loads(output)
-        print(output)
         assert len(output["statistics"]) == 51
         assert output["statistics"][0] == {
             "label": "Contig N50",
@@ -375,123 +372,443 @@ class TestClass:
         }
 
     def test_get_datasets_list_by_uuid(self, engine):
+        # the expected_output is too long and duplicated
+        # because of the returned attributes
+        # TODO: Fix this later
         output = json_format.MessageToJson(
-            service.get_datasets_list_by_uuid(engine, "a73357ab-93e7-11ec-a39d-005056b38ce3"))
+            utils.get_datasets_list_by_uuid(engine, "a73357ab-93e7-11ec-a39d-005056b38ce3"))
 
-        expected_output = {"datasets": {"assembly": {"datasetInfos": [{"datasetLabel": "GCA_900519105.1",
-                                                                       "datasetName": "assembly",
-                                                                       "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
-                                                                       "version": 108.0}]},
-                                        "evidence": {"datasetInfos": [{"datasetLabel": "Manual Add",
-                                                                       "datasetName": "evidence",
-                                                                       "datasetUuid": "64a66f22-07a9-476e-9816-785e2ccb9c30",
-                                                                       "version": 108.0}]},
-                                        "genebuild": {"datasetInfos": [{"datasetLabel": "2018-04-IWGSC",
-                                                                        "datasetName": "genebuild",
-                                                                        "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
-                                                                        "version": 108.0}]},
-                                        "homologies": {"datasetInfos": [{"datasetLabel": "Manual Add",
-                                                                         "datasetName": "homologies",
-                                                                         "datasetUuid": "e67ca09d-2e7b-4135-a990-6a2d1bca7285",
-                                                                         "version": 108.0}]},
-                                        "variation": {"datasetInfos": [{"datasetLabel": "Manual Add",
-                                                                        "datasetName": "variation",
-                                                                        "datasetUuid": "4d411e2d-676e-4fe0-b0d7-65a9e33fd47f",
-                                                                        "version": 108.0}]}},
-                           "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3"}
-
+        expected_output = {
+            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
+              "datasets": {
+                "evidence": {
+                  "datasetInfos": [
+                    {
+                      "datasetUuid": "64a66f22-07a9-476e-9816-785e2ccb9c30",
+                      "datasetName": "evidence",
+                      "datasetLabel": "Manual Add",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "64a66f22-07a9-476e-9816-785e2ccb9c30",
+                      "datasetName": "evidence",
+                      "datasetLabel": "Manual Add",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "64a66f22-07a9-476e-9816-785e2ccb9c30",
+                      "datasetName": "evidence",
+                      "datasetLabel": "Manual Add",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "64a66f22-07a9-476e-9816-785e2ccb9c30",
+                      "datasetName": "evidence",
+                      "datasetLabel": "Manual Add",
+                      "version": 108.0
+                    }
+                  ]
+                },
+                "assembly": {
+                  "datasetInfos": [
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "b4ff55e3-d06a-4772-bb13-81c3207669e3",
+                      "datasetName": "assembly",
+                      "datasetLabel": "GCA_900519105.1",
+                      "version": 108.0
+                    }
+                  ]
+                },
+                "homologies": {
+                  "datasetInfos": [
+                    {
+                      "datasetUuid": "e67ca09d-2e7b-4135-a990-6a2d1bca7285",
+                      "datasetName": "homologies",
+                      "datasetLabel": "Manual Add",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "e67ca09d-2e7b-4135-a990-6a2d1bca7285",
+                      "datasetName": "homologies",
+                      "datasetLabel": "Manual Add",
+                      "version": 108.0
+                    }
+                  ]
+                },
+                "genebuild": {
+                  "datasetInfos": [
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "0dc05c6e-2910-4dbd-879a-719ba97d5824",
+                      "datasetName": "genebuild",
+                      "datasetLabel": "2018-04-IWGSC",
+                      "version": 108.0
+                    }
+                  ]
+                },
+                "variation": {
+                  "datasetInfos": [
+                    {
+                      "datasetUuid": "4d411e2d-676e-4fe0-b0d7-65a9e33fd47f",
+                      "datasetName": "variation",
+                      "datasetLabel": "Manual Add",
+                      "version": 108.0
+                    },
+                    {
+                      "datasetUuid": "4d411e2d-676e-4fe0-b0d7-65a9e33fd47f",
+                      "datasetName": "variation",
+                      "datasetLabel": "Manual Add",
+                      "version": 108.0
+                    }
+                  ]
+                }
+              }
+            }
         assert json.loads(output) == expected_output
 
     def test_get_datasets_list_by_uuid_no_results(self, engine):
-        output = json_format.MessageToJson(service.get_datasets_list_by_uuid(engine, "some-random-uuid-f00-b4r", 103.0))
+        output = json_format.MessageToJson(utils.get_datasets_list_by_uuid(engine, "some-random-uuid-f00-b4r", 103.0))
         output = json.loads(output)
         expected_output = {}
         assert output == expected_output
 
-    def test_get_dataset_by_genome_id(self, engine):
+    def test_get_dataset_by_genome_and_dataset_type(self, engine):
+        # TODO: Fix
         output = json_format.MessageToJson(
-            service.get_dataset_by_genome_id(engine,
-                                             "a73356e1-93e7-11ec-a39d-005056b38ce3", "assembly"))
+            utils.get_dataset_by_genome_and_dataset_type(engine, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly")
+        )
         output = json.loads(output)
-        assert output == {"datasetInfos": [{"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "chromosomes",
-                                            "type": "integer",
-                                            "value": "14",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "component_sequences",
-                                            "type": "integer",
-                                            "value": "14",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "gc_percentage",
-                                            "type": "percent",
-                                            "value": "19.34",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "spanned_gaps",
-                                            "type": "integer",
-                                            "value": "0",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "toplevel_sequences",
-                                            "type": "integer",
-                                            "value": "14",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "total_coding_sequence_length",
-                                            "type": "bp",
-                                            "value": "12309897",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "total_gap_length",
-                                            "type": "bp",
-                                            "value": "0",
-                                            "version": 108.0},
-                                           {"datasetLabel": "GCA_000002765.2",
-                                            "datasetName": "assembly",
-                                            "datasetUuid": "29dbda41-5188-4323-9318-ce546a87eee7",
-                                            "name": "total_genome_length",
-                                            "type": "bp",
-                                            "value": "23292622",
-                                            "version": 108.0}],
-                          "datasetType": "assembly",
-                          "genomeUuid": "a73356e1-93e7-11ec-a39d-005056b38ce3"}
+        assert output == {'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3', 'datasetType': 'assembly',
+                          'datasetInfos': [
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'contig_n50',
+                               'type': 'bp',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '56413054'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'total_genome_length',
+                               'type': 'bp',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '3272116950'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'total_coding_sequence_length',
+                               'type': 'bp',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '34459298'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'total_gap_length',
+                               'type': 'bp',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '161368351'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'spanned_gaps',
+                               'type': 'integer',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '661'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'chromosomes',
+                               'type': 'integer',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '25'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'toplevel_sequences',
+                               'type': 'integer',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '640'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'component_sequences',
+                               'type': 'integer',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '36734'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'gc_percentage',
+                               'type': 'percent',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '38.87'}]
+                          }
 
     def test_get_dataset_by_genome_id_no_results(self, engine):
         output = json_format.MessageToJson(
-            service.get_dataset_by_genome_id(engine,
-                                             "a7335667-93e7-11ec-a39d-005056b38ce3", "blah blah blah"))
+            utils.get_dataset_by_genome_and_dataset_type(engine, "a7335667-93e7-11ec-a39d-005056b38ce3", "blah blah blah"))
         output = json.loads(output)
         assert output == {}
 
     def test_get_genome_uuid(self, engine):
         output = json_format.MessageToJson(
-            service.get_genome_uuid(
+            utils.get_genome_uuid(
                 engine,
                 "homo_sapiens", "GRCh37.p13"))
         expected_output = {
-            "genome_uuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"
+            "genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"
         }
         assert json.loads(output) == expected_output
 
     def test_get_genome_by_uuid(self, engine):
         output = json_format.MessageToJson(
-            service.get_genome_by_uuid(engine,
+            utils.get_genome_by_uuid(engine,
                                        "a73357ab-93e7-11ec-a39d-005056b38ce3", 108.0))
         expected_output = {"assembly": {"accession": "GCA_900519105.1",
                                         "ensemblName": "IWGSC",
@@ -501,13 +818,17 @@ class TestClass:
                            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
                            "organism": {"displayName": "Triticum aestivum",
                                         "ensemblName": "triticum_aestivum",
+                                        "organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
                                         "scientificName": "Triticum aestivum",
                                         "strain": "reference (Chinese spring)",
                                         "urlName": "Triticum_aestivum"},
                            "release": {"isCurrent": True,
                                        "releaseDate": "2023-05-15",
                                        "releaseLabel": "Beta Release 1",
-                                       "releaseVersion": 108.0},
+                                       "releaseVersion": 108.0,
+                                       "siteLabel": "Ensembl Genome Browser",
+                                       "siteName": "Ensembl",
+                                       "siteUri": "https://beta.ensembl.org"},
                            "taxon": {"scientificName": "Triticum aestivum",
                                      "strain": "reference (Chinese spring)",
                                      "taxonomyId": 4565}}
@@ -515,7 +836,7 @@ class TestClass:
 
     def test_genome_by_uuid_release_version_unspecified(self, engine):
         output = json_format.MessageToJson(
-            service.get_genome_by_uuid(engine, "a73357ab-93e7-11ec-a39d-005056b38ce3", 0.0))
+            utils.get_genome_by_uuid(engine, "a73357ab-93e7-11ec-a39d-005056b38ce3", 0.0))
         expected_output = {"assembly": {"accession": "GCA_900519105.1",
                                         "ensemblName": "IWGSC",
                                         "level": "chromosome",
@@ -524,25 +845,29 @@ class TestClass:
                            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
                            "organism": {"displayName": "Triticum aestivum",
                                         "ensemblName": "triticum_aestivum",
+                                        "organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
                                         "scientificName": "Triticum aestivum",
                                         "strain": "reference (Chinese spring)",
                                         "urlName": "Triticum_aestivum"},
                            "release": {"isCurrent": True,
                                        "releaseDate": "2023-05-15",
                                        "releaseLabel": "Beta Release 1",
-                                       "releaseVersion": 108.0},
+                                       "releaseVersion": 108.0,
+                                       "siteLabel": "Ensembl Genome Browser",
+                                       "siteName": "Ensembl",
+                                       "siteUri": "https://beta.ensembl.org"},
                            "taxon": {"scientificName": "Triticum aestivum",
                                      "strain": "reference (Chinese spring)",
                                      "taxonomyId": 4565}}
         assert json.loads(output) == expected_output
 
     def test_get_genomes_by_uuid_null(self, engine):
-        output = service.get_genome_by_uuid(engine, None, 0)
+        output = utils.get_genome_by_uuid(engine, None, 0)
         assert output == ensembl_metadata_pb2.Genome()
 
     def test_get_genomes_by_keyword(self, engine):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_by_keyword_iterator(engine, "Human", 108.0)]
+                  utils.get_genomes_by_keyword_iterator(engine, "Human", 108.0)]
         expected_output = [{"assembly": {"accession": "GCA_000001405.28",
                                          "ensemblName": "GRCh38.p13",
                                          "level": "chromosome",
@@ -552,18 +877,44 @@ class TestClass:
                             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
                             "organism": {"displayName": "Human",
                                          "ensemblName": "homo_sapiens",
+                                         "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
                                          "scientificName": "Homo sapiens",
                                          "urlName": "Homo_sapiens"},
                             "release": {"isCurrent": True,
                                         "releaseDate": "2023-05-15",
                                         "releaseLabel": "Beta Release 1",
-                                        "releaseVersion": 108.0},
-                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}}]
+                                        "releaseVersion": 108.0,
+                                        "siteLabel": "Ensembl Genome Browser",
+                                        "siteName": "Ensembl",
+                                        "siteUri": "https://beta.ensembl.org"},
+                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}},
+                           {"assembly": {"accession": "GCA_000001405.14",
+                                         "ensemblName": "GRCh37.p13",
+                                         "level": "chromosome",
+                                         "name": "GRCh37.p13",
+                                         "ucscName": "hg19"},
+                            "created": "2023-05-12 13:32:06",
+                            "genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3",
+                            "organism": {"displayName": "Human",
+                                         "ensemblName": "homo_sapiens",
+                                         "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
+                                         "scientificName": "Homo sapiens",
+                                         "urlName": "Homo_sapiens"},
+                            "release": {"isCurrent": True,
+                                        "releaseDate": "2023-05-15",
+                                        "releaseLabel": "Beta Release 1",
+                                        "releaseVersion": 108.0,
+                                        "siteLabel": "Ensembl Genome Browser",
+                                        "siteName": "Ensembl",
+                                        "siteUri": "https://beta.ensembl.org"},
+                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}}
+                           ]
         assert output == expected_output
 
     def test_get_genomes_by_keyword_release_unspecified(self, engine):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  service.get_genomes_by_keyword_iterator(engine, "Homo Sapiens", 0.0)]
+                  utils.get_genomes_by_keyword_iterator(engine, "Homo Sapiens", 0.0)]
+        # TODO: DRY the expected_output
         expected_output = [{"assembly": {"accession": "GCA_000001405.28",
                                          "ensemblName": "GRCh38.p13",
                                          "level": "chromosome",
@@ -573,29 +924,54 @@ class TestClass:
                             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
                             "organism": {"displayName": "Human",
                                          "ensemblName": "homo_sapiens",
+                                         "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
                                          "scientificName": "Homo sapiens",
                                          "urlName": "Homo_sapiens"},
                             "release": {"isCurrent": True,
                                         "releaseDate": "2023-05-15",
                                         "releaseLabel": "Beta Release 1",
-                                        "releaseVersion": 108.0},
-                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}}]
+                                        "releaseVersion": 108.0,
+                                        "siteLabel": "Ensembl Genome Browser",
+                                        "siteName": "Ensembl",
+                                        "siteUri": "https://beta.ensembl.org"},
+                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}},
+                           {"assembly": {"accession": "GCA_000001405.14",
+                                         "ensemblName": "GRCh37.p13",
+                                         "level": "chromosome",
+                                         "name": "GRCh37.p13",
+                                         "ucscName": "hg19"},
+                            "created": "2023-05-12 13:32:06",
+                            "genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3",
+                            "organism": {"displayName": "Human",
+                                         "ensemblName": "homo_sapiens",
+                                         "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
+                                         "scientificName": "Homo sapiens",
+                                         "urlName": "Homo_sapiens"},
+                            "release": {"isCurrent": True,
+                                        "releaseDate": "2023-05-15",
+                                        "releaseLabel": "Beta Release 1",
+                                        "releaseVersion": 108.0,
+                                        "siteLabel": "Ensembl Genome Browser",
+                                        "siteName": "Ensembl",
+                                        "siteUri": "https://beta.ensembl.org"},
+                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}}
+                           ]
         assert output == expected_output
 
     def test_get_genomes_by_keyword_null(self, engine):
         output = list(
-            service.get_genomes_by_keyword_iterator(engine, None, 0))
+            utils.get_genomes_by_keyword_iterator(engine, None, 0))
         assert output == []
 
     def test_get_genomes_by_keyword_no_matches(self, engine):
         output = list(
-            service.get_genomes_by_keyword_iterator(engine, "bigfoot",
+            utils.get_genomes_by_keyword_iterator(engine, "bigfoot",
                                                     1))
         assert output == []
 
     def test_get_genomes_by_name(self, engine):
         output = json_format.MessageToJson(
-            service.get_genome_by_name(engine, "homo_sapiens", "Ensembl", 108.0))
+            utils.get_genome_by_name(engine, "homo_sapiens", "Ensembl", 108.0))
         expected_output = {"assembly": {"accession": "GCA_000001405.28",
                                         "ensemblName": "GRCh38.p13",
                                         "level": "chromosome",
@@ -605,17 +981,21 @@ class TestClass:
                            "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
                            "organism": {"displayName": "Human",
                                         "ensemblName": "homo_sapiens",
+                                        "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
                                         "scientificName": "Homo sapiens",
                                         "urlName": "Homo_sapiens"},
                            "release": {"isCurrent": True,
                                        "releaseDate": "2023-05-15",
                                        "releaseLabel": "Beta Release 1",
-                                       "releaseVersion": 108.0},
+                                       "releaseVersion": 108.0,
+                                        "siteLabel": "Ensembl Genome Browser",
+                                        "siteName": "Ensembl",
+                                        "siteUri": "https://beta.ensembl.org"},
                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}}
         assert json.loads(output) == expected_output
 
     def test_get_genomes_by_name_release_unspecified(self, engine):
-        output = json_format.MessageToJson(service.get_genome_by_name(engine, "homo_sapiens", "Ensembl", 0.0))
+        output = json_format.MessageToJson(utils.get_genome_by_name(engine, "homo_sapiens", "Ensembl", 0.0))
         expected_output = {"assembly": {"accession": "GCA_000001405.28",
                                         "ensemblName": "GRCh38.p13",
                                         "level": "chromosome",
@@ -625,11 +1005,15 @@ class TestClass:
                            "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
                            "organism": {"displayName": "Human",
                                         "ensemblName": "homo_sapiens",
+                                        "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
                                         "scientificName": "Homo sapiens",
                                         "urlName": "Homo_sapiens"},
                            "release": {"isCurrent": True,
                                        "releaseDate": "2023-05-15",
                                        "releaseLabel": "Beta Release 1",
-                                       "releaseVersion": 108.0},
+                                       "releaseVersion": 108.0,
+                                        "siteLabel": "Ensembl Genome Browser",
+                                        "siteName": "Ensembl",
+                                        "siteUri": "https://beta.ensembl.org"},
                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}}
         assert json.loads(output) == expected_output

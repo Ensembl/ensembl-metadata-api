@@ -33,7 +33,7 @@ def connect_to_db():
 
 def get_karyotype_information(db_conn, genome_uuid):
     if genome_uuid is None:
-        return create_genome()
+        return create_karyotype()
 
     karyotype_info_result = db_conn.fetch_sequences(
         genome_uuid=genome_uuid
@@ -249,7 +249,7 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version=0):
         # { dataset_type_1: [datasets_dt1_1, datasets_dt1_2], dataset_type_2: [datasets_dt2_1] }
         ds_obj_dict = {}
         for result in datasets_results:
-            dataset_type = result.Dataset.name
+            dataset_type = result.DatasetType.name
             # Populate the objects bottom up
             datasets_info = populate_dataset_info(result)
             # Construct the datasets dictionary
@@ -315,7 +315,7 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
         yield create_release(result)
 
 
-def get_dataset_by_genome_id(db_conn, genome_uuid, requested_dataset_type):
+def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_dataset_type):
     if genome_uuid is None:
         return create_dataset_infos()
 
