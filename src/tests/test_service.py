@@ -12,7 +12,6 @@
 """
 Unit tests for service module
 """
-import datetime
 import json
 import os.path
 from pathlib import Path
@@ -22,9 +21,10 @@ import pytest
 import sqlalchemy as db
 from ensembl.database import UnitTestDB
 from ensembl.production.metadata.api.genome import GenomeAdaptor
+from ensembl.production.metadata.api.release import ReleaseAdaptor
 from google.protobuf import json_format
 
-from ensembl.production.metadata.grpc import service, ensembl_metadata_pb2, utils, protobuf_msg_factory
+from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
 
 distribution = pkg_resources.get_distribution("ensembl-metadata-api")
 sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
@@ -40,234 +40,170 @@ class TestClass:
     def engine(self, multi_dbs):
         os.environ["METADATA_URI"] = multi_dbs["ensembl_metadata"].dbc.url
         os.environ["TAXONOMY_URI"] = multi_dbs["ncbi_taxonomy"].dbc.url
-        conn = GenomeAdaptor(
+        yield db.create_engine(multi_dbs["ensembl_metadata"].dbc.url)
+
+    @pytest.fixture(scope="class")
+    def genome_db_conn(self, multi_dbs):
+        genome_conn = GenomeAdaptor(
             metadata_uri=multi_dbs["ensembl_metadata"].dbc.url,
             taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
         )
-        yield conn
+        yield genome_conn
 
-    def test_create_genome(self, multi_dbs):
+    @pytest.fixture(scope="class")
+    def release_db_conn(self, multi_dbs):
+        release_conn = ReleaseAdaptor(
+            metadata_uri=multi_dbs["ensembl_metadata"].dbc.url
+        )
+        yield release_conn
+
+    def test_create_genome(self, multi_dbs, genome_db_conn):
         """Test service.create_genome function"""
-        input_dict = {
-            "genome_uuid": "f9d8c1dc-45dd-11ec-81d3-0242ac130003",
-            "created": datetime.date(2022, 8, 15),
-            "ensembl_name": "some name",
-            "url_name": "http://url_name.com",
-            "display_name": "Display Name",
-            "is_current": True,
-            "assembly_accession": "X.AE500",
-            "assembly_name": "assembly name",
-            "assembly_ucsc_name": "ucsc name",
-            "assembly_level": "level",
-            "assembly_ensembl_name": "some assembly ensembl name",
-            "taxonomy_id": 1234,
-            "scientific_name": "scientific name",
-            "scientific_parlance_name": "scientific_parlance_name",
-            "strain": "test strain",
-            "release_version": 1,
-            "release_date": datetime.date(2022, 8, 15),
-            "release_label": "release_label",
-        }
+        input_data = genome_db_conn.fetch_genomes(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
-            "assembly": {
-                "accession": "X.AE500",
-                "level": "level",
-                "name": "assembly name",
-                "ucscName": "ucsc name",
-                "ensemblName": "some assembly ensembl name",
-            },
-            "created": "2022-08-15",
-            "genomeUuid": "f9d8c1dc-45dd-11ec-81d3-0242ac130003",
-            "organism": {
-                "displayName": "Display Name",
-                "ensemblName": "some name",
-                "scientificName": "scientific name",
-                "scientificParlanceName": "scientific_parlance_name",
-                "strain": "test strain",
-                "urlName": "http://url_name.com",
-            },
-            "release": {
-                "isCurrent": True,
-                "releaseDate": "2022-08-15",
-                "releaseLabel": "release_label",
-                "releaseVersion": 1,
-            },
-            "taxon": {
-                "scientificName": "scientific name",
-                "strain": "test strain",
-                "taxonomyId": 1234,
-            },
+          "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+          "assembly": {
+            "accession": "GCA_000001405.28",
+            "name": "GRCh38.p13",
+            "ucscName": "hg38",
+            "level": "chromosome",
+            "ensemblName": "GRCh38.p13"
+          },
+          "taxon": {
+            "taxonomyId": 9606,
+            "scientificName": "Homo sapiens"
+          },
+          "created": "2023-05-12 13:30:58",
+          "organism": {
+            "displayName": "Human",
+            "scientificName": "Homo sapiens",
+            "urlName": "Homo_sapiens",
+            "ensemblName": "homo_sapiens",
+            "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d"
+          },
+          "release": {
+            "releaseVersion": 108.0,
+            "releaseDate": "2023-05-15",
+            "releaseLabel": "Beta Release 1",
+            "isCurrent": True,
+            "siteName": "Ensembl",
+            "siteLabel": "Ensembl Genome Browser",
+            "siteUri": "https://beta.ensembl.org"
+          }
         }
-        output = json_format.MessageToJson(service.create_genome(input_dict))
+
+        output = json_format.MessageToJson(utils.create_genome(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_assembly(self, multi_dbs):
-        input_dict = {
-            "assembly_uuid": "1234",
-            "accession": "XE.1234",
-            "level": "5",
-            "name": "test name",
-            "chromosomal": 1223,
-            "length": 5,
-            "sequence_location": "location",
-            "sequence_checksum": "checksum",
-            "ga4gh_identifier": "test identifier",
-        }
-
+    def test_create_assembly(self, multi_dbs, genome_db_conn):
+        input_data = genome_db_conn.fetch_sequences(assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e")
         expected_output = {
-            "assemblyUuid": "1234",
-            "accession": "XE.1234",
-            "level": "5",
-            "name": "test name",
-            "chromosomal": 1223,
-            "length": 5,
-            "sequenceLocation": "location",
-            "sequenceChecksum": "checksum",
-            "ga4ghIdentifier": "test identifier",
+            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
+            "accession": "GCA_000001405.28",
+            "level": "chromosome",
+            "name": "GRCh38.p13",
+            "chromosomal": 1,
+            "length": 107043717,
+            "sequenceLocation": "SO:0000738"
         }
 
-        output = json_format.MessageToJson(service.create_assembly(input_dict))
+        output = json_format.MessageToJson(utils.create_assembly(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_karyotype(self, multi_dbs):
-        input_dict = {
-            "genome_uuid": "f9d8c1dc-45dd-11ec-81d3-0242ac130003",
-            "code": "5",
-            "chromosomal": "25",
-            "location": "129729",
-        }
-
+    def test_create_karyotype(self, multi_dbs, genome_db_conn):
+        input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
-            "genomeUuid": "f9d8c1dc-45dd-11ec-81d3-0242ac130003",
-            "code": "5",
-            "chromosomal": "25",
-            "location": "129729",
+            "code": "chromosome",
+            "chromosomal": "1",
+            "location": "SO:0000738",
+            "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
         }
 
-        output = json_format.MessageToJson(service.create_karyotype(input_dict))
+        output = json_format.MessageToJson(utils.create_karyotype(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_species(self, multi_dbs):
-        input_dict = {
-            "genome_uuid": "f9d8c1dc-45dd-11ec-81d3-0242ac130003",
-            "common_name": "cow",
-            "ncbi_common_name": "cattle",
-            "scientific_name": "Bos taurus",
-            "alternative_names": [
-                "bovine",
-                "cow",
-                "dairy cow",
-                "domestic cattle",
-                "domestic cow",
-            ],
-            "scientific_parlance_name": "Bos taurus",
-            "taxonomy_id": 9913,
-        }
-
+    def test_create_species(self, multi_dbs, genome_db_conn):
+        species_input_data = genome_db_conn.fetch_genomes(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
+        tax_id = species_input_data[0].Organism.taxonomy_id
+        taxo_results = genome_db_conn.fetch_taxonomy_names(tax_id)
         expected_output = {
-            "genomeUuid": "f9d8c1dc-45dd-11ec-81d3-0242ac130003",
-            "commonName": "cow",
-            "ncbiCommonName": "cattle",
-            "scientificName": "Bos taurus",
-            "scientificParlanceName": "Bos taurus",
-            "alternativeNames": [
-                "bovine",
-                "cow",
-                "dairy cow",
-                "domestic cattle",
-                "domestic cow",
-            ],
-            "taxonId": 9913,
+            "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+            "ncbiCommonName": "human",
+            "taxonId": 9606,
+            "scientificName": "Homo sapiens"
         }
 
-        output = json_format.MessageToJson(service.create_species(input_dict))
+        output = json_format.MessageToJson(utils.create_species(species_input_data[0], taxo_results[tax_id]))
         assert json.loads(output) == expected_output
 
-    def test_create_top_level_statistics(self, multi_dbs):
-        input_dict = {
-            "organism_uuid": "48357d41-0029-4ba6-8f66-66f526f71603",
+    def test_create_top_level_statistics(self, multi_dbs, genome_db_conn):
+        organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
+        input_data = genome_db_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_name="all")
+
+        statistics = []
+        # getting just the first element
+        statistics.append({
+            'name': input_data[0].Attribute.name,
+            'label': input_data[0].Attribute.label,
+            'statistic_type': input_data[0].Attribute.type,
+            'statistic_value': input_data[0].DatasetAttribute.value
+        })
+
+        expected_output = {
+            "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
             "statistics": [
                 {
-                    "name": "transcript_genomic_mnoncoding",
-                    "label": "Non-coding transcript",
-                    "statistic_type": "length_bp",
-                    "statistic_value": "5873",
-                },
-                {
-                    "name": "transcript_genomic_pseudogene",
-                    "label": "Pseudogenic transcript",
-                    "statistic_type": "length_bp",
-                    "statistic_value": "3305648",
-                },
+                    "name": "total_genome_length",
+                    "label": "Total genome length",
+                    "statisticType": "bp",
+                    "statisticValue": "4641652"
+                }
             ]
         }
 
-        expected_output = {
-            "organismUuid": "48357d41-0029-4ba6-8f66-66f526f71603",
-            "statistics": [
-                {"label": "Non-coding transcript",
-                 "name": "transcript_genomic_mnoncoding",
-                 "statisticType": "length_bp",
-                 "statisticValue": "5873"},
-                {"label": "Pseudogenic transcript",
-                 "name": "transcript_genomic_pseudogene",
-                 "statisticType": "length_bp",
-                 "statisticValue": "3305648"}]
-        }
-
         output = json_format.MessageToJson(
-            service.create_top_level_statistics(input_dict)
+            utils.create_top_level_statistics({
+                'organism_uuid': organism_uuid,
+                'statistics': statistics
+            })
         )
         assert json.loads(output) == expected_output
 
-    def test_create_genome_sequence(self, multi_dbs):
-        input_dict = {
-            "accession": "XQ1234",
-            "name": "test_seq",
-            "sequence_location": "some location",
-            "length": 1234,
-            "chromosomal": True,
-        }
+    def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
+        input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
-            "accession": "XQ1234",
-            "chromosomal": True,
-            "length": 1234,
-            "name": "test_seq",
-            "sequenceLocation": "some location",
+            "accession": "CHR_HG1_PATCH",
+            "name": "CHR_HG1_PATCH",
+            "sequenceLocation": "SO:0000738",
+            "length": 107043717,
+            "chromosomal": True
         }
-        output = json_format.MessageToJson(service.create_genome_sequence(input_dict))
+        output = json_format.MessageToJson(utils.create_genome_sequence(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_release(self, multi_dbs):
-        input_dict = {
-            "release_version": 5,
-            "release_date": "12-10-2020",
-            "release_label": "prod",
-            "is_current": False,
-            "site_name": "EBI",
-            "site_label": "EBI",
-            "site_uri": "test uri",
-        }
+    def test_create_release(self, multi_dbs, release_db_conn):
+        input_data = release_db_conn.fetch_releases(release_version=108)
         expected_output = {
-            "releaseDate": "12-10-2020",
-            "releaseLabel": "prod",
-            "releaseVersion": 5,
-            "siteLabel": "EBI",
-            "siteName": "EBI",
-            "siteUri": "test uri",
+            "releaseVersion": 108.0,
+            "releaseDate": "2023-05-15",
+            "releaseLabel": "Beta Release 1",
+            "isCurrent": True,
+            "siteName": "Ensembl",
+            "siteLabel": "Ensembl Genome Browser",
+            "siteUri": "https://beta.ensembl.org"
         }
-        output = json_format.MessageToJson(service.create_release(input_dict))
+        output = json_format.MessageToJson(utils.create_release(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_karyotype_information(self, engine):
+    def test_get_karyotype_information(self, genome_db_conn):
         output = json_format.MessageToJson(
-            utils.get_karyotype_information(engine, "3c4cec7f-fb69-11eb-8dac-005056b32883"))
+            utils.get_karyotype_information(genome_db_conn, "3c4cec7f-fb69-11eb-8dac-005056b32883"))
         expected_output = {}
         assert json.loads(output) == expected_output
 
-    def test_assembly_information(self, engine):
+    def test_get_assembly_information(self, genome_db_conn):
         output = json_format.MessageToJson(
-            utils.get_assembly_information(engine, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))
+            utils.get_assembly_information(genome_db_conn, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))
         expected_output = {"accession": "GCA_000001405.28",
                            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
                            "length": 107043717,
@@ -277,10 +213,10 @@ class TestClass:
                            "sequenceLocation": "SO:0000738"}
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_from_assembly_accession_iterator(self, engine):
+    def test_get_genomes_from_assembly_accession_iterator(self, genome_db_conn):
         output = [json.loads(json_format.MessageToJson(response)) for response in
                   utils.get_genomes_from_assembly_accession_iterator(
-                      engine, "GCA_000005845.2")]
+                      genome_db_conn, "GCA_000005845.2")]
         expected_output = [{"assembly": {"accession": "GCA_000005845.2",
                                          "ensemblName": "ASM584v2",
                                          "level": "chromosome",
@@ -307,33 +243,33 @@ class TestClass:
                                       "taxonomyId": 511145}}]
         assert output == expected_output
 
-    def test_get_genomes_from_assembly_accession_iterator_null(self, engine):
+    def test_get_genomes_from_assembly_accession_iterator_null(self, genome_db_conn):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_from_assembly_accession_iterator(engine, None)]
+                  utils.get_genomes_from_assembly_accession_iterator(genome_db_conn, None)]
         assert output == []
 
-    def test_get_genomes_from_assembly_accession_iterator_no_matches(self, engine):
+    def test_get_genomes_from_assembly_accession_iterator_no_matches(self, genome_db_conn):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_from_assembly_accession_iterator(engine, "asdfasdfadf")]
+                  utils.get_genomes_from_assembly_accession_iterator(genome_db_conn, "asdfasdfadf")]
         assert output == []
 
-    def test_get_sub_species_info(self, engine):
+    def test_get_sub_species_info(self, genome_db_conn):
         output = json_format.MessageToJson(
-            utils.get_sub_species_info(engine, "21279e3e-e651-43e1-a6fc-79e390b9e8a8"))
+            utils.get_sub_species_info(genome_db_conn, "21279e3e-e651-43e1-a6fc-79e390b9e8a8"))
         expected_output = {
             "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
             "speciesName": ["EnsemblBacteria"],
             "speciesType": ["Division"]}
         assert json.loads(output) == expected_output
 
-        output2 = json_format.MessageToJson(utils.get_sub_species_info(engine, "s0m3-r4nd0m-0rg4n1sm-uu1d"))
+        output2 = json_format.MessageToJson(utils.get_sub_species_info(genome_db_conn, "s0m3-r4nd0m-0rg4n1sm-uu1d"))
         expected_output2 = {}
         assert json.loads(output2) == expected_output2
 
-    def test_get_top_level_statistics(self, engine):
+    def test_get_top_level_statistics(self, genome_db_conn):
         # Triticum aestivum
         output = json_format.MessageToJson(
-            utils.get_top_level_statistics(engine, "d64c34ca-b37a-476b-83b5-f21d07a3ae67")
+            utils.get_top_level_statistics(genome_db_conn, "d64c34ca-b37a-476b-83b5-f21d07a3ae67")
         )
         output = json.loads(output)
         assert len(output["statistics"]) == 51
@@ -350,10 +286,10 @@ class TestClass:
             "statisticValue": "14547261565",
         }
 
-    def test_get_top_level_statistics_by_uuid(self, engine):
+    def test_get_top_level_statistics_by_uuid(self, genome_db_conn):
         output = json_format.MessageToJson(
             utils.get_top_level_statistics_by_uuid(
-                engine, "a73357ab-93e7-11ec-a39d-005056b38ce3"
+                genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3"
             )
         )
         output = json.loads(output)
@@ -371,12 +307,12 @@ class TestClass:
             "statisticValue": "133312441"
         }
 
-    def test_get_datasets_list_by_uuid(self, engine):
+    def test_get_datasets_list_by_uuid(self, genome_db_conn):
         # the expected_output is too long and duplicated
         # because of the returned attributes
         # TODO: Fix this later
         output = json_format.MessageToJson(
-            utils.get_datasets_list_by_uuid(engine, "a73357ab-93e7-11ec-a39d-005056b38ce3"))
+            utils.get_datasets_list_by_uuid(genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3"))
 
         expected_output = {
             "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
@@ -711,16 +647,16 @@ class TestClass:
             }
         assert json.loads(output) == expected_output
 
-    def test_get_datasets_list_by_uuid_no_results(self, engine):
-        output = json_format.MessageToJson(utils.get_datasets_list_by_uuid(engine, "some-random-uuid-f00-b4r", 103.0))
+    def test_get_datasets_list_by_uuid_no_results(self, genome_db_conn):
+        output = json_format.MessageToJson(utils.get_datasets_list_by_uuid(genome_db_conn, "some-random-uuid-f00-b4r", 103.0))
         output = json.loads(output)
         expected_output = {}
         assert output == expected_output
 
-    def test_get_dataset_by_genome_and_dataset_type(self, engine):
+    def test_get_dataset_by_genome_and_dataset_type(self, genome_db_conn):
         # TODO: Fix
         output = json_format.MessageToJson(
-            utils.get_dataset_by_genome_and_dataset_type(engine, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly")
+            utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly")
         )
         output = json.loads(output)
         assert output == {'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3', 'datasetType': 'assembly',
@@ -790,25 +726,25 @@ class TestClass:
                                'value': '38.87'}]
                           }
 
-    def test_get_dataset_by_genome_id_no_results(self, engine):
+    def test_get_dataset_by_genome_id_no_results(self, genome_db_conn):
         output = json_format.MessageToJson(
-            utils.get_dataset_by_genome_and_dataset_type(engine, "a7335667-93e7-11ec-a39d-005056b38ce3", "blah blah blah"))
+            utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3", "blah blah blah"))
         output = json.loads(output)
         assert output == {}
 
-    def test_get_genome_uuid(self, engine):
+    def test_get_genome_uuid(self, genome_db_conn):
         output = json_format.MessageToJson(
             utils.get_genome_uuid(
-                engine,
+                genome_db_conn,
                 "homo_sapiens", "GRCh37.p13"))
         expected_output = {
             "genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"
         }
         assert json.loads(output) == expected_output
 
-    def test_get_genome_by_uuid(self, engine):
+    def test_get_genome_by_uuid(self, genome_db_conn):
         output = json_format.MessageToJson(
-            utils.get_genome_by_uuid(engine,
+            utils.get_genome_by_uuid(genome_db_conn,
                                        "a73357ab-93e7-11ec-a39d-005056b38ce3", 108.0))
         expected_output = {"assembly": {"accession": "GCA_900519105.1",
                                         "ensemblName": "IWGSC",
@@ -834,9 +770,9 @@ class TestClass:
                                      "taxonomyId": 4565}}
         assert json.loads(output) == expected_output
 
-    def test_genome_by_uuid_release_version_unspecified(self, engine):
+    def test_genome_by_uuid_release_version_unspecified(self, genome_db_conn):
         output = json_format.MessageToJson(
-            utils.get_genome_by_uuid(engine, "a73357ab-93e7-11ec-a39d-005056b38ce3", 0.0))
+            utils.get_genome_by_uuid(genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3", 0.0))
         expected_output = {"assembly": {"accession": "GCA_900519105.1",
                                         "ensemblName": "IWGSC",
                                         "level": "chromosome",
@@ -861,13 +797,13 @@ class TestClass:
                                      "taxonomyId": 4565}}
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_by_uuid_null(self, engine):
-        output = utils.get_genome_by_uuid(engine, None, 0)
+    def test_get_genomes_by_uuid_null(self, genome_db_conn):
+        output = utils.get_genome_by_uuid(genome_db_conn, None, 0)
         assert output == ensembl_metadata_pb2.Genome()
 
-    def test_get_genomes_by_keyword(self, engine):
+    def test_get_genomes_by_keyword(self, genome_db_conn):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_by_keyword_iterator(engine, "Human", 108.0)]
+                  utils.get_genomes_by_keyword_iterator(genome_db_conn, "Human", 108.0)]
         expected_output = [{"assembly": {"accession": "GCA_000001405.28",
                                          "ensemblName": "GRCh38.p13",
                                          "level": "chromosome",
@@ -911,9 +847,9 @@ class TestClass:
                            ]
         assert output == expected_output
 
-    def test_get_genomes_by_keyword_release_unspecified(self, engine):
+    def test_get_genomes_by_keyword_release_unspecified(self, genome_db_conn):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_by_keyword_iterator(engine, "Homo Sapiens", 0.0)]
+                  utils.get_genomes_by_keyword_iterator(genome_db_conn, "Homo Sapiens", 0.0)]
         # TODO: DRY the expected_output
         expected_output = [{"assembly": {"accession": "GCA_000001405.28",
                                          "ensemblName": "GRCh38.p13",
@@ -958,20 +894,20 @@ class TestClass:
                            ]
         assert output == expected_output
 
-    def test_get_genomes_by_keyword_null(self, engine):
+    def test_get_genomes_by_keyword_null(self, genome_db_conn):
         output = list(
-            utils.get_genomes_by_keyword_iterator(engine, None, 0))
+            utils.get_genomes_by_keyword_iterator(genome_db_conn, None, 0))
         assert output == []
 
-    def test_get_genomes_by_keyword_no_matches(self, engine):
+    def test_get_genomes_by_keyword_no_matches(self, genome_db_conn):
         output = list(
-            utils.get_genomes_by_keyword_iterator(engine, "bigfoot",
+            utils.get_genomes_by_keyword_iterator(genome_db_conn, "bigfoot",
                                                     1))
         assert output == []
 
-    def test_get_genomes_by_name(self, engine):
+    def test_get_genomes_by_name(self, genome_db_conn):
         output = json_format.MessageToJson(
-            utils.get_genome_by_name(engine, "homo_sapiens", "Ensembl", 108.0))
+            utils.get_genome_by_name(genome_db_conn, "homo_sapiens", "Ensembl", 108.0))
         expected_output = {"assembly": {"accession": "GCA_000001405.28",
                                         "ensemblName": "GRCh38.p13",
                                         "level": "chromosome",
@@ -994,8 +930,8 @@ class TestClass:
                            "taxon": {"scientificName": "Homo sapiens", "taxonomyId": 9606}}
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_by_name_release_unspecified(self, engine):
-        output = json_format.MessageToJson(utils.get_genome_by_name(engine, "homo_sapiens", "Ensembl", 0.0))
+    def test_get_genomes_by_name_release_unspecified(self, genome_db_conn):
+        output = json_format.MessageToJson(utils.get_genome_by_name(genome_db_conn, "homo_sapiens", "Ensembl", 0.0))
         expected_output = {"assembly": {"accession": "GCA_000001405.28",
                                         "ensemblName": "GRCh38.p13",
                                         "level": "chromosome",

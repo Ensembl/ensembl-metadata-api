@@ -31,6 +31,7 @@ def create_species(species_data=None, taxo_info=None):
 def create_top_level_statistics(data=None):
     if data is None:
         return ensembl_metadata_pb2.TopLevelStatistics()
+
     species = ensembl_metadata_pb2.TopLevelStatistics(
         organism_uuid=data["organism_uuid"],
         statistics=data["statistics"],
