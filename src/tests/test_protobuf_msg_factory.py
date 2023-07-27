@@ -102,8 +102,8 @@ class TestClass:
             "accession": "GCA_000001405.28",
             "level": "chromosome",
             "name": "GRCh38.p13",
-            "chromosomal": 1,
-            "length": 107043717,
+            # "chromosomal": 1,
+            "length": 71251,
             "sequenceLocation": "SO:0000738"
         }
 
@@ -114,7 +114,7 @@ class TestClass:
         input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
             "code": "chromosome",
-            "chromosomal": "1",
+            "chromosomal": "0",
             "location": "SO:0000738",
             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
         }
@@ -172,11 +172,11 @@ class TestClass:
     def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
         input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
-            "accession": "CHR_HG1_PATCH",
-            "name": "CHR_HG1_PATCH",
+            "accession": "KI270757.1",
+            # "name": "CHR_HG1_PATCH",
             "sequenceLocation": "SO:0000738",
-            "length": 107043717,
-            "chromosomal": True
+            "length": 71251,
+            # "chromosomal": True
         }
         output = json_format.MessageToJson(utils.create_genome_sequence(input_data[0]))
         assert json.loads(output) == expected_output

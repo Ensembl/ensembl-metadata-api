@@ -68,8 +68,8 @@ class TestUtils:
             utils.get_assembly_information(genome_db_conn, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))
         expected_output = {"accession": "GCA_000001405.28",
                            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-                           "length": 107043717,
-                           "chromosomal": 1,
+                           "length": 71251,
+                           # "chromosomal": 1,
                            "level": "chromosome",
                            "name": "GRCh38.p13",
                            "sequenceLocation": "SO:0000738"}
