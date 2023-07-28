@@ -10,10 +10,35 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import os
-import logging
-from pathlib import Path
 
 import pytest
-from _pytest.config import Config
+import sqlalchemy as db
+
+from ensembl.production.metadata.api.genome import GenomeAdaptor
+from ensembl.production.metadata.api.release import ReleaseAdaptor
 
 pytest_plugins = ("ensembl.plugins.pytest_unittest",)
+
+
+@pytest.fixture(scope="class")
+def engine(multi_dbs):
+    os.environ["METADATA_URI"] = multi_dbs["ensembl_metadata"].dbc.url
+    os.environ["TAXONOMY_URI"] = multi_dbs["ncbi_taxonomy"].dbc.url
+    yield db.create_engine(multi_dbs["ensembl_metadata"].dbc.url)
+
+
+@pytest.fixture(scope="class")
+def genome_db_conn(multi_dbs):
+    genome_conn = GenomeAdaptor(
+        metadata_uri=multi_dbs["ensembl_metadata"].dbc.url,
+        taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
+    )
+    yield genome_conn
+
+
+@pytest.fixture(scope="class")
+def release_db_conn(multi_dbs):
+    release_conn = ReleaseAdaptor(
+        metadata_uri=multi_dbs["ensembl_metadata"].dbc.url
+    )
+    yield release_conn

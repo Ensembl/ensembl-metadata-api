@@ -13,18 +13,14 @@
 Unit tests for protobuf_msg_factory.py
 """
 import json
-import os.path
 from pathlib import Path
 
 import pkg_resources
 import pytest
-import sqlalchemy as db
 from ensembl.database import UnitTestDB
-from ensembl.production.metadata.api.genome import GenomeAdaptor
-from ensembl.production.metadata.api.release import ReleaseAdaptor
 from google.protobuf import json_format
 
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
+from ensembl.production.metadata.grpc import utils
 
 distribution = pkg_resources.get_distribution("ensembl-metadata-api")
 sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
@@ -35,27 +31,6 @@ sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata
                          indirect=True)
 class TestClass:
     dbc = None  # type: UnitTestDB
-
-    @pytest.fixture(scope="class")
-    def engine(self, multi_dbs):
-        os.environ["METADATA_URI"] = multi_dbs["ensembl_metadata"].dbc.url
-        os.environ["TAXONOMY_URI"] = multi_dbs["ncbi_taxonomy"].dbc.url
-        yield db.create_engine(multi_dbs["ensembl_metadata"].dbc.url)
-
-    @pytest.fixture(scope="class")
-    def genome_db_conn(self, multi_dbs):
-        genome_conn = GenomeAdaptor(
-            metadata_uri=multi_dbs["ensembl_metadata"].dbc.url,
-            taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
-        )
-        yield genome_conn
-
-    @pytest.fixture(scope="class")
-    def release_db_conn(self, multi_dbs):
-        release_conn = ReleaseAdaptor(
-            metadata_uri=multi_dbs["ensembl_metadata"].dbc.url
-        )
-        yield release_conn
 
     def test_create_genome(self, multi_dbs, genome_db_conn):
         """Test service.create_genome function"""
