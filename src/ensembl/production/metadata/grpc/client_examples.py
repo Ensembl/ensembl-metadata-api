@@ -23,7 +23,8 @@ from ensembl_metadata_pb2 import (
     OrganismIDRequest,
     DatasetsRequest,
     GenomeDatatypeRequest,
-    GenomeInfoRequest
+    GenomeInfoRequest,
+    GenomeAssemblySequenceRequest
 )
 
 import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
@@ -99,6 +100,29 @@ def list_genome_sequences(stub):
     genome_sequences3 = stub.GetGenomeSequence(request3)
     print("**** Invalid UUID ****")
     for seq in genome_sequences3:
+        print(seq)
+
+
+def list_genome_assembly_sequences(stub):
+    request1 = GenomeAssemblySequenceRequest(
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
+        assembly_accession="GCA_000001405.28",
+        chromosomal_only=False
+    )
+    genome_assembly_sequences1 = stub.GetGenomeAssemblySequence(request1)
+
+    request2 = GenomeAssemblySequenceRequest(
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
+        assembly_accession="GCA_000001405.28",
+        chromosomal_only=True
+    )
+    genome_assembly_sequences2 = stub.GetGenomeAssemblySequence(request2)
+    print("**** Chromosomal and non-chromosomal ****")
+    for seq in genome_assembly_sequences1:
+        print(seq)
+
+    print("**** Chromosomal_only ****")
+    for seq in genome_assembly_sequences2:
         print(seq)
 
 
@@ -250,8 +274,10 @@ def run():
         get_top_level_statistics_by_uuid(stub)
         print("-------------- Get Genomes --------------")
         get_genomes(stub)
-        print("-------------- List Sequences --------------")
+        print("-------------- List Genome Sequences --------------")
         list_genome_sequences(stub)
+        print("-------------- List Genome Assembly Sequences --------------")
+        list_genome_assembly_sequences(stub)
         print("-------------- List Releases --------------")
         list_releases(stub)
         print("-------------- List Releases for Genome --------------")

@@ -15,7 +15,8 @@ from ensembl.production.metadata.grpc.utils import connect_to_db, get_species_in
     get_genomes_from_assembly_accession_iterator, get_sub_species_info, get_karyotype_information, \
     get_top_level_statistics, get_top_level_statistics_by_uuid, get_genome_uuid, get_genome_by_uuid, \
     get_genomes_by_keyword_iterator, get_genome_by_name, release_iterator, release_by_uuid_iterator, \
-    genome_sequence_iterator, get_datasets_list_by_uuid, get_dataset_by_genome_and_dataset_type
+    genome_sequence_iterator, get_datasets_list_by_uuid, get_dataset_by_genome_and_dataset_type, \
+    genome_assembly_sequence_iterator
 
 
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):
@@ -72,6 +73,11 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
     def GetGenomeSequence(self, request, context):
         return genome_sequence_iterator(
             self.db, request.genome_uuid, request.chromosomal_only
+        )
+
+    def GetGenomeAssemblySequence(self, request, context):
+        return genome_assembly_sequence_iterator(
+            self.db, request.genome_uuid, request.assembly_accession, request.chromosomal_only
         )
 
     def GetDatasetsListByUUID(self, request, context):

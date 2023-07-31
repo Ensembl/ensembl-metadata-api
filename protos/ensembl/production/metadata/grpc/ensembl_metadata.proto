@@ -60,6 +60,9 @@ service EnsemblMetadata {
   // Retrieve sequence metadata for a genome's assembly.
   rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
 
+  // Retrieve sequence metadata for a genome's assembly.
+  rpc GetGenomeAssemblySequence(GenomeAssemblySequenceRequest) returns (stream GenomeAssemblySequence) {}
+
   // Retrieve a list of dataset_ids associated with a genome UUID.
   rpc GetDatasetsListByUUID(DatasetsRequest) returns (Datasets) {}
   
@@ -216,6 +219,18 @@ message GenomeSequence {
 }
 
 /*
+Metadata about the sequences that comprise a genome's assembly.
+ */
+message GenomeAssemblySequence {
+  string name = 1;
+  string rank = 2;  // To be added
+  string sequence_checksum = 3;
+  uint32 length = 4;
+  string ga4gh_identifier = 5;
+  bool chromosomal = 6;
+}
+
+/*
 Datasets list associated to the provided genome_uuid 
  */
 message Datasets {
@@ -300,6 +315,15 @@ Genome sequence filter.
 message GenomeSequenceRequest {
   string genome_uuid = 1;     // Mandatory
   bool chromosomal_only = 2;  // Optional
+}
+
+/*
+Genome sequence filter.
+ */
+message GenomeAssemblySequenceRequest {
+  string genome_uuid = 1;          // Mandatory
+  string assembly_accession = 2;   // Mandatory
+  bool chromosomal_only = 3;       // Optional
 }
 
 /*

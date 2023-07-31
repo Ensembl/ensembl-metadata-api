@@ -156,6 +156,16 @@ class TestClass:
         output = json_format.MessageToJson(utils.create_genome_sequence(input_data[0]))
         assert json.loads(output) == expected_output
 
+    def test_create_genome_assembly_sequence(self, multi_dbs, genome_db_conn):
+        input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
+        expected_output = {
+            "name": "CHR_HG1_PATCH",
+            "length": 107043717,
+            "chromosomal": True
+        }
+        output = json_format.MessageToJson(utils.create_genome_assembly_sequence(input_data[0]))
+        assert json.loads(output) == expected_output
+
     def test_create_release(self, multi_dbs, release_db_conn):
         input_data = release_db_conn.fetch_releases(release_version=108)
         expected_output = {

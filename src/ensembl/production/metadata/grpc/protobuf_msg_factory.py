@@ -168,6 +168,22 @@ def create_genome_sequence(data=None):
     return genome_sequence
 
 
+def create_genome_assembly_sequence(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.GenomeAssemblySequence()
+
+    genome_assembly_sequence = ensembl_metadata_pb2.GenomeAssemblySequence(
+        name=data.AssemblySequence.name,
+        # rank=data.AssemblySequence.rank, # To add
+        sequence_checksum=data.AssemblySequence.sequence_checksum,
+        length=data.AssemblySequence.length,
+        ga4gh_identifier=data.AssemblySequence.ga4gh_identifier,
+        chromosomal=data.AssemblySequence.chromosomal
+    )
+
+    return genome_assembly_sequence
+
+
 def create_release(data=None):
     if data is None:
         return ensembl_metadata_pb2.Release()

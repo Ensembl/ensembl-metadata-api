@@ -20,7 +20,7 @@ from ensembl.production.metadata.api.release import ReleaseAdaptor
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
     create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
-    create_dataset_infos, populate_dataset_info
+    create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence
 
 
 def connect_to_db():
@@ -283,6 +283,19 @@ def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
     )
     for result in assembly_sequence_results:
         yield create_genome_sequence(result)
+
+
+def genome_assembly_sequence_iterator(db_conn, genome_uuid, assembly_accession, chromosomal_only):
+    if genome_uuid is None:
+        return
+
+    assembly_sequence_results = db_conn.fetch_sequences(
+        genome_uuid=genome_uuid,
+        assembly_accession=assembly_accession,
+        chromosomal_only=chromosomal_only,
+    )
+    for result in assembly_sequence_results:
+        yield create_genome_assembly_sequence(result)
 
 
 def release_iterator(metadata_db, site_name, release_version, current_only):
