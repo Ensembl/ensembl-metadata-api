@@ -70,8 +70,8 @@ class AssemblySequence(Base):
 
     def __repr__(self):
         return f"AssemblySequence(" \
-                   f"assembly_sequence_id={self.assembly_uuid}, " \
-                   f"assembly_id='{self.accession}, " \
+                   f"assembly_sequence_id={self.assembly_sequence_id}, " \
+                   f"assembly_id='{self.assembly_id}, " \
                    f"chromosomal='{self.chromosomal}', " \
                    f"length='{self.length}'" \
                f")"

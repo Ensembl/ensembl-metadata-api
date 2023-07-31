@@ -157,6 +157,26 @@ class TestMetadataDB:
         test = conn.fetch_sequences(assembly_uuid='eeaaa2bf-151c-4848-8b85-a05a9993101e')
         assert test[0].AssemblySequence.accession == 'KI270757.1'
 
+    def test_fetch_sequences_by_gneome_assembly(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_sequences(
+            genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3',
+            assembly_accession='GCA_000001405.28',
+            chromosomal_only=False
+        )
+        assert test[-1].AssemblySequence.chromosomal == 0
+
+    def test_fetch_sequences_chromosomal_only(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_sequences(
+            genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3',
+            assembly_accession='GCA_000001405.28',
+            chromosomal_only=True
+        )
+        assert test[-1].AssemblySequence.chromosomal == 1
+
     def test_fetch_genome_dataset_default_topic_assembly(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
