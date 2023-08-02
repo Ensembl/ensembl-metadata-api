@@ -133,6 +133,26 @@ class TestMetadataDB:
         test = conn.fetch_genomes_by_assembly_accession('GCA_000005845.2')
         assert test[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)'
 
+    def test_fetch_genomes_by_assembly_sequence_accession(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_sequences(
+            genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3',
+            assembly_accession='GCA_000001405.28',
+            assembly_sequence_accession='CM000686.2'
+        )
+        assert test[0].AssemblySequence.name == 'Y'
+
+    def test_fetch_genomes_by_assembly_sequence_accession_empty(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_sequences(
+            genome_uuid='s0m3-r4nd0m-g3n3-uu1d-v4lu3',
+            assembly_accession='GCA_000001405.28',
+            assembly_sequence_accession='CM000686.2'
+        )
+        assert len(test) == 0
+
     def test_fetch_genomes_by_ensembl_name(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
