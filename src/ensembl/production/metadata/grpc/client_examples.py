@@ -24,7 +24,8 @@ from ensembl_metadata_pb2 import (
     DatasetsRequest,
     GenomeDatatypeRequest,
     GenomeInfoRequest,
-    GenomeAssemblySequenceRequest
+    GenomeAssemblySequenceRequest,
+    GenomeAssemblySequenceRegionRequest
 )
 
 import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
@@ -123,6 +124,31 @@ def list_genome_assembly_sequences(stub):
 
     print("**** Chromosomal_only ****")
     for seq in genome_assembly_sequences2:
+        print(seq)
+
+
+def list_genome_assembly_sequences_region(stub):
+    request1 = GenomeAssemblySequenceRegionRequest(
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
+        assembly_accession="GCA_000001405.28",
+        sequence_region_name="CM000686.2",
+        chromosomal_only=False
+    )
+    genome_assembly_sequences_region1 = stub.GetGenomeAssemblySequence(request1)
+
+    request2 = GenomeAssemblySequenceRegionRequest(
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
+        assembly_accession="GCA_000001405.28",
+        sequence_region_name="CM000686.2",
+        chromosomal_only=True
+    )
+    genome_assembly_sequences_region2 = stub.GetGenomeAssemblySequence(request2)
+    print("**** Chromosomal and non-chromosomal ****")
+    for seq in genome_assembly_sequences_region1:
+        print(seq)
+
+    print("**** Chromosomal_only ****")
+    for seq in genome_assembly_sequences_region2:
         print(seq)
 
 
@@ -278,6 +304,8 @@ def run():
         list_genome_sequences(stub)
         print("-------------- List Genome Assembly Sequences --------------")
         list_genome_assembly_sequences(stub)
+        print("-------------- List Region Info for Given Sequence Name --------------")
+        list_genome_assembly_sequences_region(stub)
         print("-------------- List Releases --------------")
         list_releases(stub)
         print("-------------- List Releases for Genome --------------")

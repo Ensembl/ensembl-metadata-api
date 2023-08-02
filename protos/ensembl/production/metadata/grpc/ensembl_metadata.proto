@@ -60,8 +60,11 @@ service EnsemblMetadata {
   // Retrieve sequence metadata for a genome's assembly.
   rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
 
-  // Retrieve sequence metadata for a genome's assembly.
+  // Retrieve region information for a genome's assembly.
   rpc GetGenomeAssemblySequence(GenomeAssemblySequenceRequest) returns (stream GenomeAssemblySequence) {}
+
+  // Retrieve region information for a genome's assembly with a given sequence region name.
+  rpc GetGenomeAssemblySequenceRegion(GenomeAssemblySequenceRegionRequest) returns (stream GenomeAssemblySequenceRegion) {}
 
   // Retrieve a list of dataset_ids associated with a genome UUID.
   rpc GetDatasetsListByUUID(DatasetsRequest) returns (Datasets) {}
@@ -231,6 +234,17 @@ message GenomeAssemblySequence {
 }
 
 /*
+Metadata about the sequences that comprise a genome's assembly.
+ */
+message GenomeAssemblySequenceRegion {
+  string name = 1;
+  string sequence_checksum = 2;
+  uint32 length = 3;
+  string ga4gh_identifier = 4;
+  bool chromosomal = 5;
+}
+
+/*
 Datasets list associated to the provided genome_uuid 
  */
 message Datasets {
@@ -324,6 +338,17 @@ message GenomeAssemblySequenceRequest {
   string genome_uuid = 1;          // Mandatory
   string assembly_accession = 2;   // Mandatory
   bool chromosomal_only = 3;       // Optional
+}
+
+/*
+Genome sequence filter.
+TODO: Is there a way to DRY this since it's equivalent to GenomeAssemblySequenceRequest above plus sequence_region_name
+ */
+message GenomeAssemblySequenceRegionRequest {
+  string genome_uuid = 1;          // Mandatory
+  string assembly_accession = 2;   // Mandatory
+  string sequence_region_name = 3;   // Mandatory
+  bool chromosomal_only = 4;       // Optional
 }
 
 /*

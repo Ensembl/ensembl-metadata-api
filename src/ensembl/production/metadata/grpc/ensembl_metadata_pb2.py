@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n7ensembl/production/metadata/grpc/ensembl_metadata.proto\x12\x10\x65nsembl_metadata\"\xde\x01\n\x06Genome\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12,\n\x08\x61ssembly\x18\x02 \x01(\x0b\x32\x1a.ensembl_metadata.Assembly\x12&\n\x05taxon\x18\x03 \x01(\x0b\x32\x17.ensembl_metadata.Taxon\x12\x0f\n\x07\x63reated\x18\x04 \x01(\t\x12,\n\x08organism\x18\x05 \x01(\x0b\x32\x1a.ensembl_metadata.Organism\x12*\n\x07release\x18\x06 \x01(\x0b\x32\x19.ensembl_metadata.Release\"U\n\tKaryotype\x12\x0c\n\x04\x63ode\x18\x01 \x01(\t\x12\x13\n\x0b\x63hromosomal\x18\x02 \x01(\t\x12\x10\n\x08location\x18\x03 \x01(\t\x12\x13\n\x0bgenome_uuid\x18\x04 \x01(\t\"\xb5\x01\n\x07Species\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x13\n\x0b\x63ommon_name\x18\x02 \x01(\t\x12\x18\n\x10ncbi_common_name\x18\x04 \x01(\t\x12\x10\n\x08taxon_id\x18\x05 \x01(\r\x12\x17\n\x0fscientific_name\x18\x06 \x01(\t\x12\x19\n\x11\x61lternative_names\x18\x07 \x03(\t\x12 \n\x18scientific_parlance_name\x18\x08 \x01(\t\"\xca\x01\n\x0c\x41ssemblyInfo\x12\x15\n\rassembly_uuid\x18\x01 \x01(\t\x12\x11\n\taccession\x18\x02 \x01(\t\x12\r\n\x05level\x18\x03 \x01(\t\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\x13\n\x0b\x63hromosomal\x18\x05 \x01(\r\x12\x0e\n\x06length\x18\x06 \x01(\r\x12\x19\n\x11sequence_location\x18\x07 \x01(\t\x12\x19\n\x11sequence_checksum\x18\x08 \x01(\t\x12\x18\n\x10ga4gh_identifier\x18\t \x01(\t\"O\n\nSubSpecies\x12\x15\n\rorganism_uuid\x18\x01 \x01(\t\x12\x14\n\x0cspecies_type\x18\x02 \x03(\t\x12\x14\n\x0cspecies_name\x18\x03 \x03(\t\"\xde\x01\n\x12TopLevelStatistics\x12\x15\n\rorganism_uuid\x18\x01 \x01(\t\x12L\n\nstatistics\x18\x02 \x03(\x0b\x32\x38.ensembl_metadata.TopLevelStatistics.AttributeStatistics\x1a\x63\n\x13\x41ttributeStatistics\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05label\x18\x03 \x01(\t\x12\x16\n\x0estatistic_type\x18\x04 \x01(\t\x12\x17\n\x0fstatistic_value\x18\x05 \x01(\t\"\xe8\x01\n\x18TopLevelStatisticsByUUID\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12R\n\nstatistics\x18\x02 \x03(\x0b\x32>.ensembl_metadata.TopLevelStatisticsByUUID.AttributeStatistics\x1a\x63\n\x13\x41ttributeStatistics\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05label\x18\x03 \x01(\t\x12\x16\n\x0estatistic_type\x18\x04 \x01(\t\x12\x17\n\x0fstatistic_value\x18\x05 \x01(\t\"s\n\x08\x41ssembly\x12\x11\n\taccession\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tucsc_name\x18\x03 \x01(\t\x12\r\n\x05level\x18\x04 \x01(\t\x12\x14\n\x0c\x65nsembl_name\x18\x05 \x01(\t\x12\x0e\n\x06tol_id\x18\x06 \x01(\t\"Z\n\x05Taxon\x12\x13\n\x0btaxonomy_id\x18\x01 \x01(\r\x12\x17\n\x0fscientific_name\x18\x02 \x01(\t\x12\x0e\n\x06strain\x18\x03 \x01(\t\x12\x13\n\x0b\x63ommon_name\x18\x04 \x03(\t\"\x9c\x01\n\x07Release\x12\x17\n\x0frelease_version\x18\x01 \x01(\x01\x12\x14\n\x0crelease_date\x18\x02 \x01(\t\x12\x15\n\rrelease_label\x18\x03 \x01(\t\x12\x12\n\nis_current\x18\x04 \x01(\x08\x12\x11\n\tsite_name\x18\x05 \x01(\t\x12\x12\n\nsite_label\x18\x06 \x01(\t\x12\x10\n\x08site_uri\x18\x07 \x01(\t\"\xaa\x01\n\x08Organism\x12\x14\n\x0c\x64isplay_name\x18\x01 \x01(\t\x12\x0e\n\x06strain\x18\x02 \x01(\t\x12\x17\n\x0fscientific_name\x18\x03 \x01(\t\x12\x10\n\x08url_name\x18\x04 \x01(\t\x12\x14\n\x0c\x65nsembl_name\x18\x05 \x01(\t\x12 \n\x18scientific_parlance_name\x18\x06 \x01(\t\x12\x15\n\rorganism_uuid\x18\x07 \x01(\t\"\xa4\x02\n\x0c\x44\x61tasetInfos\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_type\x18\x02 \x01(\t\x12\x41\n\rdataset_infos\x18\x03 \x03(\x0b\x32*.ensembl_metadata.DatasetInfos.DatasetInfo\x1a\xa5\x01\n\x0b\x44\x61tasetInfo\x12\x14\n\x0c\x64\x61taset_uuid\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_name\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0c\n\x04type\x18\x04 \x01(\t\x12\x17\n\x0f\x64\x61taset_version\x18\x05 \x01(\t\x12\x15\n\rdataset_label\x18\x06 \x01(\t\x12\x0f\n\x07version\x18\x07 \x01(\x01\x12\r\n\x05value\x18\x08 \x01(\t\"q\n\x0eGenomeSequence\x12\x11\n\taccession\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x19\n\x11sequence_location\x18\x03 \x01(\t\x12\x0e\n\x06length\x18\x04 \x01(\r\x12\x13\n\x0b\x63hromosomal\x18\x05 \x01(\x08\"\x8e\x01\n\x16GenomeAssemblySequence\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04rank\x18\x02 \x01(\t\x12\x19\n\x11sequence_checksum\x18\x03 \x01(\t\x12\x0e\n\x06length\x18\x04 \x01(\r\x12\x18\n\x10ga4gh_identifier\x18\x05 \x01(\t\x12\x13\n\x0b\x63hromosomal\x18\x06 \x01(\x08\"\xac\x01\n\x08\x44\x61tasets\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12:\n\x08\x64\x61tasets\x18\x02 \x03(\x0b\x32(.ensembl_metadata.Datasets.DatasetsEntry\x1aO\n\rDatasetsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12-\n\x05value\x18\x02 \x01(\x0b\x32\x1e.ensembl_metadata.DatasetInfos:\x02\x38\x01\"!\n\nGenomeUUID\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\"A\n\x11GenomeUUIDRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x17\n\x0frelease_version\x18\x02 \x01(\x01\"B\n\x16GenomeByKeywordRequest\x12\x0f\n\x07keyword\x18\x01 \x01(\t\x12\x17\n\x0frelease_version\x18\x02 \x01(\x01\"U\n\x11GenomeNameRequest\x12\x14\n\x0c\x65nsembl_name\x18\x01 \x01(\t\x12\x11\n\tsite_name\x18\x02 \x01(\t\x12\x17\n\x0frelease_version\x18\x03 \x01(\x01\"*\n\x11\x41ssemblyIDRequest\x12\x15\n\rassembly_uuid\x18\x01 \x01(\t\"8\n\x1a\x41ssemblyAccessionIDRequest\x12\x1a\n\x12\x61ssembly_accession\x18\x01 \x01(\t\"*\n\x11OrganismIDRequest\x12\x15\n\rorganism_uuid\x18\x01 \x01(\t\"R\n\x0eReleaseRequest\x12\x11\n\tsite_name\x18\x01 \x03(\t\x12\x17\n\x0frelease_version\x18\x02 \x03(\x01\x12\x14\n\x0c\x63urrent_only\x18\x03 \x01(\x08\"F\n\x15GenomeSequenceRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x18\n\x10\x63hromosomal_only\x18\x02 \x01(\x08\"j\n\x1dGenomeAssemblySequenceRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x1a\n\x12\x61ssembly_accession\x18\x02 \x01(\t\x12\x18\n\x10\x63hromosomal_only\x18\x03 \x01(\x08\"?\n\x0f\x44\x61tasetsRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x17\n\x0frelease_version\x18\x02 \x01(\x01\"B\n\x15GenomeDatatypeRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_type\x18\x02 \x01(\t\"@\n\x11GenomeInfoRequest\x12\x14\n\x0c\x65nsembl_name\x18\x01 \x01(\t\x12\x15\n\rassembly_name\x18\x02 \x01(\t2\xf6\x0c\n\x0f\x45nsemblMetadata\x12R\n\x0fGetGenomeByUUID\x12#.ensembl_metadata.GenomeUUIDRequest\x1a\x18.ensembl_metadata.Genome\"\x00\x12T\n\rGetGenomeUUID\x12#.ensembl_metadata.GenomeInfoRequest\x1a\x1c.ensembl_metadata.GenomeUUID\"\x00\x12]\n\x13GetGenomesByKeyword\x12(.ensembl_metadata.GenomeByKeywordRequest\x1a\x18.ensembl_metadata.Genome\"\x00\x30\x01\x12m\n\x1fGetGenomesByAssemblyAccessionID\x12,.ensembl_metadata.AssemblyAccessionIDRequest\x1a\x18.ensembl_metadata.Genome\"\x00\x30\x01\x12Y\n\x15GetSpeciesInformation\x12#.ensembl_metadata.GenomeUUIDRequest\x1a\x19.ensembl_metadata.Species\"\x00\x12_\n\x16GetAssemblyInformation\x12#.ensembl_metadata.AssemblyIDRequest\x1a\x1e.ensembl_metadata.AssemblyInfo\"\x00\x12_\n\x18GetSubSpeciesInformation\x12#.ensembl_metadata.OrganismIDRequest\x1a\x1c.ensembl_metadata.SubSpecies\"\x00\x12]\n\x17GetKaryotypeInformation\x12#.ensembl_metadata.GenomeUUIDRequest\x1a\x1b.ensembl_metadata.Karyotype\"\x00\x12\x64\n\x15GetTopLevelStatistics\x12#.ensembl_metadata.OrganismIDRequest\x1a$.ensembl_metadata.TopLevelStatistics\"\x00\x12p\n\x1bGetTopLevelStatisticsByUUID\x12#.ensembl_metadata.GenomeUUIDRequest\x1a*.ensembl_metadata.TopLevelStatisticsByUUID\"\x00\x12R\n\x0fGetGenomeByName\x12#.ensembl_metadata.GenomeNameRequest\x1a\x18.ensembl_metadata.Genome\"\x00\x12M\n\nGetRelease\x12 .ensembl_metadata.ReleaseRequest\x1a\x19.ensembl_metadata.Release\"\x00\x30\x01\x12V\n\x10GetReleaseByUUID\x12#.ensembl_metadata.GenomeUUIDRequest\x1a\x19.ensembl_metadata.Release\"\x00\x30\x01\x12\x62\n\x11GetGenomeSequence\x12\'.ensembl_metadata.GenomeSequenceRequest\x1a .ensembl_metadata.GenomeSequence\"\x00\x30\x01\x12z\n\x19GetGenomeAssemblySequence\x12/.ensembl_metadata.GenomeAssemblySequenceRequest\x1a(.ensembl_metadata.GenomeAssemblySequence\"\x00\x30\x01\x12X\n\x15GetDatasetsListByUUID\x12!.ensembl_metadata.DatasetsRequest\x1a\x1a.ensembl_metadata.Datasets\"\x00\x12\x62\n\x15GetDatasetInformation\x12\'.ensembl_metadata.GenomeDatatypeRequest\x1a\x1e.ensembl_metadata.DatasetInfos\"\x00\x62\x06proto3'
+  serialized_pb=b'\n7ensembl/production/metadata/grpc/ensembl_metadata.proto\x12\x10\x65nsembl_metadata\"\xde\x01\n\x06Genome\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12,\n\x08\x61ssembly\x18\x02 \x01(\x0b\x32\x1a.ensembl_metadata.Assembly\x12&\n\x05taxon\x18\x03 \x01(\x0b\x32\x17.ensembl_metadata.Taxon\x12\x0f\n\x07\x63reated\x18\x04 \x01(\t\x12,\n\x08organism\x18\x05 \x01(\x0b\x32\x1a.ensembl_metadata.Organism\x12*\n\x07release\x18\x06 \x01(\x0b\x32\x19.ensembl_metadata.Release\"U\n\tKaryotype\x12\x0c\n\x04\x63ode\x18\x01 \x01(\t\x12\x13\n\x0b\x63hromosomal\x18\x02 \x01(\t\x12\x10\n\x08location\x18\x03 \x01(\t\x12\x13\n\x0bgenome_uuid\x18\x04 \x01(\t\"\xb5\x01\n\x07Species\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x13\n\x0b\x63ommon_name\x18\x02 \x01(\t\x12\x18\n\x10ncbi_common_name\x18\x04 \x01(\t\x12\x10\n\x08taxon_id\x18\x05 \x01(\r\x12\x17\n\x0fscientific_name\x18\x06 \x01(\t\x12\x19\n\x11\x61lternative_names\x18\x07 \x03(\t\x12 \n\x18scientific_parlance_name\x18\x08 \x01(\t\"\xca\x01\n\x0c\x41ssemblyInfo\x12\x15\n\rassembly_uuid\x18\x01 \x01(\t\x12\x11\n\taccession\x18\x02 \x01(\t\x12\r\n\x05level\x18\x03 \x01(\t\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\x13\n\x0b\x63hromosomal\x18\x05 \x01(\r\x12\x0e\n\x06length\x18\x06 \x01(\r\x12\x19\n\x11sequence_location\x18\x07 \x01(\t\x12\x19\n\x11sequence_checksum\x18\x08 \x01(\t\x12\x18\n\x10ga4gh_identifier\x18\t \x01(\t\"O\n\nSubSpecies\x12\x15\n\rorganism_uuid\x18\x01 \x01(\t\x12\x14\n\x0cspecies_type\x18\x02 \x03(\t\x12\x14\n\x0cspecies_name\x18\x03 \x03(\t\"\xde\x01\n\x12TopLevelStatistics\x12\x15\n\rorganism_uuid\x18\x01 \x01(\t\x12L\n\nstatistics\x18\x02 \x03(\x0b\x32\x38.ensembl_metadata.TopLevelStatistics.AttributeStatistics\x1a\x63\n\x13\x41ttributeStatistics\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05label\x18\x03 \x01(\t\x12\x16\n\x0estatistic_type\x18\x04 \x01(\t\x12\x17\n\x0fstatistic_value\x18\x05 \x01(\t\"\xe8\x01\n\x18TopLevelStatisticsByUUID\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12R\n\nstatistics\x18\x02 \x03(\x0b\x32>.ensembl_metadata.TopLevelStatisticsByUUID.AttributeStatistics\x1a\x63\n\x13\x41ttributeStatistics\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05label\x18\x03 \x01(\t\x12\x16\n\x0estatistic_type\x18\x04 \x01(\t\x12\x17\n\x0fstatistic_value\x18\x05 \x01(\t\"s\n\x08\x41ssembly\x12\x11\n\taccession\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tucsc_name\x18\x03 \x01(\t\x12\r\n\x05level\x18\x04 \x01(\t\x12\x14\n\x0c\x65nsembl_name\x18\x05 \x01(\t\x12\x0e\n\x06tol_id\x18\x06 \x01(\t\"Z\n\x05Taxon\x12\x13\n\x0btaxonomy_id\x18\x01 \x01(\r\x12\x17\n\x0fscientific_name\x18\x02 \x01(\t\x12\x0e\n\x06strain\x18\x03 \x01(\t\x12\x13\n\x0b\x63ommon_name\x18\x04 \x03(\t\"\x9c\x01\n\x07Release\x12\x17\n\x0frelease_version\x18\x01 \x01(\x01\x12\x14\n\x0crelease_date\x18\x02 \x01(\t\x12\x15\n\rrelease_label\x18\x03 \x01(\t\x12\x12\n\nis_current\x18\x04 \x01(\x08\x12\x11\n\tsite_name\x18\x05 \x01(\t\x12\x12\n\nsite_label\x18\x06 \x01(\t\x12\x10\n\x08site_uri\x18\x07 \x01(\t\"\xaa\x01\n\x08Organism\x12\x14\n\x0c\x64isplay_name\x18\x01 \x01(\t\x12\x0e\n\x06strain\x18\x02 \x01(\t\x12\x17\n\x0fscientific_name\x18\x03 \x01(\t\x12\x10\n\x08url_name\x18\x04 \x01(\t\x12\x14\n\x0c\x65nsembl_name\x18\x05 \x01(\t\x12 \n\x18scientific_parlance_name\x18\x06 \x01(\t\x12\x15\n\rorganism_uuid\x18\x07 \x01(\t\"\xa4\x02\n\x0c\x44\x61tasetInfos\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_type\x18\x02 \x01(\t\x12\x41\n\rdataset_infos\x18\x03 \x03(\x0b\x32*.ensembl_metadata.DatasetInfos.DatasetInfo\x1a\xa5\x01\n\x0b\x44\x61tasetInfo\x12\x14\n\x0c\x64\x61taset_uuid\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_name\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0c\n\x04type\x18\x04 \x01(\t\x12\x17\n\x0f\x64\x61taset_version\x18\x05 \x01(\t\x12\x15\n\rdataset_label\x18\x06 \x01(\t\x12\x0f\n\x07version\x18\x07 \x01(\x01\x12\r\n\x05value\x18\x08 \x01(\t\"q\n\x0eGenomeSequence\x12\x11\n\taccession\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x19\n\x11sequence_location\x18\x03 \x01(\t\x12\x0e\n\x06length\x18\x04 \x01(\r\x12\x13\n\x0b\x63hromosomal\x18\x05 \x01(\x08\"\x8e\x01\n\x16GenomeAssemblySequence\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04rank\x18\x02 \x01(\t\x12\x19\n\x11sequence_checksum\x18\x03 \x01(\t\x12\x0e\n\x06length\x18\x04 \x01(\r\x12\x18\n\x10ga4gh_identifier\x18\x05 \x01(\t\x12\x13\n\x0b\x63hromosomal\x18\x06 \x01(\x08\"\x86\x01\n\x1cGenomeAssemblySequenceRegion\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x11sequence_checksum\x18\x02 \x01(\t\x12\x0e\n\x06length\x18\x03 \x01(\r\x12\x18\n\x10ga4gh_identifier\x18\x04 \x01(\t\x12\x13\n\x0b\x63hromosomal\x18\x05 \x01(\x08\"\xac\x01\n\x08\x44\x61tasets\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12:\n\x08\x64\x61tasets\x18\x02 \x03(\x0b\x32(.ensembl_metadata.Datasets.DatasetsEntry\x1aO\n\rDatasetsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12-\n\x05value\x18\x02 \x01(\x0b\x32\x1e.ensembl_metadata.DatasetInfos:\x02\x38\x01\"!\n\nGenomeUUID\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\"A\n\x11GenomeUUIDRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x17\n\x0frelease_version\x18\x02 \x01(\x01\"B\n\x16GenomeByKeywordRequest\x12\x0f\n\x07keyword\x18\x01 \x01(\t\x12\x17\n\x0frelease_version\x18\x02 \x01(\x01\"U\n\x11GenomeNameRequest\x12\x14\n\x0c\x65nsembl_name\x18\x01 \x01(\t\x12\x11\n\tsite_name\x18\x02 \x01(\t\x12\x17\n\x0frelease_version\x18\x03 \x01(\x01\"*\n\x11\x41ssemblyIDRequest\x12\x15\n\rassembly_uuid\x18\x01 \x01(\t\"8\n\x1a\x41ssemblyAccessionIDRequest\x12\x1a\n\x12\x61ssembly_accession\x18\x01 \x01(\t\"*\n\x11OrganismIDRequest\x12\x15\n\rorganism_uuid\x18\x01 \x01(\t\"R\n\x0eReleaseRequest\x12\x11\n\tsite_name\x18\x01 \x03(\t\x12\x17\n\x0frelease_version\x18\x02 \x03(\x01\x12\x14\n\x0c\x63urrent_only\x18\x03 \x01(\x08\"F\n\x15GenomeSequenceRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x18\n\x10\x63hromosomal_only\x18\x02 \x01(\x08\"j\n\x1dGenomeAssemblySequenceRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x1a\n\x12\x61ssembly_accession\x18\x02 \x01(\t\x12\x18\n\x10\x63hromosomal_only\x18\x03 \x01(\x08\"\x8e\x01\n#GenomeAssemblySequenceRegionRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x1a\n\x12\x61ssembly_accession\x18\x02 \x01(\t\x12\x1c\n\x14sequence_region_name\x18\x03 \x01(\t\x12\x18\n\x10\x63hromosomal_only\x18\x04 \x01(\x08\"?\n\x0f\x44\x61tasetsRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x17\n\x0frelease_version\x18\x02 \x01(\x01\"B\n\x15GenomeDatatypeRequest\x12\x13\n\x0bgenome_uuid\x18\x01 \x01(\t\x12\x14\n\x0c\x64\x61taset_type\x18\x02 \x01(\t\"@\n\x11GenomeInfoRequest\x12\x14\n\x0c\x65nsembl_name\x18\x01 \x01(\t\x12\x15\n\rassembly_name\x18\x02 \x01(\t2\x85\x0e\n\x0f\x45nsemblMetadata\x12R\n\x0fGetGenomeByUUID\x12#.ensembl_metadata.GenomeUUIDRequest\x1a\x18.ensembl_metadata.Genome\"\x00\x12T\n\rGetGenomeUUID\x12#.ensembl_metadata.GenomeInfoRequest\x1a\x1c.ensembl_metadata.GenomeUUID\"\x00\x12]\n\x13GetGenomesByKeyword\x12(.ensembl_metadata.GenomeByKeywordRequest\x1a\x18.ensembl_metadata.Genome\"\x00\x30\x01\x12m\n\x1fGetGenomesByAssemblyAccessionID\x12,.ensembl_metadata.AssemblyAccessionIDRequest\x1a\x18.ensembl_metadata.Genome\"\x00\x30\x01\x12Y\n\x15GetSpeciesInformation\x12#.ensembl_metadata.GenomeUUIDRequest\x1a\x19.ensembl_metadata.Species\"\x00\x12_\n\x16GetAssemblyInformation\x12#.ensembl_metadata.AssemblyIDRequest\x1a\x1e.ensembl_metadata.AssemblyInfo\"\x00\x12_\n\x18GetSubSpeciesInformation\x12#.ensembl_metadata.OrganismIDRequest\x1a\x1c.ensembl_metadata.SubSpecies\"\x00\x12]\n\x17GetKaryotypeInformation\x12#.ensembl_metadata.GenomeUUIDRequest\x1a\x1b.ensembl_metadata.Karyotype\"\x00\x12\x64\n\x15GetTopLevelStatistics\x12#.ensembl_metadata.OrganismIDRequest\x1a$.ensembl_metadata.TopLevelStatistics\"\x00\x12p\n\x1bGetTopLevelStatisticsByUUID\x12#.ensembl_metadata.GenomeUUIDRequest\x1a*.ensembl_metadata.TopLevelStatisticsByUUID\"\x00\x12R\n\x0fGetGenomeByName\x12#.ensembl_metadata.GenomeNameRequest\x1a\x18.ensembl_metadata.Genome\"\x00\x12M\n\nGetRelease\x12 .ensembl_metadata.ReleaseRequest\x1a\x19.ensembl_metadata.Release\"\x00\x30\x01\x12V\n\x10GetReleaseByUUID\x12#.ensembl_metadata.GenomeUUIDRequest\x1a\x19.ensembl_metadata.Release\"\x00\x30\x01\x12\x62\n\x11GetGenomeSequence\x12\'.ensembl_metadata.GenomeSequenceRequest\x1a .ensembl_metadata.GenomeSequence\"\x00\x30\x01\x12z\n\x19GetGenomeAssemblySequence\x12/.ensembl_metadata.GenomeAssemblySequenceRequest\x1a(.ensembl_metadata.GenomeAssemblySequence\"\x00\x30\x01\x12\x8c\x01\n\x1fGetGenomeAssemblySequenceRegion\x12\x35.ensembl_metadata.GenomeAssemblySequenceRegionRequest\x1a..ensembl_metadata.GenomeAssemblySequenceRegion\"\x00\x30\x01\x12X\n\x15GetDatasetsListByUUID\x12!.ensembl_metadata.DatasetsRequest\x1a\x1a.ensembl_metadata.Datasets\"\x00\x12\x62\n\x15GetDatasetInformation\x12\'.ensembl_metadata.GenomeDatatypeRequest\x1a\x1e.ensembl_metadata.DatasetInfos\"\x00\x62\x06proto3'
 )
 
 
@@ -1056,6 +1056,66 @@ _GENOMEASSEMBLYSEQUENCE = _descriptor.Descriptor(
 )
 
 
+_GENOMEASSEMBLYSEQUENCEREGION = _descriptor.Descriptor(
+  name='GenomeAssemblySequenceRegion',
+  full_name='ensembl_metadata.GenomeAssemblySequenceRegion',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='ensembl_metadata.GenomeAssemblySequenceRegion.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='sequence_checksum', full_name='ensembl_metadata.GenomeAssemblySequenceRegion.sequence_checksum', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='length', full_name='ensembl_metadata.GenomeAssemblySequenceRegion.length', index=2,
+      number=3, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='ga4gh_identifier', full_name='ensembl_metadata.GenomeAssemblySequenceRegion.ga4gh_identifier', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='chromosomal', full_name='ensembl_metadata.GenomeAssemblySequenceRegion.chromosomal', index=4,
+      number=5, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2416,
+  serialized_end=2550,
+)
+
+
 _DATASETS_DATASETSENTRY = _descriptor.Descriptor(
   name='DatasetsEntry',
   full_name='ensembl_metadata.Datasets.DatasetsEntry',
@@ -1090,8 +1150,8 @@ _DATASETS_DATASETSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2509,
-  serialized_end=2588,
+  serialized_start=2646,
+  serialized_end=2725,
 )
 
 _DATASETS = _descriptor.Descriptor(
@@ -1128,8 +1188,8 @@ _DATASETS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2416,
-  serialized_end=2588,
+  serialized_start=2553,
+  serialized_end=2725,
 )
 
 
@@ -1160,8 +1220,8 @@ _GENOMEUUID = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2590,
-  serialized_end=2623,
+  serialized_start=2727,
+  serialized_end=2760,
 )
 
 
@@ -1199,8 +1259,8 @@ _GENOMEUUIDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2625,
-  serialized_end=2690,
+  serialized_start=2762,
+  serialized_end=2827,
 )
 
 
@@ -1238,8 +1298,8 @@ _GENOMEBYKEYWORDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2692,
-  serialized_end=2758,
+  serialized_start=2829,
+  serialized_end=2895,
 )
 
 
@@ -1284,8 +1344,8 @@ _GENOMENAMEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2760,
-  serialized_end=2845,
+  serialized_start=2897,
+  serialized_end=2982,
 )
 
 
@@ -1316,8 +1376,8 @@ _ASSEMBLYIDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2847,
-  serialized_end=2889,
+  serialized_start=2984,
+  serialized_end=3026,
 )
 
 
@@ -1348,8 +1408,8 @@ _ASSEMBLYACCESSIONIDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2891,
-  serialized_end=2947,
+  serialized_start=3028,
+  serialized_end=3084,
 )
 
 
@@ -1380,8 +1440,8 @@ _ORGANISMIDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2949,
-  serialized_end=2991,
+  serialized_start=3086,
+  serialized_end=3128,
 )
 
 
@@ -1426,8 +1486,8 @@ _RELEASEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2993,
-  serialized_end=3075,
+  serialized_start=3130,
+  serialized_end=3212,
 )
 
 
@@ -1465,8 +1525,8 @@ _GENOMESEQUENCEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3077,
-  serialized_end=3147,
+  serialized_start=3214,
+  serialized_end=3284,
 )
 
 
@@ -1511,8 +1571,61 @@ _GENOMEASSEMBLYSEQUENCEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3149,
-  serialized_end=3255,
+  serialized_start=3286,
+  serialized_end=3392,
+)
+
+
+_GENOMEASSEMBLYSEQUENCEREGIONREQUEST = _descriptor.Descriptor(
+  name='GenomeAssemblySequenceRegionRequest',
+  full_name='ensembl_metadata.GenomeAssemblySequenceRegionRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='genome_uuid', full_name='ensembl_metadata.GenomeAssemblySequenceRegionRequest.genome_uuid', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='assembly_accession', full_name='ensembl_metadata.GenomeAssemblySequenceRegionRequest.assembly_accession', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='sequence_region_name', full_name='ensembl_metadata.GenomeAssemblySequenceRegionRequest.sequence_region_name', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='chromosomal_only', full_name='ensembl_metadata.GenomeAssemblySequenceRegionRequest.chromosomal_only', index=3,
+      number=4, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=3395,
+  serialized_end=3537,
 )
 
 
@@ -1550,8 +1663,8 @@ _DATASETSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3257,
-  serialized_end=3320,
+  serialized_start=3539,
+  serialized_end=3602,
 )
 
 
@@ -1589,8 +1702,8 @@ _GENOMEDATATYPEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3322,
-  serialized_end=3388,
+  serialized_start=3604,
+  serialized_end=3670,
 )
 
 
@@ -1628,8 +1741,8 @@ _GENOMEINFOREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3390,
-  serialized_end=3454,
+  serialized_start=3672,
+  serialized_end=3736,
 )
 
 _GENOME.fields_by_name['assembly'].message_type = _ASSEMBLY
@@ -1659,6 +1772,7 @@ DESCRIPTOR.message_types_by_name['Organism'] = _ORGANISM
 DESCRIPTOR.message_types_by_name['DatasetInfos'] = _DATASETINFOS
 DESCRIPTOR.message_types_by_name['GenomeSequence'] = _GENOMESEQUENCE
 DESCRIPTOR.message_types_by_name['GenomeAssemblySequence'] = _GENOMEASSEMBLYSEQUENCE
+DESCRIPTOR.message_types_by_name['GenomeAssemblySequenceRegion'] = _GENOMEASSEMBLYSEQUENCEREGION
 DESCRIPTOR.message_types_by_name['Datasets'] = _DATASETS
 DESCRIPTOR.message_types_by_name['GenomeUUID'] = _GENOMEUUID
 DESCRIPTOR.message_types_by_name['GenomeUUIDRequest'] = _GENOMEUUIDREQUEST
@@ -1670,6 +1784,7 @@ DESCRIPTOR.message_types_by_name['OrganismIDRequest'] = _ORGANISMIDREQUEST
 DESCRIPTOR.message_types_by_name['ReleaseRequest'] = _RELEASEREQUEST
 DESCRIPTOR.message_types_by_name['GenomeSequenceRequest'] = _GENOMESEQUENCEREQUEST
 DESCRIPTOR.message_types_by_name['GenomeAssemblySequenceRequest'] = _GENOMEASSEMBLYSEQUENCEREQUEST
+DESCRIPTOR.message_types_by_name['GenomeAssemblySequenceRegionRequest'] = _GENOMEASSEMBLYSEQUENCEREGIONREQUEST
 DESCRIPTOR.message_types_by_name['DatasetsRequest'] = _DATASETSREQUEST
 DESCRIPTOR.message_types_by_name['GenomeDatatypeRequest'] = _GENOMEDATATYPEREQUEST
 DESCRIPTOR.message_types_by_name['GenomeInfoRequest'] = _GENOMEINFOREQUEST
@@ -1797,6 +1912,13 @@ GenomeAssemblySequence = _reflection.GeneratedProtocolMessageType('GenomeAssembl
   })
 _sym_db.RegisterMessage(GenomeAssemblySequence)
 
+GenomeAssemblySequenceRegion = _reflection.GeneratedProtocolMessageType('GenomeAssemblySequenceRegion', (_message.Message,), {
+  'DESCRIPTOR' : _GENOMEASSEMBLYSEQUENCEREGION,
+  '__module__' : 'ensembl.production.metadata.grpc.ensembl_metadata_pb2'
+  # @@protoc_insertion_point(class_scope:ensembl_metadata.GenomeAssemblySequenceRegion)
+  })
+_sym_db.RegisterMessage(GenomeAssemblySequenceRegion)
+
 Datasets = _reflection.GeneratedProtocolMessageType('Datasets', (_message.Message,), {
 
   'DatasetsEntry' : _reflection.GeneratedProtocolMessageType('DatasetsEntry', (_message.Message,), {
@@ -1882,6 +2004,13 @@ GenomeAssemblySequenceRequest = _reflection.GeneratedProtocolMessageType('Genome
   })
 _sym_db.RegisterMessage(GenomeAssemblySequenceRequest)
 
+GenomeAssemblySequenceRegionRequest = _reflection.GeneratedProtocolMessageType('GenomeAssemblySequenceRegionRequest', (_message.Message,), {
+  'DESCRIPTOR' : _GENOMEASSEMBLYSEQUENCEREGIONREQUEST,
+  '__module__' : 'ensembl.production.metadata.grpc.ensembl_metadata_pb2'
+  # @@protoc_insertion_point(class_scope:ensembl_metadata.GenomeAssemblySequenceRegionRequest)
+  })
+_sym_db.RegisterMessage(GenomeAssemblySequenceRegionRequest)
+
 DatasetsRequest = _reflection.GeneratedProtocolMessageType('DatasetsRequest', (_message.Message,), {
   'DESCRIPTOR' : _DATASETSREQUEST,
   '__module__' : 'ensembl.production.metadata.grpc.ensembl_metadata_pb2'
@@ -1913,8 +2042,8 @@ _ENSEMBLMETADATA = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=3457,
-  serialized_end=5111,
+  serialized_start=3739,
+  serialized_end=5536,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetGenomeByUUID',
@@ -2067,9 +2196,19 @@ _ENSEMBLMETADATA = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
+    name='GetGenomeAssemblySequenceRegion',
+    full_name='ensembl_metadata.EnsemblMetadata.GetGenomeAssemblySequenceRegion',
+    index=15,
+    containing_service=None,
+    input_type=_GENOMEASSEMBLYSEQUENCEREGIONREQUEST,
+    output_type=_GENOMEASSEMBLYSEQUENCEREGION,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
     name='GetDatasetsListByUUID',
     full_name='ensembl_metadata.EnsemblMetadata.GetDatasetsListByUUID',
-    index=15,
+    index=16,
     containing_service=None,
     input_type=_DATASETSREQUEST,
     output_type=_DATASETS,
@@ -2079,7 +2218,7 @@ _ENSEMBLMETADATA = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetDatasetInformation',
     full_name='ensembl_metadata.EnsemblMetadata.GetDatasetInformation',
-    index=16,
+    index=17,
     containing_service=None,
     input_type=_GENOMEDATATYPEREQUEST,
     output_type=_DATASETINFOS,

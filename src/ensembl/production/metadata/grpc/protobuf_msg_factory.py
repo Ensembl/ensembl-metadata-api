@@ -184,6 +184,21 @@ def create_genome_assembly_sequence(data=None):
     return genome_assembly_sequence
 
 
+def create_genome_assembly_sequence_region(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.GenomeAssemblySequenceRegion()
+
+    genome_assembly_sequence_region = ensembl_metadata_pb2.GenomeAssemblySequenceRegion(
+        name=data.AssemblySequence.name,
+        sequence_checksum=data.AssemblySequence.sequence_checksum,
+        length=data.AssemblySequence.length,
+        ga4gh_identifier=data.AssemblySequence.ga4gh_identifier,
+        chromosomal=data.AssemblySequence.chromosomal
+    )
+
+    return genome_assembly_sequence_region
+
+
 def create_release(data=None):
     if data is None:
         return ensembl_metadata_pb2.Release()
