@@ -11,6 +11,6 @@
 1	1	species.species_taxonomy_id	6666666
 8	1	species.strain	reference
 9	1	species.strain_group	testing
-2	1	species.taxonomy_id	511145
+2	1	species.taxonomy_id	666668
 10	1	species.type	monsters
 5	1	species.url	Jabbe
