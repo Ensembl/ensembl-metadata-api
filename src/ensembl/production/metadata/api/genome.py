@@ -34,34 +34,54 @@ class GenomeAdaptor(BaseAdaptor):
             names = {"scientific_name": None, "synonym": []}
             taxons[tid] = names
 
-        for taxon in taxons:
-            sci_name_select = db.select(
-                NCBITaxaName.name
-            ).filter(
-                NCBITaxaName.taxon_id == taxon,
-                NCBITaxaName.name_class == "scientific name",
-            )
-            synonym_class = [
-                "common name",
-                "equivalent name",
-                "genbank common name",
-                "genbank synonym",
-                "synonym",
-            ]
+            taxonomy_ids = check_parameter(taxonomy_ids)
 
-            synonyms_select = db.select(
-                NCBITaxaName.name
-            ).filter(
-                NCBITaxaName.taxon_id == taxon,
-                NCBITaxaName.name_class.in_(synonym_class),
-            )
+            taxons = {}
+            for tid in taxonomy_ids:
+                names = {"scientific_name": None, "synonym": []}
+                taxons[tid] = names
+            for taxon in taxons:
+                sci_name_select = db.select(
+                    NCBITaxaName.name
+                ).filter(
+                    NCBITaxaName.taxon_id == taxon,
+                    NCBITaxaName.name_class == "scientific name",
+                )
+                synonym_class = [
+                    "common name",
+                    "equivalent name",
+                    "genbank common name",
+                    "genbank synonym",
+                    "synonym",
+                ]
 
-            with self.taxonomy_db.session_scope() as session:
-                sci_name = session.execute(sci_name_select).one()
-                taxons[taxon]["scientific_name"] = sci_name[0]
-                synonyms = session.execute(synonyms_select).all()
-                for synonym in synonyms:
-                    taxons[taxon]["synonym"].append(synonym[0])
+                synonyms_select = db.select(
+                    NCBITaxaName.name, NCBITaxaName.name_class
+                ).filter(
+                    NCBITaxaName.taxon_id == taxon,
+                    NCBITaxaName.name_class.in_(synonym_class),
+                )
+                with self.taxonomy_db.session_scope() as session:
+                    sci_name = session.execute(sci_name_select).one()
+                    taxons[taxon]["scientific_name"] = sci_name[0]
+                    synonyms = session.execute(synonyms_select).all()
+                    common_names = []
+                    taxons[taxon]['ncbi_common_name'] = None
+                    for synonym in synonyms:
+                        # create a list of synonyms
+                        taxons[taxon]["synonym"].append(synonym[0])
+                        # and fill the rest of the required key-values fields
+                        # these are required by get_species_information() in the metadata service
+                        if synonym[1] is not None and synonym[0] is not None:
+                            if synonym[1] == 'genbank common name':
+                                taxons[taxon]['ncbi_common_name'] = synonym[0]
+                            if synonym[1] == 'common name':
+                                common_names.append(synonym[1])
+                        taxons[taxon]['alternative_names'] = common_names
+                        if len(common_names) > 0:
+                            taxons[taxon]['common_name'] = common_names[0]
+                        else:
+                            taxons[taxon]['common_name'] = None
         return taxons
 
     def fetch_taxonomy_ids(self, taxonomy_names):
