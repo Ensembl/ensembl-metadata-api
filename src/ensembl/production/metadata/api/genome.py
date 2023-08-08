@@ -29,8 +29,8 @@ class GenomeAdaptor(BaseAdaptor):
         self.taxonomy_db = DBConnection(taxonomy_uri)
 
     def fetch_taxonomy_names(self, taxonomy_ids):
-        if taxonomy_ids.isdigit():
-            taxonomy_ids = check_parameter(taxonomy_ids)
+
+        taxonomy_ids = check_parameter(taxonomy_ids)
         taxons = {}
         for tid in taxonomy_ids:
             names = {"scientific_name": None, "synonym": []}

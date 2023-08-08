@@ -23,6 +23,8 @@ class BaseAdaptor:
 
 
 def check_parameter(param):
+    if  isinstance(param, tuple):
+        param = param[0]
     if param is not None and not isinstance(param, list):
         param = [param]
     return param
