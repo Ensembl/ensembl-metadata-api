@@ -14,3 +14,4 @@
 2	1	species.taxonomy_id	666668
 10	1	species.type	monsters
 5	1	species.url	Jabbe
+17	1	genebuild.version	1
