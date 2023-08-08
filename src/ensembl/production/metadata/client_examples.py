@@ -234,8 +234,22 @@ def get_genome_uuid(stub):
     request1 = GenomeInfoRequest(
         ensembl_name="homo_sapiens", assembly_name="GRCh37.p13"
     )
-    genome_uuid = stub.GetGenomeUUID(request1)
-    print(genome_uuid)
+    genome_uuid1 = stub.GetGenomeUUID(request1)
+    request2 = GenomeInfoRequest(
+        ensembl_name="homo_sapiens", assembly_name="GRCh37", use_default=True
+    )
+    genome_uuid2 = stub.GetGenomeUUID(request2)
+    request3 = GenomeInfoRequest(
+        ensembl_name="homo_sapiens", assembly_name="GRCh37.p13", use_default=True
+    )
+    genome_uuid3 = stub.GetGenomeUUID(request3)
+
+    print("**** Using assembly_name ****")
+    print(genome_uuid1)
+    print("**** Using assembly_default ****")
+    print(genome_uuid2)
+    print("**** Using assembly_default (No results) ****")
+    print(genome_uuid3)
 
 
 def run():
