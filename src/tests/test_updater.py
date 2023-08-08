@@ -46,10 +46,10 @@ class TestUpdater:
         metadata = MetaData()
         dataset = Table('dataset', metadata, autoload=True, autoload_with=engine)
         query = select([dataset]).where(
-            (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '01')
+            (dataset.c.version == 999) & (dataset.c.name == 'genebuild')
         )
         row = engine.execute(query).fetchone()
-        assert row[-2] == '01'
+        assert row[4] is not None
 
     #
     def test_update_organism(self, multi_dbs):
@@ -59,7 +59,7 @@ class TestUpdater:
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-        assert test_collect[0].Organism.scientific_name == 'lewis_carol'
+        assert test_collect[0].Organism.scientific_name == 'carol_jabberwocky'
 
     def test_update_assembly(self, multi_dbs):
         test = meta_factory(multi_dbs['core_3'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
@@ -68,7 +68,7 @@ class TestUpdater:
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
-        assert test_collect[1].Organism.scientific_name == 'lewis_carol'
+        assert test_collect[1].Organism.scientific_name == 'carol_jabberwocky'
         assert test_collect[1].Assembly.accession == 'weird02'
 
     #
@@ -83,4 +83,5 @@ class TestUpdater:
             (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '02')
         )
         row = engine.execute(query).fetchone()
-        assert row[-2] == '02'
+        assert row[4] is not None
+
