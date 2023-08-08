@@ -252,15 +252,14 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
             # One complicated query to get all the data. Otherwise, this takes far too long to do.
             results = (session.query(SeqRegion.name, SeqRegion.length, CoordSystem.name,
-                                     SeqRegionAttribAlias.value, SeqRegionSynonym.synonym, ExternalDb.db_name)
+                                     SeqRegionAttribAlias.value, SeqRegionSynonym.synonym)
                        .join(SeqRegion.coord_system)
                        .join(SeqRegion.seq_region_attrib)
                        .join(SeqRegionAttrib.attrib_type)
                        .outerjoin(SeqRegion.seq_region_synonym)
-                       .outerjoin(SeqRegionSynonym.external_db)
                        .join(SeqRegionAttribAlias, SeqRegion.seq_region_attrib)  # join with SeqRegionAttribAlias
                        .outerjoin(AttribTypeAlias, SeqRegionAttribAlias.attrib_type)  # join with AttribTypeAlias
-                       .filter(CoordSystem.species_id == species)
+                       .filter(Meta.species_id == species)
                        .filter(AttribType.code == "toplevel")  # ensure toplevel
                        .filter(AttribTypeAlias.code == "sequence_location").all())  # ensure sequence_location
 
@@ -268,7 +267,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             accession_info = defaultdict(
                 lambda: {"names": set(), "length": None, "location": None, "chromosomal": None})
 
-            for seq_region_name, seq_region_length, coord_system_name, location, synonym, db_name in results:
+            for seq_region_name, seq_region_length, coord_system_name, location, synonym in results:
 
                 # Test to see if the seq_name follows accession standards (99% of sequences)
                 if re.match(r'^[a-zA-Z]+\d+\.\d+', seq_region_name):
