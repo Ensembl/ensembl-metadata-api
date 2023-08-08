@@ -46,7 +46,7 @@ class TestUpdater:
         metadata = MetaData()
         dataset = Table('dataset', metadata, autoload=True, autoload_with=engine)
         query = select([dataset]).where(
-            (dataset.c.version == 999) & (dataset.c.name == 'genebuild')
+            (dataset.c.version == 1) & (dataset.c.name == 'genebuild')
         )
         row = engine.execute(query).fetchone()
         assert row is not None
@@ -82,7 +82,7 @@ class TestUpdater:
         metadata = MetaData()
         dataset = Table('dataset', metadata, autoload=True, autoload_with=engine)
         query = select([dataset]).where(
-            (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '02')
+            (dataset.c.version == 1) & (dataset.c.name == 'genebuild')
         )
         row = engine.execute(query).fetchone()
         assert row is not None
