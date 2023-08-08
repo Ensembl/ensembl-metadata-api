@@ -49,7 +49,9 @@ class TestUpdater:
             (dataset.c.version == 999) & (dataset.c.name == 'genebuild')
         )
         row = engine.execute(query).fetchone()
-        assert row[4] is not None
+        assert row is not None
+        if row is not None:
+            assert row[4] is not None
 
     #
     def test_update_organism(self, multi_dbs):
@@ -83,5 +85,6 @@ class TestUpdater:
             (dataset.c.version == 999) & (dataset.c.name == 'genebuild') & (dataset.c.label == '02')
         )
         row = engine.execute(query).fetchone()
-        assert row[4] is not None
-
+        assert row is not None
+        if row is not None:
+            assert row[4] is not None
