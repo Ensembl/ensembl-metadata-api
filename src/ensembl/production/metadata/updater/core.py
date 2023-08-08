@@ -256,12 +256,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
                        .join(SeqRegion.coord_system)
                        .join(SeqRegion.seq_region_attrib)
                        .join(SeqRegionAttrib.attrib_type)
-                       .join(CoordSystem.meta)
                        .outerjoin(SeqRegion.seq_region_synonym)
                        .outerjoin(SeqRegionSynonym.external_db)
                        .join(SeqRegionAttribAlias, SeqRegion.seq_region_attrib)  # join with SeqRegionAttribAlias
                        .outerjoin(AttribTypeAlias, SeqRegionAttribAlias.attrib_type)  # join with AttribTypeAlias
-                       .filter(Meta.species_id == species)
+                       .filter(CoordSystem.species_id == species)
                        .filter(AttribType.code == "toplevel")  # ensure toplevel
                        .filter(AttribTypeAlias.code == "sequence_location").all())  # ensure sequence_location
 

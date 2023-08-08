@@ -52,7 +52,7 @@ class TestMetadataDB:
     def test_fetch_taxonomy_names(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_taxonomy_names(taxonomy_ids=(6239, 511145))
+        test = conn.fetch_taxonomy_names(taxonomy_ids=511145)
         assert test[511145]['scientific_name'] == 'Escherichia coli str. K-12 substr. MG1655'
 
     def test_fetch_taxonomy_ids(self, multi_dbs):
