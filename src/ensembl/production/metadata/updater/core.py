@@ -268,7 +268,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 lambda: {"names": set(), "length": None, "location": None, "chromosomal": None})
 
             for seq_region_name, seq_region_length, coord_system_name, location, synonym in results:
-
+                # Skip all sequence lrg sequences.
+                if coord_system_name == "lrg":
+                    continue
                 # Test to see if the seq_name follows accession standards (99% of sequences)
                 if re.match(r'^[a-zA-Z]+\d+\.\d+', seq_region_name):
                     # If so assign it to accession
