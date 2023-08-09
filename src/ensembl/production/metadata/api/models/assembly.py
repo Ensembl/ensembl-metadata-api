@@ -35,9 +35,9 @@ class Assembly(Base):
     alt_accession = Column(String(16), nullable=True)
     # One to many relationships
     # assembly_id within assembly_sequence
-    assembly_sequences = relationship("AssemblySequence", back_populates="assembly")
+    assembly_sequences = relationship("AssemblySequence", back_populates="assembly", cascade="all, delete, delete-orphan")
     # assembly_id within genome
-    genomes = relationship("Genome", back_populates="assembly")
+    genomes = relationship("Genome", back_populates="assembly", cascade="all, delete, delete-orphan")
 
 
 class AssemblySequence(Base):

@@ -321,6 +321,10 @@
 2301119	Rhabditomorpha	scientific name
 2698737	Sar Burki et al. 2008	authority
 2698737	Sar	scientific name
+666668	jabberwocky	synonym
+666668	carol_jabberwocky3	equivalent name
+666668	carol_jabberwocky2	equivalent name
+666668	carol_jabberwocky	scientific name
 2698737	SAR supergroup	synonym
 38820	4478	merged_taxon_id
 38820	4727	merged_taxon_id

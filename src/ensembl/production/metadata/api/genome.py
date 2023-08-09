@@ -30,11 +30,11 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_taxonomy_names(self, taxonomy_ids):
 
+        taxonomy_ids = check_parameter(taxonomy_ids)
         taxons = {}
         for tid in taxonomy_ids:
             names = {"scientific_name": None, "synonym": []}
             taxons[tid] = names
-
         for taxon in taxons:
             sci_name_select = db.select(
                 NCBITaxaName.name
