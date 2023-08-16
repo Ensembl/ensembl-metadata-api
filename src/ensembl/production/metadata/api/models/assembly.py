@@ -33,6 +33,8 @@ class Assembly(Base):
     created = Column(DateTime)
     ensembl_name = Column(String(255), unique=True)
     alt_accession = Column(String(16), nullable=True)
+    is_reference = Column(TINYINT(1), nullable=False)
+    url_name = Column(String(128), nullable=False)
     # One to many relationships
     # assembly_id within assembly_sequence
     assembly_sequences = relationship("AssemblySequence", back_populates="assembly", cascade="all, delete, delete-orphan")
@@ -51,10 +53,11 @@ class AssemblySequence(Base):
     assembly_id = Column(ForeignKey('assembly.assembly_id'), nullable=False, index=True)
     accession = Column(String(128), nullable=False)
     chromosomal = Column(TINYINT(1), nullable=False)
+    chromosome_rank = Column(Integer)
     length = Column(Integer, nullable=False)
     sequence_location = Column(String(10))
-    sequence_checksum = Column(String(32))
-    ga4gh_identifier = Column(String(32))
+    md5 = Column(String(32))
+    sha512t4u = Column(String(128))
     # One to many relationships
     # none
     # many to one relationships

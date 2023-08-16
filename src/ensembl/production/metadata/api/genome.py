@@ -10,7 +10,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import sqlalchemy as db
-from sqlalchemy.engine import make_url
 
 from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
@@ -42,10 +41,15 @@ class GenomeAdaptor(BaseAdaptor):
                 NCBITaxaName.taxon_id == taxon,
                 NCBITaxaName.name_class == "scientific name",
             )
+            genbank_name_select = db.select(
+                NCBITaxaName.name
+            ).filter(
+                NCBITaxaName.taxon_id == taxon,
+                NCBITaxaName.name_class == "genbank common name",
+            )
             synonym_class = [
                 "common name",
                 "equivalent name",
-                "genbank common name",
                 "genbank synonym",
                 "synonym",
             ]
@@ -60,6 +64,8 @@ class GenomeAdaptor(BaseAdaptor):
             with self.taxonomy_db.session_scope() as session:
                 sci_name = session.execute(sci_name_select).one()
                 taxons[taxon]["scientific_name"] = sci_name[0]
+                genbank_name = session.execute(genbank_name_select).one_or_none()
+                taxons[taxon]["genbank_common_name"] = genbank_name[0]
                 synonyms = session.execute(synonyms_select).all()
                 for synonym in synonyms:
                     taxons[taxon]["synonym"].append(synonym[0])

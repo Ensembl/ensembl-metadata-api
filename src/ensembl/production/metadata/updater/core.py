@@ -37,7 +37,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
         self.assembly_dataset = None
         self.assembly_dataset_attributes = None  # array
         self.genome = None
-        self.genome_release = None
 
         self.genebuild_dataset_attributes = None  # array
         self.genebuild_dataset = None
@@ -175,15 +174,22 @@ class CoreMetaUpdater(BaseMetaUpdater):
         if ensembl_name is None:
             ensembl_name = self.get_meta_single_meta_key(species, "species.production_name")
 
+        # Getting the common name from the meta table, otherwise we grab it from ncbi.
+        common_name = self.get_meta_single_meta_key(species, "species.common_name")
+        if common_name is None:
+            taxid = self.get_meta_single_meta_key(species, "species.taxonomy_id")
+            temp_adapt = GenomeAdaptor(metadata_uri, taxonomy_uri)
+            names = temp_adapt.fetch_taxonomy_names(taxid)
+            common_name = names[taxid]["genbank_common_name"]
         # Instantiate a new Organism object using data fetched from metadata.
         new_organism = Organism(
             species_taxonomy_id=self.get_meta_single_meta_key(species, "species.species_taxonomy_id"),
             taxonomy_id=self.get_meta_single_meta_key(species, "species.taxonomy_id"),
-            display_name=self.get_meta_single_meta_key(species, "species.display_name"),
+            common_name=common_name,
             scientific_name=self.get_meta_single_meta_key(species, "species.scientific_name"),
-            url_name=self.get_meta_single_meta_key(species, "species.url"),
             ensembl_name=ensembl_name,
             strain=self.get_meta_single_meta_key(species, "species.strain"),
+            strain_type = self.get_meta_single_meta_key(species, "strain.type"),
             #
         )
 
@@ -246,28 +252,40 @@ class CoreMetaUpdater(BaseMetaUpdater):
         """
         assembly_sequences = []
         with self.db.session_scope() as session:
-            # Create an alias for SeqRegionAttrib and AttribType to be used for sequence_location
+            # Alias for SeqRegionAttrib and AttribType to be used for sequence_location
             SeqRegionAttribAlias = aliased(SeqRegionAttrib)
             AttribTypeAlias = aliased(AttribType)
 
+            # New aliases for karyotype_rank
+            SeqRegionAttribKaryo = aliased(SeqRegionAttrib)
+            AttribTypeKaryo = aliased(AttribType)
+
             # One complicated query to get all the data. Otherwise, this takes far too long to do.
             results = (session.query(SeqRegion.name, SeqRegion.length, CoordSystem.name,
-                                     SeqRegionAttribAlias.value, SeqRegionSynonym.synonym)
+                                     SeqRegionAttribAlias.value, SeqRegionSynonym.synonym, SeqRegionAttribKaryo.value)
                        .join(SeqRegion.coord_system)
                        .join(SeqRegion.seq_region_attrib)
                        .join(SeqRegionAttrib.attrib_type)
                        .outerjoin(SeqRegion.seq_region_synonym)
-                       .join(SeqRegionAttribAlias, SeqRegion.seq_region_attrib)  # join with SeqRegionAttribAlias
-                       .outerjoin(AttribTypeAlias, SeqRegionAttribAlias.attrib_type)  # join with AttribTypeAlias
+
+                        #sequence location
+                       .join(SeqRegionAttribAlias, SeqRegion.seq_region_attrib)
+                       .outerjoin(AttribTypeAlias, SeqRegionAttribAlias.attrib_type)
+
+                        #karyotype rank
+                       .outerjoin(SeqRegionAttribKaryo, SeqRegion.seq_region_attrib)
+                       .outerjoin(AttribTypeKaryo, SeqRegionAttribKaryo.attrib_type)
+
                        .filter(Meta.species_id == species)
                        .filter(AttribType.code == "toplevel")  # ensure toplevel
-                       .filter(AttribTypeAlias.code == "sequence_location").all())  # ensure sequence_location
+                       .filter(AttribTypeAlias.code == "sequence_location")
+                       .filter(AttribTypeKaryo.code == "karyotype_rank").all())  # ensure sequence_location
 
             # Create a dictionary so that the results can have multiple synonyms per line and only one SeqRegion
             accession_info = defaultdict(
-                lambda: {"names": set(), "length": None, "location": None, "chromosomal": None})
+                lambda: {"names": set(), "length": None, "location": None, "chromosomal": None, "karyotype_rank":None})
 
-            for seq_region_name, seq_region_length, coord_system_name, location, synonym in results:
+            for seq_region_name, seq_region_length, coord_system_name, location, synonym, karyotype_rank in results:
                 # Skip all sequence lrg sequences.
                 if coord_system_name == "lrg":
                     continue
@@ -304,16 +322,19 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     raise Exception('Error with sequence location: {} is not a valid type'.format(location))
 
                 # Test if chromosomal:
-                if coord_system_name == "chromosome":
+                if karyotype_rank is not None:
                     chromosomal = 1
                 else:
-                    chromosomal = 0
+                    if coord_system_name == "chromosome":
+                        chromosomal = 1
+                    else:
+                        chromosomal = 0
 
                 # Assign the values to the dictionary
                 accession_info[accession]["location"] = sequence_location
                 accession_info[accession]["chromosomal"] = chromosomal
                 accession_info[accession]["length"] = seq_region_length
-
+                accession_info[accession]["karyotype_rank"] = karyotype_rank
             # Now, create AssemblySequence objects for each unique accession.
             for accession, info in accession_info.items():
                 # Combine all unique names with ";". If a name appears in multiple sequences with the same accession,
@@ -327,8 +348,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     chromosomal=info["chromosomal"],
                     length=info["length"],
                     sequence_location=info["location"],
-                    # sequence_checksum="", Not implemented
-                    # ga4gh_identifier="", Not implemented
+                    karyotype_rank=karyotype_rank,
+                    # md5="", Populated after checksums are ran.
+                    # sha512t4u="", Populated after checksums are ran.
                 )
 
                 assembly_sequences.append(assembly_sequence)
@@ -354,8 +376,12 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 assembly_sequences, dataset_source, "Existing"
 
         else:
+            is_reference = 1 if self.get_meta_single_meta_key(species, "assembly.is_reference") else 0
             with self.db.session_scope() as session:
-                # May be problematic. Might be provided by genebuild.
+                # May be problematic.
+                # Ideally this should be done through karyotype rank, however using coord system was more efficent
+                # and upon testing 100 databases, it was found to be accurate in every case.
+                # Leaving it until told otherwise.
                 level = (session.execute(db.select(CoordSystem.name).filter(
                     CoordSystem.species_id == species).order_by(CoordSystem.rank)).all())[0][0]
             assembly = Assembly(
@@ -370,6 +396,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 created=func.now(),
                 ensembl_name=self.get_meta_single_meta_key(species, "assembly.name"),
                 assembly_uuid=str(uuid.uuid4()),
+                url_name=self.get_meta_single_meta_key(species, "assembly.url_name"),
+                is_reference=is_reference
+
             )
             dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "assembly").first()
             if source is None:
@@ -416,6 +445,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
         assembly_accession = self.get_meta_single_meta_key(species, "assembly.accession")
         genebuild_version = self.get_meta_single_meta_key(species, "genebuild.version")
 
+        #Test if sample_gene is present.
+
         # The genebuild accession is formed by combining the assembly accession and the genebuild version
         genebuild_accession = assembly_accession + "_" + genebuild_version
 
@@ -456,6 +487,20 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 attribute=meta_attribute,
             )
             genebuild_dataset_attributes.append(dataset_attribute)
+
+        #Grab the necessary sample data and add it as an datasetattribute
+        sample_gene_param = DatasetAttribute(
+                value=self.get_meta_single_meta_key(species, "sample.gene_param"),
+                dataset=genebuild_dataset,
+                attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.gene_param").one_or_none(),
+            )
+        genebuild_dataset_attributes.append(sample_gene_param)
+        sample_location_param = DatasetAttribute(
+                value=self.get_meta_single_meta_key(species, "sample.location_param"),
+                dataset=genebuild_dataset,
+                attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.gene_param").one_or_none(),
+            )
+        genebuild_dataset_attributes.append(sample_location_param)
 
         # Check if the genebuild dataset with the given label already exists
         test_status = meta_session.query(Dataset).filter(Dataset.label == genebuild_accession).one_or_none()
