@@ -12,4 +12,4 @@ install:
   - pip install -e .
 
 script:
-  - travis_wait coverage run -m pytest -vvv --server mysql://travis@127.0.0.1:3306
+  - coverage run -m pytest --server mysql://travis@127.0.0.1:3306
