@@ -12,6 +12,8 @@ CREATE TABLE assembly
     created          datetime     null,
     ensembl_name     varchar(255) null,
     alt_accession    varchar(16)  null,
+    is_reference     tinyint(1)   not null,
+    url_name         varchar(128) null,
 
     constraint assembly_uuid
         unique (assembly_uuid),
@@ -32,9 +34,10 @@ CREATE TABLE assembly_sequence
     accession            varchar(128) null,
     chromosomal          tinyint(1)   not null,
     length               int          not null,
+    chromosome_rank      int          null,
     sequence_location    varchar(10)  null,
-    sequence_checksum    varchar(32)  null,
-    ga4gh_identifier     varchar(32)  null,
+    md5                  varchar(32)  null,
+    sha512t4u            varchar(128)  null,
     constraint assembly_sequence_assembly_id_accession_5f3e5119_uniq
         unique (assembly_id, accession),
     constraint assembly_sequence_assembly_id_2a84ddcb_fk_assembly_assembly_id
@@ -154,12 +157,12 @@ CREATE TABLE organism
     organism_uuid            varchar(128) not null,
     taxonomy_id              int          not null,
     species_taxonomy_id      int          null,
-    display_name             varchar(128) not null,
+    common_name              varchar(128) not null,
     strain                   varchar(128) null,
     scientific_name          varchar(128) null,
-    url_name                 varchar(128) not null,
     ensembl_name             varchar(128) not null,
     scientific_parlance_name varchar(255) null,
+    strain_type              varchar(255) null,
     constraint organism_uuid
         unique (organism_uuid),
     constraint ensembl_name
@@ -205,6 +208,7 @@ CREATE TABLE genome_release
     genome_id         int        not null,
     release_id        int        not null,
     is_current        tinyint(1) not null,
+    is_best           tinyint(1) not null,
     constraint genome_release_genome_id_3e45dc04_fk
         foreign key (genome_id) references genome (genome_id),
     constraint genome_release_release_id_bca7e1e5_fk_ensembl_release_release_id
@@ -229,6 +233,7 @@ CREATE TABLE organism_group_member
     organism_group_member_id int auto_increment
         primary key,
     is_reference             tinyint(1) not null,
+    order                    int        null,
     organism_id              int        not null,
     organism_group_id        int        not null,
     constraint organism_group_member_organism_id_organism_gro_fe8f49ac_uniq

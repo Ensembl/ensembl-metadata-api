@@ -1,6 +1,6 @@
-1	assembly	Genomic assembly	Core Annotation	Compilation of sequences for a genome	
-2	genebuild	Genomic Build	Core Annotation	Genomic annotations for an assembly	
-3	variation	Variations	Variation Annotation
-4	evidence	Variation Evidence	Variation Annotation
-5	regulation_build	Regulations	Regulatory Annotation
-6	homologies	Comparative homologies	Comparative Annotation
+1	assembly	Genomic assembly	Core Annotation	Compilation of sequences for a genome	\N	\N
+2	genebuild	Genomic Build	Core Annotation	Genomic annotations for an assembly	\N	\N
+3	variation	Variations	Variation Annotation	\N	\N
+4	evidence	Variation Evidence	Variation Annotation	\N	\N
+5	regulation_build	Regulations	Regulatory Annotation	\N	\N
+6	homologies	Comparative homologies	Comparative Annotation	\N	\N
