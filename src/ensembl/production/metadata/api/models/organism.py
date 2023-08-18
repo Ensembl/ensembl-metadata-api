@@ -39,8 +39,8 @@ class Organism(Base):
     # organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
     def __repr__(self):
         return f"organism_id={self.organism_id}, taxonomy_id={self.taxonomy_id}, species_taxonomy_id={self.species_taxonomy_id}, " \
-               f"display_name={self.display_name}, strain={self.strain}, scientific_name={self.scientific_name}, " \
-               f"url_name={self.url_name}, ensembl_name={self.ensembl_name}, scientific_parlance_name={self.scientific_parlance_name}"
+               f"common_name={self.common_name}, strain={self.strain}, scientific_name={self.scientific_name}, " \
+               f"ensembl_name={self.ensembl_name}, scientific_parlance_name={self.scientific_parlance_name}"
 
 
 class OrganismGroup(Base):

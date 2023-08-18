@@ -68,3 +68,5 @@
 68	assembly.ucsc_alias	ucsc_alias	ucsc_alias	string
 69	genebuild.last_geneset_update	last_geneset_update	last_geneset_update	string
 70	genebuild.version	version	version	string
+71	sample.gene_param	sample.gene_param	sample.gene_param	string
+72	sample.location_param	sample.location_param	sample.location_param	string
