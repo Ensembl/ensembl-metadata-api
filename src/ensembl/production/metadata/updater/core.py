@@ -15,6 +15,7 @@ import sqlalchemy as db
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
     SeqRegionSynonym, AttribType, ExternalDb
 from sqlalchemy import select, func
+from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 from ensembl.database import DBConnection
 from sqlalchemy.exc import NoResultFound
@@ -252,61 +253,39 @@ class CoreMetaUpdater(BaseMetaUpdater):
         """
         assembly_sequences = []
         with self.db.session_scope() as session:
-            # Alias for SeqRegionAttrib and AttribType to be used for sequence_location
-            SeqRegionAttribAlias = aliased(SeqRegionAttrib)
-            AttribTypeAlias = aliased(AttribType)
 
-            # New aliases for karyotype_rank
-            SeqRegionAttribKaryo = aliased(SeqRegionAttrib)
-            AttribTypeKaryo = aliased(AttribType)
-
-            # One complicated query to get all the data. Otherwise, this takes far too long to do.
-            results = (session.query(SeqRegion.name, SeqRegion.length, CoordSystem.name,
-                                     SeqRegionAttribAlias.value, SeqRegionSynonym.synonym, SeqRegionAttribKaryo.value)
+            results = (session.query(SeqRegion.name, SeqRegion.length, CoordSystem.name, SeqRegionSynonym.synonym)
                        .join(SeqRegion.coord_system)
+                       .outerjoin(SeqRegionSynonym, SeqRegionSynonym.seq_region_id == SeqRegion.seq_region_id)
                        .join(SeqRegion.seq_region_attrib)
                        .join(SeqRegionAttrib.attrib_type)
-                       .outerjoin(SeqRegion.seq_region_synonym)
+                       .filter(CoordSystem.species_id == species)
+                       .filter(AttribType.code == "toplevel")
+                       .all())
+            attributes = (session.query(SeqRegion.name, AttribType.code, SeqRegionAttrib.value)
+                          .select_from(SeqRegion)
+                          .join(SeqRegionAttrib)
+                          .join(AttribType)
+                          .filter(or_(AttribType.code == "sequence_location",
+                                      AttribType.code == "karyotype_rank")).all())
+            attribute_dict = {}
+            for name, code, value in attributes:
+                if name not in attribute_dict:
+                    attribute_dict[name] = {}
+                attribute_dict[name][code] = value
 
-                        #sequence location
-                       .join(SeqRegionAttribAlias, SeqRegion.seq_region_attrib)
-                       .outerjoin(AttribTypeAlias, SeqRegionAttribAlias.attrib_type)
-
-                        #karyotype rank
-                       .outerjoin(SeqRegionAttribKaryo, SeqRegion.seq_region_attrib)
-                       .outerjoin(AttribTypeKaryo, SeqRegionAttribKaryo.attrib_type)
-
-                       .filter(Meta.species_id == species)
-                       .filter(AttribType.code == "toplevel")  # ensure toplevel
-                       .filter(AttribTypeAlias.code == "sequence_location")
-                       .filter(AttribTypeKaryo.code == "karyotype_rank").all())  # ensure sequence_location
 
             # Create a dictionary so that the results can have multiple synonyms per line and only one SeqRegion
             accession_info = defaultdict(
-                lambda: {"names": set(), "length": None, "location": None, "chromosomal": None, "karyotype_rank":None})
+                lambda: {"names": set(), "accession": None, "length": None, "location": None, "chromosomal": None, "karyotype_rank":None})
 
-            for seq_region_name, seq_region_length, coord_system_name, location, synonym, karyotype_rank in results:
+            for seq_region_name, seq_region_length, coord_system_name, synonym in results:
                 # Skip all sequence lrg sequences.
                 if coord_system_name == "lrg":
                     continue
-                # Test to see if the seq_name follows accession standards (99% of sequences)
-                if re.match(r'^[a-zA-Z]+\d+\.\d+', seq_region_name):
-                    # If so assign it to accession
-                    accession = seq_region_name
-                    if not synonym:
-                        # If it doesn't have any synonyms the accession is the name.
-                        accession_info[accession]["names"].add(accession)
-                    else:
-                        accession_info[accession]["names"].add(synonym)
-                else:
-                    # For named sequences like chr1
-                    name = seq_region_name
-                    if re.match(r'^[a-zA-Z]+\d+\.\d+', synonym):
-                        accession = synonym
-                        accession_info[accession]["names"].add(name)
-                    else:
-                        accession = name  # In case synonym doesn't match the pattern, use the name as the accession
-                        accession_info[accession]["names"].add(synonym if synonym else name)
+                accession_info[seq_region_name]["names"].add(seq_region_name)
+                if synonym:
+                    accession_info[seq_region_name]["names"].add(synonym)
 
                 # Save the sequence location, length, and chromosomal flag.
                 location_mapping = {
@@ -315,31 +294,56 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     'chloroplast_chromosome': 'SO:0000745',
                     None: 'SO:0000738',
                 }
+                # Try to get the sequence location
+                location = attribute_dict.get(seq_region_name, {}).get("sequence_location", None)
 
-                try:
-                    sequence_location = location_mapping[location]
-                except KeyError:
-                    raise Exception('Error with sequence location: {} is not a valid type'.format(location))
+                # Using the retrieved location to get the sequence location
+                sequence_location = location_mapping[location]
+
+                # Try to get the karyotype rank
+                karyotype_rank = attribute_dict.get(seq_region_name, {}).get("karyotype_rank", None)
 
                 # Test if chromosomal:
                 if karyotype_rank is not None:
                     chromosomal = 1
                 else:
-                    if coord_system_name == "chromosome":
-                        chromosomal = 1
-                    else:
-                        chromosomal = 0
+                    chromosomal = 1 if coord_system_name == "chromosome" else 0
 
                 # Assign the values to the dictionary
-                accession_info[accession]["location"] = sequence_location
-                accession_info[accession]["chromosomal"] = chromosomal
-                accession_info[accession]["length"] = seq_region_length
-                accession_info[accession]["karyotype_rank"] = karyotype_rank
+                if not accession_info[seq_region_name]["length"]:
+                    accession_info[seq_region_name]["length"] = seq_region_length
+
+                if not accession_info[seq_region_name]["location"]:
+                    accession_info[seq_region_name]["location"] = sequence_location
+
+                if accession_info[seq_region_name]["chromosomal"] is None:  # Assuming default is None
+                    accession_info[seq_region_name]["chromosomal"] = chromosomal
+
+                if not accession_info[seq_region_name]["karyotype_rank"]:
+                    accession_info[seq_region_name]["karyotype_rank"] = karyotype_rank
             # Now, create AssemblySequence objects for each unique accession.
             for accession, info in accession_info.items():
-                # Combine all unique names with ";". If a name appears in multiple sequences with the same accession,
-                name = ";".join(info["names"])
+                accession_pattern = r'^[a-zA-Z]{2}\d+\.\d+'
+                names = info["names"]
+                if not names:
+                    name = accession
+                else:
+                    # Sort names based on whether they contain a period.
+                    # Names without a period will come first.
+                    sorted_names = sorted(names, key=lambda x: ('.' in x, x))
+                    preferred_name = sorted_names[0]
 
+                    if re.match(accession_pattern, accession):
+                        name = preferred_name
+                    else:
+                        names.add(accession)
+                        matching_accessions = [temp for temp in names if re.match(accession_pattern, temp)]
+
+                        accession = matching_accessions[0] if matching_accessions else accession
+                        name = preferred_name
+
+                # Combine all unique names with ";". If a name appears in multiple sequences with the same accession,
+        #        name = ";".join(info["names"])
                 # Create an AssemblySequence object.
                 assembly_sequence = AssemblySequence(
                     name=name,
@@ -348,7 +352,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     chromosomal=info["chromosomal"],
                     length=info["length"],
                     sequence_location=info["location"],
-                    karyotype_rank=karyotype_rank,
+                    chromosome_rank=info["karyotype_rank"],
                     # md5="", Populated after checksums are ran.
                     # sha512t4u="", Populated after checksums are ran.
                 )
@@ -384,6 +388,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 # Leaving it until told otherwise.
                 level = (session.execute(db.select(CoordSystem.name).filter(
                     CoordSystem.species_id == species).order_by(CoordSystem.rank)).all())[0][0]
+                tol_id=self.get_meta_single_meta_key(species, "assembly.tol_id")
+                if tol_id is None:
+                    tol_id = self.get_meta_single_meta_key(species, "assembly.tolid")
+
             assembly = Assembly(
                 ucsc_name=self.get_meta_single_meta_key(species, "assembly.ucsc_alias"),
                 accession=self.get_meta_single_meta_key(species, "assembly.accession"),
@@ -392,7 +400,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 name=self.get_meta_single_meta_key(species, "assembly.name"),
                 accession_body=self.get_meta_single_meta_key(species, "assembly.provider"),
                 assembly_default=self.get_meta_single_meta_key(species, "assembly.default"),
-                tol_id=self.get_meta_single_meta_key(species, "assembly.tol_id"),  # Not implemented yet
+                tol_id=tol_id,
                 created=func.now(),
                 ensembl_name=self.get_meta_single_meta_key(species, "assembly.name"),
                 assembly_uuid=str(uuid.uuid4()),
@@ -498,7 +506,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         sample_location_param = DatasetAttribute(
                 value=self.get_meta_single_meta_key(species, "sample.location_param"),
                 dataset=genebuild_dataset,
-                attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.gene_param").one_or_none(),
+                attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.location_param").one_or_none(),
             )
         genebuild_dataset_attributes.append(sample_location_param)
 
