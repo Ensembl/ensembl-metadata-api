@@ -64,7 +64,7 @@ class GenomeAdaptor(BaseAdaptor):
             with self.taxonomy_db.session_scope() as session:
                 sci_name = session.execute(sci_name_select).one()
                 taxons[taxon]["scientific_name"] = sci_name[0]
-                genbank_name = session.execute(genbank_name_select).one()
+                genbank_name = session.execute(genbank_name_select).one_or_none()
                 taxons[taxon]["genbank_common_name"] = genbank_name[0]
                 synonyms = session.execute(synonyms_select).all()
                 for synonym in synonyms:

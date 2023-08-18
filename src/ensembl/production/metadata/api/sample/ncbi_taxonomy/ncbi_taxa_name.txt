@@ -297,6 +297,7 @@
 422676	Hematozoa Vivier 1982	synonym
 451864	Dikarya	scientific name
 511145	Escherichia coli MG1655	synonym
+511145	Escherichia coli MG1655	genbank common name
 511145	Escherichia coli strain MG1655	equivalent name
 511145	Escherichia coli str. K12 substr. MG1655	equivalent name
 511145	Escherichia coli str. K-12 substr. MG1655	scientific name
