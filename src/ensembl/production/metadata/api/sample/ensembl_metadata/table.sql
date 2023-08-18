@@ -111,11 +111,11 @@ CREATE TABLE dataset_attribute
 (
     dataset_attribute_id int auto_increment
         primary key,
-    value                varchar(128) not null,
+    value                varchar(128) null,
     attribute_id         int          not null,
     dataset_id           int          not null,
     constraint dataset_attribute_dataset_id_attribute_id__d3b34d8c_uniq
-        unique (dataset_id, attribute_id, value),
+        unique (dataset_id, attribute_id),
     constraint dataset_attribute_attribute_id_55c51407_fk_attribute
         foreign key (attribute_id) references attribute (attribute_id),
     constraint dataset_attribute_dataset_id_2e2afe19_fk_dataset_dataset_id
