@@ -160,6 +160,5 @@ class TestMetadataDB:
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes_info(genome_uuid=uuid)
-        result = test[0]
-        assert result['genome'][0].genome_uuid == uuid
-        assert result['datasets'][0][0].genome_uuid == uuid
+        assert test['genome'][0].genome_uuid == uuid
+        assert test['datasets'][0][0].genome_uuid == uuid
