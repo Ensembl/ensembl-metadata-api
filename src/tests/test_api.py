@@ -145,22 +145,16 @@ class TestMetadataDB:
         test = conn.fetch_genome_datasets(unreleased_datasets=True)
         print(test)
         assert test[0][1].release_id is None
-        assert test[0][1].is_current is False
+        assert test[0][1].is_current == 0
 
-    def test_fetch_genome_info_unreleased(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(unreleased_datasets=True)
-        assert test[0][1].release_id is None
-        assert test[0][1].is_current is False
-
-    def test_fetch_genome_info(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_info()
-        result = next(test)[0]
-        assert 'genome' in result
-        assert 'datasets' in result
+    #Duplicate
+    # def test_fetch_genome_info(self, multi_dbs):
+    #     conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+    #                          taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+    #     test = conn.fetch_genomes_info()
+    #     result = next(test)[0]
+    #     assert 'genome' in result
+    #     assert 'datasets' in result
 
     def test_fetch_genome_info_genome_uuid(self, multi_dbs):
         uuid = 'a7335667-93e7-11ec-a39d-005056b38ce3'
