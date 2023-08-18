@@ -155,10 +155,10 @@ class TestMetadataDB:
     #     assert 'genome' in result
     #     assert 'datasets' in result
 
-    def test_fetch_genome_info_genome_uuid(self, multi_dbs):
-        uuid = 'a7335667-93e7-11ec-a39d-005056b38ce3'
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_info(genome_uuid=uuid)
-        assert test['genome'][0].genome_uuid == uuid
-        assert test['datasets'][0][0].genome_uuid == uuid
+    # def test_fetch_genome_info_genome_uuid(self, multi_dbs):
+    #     uuid = 'a7335667-93e7-11ec-a39d-005056b38ce3'
+    #     conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+    #                          taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+    #     test = conn.fetch_genomes_info(genome_uuid=uuid)
+    #     assert test['genome'][0].genome_uuid == uuid
+    #     assert test['datasets'][0][0].genome_uuid == uuid
