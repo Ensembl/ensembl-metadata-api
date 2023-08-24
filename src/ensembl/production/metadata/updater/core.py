@@ -72,7 +72,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         for species in multi_species:
             self.process_species(species, metadata_uri, taxonomy_uri, db_uri)
 
-    def process_species(self, species, metadata_uri, taxonomy_uri, db_uri):
+    def process_species(self, species_id, metadata_uri, taxonomy_uri, db_uri):
         print (db_uri)
         """
         Process an individual species from a core database to update the metadata db.
@@ -81,11 +81,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
         meta_conn = DBConnection(metadata_uri)
         with meta_conn.session_scope() as meta_session:
             self.organism, self.division, self.organism_group_member, organism_status = \
-                self.get_or_new_organism(species, meta_session, metadata_uri, taxonomy_uri)
+                self.get_or_new_organism(species_id, meta_session, metadata_uri, taxonomy_uri)
             self.assembly, self.assembly_dataset, self.assembly_dataset_attributes, self.assembly_sequences, \
-                self.dataset_source, assembly_status = self.get_or_new_assembly(species, meta_session, db_uri)
+                self.dataset_source, assembly_status = self.get_or_new_assembly(species_id, meta_session, db_uri)
             self.genebuild_dataset, self.genebuild_dataset_attributes, \
-                genebuild_status = self.new_genebuild(species, meta_session, db_uri, self.dataset_source)
+                genebuild_status = self.new_genebuild(species_id, meta_session, db_uri, self.dataset_source)
 
             conn = DatasetAdaptor(metadata_uri=metadata_uri)
             genebuild_release_status = conn.check_release_status(self.genebuild_dataset.dataset_uuid)
@@ -165,40 +165,40 @@ class CoreMetaUpdater(BaseMetaUpdater):
         meta_session.add(genebuild_genome_dataset)
         return new_genome, assembly_genome_dataset, genebuild_genome_dataset
 
-    def get_or_new_organism(self, species, meta_session, metadata_uri, taxonomy_uri):
+    def get_or_new_organism(self, species_id, meta_session, metadata_uri, taxonomy_uri):
         """
         Get an existing Organism instance or create a new one, depending on the information from the metadata database.
         """
 
         # Fetch the Ensembl name of the organism from metadata using either 'species.ensembl_name'
         # or 'species.production_name' as the key.
-        ensembl_name = self.get_meta_single_meta_key(species, "species.ensembl_name")
+        ensembl_name = self.get_meta_single_meta_key(species_id, "species.ensembl_name")
         if ensembl_name is None:
-            ensembl_name = self.get_meta_single_meta_key(species, "species.production_name")
+            ensembl_name = self.get_meta_single_meta_key(species_id, "species.production_name")
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
-        common_name = self.get_meta_single_meta_key(species, "species.common_name")
+        common_name = self.get_meta_single_meta_key(species_id, "species.common_name")
         if common_name is None:
-            taxid = self.get_meta_single_meta_key(species, "species.taxonomy_id")
+            taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
             temp_adapt = GenomeAdaptor(metadata_uri, taxonomy_uri)
             names = temp_adapt.fetch_taxonomy_names(taxid)
             common_name = names[taxid]["genbank_common_name"]
         # Instantiate a new Organism object using data fetched from metadata.
         new_organism = Organism(
-            species_taxonomy_id=self.get_meta_single_meta_key(species, "species.species_taxonomy_id"),
-            taxonomy_id=self.get_meta_single_meta_key(species, "species.taxonomy_id"),
+            species_taxonomy_id=self.get_meta_single_meta_key(species_id, "species.species_taxonomy_id"),
+            taxonomy_id=self.get_meta_single_meta_key(species_id, "species.taxonomy_id"),
             common_name=common_name,
-            scientific_name=self.get_meta_single_meta_key(species, "species.scientific_name"),
+            scientific_name=self.get_meta_single_meta_key(species_id, "species.scientific_name"),
             ensembl_name=ensembl_name,
-            strain=self.get_meta_single_meta_key(species, "species.strain"),
-            strain_type = self.get_meta_single_meta_key(species, "strain.type"),
+            strain=self.get_meta_single_meta_key(species_id, "species.strain"),
+            strain_type = self.get_meta_single_meta_key(species_id, "strain.type"),
             #
         )
 
         # Query the metadata database to find if an Organism with the same Ensembl name already exists.
         old_organism = meta_session.query(Organism).filter(
             Organism.ensembl_name == new_organism.ensembl_name).one_or_none()
-        division_name = self.get_meta_single_meta_key(species, "species.division")
+        division_name = self.get_meta_single_meta_key(species_id, "species.division")
         division = meta_session.query(OrganismGroup).filter(OrganismGroup.name == division_name).one_or_none()
 
         # If an existing Organism is found, return it and indicate that it already existed.
@@ -218,7 +218,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 raise Exception("taxid not found in taxonomy database for scientific name")
 
             # Check if an Assembly with the same accession already exists in the metadata database.
-            accession = self.get_meta_single_meta_key(species, "assembly.accession")
+            accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
             assembly_test = meta_session.query(Assembly).filter(Assembly.accession == accession).one_or_none()
             if assembly_test is not None:
                 raise Exception(
@@ -248,7 +248,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # Return the newly created Organism and indicate that it is new.
             return new_organism, division, organism_group_member, "New"
 
-    def get_assembly_sequences(self, species, assembly):
+    def get_assembly_sequences(self, species_id, assembly):
         """
         Get the assembly sequences and the values that correspond to the metadata table
         """
@@ -260,7 +260,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                        .outerjoin(SeqRegionSynonym, SeqRegionSynonym.seq_region_id == SeqRegion.seq_region_id)
                        .join(SeqRegion.seq_region_attrib)
                        .join(SeqRegionAttrib.attrib_type)
-                       .filter(CoordSystem.species_id == species)
+                       .filter(CoordSystem.species_id == species_id)
                        .filter(AttribType.code == "toplevel")
                        .filter(CoordSystem.name != "lrg")
                        .all())
@@ -282,9 +282,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 lambda: {"names": set(), "accession": None, "length": None, "location": None, "chromosomal": None, "karyotype_rank":None})
 
             for seq_region_name, seq_region_length, coord_system_name, synonym in results:
-                # Skip all sequence lrg sequences.
-                if coord_system_name == "lrg":
-                    continue
                 accession_info[seq_region_name]["names"].add(seq_region_name)
                 if synonym:
                     accession_info[seq_region_name]["names"].add(synonym)
@@ -362,9 +359,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 assembly_sequences.append(assembly_sequence)
         return assembly_sequences
 
-    def get_or_new_assembly(self, species, meta_session, db_uri, source=None):
+    def get_or_new_assembly(self, species_id, meta_session, db_uri, source=None):
         # Get the new assembly accession  from the core handed over
-        assembly_accession = self.get_meta_single_meta_key(species, "assembly.accession")
+        assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         assembly = meta_session.query(Assembly).filter(Assembly.accession == assembly_accession).one_or_none()
 
         if assembly is not None:
@@ -382,30 +379,30 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 assembly_sequences, dataset_source, "Existing"
 
         else:
-            is_reference = 1 if self.get_meta_single_meta_key(species, "assembly.is_reference") else 0
+            is_reference = 1 if self.get_meta_single_meta_key(species_id, "assembly.is_reference") else 0
             with self.db.session_scope() as session:
                 # May be problematic.
                 # Ideally this should be done through karyotype rank, however using coord system was more efficent
                 # and upon testing 100 databases, it was found to be accurate in every case.
                 # Leaving it until told otherwise.
                 level = (session.execute(db.select(CoordSystem.name).filter(
-                    CoordSystem.species_id == species).order_by(CoordSystem.rank)).all())[0][0]
-                tol_id=self.get_meta_single_meta_key(species, "assembly.tol_id")
+                    CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
+                tol_id=self.get_meta_single_meta_key(species_id, "assembly.tol_id")
                 if tol_id is None:
-                    tol_id = self.get_meta_single_meta_key(species, "assembly.tolid")
+                    tol_id = self.get_meta_single_meta_key(species_id, "assembly.tolid")
 
             assembly = Assembly(
-                ucsc_name=self.get_meta_single_meta_key(species, "assembly.ucsc_alias"),
-                accession=self.get_meta_single_meta_key(species, "assembly.accession"),
+                ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
+                accession=self.get_meta_single_meta_key(species_id, "assembly.accession"),
                 level=level,
-                name=self.get_meta_single_meta_key(species, "assembly.name"),
-                accession_body=self.get_meta_single_meta_key(species, "assembly.provider"),
-                assembly_default=self.get_meta_single_meta_key(species, "assembly.default"),
+                name=self.get_meta_single_meta_key(species_id, "assembly.name"),
+                accession_body=self.get_meta_single_meta_key(species_id, "assembly.provider"),
+                assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
                 tol_id=tol_id,
                 created=func.now(),
-                ensembl_name=self.get_meta_single_meta_key(species, "assembly.name"),
+                ensembl_name=self.get_meta_single_meta_key(species_id, "assembly.name"),
                 assembly_uuid=str(uuid.uuid4()),
-                url_name=self.get_meta_single_meta_key(species, "assembly.url_name"),
+                url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
                 is_reference=is_reference
 
             )
@@ -425,7 +422,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 dataset_source=dataset_source,  # extract from dataset_source
                 status='Submitted',
             )
-            attributes = self.get_meta_list_from_prefix_meta_key(species, "assembly")
+            attributes = self.get_meta_list_from_prefix_meta_key(species_id, "assembly")
             assembly_dataset_attributes = []
             for attribute, value in attributes.items():
                 meta_attribute = meta_session.query(Attribute).filter(Attribute.name == attribute).one_or_none()
@@ -437,22 +434,22 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     attribute=meta_attribute,
                 )
                 assembly_dataset_attributes.append(dataset_attribute)
-            assembly_sequences = self.get_assembly_sequences(species, assembly)
+            assembly_sequences = self.get_assembly_sequences(species_id, assembly)
             meta_session.add(assembly)
             meta_session.add_all(assembly_sequences)
             meta_session.add(assembly_dataset)
             meta_session.add_all(assembly_dataset_attributes)
             return assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source, "New"
 
-    def new_genebuild(self, species, meta_session, db_uri, source=None):
+    def new_genebuild(self, species_id, meta_session, db_uri, source=None):
         """
         Process an individual species from a core database to update the metadata db.
         This method contains the logic for updating the metadata
         This is not a get, as we don't update the metadata for genebuild, only replace it if it is not released.
         """
         # The assembly accession and genebuild version are extracted from the metadata of the species
-        assembly_accession = self.get_meta_single_meta_key(species, "assembly.accession")
-        genebuild_version = self.get_meta_single_meta_key(species, "genebuild.version")
+        assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
+        genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
 
         #Test if sample_gene is present.
 
@@ -481,7 +478,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         )
 
         # Fetching all attributes associated with "genebuild" from the metadata of the species
-        attributes = self.get_meta_list_from_prefix_meta_key(species, "genebuild.")
+        attributes = self.get_meta_list_from_prefix_meta_key(species_id, "genebuild.")
 
         # An empty list to hold DatasetAttribute instances
         genebuild_dataset_attributes = []
@@ -499,13 +496,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         #Grab the necessary sample data and add it as an datasetattribute
         sample_gene_param = DatasetAttribute(
-                value=self.get_meta_single_meta_key(species, "sample.gene_param"),
+                value=self.get_meta_single_meta_key(species_id, "sample.gene_param"),
                 dataset=genebuild_dataset,
                 attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.gene_param").one_or_none(),
             )
         genebuild_dataset_attributes.append(sample_gene_param)
         sample_location_param = DatasetAttribute(
-                value=self.get_meta_single_meta_key(species, "sample.location_param"),
+                value=self.get_meta_single_meta_key(species_id, "sample.location_param"),
                 dataset=genebuild_dataset,
                 attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.location_param").one_or_none(),
             )
