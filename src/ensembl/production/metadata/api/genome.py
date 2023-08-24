@@ -277,8 +277,8 @@ class GenomeAdaptor(BaseAdaptor):
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
-                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
-                    .filter(GenomeDataset.is_current == 0)
+                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None))
+
             if dataset_name is not None:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
 
