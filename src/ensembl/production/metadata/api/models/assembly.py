@@ -28,7 +28,7 @@ class Assembly(Base):
     level = Column(String(32), nullable=False)
     name = Column(String(128), nullable=False)
     accession_body = Column(String(32))
-    assembly_default = Column(String(32))
+    assembly_default = Column(String(128))
     tol_id = Column(String(32), unique=True)
     created = Column(DateTime)
     ensembl_name = Column(String(255), unique=True)

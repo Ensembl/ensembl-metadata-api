@@ -73,6 +73,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             self.process_species(species, metadata_uri, taxonomy_uri, db_uri)
 
     def process_species(self, species, metadata_uri, taxonomy_uri, db_uri):
+        print (db_uri)
         """
         Process an individual species from a core database to update the metadata db.
         This method contains the logic for updating the metadata
@@ -261,6 +262,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                        .join(SeqRegionAttrib.attrib_type)
                        .filter(CoordSystem.species_id == species)
                        .filter(AttribType.code == "toplevel")
+                       .filter(CoordSystem.name != "lrg")
                        .all())
             attributes = (session.query(SeqRegion.name, AttribType.code, SeqRegionAttrib.value)
                           .select_from(SeqRegion)
@@ -396,7 +398,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 ucsc_name=self.get_meta_single_meta_key(species, "assembly.ucsc_alias"),
                 accession=self.get_meta_single_meta_key(species, "assembly.accession"),
                 level=level,
-                # level=self.get_meta_single_meta_key(self.species, "assembly.level"),   #Not yet implemented.
                 name=self.get_meta_single_meta_key(species, "assembly.name"),
                 accession_body=self.get_meta_single_meta_key(species, "assembly.provider"),
                 assembly_default=self.get_meta_single_meta_key(species, "assembly.default"),
