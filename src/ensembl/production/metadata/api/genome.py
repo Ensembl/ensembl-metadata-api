@@ -10,7 +10,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import sqlalchemy as db
-from sqlalchemy.engine import make_url
 
 from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
@@ -28,42 +27,36 @@ class GenomeAdaptor(BaseAdaptor):
         super().__init__(metadata_uri)
         self.taxonomy_db = DBConnection(taxonomy_uri)
 
-    def fetch_taxonomy_names(self, taxonomy_ids):
+    def fetch_taxonomy_names(self, taxonomy_ids, synonyms=[]):
 
         taxonomy_ids = check_parameter(taxonomy_ids)
+        synonyms = [
+            "common name",
+            "equivalent name",
+            "genbank synonym",
+            "synonym",
+        ] if len(check_parameter(synonyms)) == 0 else synonyms
+        required_class_name = ["genbank common name", "scientific name"]
         taxons = {}
-        for tid in taxonomy_ids:
-            names = {"scientific_name": None, "synonym": []}
-            taxons[tid] = names
-        for taxon in taxons:
-            sci_name_select = db.select(
-                NCBITaxaName.name
-            ).filter(
-                NCBITaxaName.taxon_id == taxon,
-                NCBITaxaName.name_class == "scientific name",
-            )
-            synonym_class = [
-                "common name",
-                "equivalent name",
-                "genbank common name",
-                "genbank synonym",
-                "synonym",
-            ]
+        with self.taxonomy_db.session_scope() as session:
+            for tid in taxonomy_ids:
+                taxons[tid] = {"scientific_name": None, "genbank_common_name": None, "synonym": []}
 
-            synonyms_select = db.select(
-                NCBITaxaName.name
-            ).filter(
-                NCBITaxaName.taxon_id == taxon,
-                NCBITaxaName.name_class.in_(synonym_class),
-            )
+                taxonomyname_query = db.select(
+                    NCBITaxaName.name,
+                    NCBITaxaName.name_class,
+                ).filter(
+                    NCBITaxaName.taxon_id == tid,
+                    NCBITaxaName.name_class.in_(required_class_name + synonyms),
+                )
 
-            with self.taxonomy_db.session_scope() as session:
-                sci_name = session.execute(sci_name_select).one()
-                taxons[taxon]["scientific_name"] = sci_name[0]
-                synonyms = session.execute(synonyms_select).all()
-                for synonym in synonyms:
-                    taxons[taxon]["synonym"].append(synonym[0])
-        return taxons
+                for taxon_name in session.execute(taxonomyname_query).all():
+                    if taxon_name[1] in synonyms:
+                        taxons[tid]['synonym'].append(taxon_name[0])
+                    if taxon_name[1] in required_class_name:
+                        taxon_format_name = "_".join(taxon_name[1].split(' '))
+                        taxons[tid][taxon_format_name] = taxon_name[0]
+            return taxons
 
     def fetch_taxonomy_ids(self, taxonomy_names):
         taxids = []
@@ -284,8 +277,8 @@ class GenomeAdaptor(BaseAdaptor):
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
-                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
-                    .filter(GenomeDataset.is_current == 0)
+                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None))
+
             if dataset_name is not None:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
 

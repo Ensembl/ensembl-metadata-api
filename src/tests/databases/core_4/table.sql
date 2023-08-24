@@ -84,3 +84,4 @@ CREATE TABLE `attrib_type` (
   PRIMARY KEY (`attrib_type_id`),
   UNIQUE KEY `code_idx` (`code`)
 );
+

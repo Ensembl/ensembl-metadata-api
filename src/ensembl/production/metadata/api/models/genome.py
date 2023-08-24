@@ -63,6 +63,7 @@ class GenomeRelease(Base):
     genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
     release_id = Column(ForeignKey("ensembl_release.release_id"), nullable=False, index=True)
     is_current = Column(TINYINT(1), nullable=False)
+    is_best = Column(TINYINT(1), nullable=False)
     # One to many relationships
     # none
     # many to one relationships
