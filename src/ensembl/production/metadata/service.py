@@ -340,7 +340,7 @@ def get_grouping_info(metadata_db, organism_id):
             return create_grouping()
 
 
-def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
+def get_genome_uuid(metadata_db, ensembl_name, assembly_name, use_default):
     if ensembl_name is None or assembly_name is None:
         return create_genome_uuid()
 
@@ -350,9 +350,9 @@ def get_genome_uuid(metadata_db, ensembl_name, assembly_name):
         assembly = sqlalchemy_md.tables['assembly']
         organism = sqlalchemy_md.tables['organism']
 
-    genome_uuid_query = get_genome_uuid_query(genome, assembly, organism).select_from(genome)\
+    genome_uuid_query = get_genome_uuid_query(genome, assembly, organism).select_from(genome) \
         .join(assembly).join(organism) \
-        .where(and_(func.lower(assembly.c.name) == assembly_name.lower(),
+        .where(and_(func.lower(assembly.c.assembly_default if use_default == 1 else assembly.c.name) == assembly_name.lower(),
                     func.lower(organism.c.ensembl_name) == ensembl_name.lower()))
 
     genome_uuid_result = session.execute(genome_uuid_query).all()
@@ -944,7 +944,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return get_top_level_statistics_by_uuid(self.db, request.genome_uuid)
 
     def GetGenomeUUID(self, request, context):
-        return get_genome_uuid(self.db, request.ensembl_name, request.assembly_name)
+        return get_genome_uuid(self.db, request.ensembl_name, request.assembly_name, request.use_default)
 
     def GetGenomeByUUID(self, request, context):
         return get_genome_by_uuid(self.db, request.genome_uuid, request.release_version)
