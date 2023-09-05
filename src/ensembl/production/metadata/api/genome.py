@@ -492,7 +492,6 @@ class GenomeAdaptor(BaseAdaptor):
                     dataset_source=dataset_source
                 )
                 res = [{'genome': genome, 'datasets': dataset}]
-                print(f"res ===> {res}")
                 yield res
         except Exception as e:
             raise ValueError(str(e))
