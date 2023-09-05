@@ -297,6 +297,7 @@
 422676	Hematozoa Vivier 1982	synonym
 451864	Dikarya	scientific name
 511145	Escherichia coli MG1655	synonym
+511145	Escherichia coli MG1655	genbank common name
 511145	Escherichia coli strain MG1655	equivalent name
 511145	Escherichia coli str. K12 substr. MG1655	equivalent name
 511145	Escherichia coli str. K-12 substr. MG1655	scientific name
@@ -321,6 +322,10 @@
 2301119	Rhabditomorpha	scientific name
 2698737	Sar Burki et al. 2008	authority
 2698737	Sar	scientific name
+666668	jabberwocky	synonym
+666668	carol_jabberwocky3	equivalent name
+666668	carol_jabberwocky2	equivalent name
+666668	carol_jabberwocky	scientific name
 2698737	SAR supergroup	synonym
 38820	4478	merged_taxon_id
 38820	4727	merged_taxon_id

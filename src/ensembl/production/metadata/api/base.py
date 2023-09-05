@@ -12,12 +12,19 @@
 from ensembl.database import DBConnection
 
 
+##Todo: Add in OrganismAdapator. Subfunction fetches all organism in popular group. and # of genomes from distinct assemblies.
+#Add in best genome (see doc)
+#More functions for related genomes
+
+
 class BaseAdaptor:
     def __init__(self, metadata_uri):
         self.metadata_db = DBConnection(metadata_uri)
 
 
 def check_parameter(param):
+    if  isinstance(param, tuple):
+        param = param[0]
     if param is not None and not isinstance(param, list):
         param = [param]
     return param

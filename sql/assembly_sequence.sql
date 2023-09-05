@@ -1,11 +1,11 @@
--- Because the attrib_type and external_db tables are identical
+-- Because the attrib_type.txt and external_db tables are identical
 -- across all dbs, and in sync with the production master copy,
 -- we can use IDs directly, and avoid some complicated outer
 -- join statements...
 -- external_db.external_db_id 50710 = INSDC
--- attrib_type.attrib_type_id 6 = toplevel
--- attrib_type.attrib_type_id 367 = karyotype_rank
--- attrib_type.attrib_type_id 547 = sequence_location
+-- attrib_type.txt.attrib_type_id 6 = toplevel
+-- attrib_type.txt.attrib_type_id 367 = karyotype_rank
+-- attrib_type.txt.attrib_type_id 547 = sequence_location
 
 -- Unfortunately, the sequence_location attribute in the core dbs
 -- isn't set with the values you might expect; it has '*_chromosome'

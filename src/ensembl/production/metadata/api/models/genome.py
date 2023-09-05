@@ -28,8 +28,8 @@ class Genome(Base):
     created = Column(DATETIME(fsp=6), nullable=False)
     # One to many relationships
     # genome_id to genome_dataset and genome release
-    genome_datasets = relationship("GenomeDataset", back_populates="genome")
-    genome_releases = relationship("GenomeRelease", back_populates="genome")
+    genome_datasets = relationship("GenomeDataset", back_populates="genome", cascade="all, delete, delete-orphan")
+    genome_releases = relationship("GenomeRelease", back_populates="genome", cascade="all, delete, delete-orphan")
     # many to one relationships
     # assembly_id to assembly
     assembly = relationship("Assembly", back_populates="genomes")
@@ -69,6 +69,7 @@ class GenomeRelease(Base):
     genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
     release_id = Column(ForeignKey("ensembl_release.release_id"), nullable=False, index=True)
     is_current = Column(TINYINT(1), nullable=False)
+    is_best = Column(TINYINT(1), nullable=False)
     # One to many relationships
     # none
     # many to one relationships

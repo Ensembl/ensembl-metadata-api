@@ -55,8 +55,8 @@ class Dataset(Base):
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
-    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset')
-    genome_datasets = relationship("GenomeDataset", back_populates='dataset')
+    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset', cascade="all, delete, delete-orphan")
+    genome_datasets = relationship("GenomeDataset", back_populates='dataset', cascade="all, delete, delete-orphan")
     # many to one relationships
     # dataset_type_id to dataset_type
     dataset_type = relationship('DatasetType', back_populates="datasets")

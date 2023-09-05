@@ -58,12 +58,12 @@ class ReleaseAdaptor(BaseAdaptor):
                 EnsemblRelease.release_id.in_(release_id)
             )
         # WHERE ensembl_release.version = :version_1
-        if release_version is not None:
+        elif release_version is not None:
             release_select = release_select.filter(
                 EnsemblRelease.version.in_(release_version)
             )
         # WHERE ensembl_release.is_current =:is_current_1
-        if current_only:
+        elif current_only:
             release_select = release_select.filter(
                 EnsemblRelease.is_current == 1
             )

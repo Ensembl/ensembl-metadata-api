@@ -25,32 +25,22 @@ class Organism(Base):
     organism_uuid = Column(String(128), unique=True, nullable=False, default=uuid.uuid4)
     taxonomy_id = Column(Integer, nullable=False)
     species_taxonomy_id = Column(Integer)
-    display_name = Column(String(128), nullable=False)
+    common_name = Column(String(128), nullable=False)
     strain = Column(String(128))
     scientific_name = Column(String(128))
-    url_name = Column(String(128), nullable=False)
     ensembl_name = Column(String(128), nullable=False, unique=True)
     scientific_parlance_name = Column(String(255))
     # One to many relationships
     # Organism_id to organism_group_member and genome
-    genomes = relationship("Genome", back_populates="organism")
+    genomes = relationship("Genome", back_populates="organism", cascade="all, delete, delete-orphan")
     organism_group_members = relationship("OrganismGroupMember", back_populates="organism")
-
+    strain_type = Column(String(128), nullable=True, unique=False)
     # many to one relationships
     # organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
-
     def __repr__(self):
-        return f"Organism(" \
-                   f"organism_id={self.organism_id}, " \
-                   f"taxonomy_id={self.taxonomy_id}, " \
-                   f"species_taxonomy_id='{self.species_taxonomy_id}, " \
-                   f"display_name='{self.display_name}', " \
-                   f"strain='{self.strain}', " \
-                   f"scientific_name='{self.scientific_name}', " \
-                   f"url_name='{self.url_name}', " \
-                   f"ensembl_name='{self.ensembl_name}', " \
-                   f"scientific_parlance_name='{self.scientific_parlance_name}'" \
-               f")"
+        return f"organism_id={self.organism_id}, taxonomy_id={self.taxonomy_id}, species_taxonomy_id={self.species_taxonomy_id}, " \
+               f"common_name={self.common_name}, strain={self.strain}, scientific_name={self.scientific_name}, " \
+               f"ensembl_name={self.ensembl_name}, scientific_parlance_name={self.scientific_parlance_name}"
 
 
 class OrganismGroup(Base):
@@ -69,14 +59,9 @@ class OrganismGroup(Base):
 
     # many to one relationships
     # none
-
     def __repr__(self):
-        return f"OrganismGroup(" \
-                   f"organism_group_id={self.organism_group_id}, " \
-                   f"type={self.type}, " \
-                   f"name={self.name}, " \
-                   f"name={self.code}" \
-               f")"
+        return f"organism_group_id={self.organism_group_id}, type={self.type}, name={self.name}, " \
+               f"code={self.code}"
 
 
 class OrganismGroupMember(Base):
@@ -88,6 +73,7 @@ class OrganismGroupMember(Base):
 
     organism_group_member_id = Column(Integer, primary_key=True)
     is_reference = Column(TINYINT(1), nullable=False)
+    order = Column(Integer, nullable=True)
     organism_id = Column(ForeignKey("organism.organism_id"), nullable=False)
     organism_group_id = Column(ForeignKey("organism_group.organism_group_id"), nullable=False, index=True)
     # One to many relationships
@@ -99,9 +85,5 @@ class OrganismGroupMember(Base):
     organism = relationship("Organism", back_populates="organism_group_members")
 
     def __repr__(self):
-        return f"OrganismGroupMember(" \
-                   f"organism_group_member_id={self.organism_group_member_id}, " \
-                   f"is_reference={self.is_reference}, " \
-                   f"organism_id={self.organism_id}, " \
-                   f"organism_group_id={self.organism_group_id}" \
-               f")"
+        return f"organism_group_member_id={self.organism_group_member_id}, is_reference={self.is_reference}, organism_id={self.organism_id}, " \
+               f"organism_group_id={self.organism_group_id}"

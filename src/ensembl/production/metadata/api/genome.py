@@ -10,15 +10,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import sqlalchemy as db
-from sqlalchemy.engine import make_url
 
 from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
 
 from ensembl.production.metadata.api.base import BaseAdaptor, check_parameter
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
-    GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
-    Attribute, DatasetAttribute
+    GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,73 +27,36 @@ class GenomeAdaptor(BaseAdaptor):
         super().__init__(metadata_uri)
         self.taxonomy_db = DBConnection(taxonomy_uri)
 
-    def fetch_taxonomy_names(self, taxonomy_ids):
-        """
-        Fetches taxonomy names for the given taxonomy IDs.
+    def fetch_taxonomy_names(self, taxonomy_ids, synonyms=[]):
 
-        Args:
-            taxonomy_ids (list): List of taxonomy IDs to fetch names for.
-
-        Returns:
-            dict: Dictionary containing taxonomy IDs as keys and corresponding names and related information as values.
-                  Each taxonomy ID has a dictionary with keys "scientific_name", "synonym", "ncbi_common_name",
-                  "alternative_names", and "common_name". The "scientific_name" key holds the scientific name for
-                  the taxonomy ID, "synonym" key holds a list of synonymous names, "ncbi_common_name" key holds
-                  the GenBank common name, "alternative_names" key holds a list of common names, and "common_name" key
-                  holds the primary common name.
-        """
-        # Parameter validation
         taxonomy_ids = check_parameter(taxonomy_ids)
-
+        synonyms = [
+            "common name",
+            "equivalent name",
+            "genbank synonym",
+            "synonym",
+        ] if len(check_parameter(synonyms)) == 0 else synonyms
+        required_class_name = ["genbank common name", "scientific name"]
         taxons = {}
-        for tid in taxonomy_ids:
-            names = {"scientific_name": None, "synonym": []}
-            taxons[tid] = names
+        with self.taxonomy_db.session_scope() as session:
+            for tid in taxonomy_ids:
+                taxons[tid] = {"scientific_name": None, "genbank_common_name": None, "synonym": []}
 
-        for taxon in taxons:
-            sci_name_select = db.select(
-                NCBITaxaName.name
-            ).filter(
-                NCBITaxaName.taxon_id == taxon,
-                NCBITaxaName.name_class == "scientific name",
-            )
-            synonym_class = [
-                "common name",
-                "equivalent name",
-                "genbank common name",
-                "genbank synonym",
-                "synonym",
-            ]
+                taxonomyname_query = db.select(
+                    NCBITaxaName.name,
+                    NCBITaxaName.name_class,
+                ).filter(
+                    NCBITaxaName.taxon_id == tid,
+                    NCBITaxaName.name_class.in_(required_class_name + synonyms),
+                )
 
-            synonyms_select = db.select(
-                NCBITaxaName.name, NCBITaxaName.name_class
-            ).filter(
-                NCBITaxaName.taxon_id == taxon,
-                NCBITaxaName.name_class.in_(synonym_class),
-            )
-
-            with self.taxonomy_db.session_scope() as session:
-                sci_name = session.execute(sci_name_select).one()
-                taxons[taxon]["scientific_name"] = sci_name[0]
-                synonyms = session.execute(synonyms_select).all()
-                common_names = []
-                taxons[taxon]['ncbi_common_name'] = None
-                for synonym in synonyms:
-                    # create a list of synonyms
-                    taxons[taxon]["synonym"].append(synonym[0])
-                    # and fill the rest of the required key-values fields
-                    # these are required by get_species_information() in the metadata service
-                    if synonym[1] is not None and synonym[0] is not None:
-                        if synonym[1] == 'genbank common name':
-                            taxons[taxon]['ncbi_common_name'] = synonym[0]
-                        if synonym[1] == 'common name':
-                            common_names.append(synonym[1])
-                    taxons[taxon]['alternative_names'] = common_names
-                    if len(common_names) > 0:
-                        taxons[taxon]['common_name'] = common_names[0]
-                    else:
-                        taxons[taxon]['common_name'] = None
-        return taxons
+                for taxon_name in session.execute(taxonomyname_query).all():
+                    if taxon_name[1] in synonyms:
+                        taxons[tid]['synonym'].append(taxon_name[0])
+                    if taxon_name[1] in required_class_name:
+                        taxon_format_name = "_".join(taxon_name[1].split(' '))
+                        taxons[tid][taxon_format_name] = taxon_name[0]
+            return taxons
 
     def fetch_taxonomy_ids(self, taxonomy_names):
         taxids = []
@@ -165,17 +126,18 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Construct the initial database query
         genome_select = db.select(
-            Genome, Organism, Assembly, OrganismGroupMember, OrganismGroup
-        ).select_from(Genome) \
-            .join(Organism, Organism.organism_id == Genome.organism_id) \
-            .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
-            .join(OrganismGroupMember, OrganismGroupMember.organism_id == Organism.organism_id) \
-            .join(OrganismGroup, OrganismGroup.organism_group_id == OrganismGroupMember.organism_group_id) \
+            Genome, Organism, Assembly
+        ).join(Genome.assembly).join(Genome.organism)
 
         # Apply group filtering if group parameter is provided
         if group:
             group_type = group_type if group_type else ['Division']
-            genome_select = genome_select.filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
+            genome_select = db.select(
+                Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember
+            ).join(Genome.assembly).join(Genome.organism) \
+                .join(Organism.organism_group_members) \
+                .join(OrganismGroupMember.organism_group) \
+                .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
 
         # Apply additional filters based on the provided parameters
         if unreleased_only:
@@ -184,15 +146,11 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
                 GenomeRelease.genome_id == None
             )
-        if is_released:
-            # Include release related info only if is_released is True
-            genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
-                .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
-                .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
-                .join(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id)
-
-        if site_name is not None:
-            genome_select = genome_select.filter(EnsemblSite.name == site_name)
+        elif site_name is not None:
+            genome_select = genome_select.join(
+                Genome.genome_releases).join(
+                GenomeRelease.ensembl_release).join(
+                EnsemblRelease.ensembl_site).filter(EnsemblSite.name == site_name)
 
             if release_type is not None:
                 genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
@@ -200,7 +158,7 @@ class GenomeAdaptor(BaseAdaptor):
             if current_only:
                 genome_select = genome_select.filter(GenomeRelease.is_current == 1)
 
-            if release_version != 0.0:
+            if release_version is not None:
                 genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
         # These options are in order of decreasing specificity,
@@ -209,7 +167,7 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
 
         if genome_uuid is not None:
-            genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
+            genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid) )
 
         if organism_uuid is not None:
             genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
@@ -223,7 +181,7 @@ class GenomeAdaptor(BaseAdaptor):
         if ensembl_name is not None:
             genome_select = genome_select.filter(Organism.ensembl_name.in_(ensembl_name))
 
-        if taxonomy_id is not None:
+        elif taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
 
         with self.metadata_db.session_scope() as session:
@@ -356,11 +314,7 @@ class GenomeAdaptor(BaseAdaptor):
         assembly_accession = check_parameter(assembly_accession)
         assembly_sequence_accession = check_parameter(assembly_sequence_accession)
 
-        seq_select = db.select(
-            Genome, Assembly, AssemblySequence
-        ).select_from(Genome) \
-            .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
-            .join(AssemblySequence, AssemblySequence.assembly_id == Assembly.assembly_id)
+        seq_select = db.select(AssemblySequence, )
 
         if chromosomal_only:
             seq_select = seq_select.filter(AssemblySequence.chromosomal == 1)
@@ -368,15 +322,16 @@ class GenomeAdaptor(BaseAdaptor):
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
         if genome_id is not None:
-            seq_select = seq_select.filter(Genome.genome_id == genome_id)
+            seq_select = seq_select.join(AssemblySequence.assembly).join(Assembly.genomes).filter(
+                Genome.genome_id == genome_id
+            )
 
-        if genome_uuid is not None:
-            seq_select = seq_select.filter(Genome.genome_uuid == genome_uuid)
+        elif genome_uuid is not None:
+            seq_select = seq_select.join(AssemblySequence.assembly).join(Assembly.genomes).filter(
+                Genome.genome_uuid == genome_uuid
+            )
 
-        if assembly_uuid is not None:
-            seq_select = seq_select.filter(Assembly.assembly_uuid.in_(assembly_uuid))
-
-        if assembly_accession is not None:
+        elif assembly_accession is not None:
             seq_select = seq_select.filter(Assembly.accession == assembly_accession)
 
         if assembly_sequence_accession is not None:
@@ -439,17 +394,15 @@ class GenomeAdaptor(BaseAdaptor):
         try:
             genome_select = db.select(
                 Genome,
-                Organism,
                 GenomeDataset,
                 Dataset,
                 DatasetType,
-                DatasetSource,
+                DatasetSource
             ).select_from(Genome) \
-                .join(Organism, Organism.organism_id == Genome.organism_id) \
                 .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
-                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id) \
+                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
 
             # set default group topic as 'assembly' to fetch unique datasource
             if not dataset_name:
@@ -457,11 +410,9 @@ class GenomeAdaptor(BaseAdaptor):
 
             genome_id = check_parameter(genome_id)
             genome_uuid = check_parameter(genome_uuid)
-            organism_uuid = check_parameter(organism_uuid)
             dataset_uuid = check_parameter(dataset_uuid)
             dataset_name = check_parameter(dataset_name)
             dataset_source = check_parameter(dataset_source)
-            dataset_type = check_parameter(dataset_type)
 
             if genome_id is not None:
                 genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
@@ -469,22 +420,11 @@ class GenomeAdaptor(BaseAdaptor):
             if genome_uuid is not None:
                 genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
 
-            if organism_uuid is not None:
-                genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
-
             if dataset_uuid is not None:
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
-                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None)) \
-                    .filter(GenomeDataset.is_current == 0)
-
-            if is_released:
-                # Include release related info only if is_released is True
-                genome_select = genome_select.add_columns(EnsemblRelease, DatasetAttribute, Attribute) \
-                    .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id) \
-                    .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
-                    .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id)
+                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None))
 
             if dataset_name is not None and "all" not in dataset_name:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
@@ -551,6 +491,8 @@ class GenomeAdaptor(BaseAdaptor):
                     dataset_name=dataset_name,
                     dataset_source=dataset_source
                 )
-                yield [{'genome': genome, 'datasets': dataset}]
+                res = [{'genome': genome, 'datasets': dataset}]
+                print(f"res ===> {res}")
+                yield res
         except Exception as e:
             raise ValueError(str(e))

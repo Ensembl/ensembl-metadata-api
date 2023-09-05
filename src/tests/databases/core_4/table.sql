@@ -76,3 +76,12 @@ CREATE TABLE seq_region_synonym
 CREATE INDEX seq_region_idx
     on seq_region_synonym (seq_region_id);
 
+CREATE TABLE `attrib_type` (
+  `attrib_type_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(20) NOT NULL DEFAULT '',
+  `name` varchar(255) NOT NULL DEFAULT '',
+  `description` text,
+  PRIMARY KEY (`attrib_type_id`),
+  UNIQUE KEY `code_idx` (`code`)
+);
+

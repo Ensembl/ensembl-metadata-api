@@ -56,13 +56,17 @@
 56	homology_coverage	Coverage	Percent of genome which is homologous to another species	percent
 57	short_variants	Short variants	Small-scale genetic variations	integer
 58	structural_variants	Structural variants	Large-scale genetic variations	integer
-59	short_variants_with_phenotype_assertions	"Short variants
-With phenotype assertions"	Short variants with phenotypic evidence	integer
-60	short_variants_with_publications	"Short variants
-With publications"	Short variants published in literature	integer
-61	short_variants_frequency_studies	"Short variants
-Frequency studies"	Short variants studied for frequency	integer
-62	structural_variants_with_phenotype_assertions	"Structural variants
-With phenotype assertions"	Structural variants with phenotypic evidence	integer
+59	short_variants_with_phenotype_assertions	"Short variants With phenotype assertions"	Short variants with phenotypic evidence	integer
+60	short_variants_with_publications	"Short variants With publications"	Short variants published in literature	integer
+61	short_variants_frequency_studies	"Short variants Frequency studies"	Short variants studied for frequency	integer
+62	structural_variants_with_phenotype_assertions	"Structural variants With phenotype assertions"	Structural variants with phenotypic evidence	integer
 63	enhancers	Enhancers	DNA sequences that increase gene expression	integer
 64	promoters	Promoters	DNA sequences initiating transcription	integer
+65	assembly.accession	accession	accession	string
+66	assembly.default	default	default	string
+67	assembly.name	name	name	string
+68	assembly.ucsc_alias	ucsc_alias	ucsc_alias	string
+69	genebuild.last_geneset_update	last_geneset_update	last_geneset_update	string
+70	genebuild.version	version	version	string
+71	sample.gene_param	sample.gene_param	sample.gene_param	string
+72	sample.location_param	sample.location_param	sample.location_param	string
