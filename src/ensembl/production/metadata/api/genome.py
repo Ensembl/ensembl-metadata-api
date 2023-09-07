@@ -340,3 +340,46 @@ class GenomeAdaptor(BaseAdaptor):
                 yield [{'genome': genome, 'datasets': dataset}]
         except Exception as e:
             raise ValueError(str(e))
+
+    def get_popular_organisms_counts(self, release_version=None):
+        from ensembl.production.metadata.api.models.organism import OrganismGroup, Organism, OrganismGroupMember
+        from sqlalchemy.orm import aliased
+        from sqlalchemy import func
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            o_species = aliased(Organism)
+            o = aliased(Organism)
+            if not release_version:
+                # Get latest released organisms
+                query = session.query(
+                    o_species.species_taxonomy_id,
+                    o_species.ensembl_name,
+                    o_species.common_name,
+                    o_species.scientific_name,
+                    OrganismGroupMember.order.label('order'),
+                    func.count().label('count')
+                )
+
+                query = query.join(o, o_species.species_taxonomy_id == o.species_taxonomy_id)
+                query = query.join(Genome, o.organism_id == Genome.organism_id)
+                query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+                query = query.join(OrganismGroupMember, o_species.organism_id == OrganismGroupMember.organism_id)
+                query = query.join(OrganismGroup,
+                                   OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
+                query = query.filter(OrganismGroup.code == 'popular')
+                query = query.group_by(
+                    o_species.species_taxonomy_id,
+                    o_species.ensembl_name,
+                    o_species.common_name,
+                    o_species.scientific_name,
+                    OrganismGroupMember.order
+                )
+                query = query.order_by(OrganismGroupMember.order)
+                # TODO check if we should return a dictionary instead
+                return query.all()
+            else:
+                # change group to release_version_state and related genomes
+                raise NotImplementedError('Not implemented yet')
+                pass
+
+
