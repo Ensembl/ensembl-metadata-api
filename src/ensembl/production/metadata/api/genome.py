@@ -16,7 +16,8 @@ from ensembl.ncbi_taxonomy.models import NCBITaxaName
 
 from ensembl.production.metadata.api.base import BaseAdaptor, check_parameter
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
-    GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource
+    GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
+    Attribute, DatasetAttribute
 import logging
 
 logger = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genomes(self, genome_id=None, genome_uuid=None, organism_uuid=None, assembly_accession=None,
                       assembly_name=None, ensembl_name=None, taxonomy_id=None, group=None, group_type=None,
-                      unreleased_only=False, is_released=True, site_name=None, release_type=None,
+                      unreleased_only=False, site_name=None, release_type=None,
                       release_version=None, current_only=True):
         """
         Fetches genome information based on the specified parameters.
@@ -91,7 +92,6 @@ class GenomeAdaptor(BaseAdaptor):
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
             group_type (Union[str, List[str]]): The type(s) of the organism group(s) to filter by.
             unreleased_only (bool): Whether to fetch only genomes that have not been released (default: False).
-            is_released (bool): Whether to fetch released genomes that have been released (default: True).
             site_name (str): The name of the Ensembl site to filter by.
             release_type (str): The type of the Ensembl release to filter by.
             release_version (int): The maximum version of the Ensembl release to filter by.
@@ -127,7 +127,9 @@ class GenomeAdaptor(BaseAdaptor):
         # Construct the initial database query
         genome_select = db.select(
             Genome, Organism, Assembly
-        ).join(Genome.assembly).join(Genome.organism)
+        ).select_from(Genome) \
+            .join(Organism, Organism.organism_id == Genome.organism_id) \
+            .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
 
         # Apply group filtering if group parameter is provided
         if group:
@@ -146,20 +148,8 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
                 GenomeRelease.genome_id == None
             )
-        elif site_name is not None:
-            genome_select = genome_select.join(
-                Genome.genome_releases).join(
-                GenomeRelease.ensembl_release).join(
-                EnsemblRelease.ensembl_site).filter(EnsemblSite.name == site_name)
 
-            if release_type is not None:
-                genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
 
-            if current_only:
-                genome_select = genome_select.filter(GenomeRelease.is_current == 1)
-
-            if release_version is not None:
-                genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
@@ -181,9 +171,40 @@ class GenomeAdaptor(BaseAdaptor):
         if ensembl_name is not None:
             genome_select = genome_select.filter(Organism.ensembl_name.in_(ensembl_name))
 
-        elif taxonomy_id is not None:
+        if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
 
+        # Check if genome is released
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            # copy genome_select as we don't want to include GenomeDataset
+            # because it results in multiple row for a given genome (genome can have many datasets)
+            check_query = genome_select
+            prep_query = check_query.add_columns(GenomeDataset) \
+                .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
+                .filter(GenomeDataset.release_id.isnot(None))
+            is_genome_released = session.execute(prep_query).first()
+
+        if is_genome_released:
+            # Include release related info if released_only is True
+            genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
+                .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
+                .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
+                .join(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id)
+
+        if site_name is not None:
+            genome_select = genome_select.add_columns(EnsemblSite).filter(EnsemblSite.name == site_name)
+
+            if release_type is not None:
+                genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
+
+            if release_version is not None:
+                genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+            # get current_only only if release_version is Not specified
+            elif current_only:
+                genome_select = genome_select.filter(GenomeRelease.is_current == 1)
+
+        # print(f"genome_select query ====> {str(genome_select)}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("ensembl_name")).all()
@@ -277,7 +298,7 @@ class GenomeAdaptor(BaseAdaptor):
                                                      db.func.lower(Assembly.accession) == keyword.lower(),
                                                      db.func.lower(Assembly.name) == keyword.lower(),
                                                      db.func.lower(Assembly.ensembl_name) == keyword.lower(),
-                                                     db.func.lower(Organism.display_name) == keyword.lower(),
+                                                     db.func.lower(Organism.common_name) == keyword.lower(),
                                                      db.func.lower(Organism.scientific_name) == keyword.lower(),
                                                      db.func.lower(
                                                          Organism.scientific_parlance_name) == keyword.lower(),
@@ -314,7 +335,11 @@ class GenomeAdaptor(BaseAdaptor):
         assembly_accession = check_parameter(assembly_accession)
         assembly_sequence_accession = check_parameter(assembly_sequence_accession)
 
-        seq_select = db.select(AssemblySequence, )
+        seq_select = db.select(
+            Genome, Assembly, AssemblySequence
+        ).select_from(Genome) \
+            .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
+            .join(AssemblySequence, AssemblySequence.assembly_id == Assembly.assembly_id)
 
         if chromosomal_only:
             seq_select = seq_select.filter(AssemblySequence.chromosomal == 1)
@@ -322,17 +347,16 @@ class GenomeAdaptor(BaseAdaptor):
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
         if genome_id is not None:
-            seq_select = seq_select.join(AssemblySequence.assembly).join(Assembly.genomes).filter(
-                Genome.genome_id == genome_id
-            )
+            seq_select = seq_select.filter(Genome.genome_id == genome_id)
 
-        elif genome_uuid is not None:
-            seq_select = seq_select.join(AssemblySequence.assembly).join(Assembly.genomes).filter(
-                Genome.genome_uuid == genome_uuid
-            )
+        if genome_uuid is not None:
+            seq_select = seq_select.filter(Genome.genome_uuid == genome_uuid)
 
-        elif assembly_accession is not None:
+        if assembly_accession is not None:
             seq_select = seq_select.filter(Assembly.accession == assembly_accession)
+
+        if assembly_uuid is not None:
+            seq_select = seq_select.filter(Assembly.assembly_uuid.in_(assembly_uuid))
 
         if assembly_sequence_accession is not None:
             seq_select = seq_select.filter(AssemblySequence.accession == assembly_sequence_accession)
@@ -354,8 +378,8 @@ class GenomeAdaptor(BaseAdaptor):
         )
 
     def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, unreleased_datasets=False,
-                              is_released=True, dataset_uuid=None, dataset_name=None, dataset_source=None,
-                              dataset_type=None, release_version=None):
+                              dataset_uuid=None, dataset_name=None, dataset_source=None, dataset_type=None,
+                              release_version=None):
         """
         Fetches genome datasets based on the provided parameters.
 
@@ -364,7 +388,6 @@ class GenomeAdaptor(BaseAdaptor):
             genome_uuid (str or list or None): Genome UUID(s) to filter by.
             organism_uuid (str or list or None): Organism UUID(s) to filter by.
             unreleased_datasets (bool): Flag indicating whether to fetch only unreleased datasets.
-            is_released (bool): Flag indicating whether to fetch released datasets (default: True).
             dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
             dataset_name (str or None): Dataset name to filter by, default is 'assembly'.
             dataset_source (str or None): Dataset source to filter by.
@@ -397,12 +420,16 @@ class GenomeAdaptor(BaseAdaptor):
                 GenomeDataset,
                 Dataset,
                 DatasetType,
-                DatasetSource
+                DatasetSource,
+                DatasetAttribute,
+                Attribute
             ).select_from(Genome) \
                 .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
-                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
+                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id) \
+                .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
+                .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id)
 
             # set default group topic as 'assembly' to fetch unique datasource
             if not dataset_name:
@@ -410,9 +437,11 @@ class GenomeAdaptor(BaseAdaptor):
 
             genome_id = check_parameter(genome_id)
             genome_uuid = check_parameter(genome_uuid)
+            organism_uuid = check_parameter(organism_uuid)
             dataset_uuid = check_parameter(dataset_uuid)
             dataset_name = check_parameter(dataset_name)
             dataset_source = check_parameter(dataset_source)
+            dataset_type = check_parameter(dataset_type)
 
             if genome_id is not None:
                 genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
@@ -420,11 +449,28 @@ class GenomeAdaptor(BaseAdaptor):
             if genome_uuid is not None:
                 genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
 
+            if organism_uuid is not None:
+                genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
+
             if dataset_uuid is not None:
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
                 genome_select = genome_select.filter(GenomeDataset.release_id.is_(None))
+
+            # Check if genome is released
+            with self.metadata_db.session_scope() as session:
+                session.expire_on_commit = False
+                # copy genome_select as we don't want to include GenomeDataset
+                # because it results in multiple row for a given genome (genome can have many datasets)
+                # check_query = genome_select
+                prep_query = genome_select.filter(GenomeDataset.release_id.isnot(None))
+                is_genome_released = session.execute(prep_query).first()
+
+            if is_genome_released:
+                # Include release related info if released_only is True
+                genome_select = genome_select.add_columns(EnsemblRelease) \
+                    .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
 
             if dataset_name is not None and "all" not in dataset_name:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
@@ -438,6 +484,7 @@ class GenomeAdaptor(BaseAdaptor):
             if release_version:
                 genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
+            # print(f"genome_select str ====> {str(genome_select)}")
             logger.debug(genome_select)
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
