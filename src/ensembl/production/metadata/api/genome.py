@@ -456,7 +456,7 @@ class GenomeAdaptor(BaseAdaptor):
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
-                genome_select = genome_select.filter(GenomeDataset.release_id.is_(None))
+                genome_select = genome_select.filter(GenomeDataset.ensembl_release is None)
 
             # Check if genome is released
             with self.metadata_db.session_scope() as session:
@@ -464,7 +464,7 @@ class GenomeAdaptor(BaseAdaptor):
                 # copy genome_select as we don't want to include GenomeDataset
                 # because it results in multiple row for a given genome (genome can have many datasets)
                 # check_query = genome_select
-                prep_query = genome_select.filter(GenomeDataset.release_id.isnot(None))
+                prep_query = genome_select.filter(GenomeDataset.ensembl_release is not None)
                 is_genome_released = session.execute(prep_query).first()
 
             if is_genome_released:
