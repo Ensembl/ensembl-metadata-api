@@ -29,14 +29,6 @@ class EnsemblSite(Base):
     # many to one relationships
     # none
 
-    def __repr__(self):
-        return f"EnsemblSite(" \
-                   f"site_id={self.site_id}, " \
-                   f"name={self.name}, " \
-                   f"label={self.label}, " \
-                   f"uri={self.uri}" \
-               f")"
-
 
 class EnsemblRelease(Base):
     __tablename__ = 'ensembl_release'
@@ -59,11 +51,3 @@ class EnsemblRelease(Base):
     # site_id to ensembl_site
     ensembl_site = relationship('EnsemblSite', back_populates='ensembl_releases')
 
-    def __repr__(self):
-        return f"EnsemblRelease(" \
-                   f"release_id={self.release_id}, " \
-                   f"version={self.version}, " \
-                   f"label={self.label}, " \
-                   f"is_current={self.is_current}, " \
-                   f"release_type={self.release_type}" \
-               f")"
