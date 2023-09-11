@@ -9,15 +9,15 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import sqlalchemy as db
+import logging
 
+import sqlalchemy as db
+from sqlalchemy.orm import aliased
 from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
-
 from ensembl.production.metadata.api.base import BaseAdaptor, check_parameter
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -340,3 +340,41 @@ class GenomeAdaptor(BaseAdaptor):
                 yield [{'genome': genome, 'datasets': dataset}]
         except Exception as e:
             raise ValueError(str(e))
+
+    def fetch_organisms_group_counts(self, release_version=None, group_code='popular'):
+        o_species = aliased(Organism)
+        o = aliased(Organism)
+        if not release_version:
+            # Get latest released organisms
+            query = db.select(
+                o_species.species_taxonomy_id,
+                o_species.ensembl_name,
+                o_species.common_name,
+                o_species.scientific_name,
+                OrganismGroupMember.order.label('order'),
+                db.func.count().label('count')
+            )
+
+            query = query.join(o, o_species.species_taxonomy_id == o.species_taxonomy_id)
+            query = query.join(Genome, o.organism_id == Genome.organism_id)
+            query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+            query = query.join(OrganismGroupMember, o_species.organism_id == OrganismGroupMember.organism_id)
+            query = query.join(OrganismGroup,
+                               OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
+            query = query.filter(OrganismGroup.code == group_code)
+            query = query.group_by(
+                o_species.species_taxonomy_id,
+                o_species.ensembl_name,
+                o_species.common_name,
+                o_species.scientific_name,
+                OrganismGroupMember.order
+            )
+            query = query.order_by(OrganismGroupMember.order)
+        else:
+            # change group to release_version_state and related genomes
+            raise NotImplementedError('Not implemented yet')
+            pass
+
+        with self.metadata_db.session_scope() as session:
+            # TODO check if we should return a dictionary instead
+            return session.execute(query).all()

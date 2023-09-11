@@ -162,3 +162,15 @@ class TestMetadataDB:
     #     test = conn.fetch_genomes_info(genome_uuid=uuid)
     #     assert test['genome'][0].genome_uuid == uuid
     #     assert test['datasets'][0][0].genome_uuid == uuid
+
+    def test_popular_species(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_organisms_group_counts()
+        # First result should be Human
+        assert test[0][2] == 'Human'
+        # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
+        assert test[0][5] == 3
+        for data in test[1:]:
+            # All others have only one genome in test DB
+            assert data[5] == 1
