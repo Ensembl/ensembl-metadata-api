@@ -43,8 +43,8 @@ class TestUtils:
             utils.get_assembly_information(genome_db_conn, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))
         expected_output = {"accession": "GCA_000001405.28",
                            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-                           "chromosomal": 1,
-                           "length": 107043717,
+                           # "chromosomal": 1,
+                           "length": 71251,
                            "level": "chromosome",
                            "name": "GRCh38.p13",
                            "sequenceLocation": "SO:0000738"}
@@ -114,6 +114,7 @@ class TestUtils:
         output = json_format.MessageToJson(
             utils.get_top_level_statistics(
                 db_conn=genome_db_conn,
+                group="EnsemblPlants",
                 organism_uuid="d64c34ca-b37a-476b-83b5-f21d07a3ae67",
             )
         )

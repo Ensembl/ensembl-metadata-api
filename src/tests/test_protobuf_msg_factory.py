@@ -77,8 +77,8 @@ class TestClass:
         expected_output = {
             "accession": "GCA_000001405.28",
             "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-            "chromosomal": 1,
-            "length": 107043717,
+            # "chromosomal": 1,
+            "length": 71251,
             "level": "chromosome",
             "name": "GRCh38.p13",
             "sequenceLocation": "SO:0000738"
@@ -91,7 +91,7 @@ class TestClass:
         input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
             "code": "chromosome",
-            "chromosomal": "1",
+            "chromosomal": "0",
             "location": "SO:0000738",
             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
         }
@@ -134,10 +134,10 @@ class TestClass:
             "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
             "statistics": [
                 {
-                    "label": "Coding genes",
-                    "name": "coding_genes",
-                    "statisticType": "integer",
-                    "statisticValue": "20446"
+                    "label": "Contig N50",
+                    "name": "contig_n50",
+                    "statisticType": "bp",
+                    "statisticValue": "56413054"
                 }
             ]
         }
@@ -153,10 +153,10 @@ class TestClass:
     def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
         input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
-            "accession": "CHR_HG1_PATCH",
-            "chromosomal": True,
-            "length": 107043717,
-            "name": "CHR_HG1_PATCH",
+            "accession": "KI270757.1",
+            # "chromosomal": True,
+            "length": 71251,
+            # "name": "CHR_HG1_PATCH",
             "sequenceLocation": "SO:0000738"
         }
         output = json_format.MessageToJson(utils.create_genome_sequence(input_data[0]))

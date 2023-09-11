@@ -51,7 +51,6 @@ def get_top_level_statistics(db_conn, organism_uuid, group):
 
     stats_results = db_conn.fetch_genome_datasets(
         organism_uuid=organism_uuid,
-        group=group,
         dataset_name="all"
     )
 
