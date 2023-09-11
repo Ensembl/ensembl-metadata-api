@@ -127,10 +127,10 @@ class TestUtils:
             "statisticValue": "56413054",
         }
         assert output["statistics"][1] == {
-            "label": "Average coding genomic span",
-            "name": "average_genomic_span",
+            "label": "Total genome length",
+            "name": "total_genome_length",
             "statisticType": "bp",
-            "statisticValue": "67470.63",
+            "statisticValue": "3272116950",
         }
 
     def test_get_top_level_statistics_by_uuid(self, genome_db_conn):
