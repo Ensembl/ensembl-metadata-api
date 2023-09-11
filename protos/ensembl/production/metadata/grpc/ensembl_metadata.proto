@@ -225,9 +225,9 @@ Metadata about the sequences that comprise a genome's assembly.
 message GenomeAssemblySequence {
   string name = 1;
   string rank = 2;  // To be added
-  string sequence_checksum = 3;
+  string md5 = 3;
   uint32 length = 4;
-  string ga4gh_identifier = 5;
+  string sha512t4u = 5;
   bool chromosomal = 6;
 }
 
@@ -236,9 +236,9 @@ Metadata about the sequences that comprise a genome's assembly.
  */
 message GenomeAssemblySequenceRegion {
   string name = 1;
-  string sequence_checksum = 2;
+  string md5 = 2;
   uint32 length = 3;
-  string ga4gh_identifier = 4;
+  string sha512t4u = 4;
   bool chromosomal = 5;
 }
 

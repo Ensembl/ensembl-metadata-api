@@ -165,9 +165,9 @@ def create_genome_assembly_sequence(data=None):
     genome_assembly_sequence = ensembl_metadata_pb2.GenomeAssemblySequence(
         name=data.AssemblySequence.name,
         # rank=data.AssemblySequence.rank, # To add
-        sequence_checksum=data.AssemblySequence.sequence_checksum,
+        md5=data.AssemblySequence.md5,
         length=data.AssemblySequence.length,
-        ga4gh_identifier=data.AssemblySequence.ga4gh_identifier,
+        sha512t4u=data.AssemblySequence.sha512t4u,
         chromosomal=data.AssemblySequence.chromosomal
     )
 
