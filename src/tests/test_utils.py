@@ -121,10 +121,10 @@ class TestUtils:
         output = json.loads(output)
         assert len(output["statistics"]) == 400
         assert output["statistics"][0] == {
-            "label": "Coding genes",
-            "name": "coding_genes",
-            "statisticType": "integer",
-            "statisticValue": "20446",
+            "label": "Contig N50",
+            "name": "contig_n50",
+            "statisticType": "bp",
+            "statisticValue": "56413054",
         }
         assert output["statistics"][1] == {
             "label": "Average coding genomic span",
