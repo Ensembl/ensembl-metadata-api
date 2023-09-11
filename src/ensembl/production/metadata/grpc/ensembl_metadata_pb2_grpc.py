@@ -2,8 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from ensembl.production.metadata.grpc import \
-    ensembl_metadata_pb2 as ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2
+from ensembl.production.metadata.grpc import ensembl_metadata_pb2 as ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2
 
 
 class EnsemblMetadataStub(object):
@@ -21,83 +20,83 @@ class EnsemblMetadataStub(object):
         """
         self.GetGenomeByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeByUUID',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
                 )
         self.GetGenomeUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeUUID',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeInfoRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeInfoRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
                 )
         self.GetGenomesByKeyword = channel.unary_stream(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomesByKeyword',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
                 )
         self.GetGenomesByAssemblyAccessionID = channel.unary_stream(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomesByAssemblyAccessionID',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyAccessionIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyAccessionIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
                 )
         self.GetSpeciesInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetSpeciesInformation',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Species.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Species.FromString,
                 )
         self.GetAssemblyInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetAssemblyInformation',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyInfo.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyInfo.FromString,
                 )
         self.GetSubSpeciesInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetSubSpeciesInformation',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.SubSpecies.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.SubSpecies.FromString,
                 )
         self.GetKaryotypeInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Karyotype.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.FromString,
                 )
         self.GetTopLevelStatistics = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetTopLevelStatistics',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.TopLevelStatistics.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.TopLevelStatistics.FromString,
                 )
         self.GetTopLevelStatisticsByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetTopLevelStatisticsByUUID',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.TopLevelStatisticsByUUID.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.TopLevelStatisticsByUUID.FromString,
                 )
         self.GetGenomeByName = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeByName',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeNameRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeNameRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
                 )
         self.GetRelease = channel.unary_stream(
                 '/ensembl_metadata.EnsemblMetadata/GetRelease',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.ReleaseRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Release.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Release.FromString,
                 )
         self.GetReleaseByUUID = channel.unary_stream(
                 '/ensembl_metadata.EnsemblMetadata/GetReleaseByUUID',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Release.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Release.FromString,
                 )
         self.GetGenomeSequence = channel.unary_stream(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeSequence',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeSequence.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequence.FromString,
                 )
         self.GetDatasetsListByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Datasets.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Datasets.FromString,
                 )
         self.GetDatasetInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetDatasetInformation',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetInfos.FromString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetInfos.FromString,
                 )
 
 
@@ -225,83 +224,83 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GetGenomeByUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetGenomeByUUID,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.SerializeToString,
             ),
             'GetGenomeUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetGenomeUUID,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeInfoRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUID.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeInfoRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.SerializeToString,
             ),
             'GetGenomesByKeyword': grpc.unary_stream_rpc_method_handler(
                     servicer.GetGenomesByKeyword,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.SerializeToString,
             ),
             'GetGenomesByAssemblyAccessionID': grpc.unary_stream_rpc_method_handler(
                     servicer.GetGenomesByAssemblyAccessionID,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyAccessionIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyAccessionIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.SerializeToString,
             ),
             'GetSpeciesInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetSpeciesInformation,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Species.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Species.SerializeToString,
             ),
             'GetAssemblyInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetAssemblyInformation,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyInfo.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyInfo.SerializeToString,
             ),
             'GetSubSpeciesInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetSubSpeciesInformation,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.SubSpecies.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.SubSpecies.SerializeToString,
             ),
             'GetKaryotypeInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetKaryotypeInformation,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Karyotype.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.SerializeToString,
             ),
             'GetTopLevelStatistics': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTopLevelStatistics,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.TopLevelStatistics.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.TopLevelStatistics.SerializeToString,
             ),
             'GetTopLevelStatisticsByUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTopLevelStatisticsByUUID,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.TopLevelStatisticsByUUID.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.TopLevelStatisticsByUUID.SerializeToString,
             ),
             'GetGenomeByName': grpc.unary_unary_rpc_method_handler(
                     servicer.GetGenomeByName,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeNameRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeNameRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.SerializeToString,
             ),
             'GetRelease': grpc.unary_stream_rpc_method_handler(
                     servicer.GetRelease,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.ReleaseRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Release.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Release.SerializeToString,
             ),
             'GetReleaseByUUID': grpc.unary_stream_rpc_method_handler(
                     servicer.GetReleaseByUUID,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Release.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Release.SerializeToString,
             ),
             'GetGenomeSequence': grpc.unary_stream_rpc_method_handler(
                     servicer.GetGenomeSequence,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeSequenceRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeSequence.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequenceRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequence.SerializeToString,
             ),
             'GetDatasetsListByUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetDatasetsListByUUID,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetsRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Datasets.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetsRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Datasets.SerializeToString,
             ),
             'GetDatasetInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetDatasetInformation,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetInfos.SerializeToString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetInfos.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -329,8 +328,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeByUUID',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -346,8 +345,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeUUID',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeInfoRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeInfoRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -363,8 +362,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomesByKeyword',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeByKeywordRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -380,8 +379,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomesByAssemblyAccessionID',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyAccessionIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyAccessionIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -397,8 +396,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetSpeciesInformation',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Species.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Species.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -414,8 +413,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetAssemblyInformation',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.AssemblyInfo.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyInfo.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -431,8 +430,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetSubSpeciesInformation',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.SubSpecies.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.SubSpecies.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -448,8 +447,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Karyotype.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -465,8 +464,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetTopLevelStatistics',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.TopLevelStatistics.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.TopLevelStatistics.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -482,8 +481,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetTopLevelStatisticsByUUID',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.TopLevelStatisticsByUUID.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.TopLevelStatisticsByUUID.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -499,8 +498,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeByName',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeNameRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Genome.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeNameRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -516,8 +515,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetRelease',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.ReleaseRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Release.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Release.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -533,8 +532,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetReleaseByUUID',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Release.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Release.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -550,8 +549,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeSequence',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeSequence.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequence.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -567,8 +566,8 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.Datasets.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Datasets.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -584,7 +583,7 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetDatasetInformation',
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_ensembl__metadata__pb2.DatasetInfos.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetInfos.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

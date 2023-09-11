@@ -34,7 +34,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         )
 
     def GetSubSpeciesInformation(self, request, context):
-        return get_sub_species_info(self.db, request.organism_uuid)
+        return get_sub_species_info(self.db, request.organism_uuid, request.group)
 
     def GetKaryotypeInformation(self, request, context):
         return get_karyotype_information(self.db, request.genome_uuid)
