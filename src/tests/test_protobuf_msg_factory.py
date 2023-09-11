@@ -34,7 +34,9 @@ class TestClass:
 
     def test_create_genome(self, multi_dbs, genome_db_conn):
         """Test service.create_genome function"""
-        input_data = genome_db_conn.fetch_genomes(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
+        input_data = genome_db_conn.fetch_genomes(
+            genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
+        )
         expected_output = {
           "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
           "assembly": {
@@ -50,11 +52,11 @@ class TestClass:
           },
           "created": "2023-05-12 13:30:58",
           "organism": {
-            "displayName": "Human",
+            "commonName": "Human",
+            "ensemblName": "Homo_sapiens",
+            "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
             "scientificName": "Homo sapiens",
-            "urlName": "Homo_sapiens",
-            "ensemblName": "homo_sapiens",
-            "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d"
+            "scientificParlanceName": "homo_sapiens"
           },
           "release": {
             "releaseVersion": 108.0,
@@ -73,12 +75,12 @@ class TestClass:
     def test_create_assembly(self, multi_dbs, genome_db_conn):
         input_data = genome_db_conn.fetch_sequences(assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e")
         expected_output = {
-            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
             "accession": "GCA_000001405.28",
+            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
+            "chromosomal": 1,
+            "length": 107043717,
             "level": "chromosome",
             "name": "GRCh38.p13",
-            # "chromosomal": 1,
-            "length": 71251,
             "sequenceLocation": "SO:0000738"
         }
 
@@ -89,7 +91,7 @@ class TestClass:
         input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
             "code": "chromosome",
-            "chromosomal": "0",
+            "chromosomal": "1",
             "location": "SO:0000738",
             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
         }
@@ -102,10 +104,11 @@ class TestClass:
         tax_id = species_input_data[0].Organism.taxonomy_id
         taxo_results = genome_db_conn.fetch_taxonomy_names(tax_id)
         expected_output = {
+            "genbankCommonName": "human",
             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
-            "ncbiCommonName": "human",
-            "taxonId": 9606,
-            "scientificName": "Homo sapiens"
+            "scientificName": "Homo sapiens",
+            "scientificParlanceName": "homo_sapiens",
+            "taxonId": 9606
         }
 
         output = json_format.MessageToJson(utils.create_species(species_input_data[0], taxo_results[tax_id]))
@@ -113,7 +116,10 @@ class TestClass:
 
     def test_create_top_level_statistics(self, multi_dbs, genome_db_conn):
         organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
-        input_data = genome_db_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_name="all")
+        input_data = genome_db_conn.fetch_genome_datasets(
+            organism_uuid=organism_uuid,
+            dataset_name="all"
+        )
 
         statistics = []
         # getting just the first element
@@ -128,10 +134,10 @@ class TestClass:
             "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
             "statistics": [
                 {
-                    "name": "total_genome_length",
-                    "label": "Total genome length",
-                    "statisticType": "bp",
-                    "statisticValue": "4641652"
+                    "label": "Coding genes",
+                    "name": "coding_genes",
+                    "statisticType": "integer",
+                    "statisticValue": "20446"
                 }
             ]
         }
@@ -147,11 +153,11 @@ class TestClass:
     def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
         input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
-            "accession": "KI270757.1",
-            # "name": "CHR_HG1_PATCH",
-            "sequenceLocation": "SO:0000738",
-            "length": 71251,
-            # "chromosomal": True
+            "accession": "CHR_HG1_PATCH",
+            "chromosomal": True,
+            "length": 107043717,
+            "name": "CHR_HG1_PATCH",
+            "sequenceLocation": "SO:0000738"
         }
         output = json_format.MessageToJson(utils.create_genome_sequence(input_data[0]))
         assert json.loads(output) == expected_output
