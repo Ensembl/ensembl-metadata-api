@@ -57,7 +57,7 @@ def get_genomes_by_keyword(stub, genome_request):
 def get_genomes(stub):
     request1 = GenomeUUIDRequest(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
     request2 = GenomeUUIDRequest(genome_uuid="rhubarb")
-    request3 = GenomeNameRequest(ensembl_name="caenorhabditis_elegans", site_name="Ensembl")
+    request3 = GenomeNameRequest(ensembl_name="129S1_SvImJ_v1", site_name="Ensembl")
     request4 = GenomeNameRequest(
         ensembl_name="accipiter_gentilis", site_name="rapid", release_version=13.0
     )
@@ -84,14 +84,14 @@ def get_genomes(stub):
 
 def list_genome_sequences(stub):
     request1 = GenomeSequenceRequest(
-        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3", chromosomal_only=True
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", chromosomal_only=True
     )
     genome_sequences1 = stub.GetGenomeSequence(request1)
     print("**** Only chromosomes ****")
     for seq in genome_sequences1:
         print(seq)
 
-    request2 = GenomeSequenceRequest(genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3")
+    request2 = GenomeSequenceRequest(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
     genome_sequences2 = stub.GetGenomeSequence(request2)
     print("**** All sequences ****")
     for seq in genome_sequences2:
@@ -199,21 +199,21 @@ def list_releases_by_uuid(stub):
 
 
 def get_species_information_by_uuid(stub):
-    request1 = GenomeUUIDRequest(genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3")
+    request1 = GenomeUUIDRequest(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
     releases1 = stub.GetSpeciesInformation(request1)
     print("**** Species information ****")
     print(releases1)
 
 
 def get_assembly_information(stub):
-    request1 = AssemblyIDRequest(assembly_uuid="3142a1c4-0f6a-11ee-bfb4-005056b370fb")
+    request1 = AssemblyIDRequest(assembly_uuid="624e179e-5451-4689-bbfd-efd8e1edfa81")
     releases1 = stub.GetAssemblyInformation(request1)
     print("**** Assembly information ****")
     print(releases1)
 
 
 def get_genomes_by_assembly_accession(stub):
-    request1 = AssemblyAccessionIDRequest(assembly_accession="GCA_000001405.28")
+    request1 = AssemblyAccessionIDRequest(assembly_accession="GCA_001624185.1")
     genomes1 = stub.GetGenomesByAssemblyAccessionID(request1)
     print("**** Genomes from assembly accession information ****")
     for genome in genomes1:
@@ -226,21 +226,27 @@ def get_genomes_by_assembly_accession(stub):
 
 
 def get_sub_species_info(stub):
-    request1 = OrganismIDRequest(organism_uuid="317e356e-0f6a-11ee-bfb4-005056b370fb")
+    request1 = OrganismIDRequest(
+        organism_uuid="892a709f-6062-4be8-891a-2e9044a46d94",
+        group="EnsemblPlants"
+    )
     releases1 = stub.GetSubSpeciesInformation(request1)
     print("**** Sub species information ****")
     print(releases1)
 
 
 def get_karyotype_information(stub):
-    request1 = GenomeUUIDRequest(genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3")
+    request1 = GenomeUUIDRequest(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
     releases1 = stub.GetKaryotypeInformation(request1)
     print("**** Karyotype ****")
     print(releases1)
 
 
 def get_top_level_statistics(stub):
-    request1 = OrganismIDRequest(organism_uuid="317e356e-0f6a-11ee-bfb4-005056b370fb")
+    request1 = OrganismIDRequest(
+        organism_uuid="892a709f-6062-4be8-891a-2e9044a46d94",
+        group="EnsemblPlants"
+    )
     releases1 = stub.GetTopLevelStatistics(request1)
     print("**** Top level statistics ****")
     print(releases1)
@@ -248,7 +254,7 @@ def get_top_level_statistics(stub):
 
 def get_top_level_statistics_by_uuid(stub):
     genome_request = GenomeUUIDRequest(
-        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3"
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
     )
     toplevel_stats_by_uuid_request = stub.GetTopLevelStatisticsByUUID(genome_request)
     print("**** Top level statistics by UUID ****")
@@ -257,7 +263,7 @@ def get_top_level_statistics_by_uuid(stub):
 
 def get_datasets_list_by_uuid(stub):
     request1 = DatasetsRequest(
-        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3", release_version=108.0
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", release_version=108.0
     )
     datasets = stub.GetDatasetsListByUUID(request1)
     print(datasets)
@@ -275,8 +281,22 @@ def get_genome_uuid(stub):
     request1 = GenomeInfoRequest(
         ensembl_name="homo_sapiens", assembly_name="GRCh37.p13"
     )
-    genome_uuid = stub.GetGenomeUUID(request1)
-    print(genome_uuid)
+    genome_uuid1 = stub.GetGenomeUUID(request1)
+    request2 = GenomeInfoRequest(
+        ensembl_name="homo_sapiens", assembly_name="GRCh37", use_default=True
+    )
+    genome_uuid2 = stub.GetGenomeUUID(request2)
+    request3 = GenomeInfoRequest(
+        ensembl_name="homo_sapiens", assembly_name="GRCh37.p13", use_default=True
+    )
+    genome_uuid3 = stub.GetGenomeUUID(request3)
+
+    print("**** Using assembly_name ****")
+    print(genome_uuid1)
+    print("**** Using assembly_default ****")
+    print(genome_uuid2)
+    print("**** Using assembly_default (No results) ****")
+    print(genome_uuid3)
 
 
 def run():

@@ -95,12 +95,11 @@ message Karyotype {
 
 message Species {
   string genome_uuid = 1;
-  string common_name = 2;
-  string ncbi_common_name = 4;
-  uint32 taxon_id = 5;
-  string scientific_name = 6;
-  repeated string alternative_names = 7;
-  string scientific_parlance_name = 8;
+  uint32 taxon_id = 2;
+  string scientific_name = 3;
+  string scientific_parlance_name = 4;
+  string genbank_common_name = 5;
+  repeated string synonym = 6;
 }
 
 message AssemblyInfo {
@@ -111,8 +110,8 @@ message AssemblyInfo {
   uint32 chromosomal = 5;
   uint32 length = 6;
   string sequence_location = 7;
-  string sequence_checksum = 8;
-  string ga4gh_identifier = 9;
+  string md5 = 8;
+  string sha512t4u = 9;
 }
 
 message SubSpecies {
@@ -179,13 +178,12 @@ message Release {
 }
 
 message Organism {
-  string display_name = 1;
+  string common_name = 1;
   string strain = 2;
   string scientific_name = 3;
-  string url_name = 4;
-  string ensembl_name = 5;
-  string scientific_parlance_name = 6;
-  string organism_uuid = 7;
+  string ensembl_name = 4;
+  string scientific_parlance_name = 5;
+  string organism_uuid = 6;
 }
 
 /*
@@ -311,6 +309,7 @@ message AssemblyAccessionIDRequest {
 
 message OrganismIDRequest {
   string organism_uuid = 1;
+  string group = 2;
 }
 
 /*
@@ -373,4 +372,5 @@ Genome info filter used by Compara (EA-1090)
 message GenomeInfoRequest {
   string ensembl_name = 1;     // Mandatory
   string assembly_name = 2;    // Mandatory
+  bool use_default = 3;        // Optional
 }

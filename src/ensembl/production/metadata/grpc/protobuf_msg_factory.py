@@ -21,9 +21,8 @@ def create_species(species_data=None, taxo_info=None):
         taxon_id=species_data.Organism.taxonomy_id,
         scientific_name=species_data.Organism.scientific_name,
         scientific_parlance_name=species_data.Organism.scientific_parlance_name,
-        ncbi_common_name=taxo_info["ncbi_common_name"],
-        common_name=taxo_info["common_name"],
-        alternative_names=taxo_info["alternative_names"],
+        genbank_common_name=taxo_info["genbank_common_name"],
+        synonym=taxo_info["synonym"],
     )
     return species
 
@@ -86,8 +85,8 @@ def create_assembly(data=None):
         chromosomal=data.AssemblySequence.chromosomal,
         length=data.AssemblySequence.length,
         sequence_location=data.AssemblySequence.sequence_location,
-        sequence_checksum=data.AssemblySequence.sequence_checksum,
-        ga4gh_identifier=data.AssemblySequence.ga4gh_identifier,
+        md5=data.AssemblySequence.md5,
+        sha512t4u=data.AssemblySequence.sha512t4u,
     )
     return assembly
 
@@ -122,24 +121,15 @@ def create_genome(data=None):
     # TODO: fetch common_name(s) from ncbi_taxonomy database
 
     organism = ensembl_metadata_pb2.Organism(
-        display_name=data.Organism.display_name,
+        common_name=data.Organism.common_name,
         strain=data.Organism.strain,
         scientific_name=data.Organism.scientific_name,
-        url_name=data.Organism.url_name,
         ensembl_name=data.Organism.ensembl_name,
         scientific_parlance_name=data.Organism.scientific_parlance_name,
         organism_uuid=data.Organism.organism_uuid,
     )
 
-    release = ensembl_metadata_pb2.Release(
-        release_version=data.EnsemblRelease.version,
-        release_date=str(data.EnsemblRelease.release_date),
-        release_label=data.EnsemblRelease.label,
-        is_current=data.EnsemblRelease.is_current,
-        site_name=data.EnsemblSite.name,
-        site_label=data.EnsemblSite.label,
-        site_uri=data.EnsemblSite.uri,
-    )
+    release = create_release(data)
 
     genome = ensembl_metadata_pb2.Genome(
         genome_uuid=data.Genome.genome_uuid,
@@ -204,13 +194,13 @@ def create_release(data=None):
         return ensembl_metadata_pb2.Release()
 
     release = ensembl_metadata_pb2.Release(
-        release_version=data.EnsemblRelease.version,
-        release_date=str(data.EnsemblRelease.release_date),
-        release_label=data.EnsemblRelease.label,
-        is_current=data.EnsemblRelease.is_current,
-        site_name=data.EnsemblSite.name,
-        site_label=data.EnsemblSite.label,
-        site_uri=data.EnsemblSite.uri
+        release_version=data.EnsemblRelease.version if hasattr(data, 'EnsemblRelease') else None,
+        release_date=str(data.EnsemblRelease.release_date) if hasattr(data, 'EnsemblRelease') else "Unreleased",
+        release_label=data.EnsemblRelease.label if hasattr(data, 'EnsemblRelease') else "Unreleased",
+        is_current=data.EnsemblRelease.is_current if hasattr(data, 'EnsemblRelease') else False,
+        site_name=data.EnsemblSite.name if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
+        site_label=data.EnsemblSite.label if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
+        site_uri=data.EnsemblSite.uri if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
     )
 
     return release
@@ -236,7 +226,7 @@ def create_dataset_info(data=None):
         type=data.Attribute.type,
         dataset_version=data.Dataset.version,
         dataset_label=data.Dataset.label,
-        version=int(data.EnsemblRelease.version),
+        version=int(data.EnsemblRelease.version) if hasattr(data, 'EnsemblRelease') else None,
         value=data.DatasetAttribute.value,
     )
 
@@ -259,5 +249,5 @@ def populate_dataset_info(data):
         dataset_name=data.Dataset.name,
         dataset_version=data.Dataset.version,
         dataset_label=data.Dataset.label,
-        version=int(data.EnsemblRelease.version),
+        version=int(data.EnsemblRelease.version) if hasattr(data, 'EnsemblRelease') else None,
     )

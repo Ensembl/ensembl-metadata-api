@@ -45,7 +45,7 @@ def get_karyotype_information(db_conn, genome_uuid):
     return create_karyotype()
 
 
-def get_top_level_statistics(db_conn, organism_uuid):
+def get_top_level_statistics(db_conn, organism_uuid, group):
     if organism_uuid is None:
         return create_top_level_statistics()
 
@@ -135,12 +135,13 @@ def get_species_information(db_conn, genome_uuid):
     return create_species()
 
 
-def get_sub_species_info(db_conn, organism_uuid):
+def get_sub_species_info(db_conn, organism_uuid, group):
     if organism_uuid is None:
         return create_sub_species()
 
     sub_species_results = db_conn.fetch_genomes(
-        organism_uuid=organism_uuid
+        organism_uuid=organism_uuid,
+        group=group
     )
 
     species_name = []
