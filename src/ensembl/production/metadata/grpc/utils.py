@@ -162,13 +162,14 @@ def get_sub_species_info(db_conn, organism_uuid, group):
     return create_sub_species()
 
 
-def get_genome_uuid(db_conn, ensembl_name, assembly_name):
+def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
     if ensembl_name is None or assembly_name is None:
         return create_genome_uuid()
 
     genome_uuid_result = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
-        assembly_name=assembly_name
+        assembly_name=assembly_name,
+        use_default_assembly=use_default
     )
 
     if len(genome_uuid_result) == 1:

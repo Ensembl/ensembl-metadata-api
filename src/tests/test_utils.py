@@ -586,11 +586,24 @@ class TestUtils:
         output = json_format.MessageToJson(
             utils.get_genome_uuid(
                 db_conn=genome_db_conn,
-                ensembl_name="Triticum_aestivum",
-                assembly_name="IWGSC"
+                ensembl_name="homo_sapiens",
+                assembly_name="GRCh38.p13"
             ))
         expected_output = {
-            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3"
+            "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
+        }
+        assert json.loads(output) == expected_output
+
+    def test_get_genome_uuid_use_default(self, genome_db_conn):
+        output = json_format.MessageToJson(
+            utils.get_genome_uuid(
+                db_conn=genome_db_conn,
+                ensembl_name="homo_sapiens",
+                assembly_name="GRCh38",
+                use_default=True
+            ))
+        expected_output = {
+            "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
         }
         assert json.loads(output) == expected_output
 
