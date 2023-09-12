@@ -4,3 +4,4 @@
 4	Division	EnsemblPlants	plants
 5	Division	EnsemblFungi	fungi
 6	Division	EnsemblMetazoa	metazoa
+7	Internal	Popular Species	popular
