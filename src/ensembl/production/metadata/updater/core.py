@@ -157,6 +157,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             assembly=assembly,
             organism=organism,
             created=func.now(),
+            is_best=0,
         )
         meta_session.add(new_genome)
         assembly_genome_dataset = GenomeDataset(

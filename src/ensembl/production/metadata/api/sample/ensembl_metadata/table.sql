@@ -176,7 +176,9 @@ CREATE TABLE genome
     genome_uuid varchar(128) not null,
     assembly_id int          not null,
     organism_id int          not null,
-    created     datetime(6) not null,
+    created     datetime(6)  not null,
+    is_best     tinyint(1)   not null,
+
     constraint genome_uuid
         unique (genome_uuid),
     constraint genome_assembly_id_0a748388_fk_assembly_assembly_id
@@ -208,7 +210,6 @@ CREATE TABLE genome_release
     genome_id         int not null,
     release_id        int not null,
     is_current        tinyint(1) not null,
-    is_best           tinyint(1) not null,
     constraint genome_release_genome_id_3e45dc04_fk
         foreign key (genome_id) references genome (genome_id),
     constraint genome_release_release_id_bca7e1e5_fk_ensembl_release_release_id
