@@ -77,8 +77,8 @@ class GenomeAdaptor(BaseAdaptor):
         return taxids
 
     def fetch_genomes(self, genome_id=None, genome_uuid=None, organism_uuid=None, assembly_accession=None,
-                      assembly_name=None, ensembl_name=None, taxonomy_id=None, group=None, group_type=None,
-                      unreleased_only=False, site_name=None, release_type=None,
+                      assembly_name=None, use_default_assembly=False, ensembl_name=None, taxonomy_id=None,
+                      group=None, group_type=None, unreleased_only=False, site_name=None, release_type=None,
                       release_version=None, current_only=True):
         """
         Fetches genome information based on the specified parameters.
@@ -89,6 +89,7 @@ class GenomeAdaptor(BaseAdaptor):
             organism_uuid (Union[str, List[str]]): The UUID(s) of the organism(s) to fetch.
             assembly_accession (Union[str, List[str]]): The assenbly accession of the assembly(s) to fetch.
             assembly_name (Union[str, List[str]]): The name(s) of the assembly(s) to fetch.
+            use_default_assembly (bool): Whether to use default assembly name or not.
             ensembl_name (Union[str, List[str]]): The Ensembl name(s) of the organism(s) to fetch.
             taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
@@ -162,7 +163,18 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.filter(Assembly.accession.in_(assembly_accession))
 
         if assembly_name is not None:
-            genome_select = genome_select.filter(Assembly.name.in_(assembly_name))
+            # case() function is used to conditionally select between columns, sql equivalent is:
+            # CASE
+            #     WHEN :use_default_assembly = 1 THEN assembly.assembly_default
+            #     ELSE assembly.name
+            # END
+            conditional_column = db.case(
+                # literal is used to prevent evaluating use_default_assembly to a boolean (True or False)
+                [(db.literal(use_default_assembly) == 1, Assembly.assembly_default)],
+                else_=Assembly.name
+            )
+            lowered_assemblies = [name.lower() for name in assembly_name]
+            genome_select = genome_select.filter(db.func.lower(conditional_column).in_(lowered_assemblies))
 
         if ensembl_name is not None:
             genome_select = genome_select.filter(Organism.ensembl_name.in_(ensembl_name))

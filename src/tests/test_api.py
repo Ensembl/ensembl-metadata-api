@@ -245,24 +245,40 @@ class TestMetadataDB:
     #     assert test[0].GenomeDataset.release_id is None
     #     assert test[0].GenomeDataset.is_current == 0
 
+    @pytest.mark.parametrize(
+        "ensembl_name, assembly_name, use_default_assembly, expected_output",
+        [
+            ("homo_sapiens", "GRCh37.p13", False, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
+            ("homo_sapiens", "GRCh37", True, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
+        ]
+    )
+    def test_fetch_genome_uuid(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly, expected_output):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genomes(
+            ensembl_name=ensembl_name,
+            assembly_name=assembly_name,
+            use_default_assembly=use_default_assembly
+        )
+        assert len(test) == 1
+        assert test[0].Genome.genome_uuid == expected_output
 
-    #Duplicate
-    # def test_fetch_genome_info(self, multi_dbs):
-    #     conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-    #                          taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-    #     test = conn.fetch_genomes_info()
-    #     result = next(test)[0]
-    #     assert 'genome' in result
-    #     assert 'datasets' in result
-
-
-    # def test_fetch_genome_info_genome_uuid(self, multi_dbs):
-    #     uuid = 'a7335667-93e7-11ec-a39d-005056b38ce3'
-    #     conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-    #                          taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-    #     test = conn.fetch_genomes_info(genome_uuid=uuid)
-    #     assert test['genome'][0].genome_uuid == uuid
-    #     assert test['datasets'][0][0].genome_uuid == uuid
+    @pytest.mark.parametrize(
+        "ensembl_name, assembly_name, use_default_assembly",
+        [
+            ("homo_sapiens", "GRCh37", False),
+            ("homo_sapiens", "GRCh37.p13", True),
+        ]
+    )
+    def test_fetch_genome_uuid_empty(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genomes(
+            ensembl_name=ensembl_name,
+            assembly_name=assembly_name,
+            use_default_assembly=use_default_assembly
+        )
+        assert len(test) == 0
 
     def test_popular_species(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
