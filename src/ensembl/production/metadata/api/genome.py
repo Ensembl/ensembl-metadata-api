@@ -143,13 +143,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Apply additional filters based on the provided parameters
         if unreleased_only:
-            # Question (Bilal): When adding unreleased genomes do we populate genome_releases table?
-            # if that's the case the test data doesn't do so (this will return en empty list)
-            genome_select = genome_select.outerjoin(Genome.genome_releases).filter(
-                GenomeRelease.genome_id == None
-            )
-
-
+            genome_select = genome_select.filter(Genome.genome_releases is None)
 
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
@@ -195,14 +189,18 @@ class GenomeAdaptor(BaseAdaptor):
         if site_name is not None:
             genome_select = genome_select.add_columns(EnsemblSite).filter(EnsemblSite.name == site_name)
 
-            if release_type is not None:
-                genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
+        if release_type is not None:
+            genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
 
-            if release_version is not None:
-                genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-            # get current_only only if release_version is Not specified
-            elif current_only:
-                genome_select = genome_select.filter(GenomeRelease.is_current == 1)
+        # get current_only only if release_version is Not specified
+        if release_version is None or release_version == 0:
+            # grab released and unreleased genomes if release_version is not specified
+            pass
+        elif release_version is not None and release_version > 0:
+            genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+        elif current_only:
+            # current_only will be executed only if none of the condition above are met
+            genome_select = genome_select.filter(GenomeRelease.is_current == 1)
 
         # print(f"genome_select query ====> {str(genome_select)}")
         with self.metadata_db.session_scope() as session:
@@ -458,20 +456,6 @@ class GenomeAdaptor(BaseAdaptor):
             if unreleased_datasets:
                 genome_select = genome_select.filter(GenomeDataset.ensembl_release is None)
 
-            # Check if genome is released
-            with self.metadata_db.session_scope() as session:
-                session.expire_on_commit = False
-                # copy genome_select as we don't want to include GenomeDataset
-                # because it results in multiple row for a given genome (genome can have many datasets)
-                # check_query = genome_select
-                prep_query = genome_select.filter(GenomeDataset.ensembl_release is not None)
-                is_genome_released = session.execute(prep_query).first()
-
-            if is_genome_released:
-                # Include release related info if released_only is True
-                genome_select = genome_select.add_columns(EnsemblRelease) \
-                    .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
-
             if dataset_name is not None and "all" not in dataset_name:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
 
@@ -481,13 +465,28 @@ class GenomeAdaptor(BaseAdaptor):
             if dataset_type is not None:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_type))
 
-            if release_version:
-                genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-
-            # print(f"genome_select str ====> {str(genome_select)}")
-            logger.debug(genome_select)
             with self.metadata_db.session_scope() as session:
+                # This is needed in order to ovoid tests throwing:
+                # sqlalchemy.orm.exc.DetachedInstanceError: Instance <DatasetType at 0x7fc5c05a13d0>
+                # is not bound to a Session; attribute refresh operation cannot proceed
+                # (Background on this error at: https://sqlalche.me/e/14/bhk3)
                 session.expire_on_commit = False
+                # copy genome_select as we don't want to include GenomeDataset
+                # because it results in multiple row for a given genome (genome can have many datasets)
+                prep_query = genome_select.filter(GenomeDataset.ensembl_release is not None)
+                is_genome_released = session.execute(prep_query).first()
+
+                if is_genome_released:
+                    # Include release related info if released_only is True
+                    genome_select = genome_select.add_columns(EnsemblRelease) \
+                        .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
+
+                if release_version:
+                    genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+
+                # print(f"genome_select str ====> {str(genome_select)}")
+                logger.debug(genome_select)
+
                 return session.execute(genome_select).all()
 
         except Exception as e:
