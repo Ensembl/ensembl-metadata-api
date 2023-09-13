@@ -234,12 +234,16 @@ message GenomeUUID {
 }
 
 message OrganismsGroup {
-  string ensembl_name = 1;
-  uint32 count = 2;
+  uint32 species_taxonomy_id = 1;
+  string ensembl_name = 2;
+  string common_name = 3;
+  string scientific_name = 4;
+  uint32 order = 5;
+  uint32 count = 6;
 }
 
 message OrganismsGroupCount {
-  repeated OrganismsGroup organism_group = 1;
+  repeated OrganismsGroup organisms_group_count = 1;
 }
 
 /*

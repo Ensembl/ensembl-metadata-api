@@ -229,11 +229,15 @@ def create_organisms_group_count(data):
     organisms_list = []
     for organism in data:
         created_organism_group = ensembl_metadata_pb2.OrganismsGroup(
+            species_taxonomy_id=organism[0],
             ensembl_name=organism[1],
+            common_name=organism[2],
+            scientific_name=organism[3],
+            order=organism[4],
             count=organism[5],
         )
         organisms_list.append(created_organism_group)
 
     return ensembl_metadata_pb2.OrganismsGroupCount(
-        organism_group=organisms_list
+        organisms_group_count=organisms_list
     )
