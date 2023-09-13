@@ -71,3 +71,4 @@ class GenomeRelease(Base):
     genome = relationship("Genome", back_populates="genome_releases")
     # release_id to ensembl release
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_releases")
+

@@ -30,6 +30,19 @@ class ReleaseAdaptor(BaseAdaptor):
             release_type=None,
             site_name=None,
     ):
+        """
+        Fetches releases based on the provided parameters.
+
+        Args:
+            release_id (int or list or None): Release ID(s) to filter by.
+            release_version (str or list or None): Release version(s) to filter by.
+            current_only (bool): Flag indicating whether to fetch only current releases.
+            release_type (str or list or None): Release type(s) to filter by.
+            site_name (str or list or None): Name(s) of the Ensembl site to filter by.
+
+        Returns:
+            list: A list of fetched releases.
+        """
         release_id = check_parameter(release_id)
         release_version = check_parameter(release_version)
         release_type = check_parameter(release_type)

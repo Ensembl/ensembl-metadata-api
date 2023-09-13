@@ -50,3 +50,4 @@ class EnsemblRelease(Base):
     # many to one relationships
     # site_id to ensembl_site
     ensembl_site = relationship('EnsemblSite', back_populates='ensembl_releases')
+

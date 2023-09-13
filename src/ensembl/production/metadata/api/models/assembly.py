@@ -63,3 +63,4 @@ class AssemblySequence(Base):
     # many to one relationships
     # assembly_id within assembly
     assembly = relationship('Assembly', back_populates="assembly_sequences")
+
