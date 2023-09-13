@@ -220,3 +220,20 @@ def populate_dataset_info(data):
         dataset_label=data.Dataset.label,
         version=int(data.EnsemblRelease.version) if hasattr(data, 'EnsemblRelease') else None,
     )
+
+
+def create_organisms_group_count(data):
+    if data is None:
+        return ensembl_metadata_pb2.OrganismsGroupCount()
+
+    organisms_list = []
+    for organism in data:
+        created_organism_group = ensembl_metadata_pb2.OrganismsGroup(
+            ensembl_name=organism[1],
+            count=organism[5],
+        )
+        organisms_list.append(created_organism_group)
+
+    return ensembl_metadata_pb2.OrganismsGroupCount(
+        organism_group=organisms_list
+    )

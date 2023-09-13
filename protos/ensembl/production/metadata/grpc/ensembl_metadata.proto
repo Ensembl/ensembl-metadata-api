@@ -65,6 +65,9 @@ service EnsemblMetadata {
   
   // Retrieve dataset info by genome uuid and dataset_type
   rpc GetDatasetInformation(GenomeDatatypeRequest) returns (DatasetInfos) {}
+
+  // Retrieve organisms group count
+  rpc GetOrganismsGroupCount(EmptyRequest) returns (OrganismsGroupCount) {}
 }
 
 /*
@@ -230,6 +233,15 @@ message GenomeUUID {
   string genome_uuid = 1;
 }
 
+message OrganismsGroup {
+  string ensembl_name = 1;
+  uint32 count = 2;
+}
+
+message OrganismsGroupCount {
+  repeated OrganismsGroup organism_group = 1;
+}
+
 /*
 The messages below are used to request data - required-ness is not enforced
 by protocol buffers, but in practice some fields are mandatory in order to
@@ -325,3 +337,15 @@ message GenomeInfoRequest {
   string assembly_name = 2;    // Mandatory
   bool use_default = 3;        // Optional
 }
+
+/*
+  A generic empty message that can be used as the request
+  or the response type of an API method. For instance:
+
+     service Foo {
+       rpc Bar(EmptyRequest) returns (EmptyRequest);
+     }
+
+  Example: https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/empty.proto
+ */
+message EmptyRequest {}
