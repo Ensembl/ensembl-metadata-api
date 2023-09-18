@@ -114,7 +114,8 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
         return create_genome()
 
     genome_results = db_conn.fetch_genomes(
-        assembly_accession=assembly_accession
+        assembly_accession=assembly_accession,
+        unreleased_only=cfg.unreleased_data_only
     )
     for genome in genome_results:
         yield create_genome(genome)
@@ -125,7 +126,8 @@ def get_species_information(db_conn, genome_uuid):
         return create_species()
 
     species_results = db_conn.fetch_genomes(
-        genome_uuid=genome_uuid
+        genome_uuid=genome_uuid,
+        unreleased_only=cfg.unreleased_data_only
     )
     if len(species_results) == 1:
         tax_id = species_results[0].Organism.taxonomy_id
@@ -141,7 +143,8 @@ def get_sub_species_info(db_conn, organism_uuid, group):
 
     sub_species_results = db_conn.fetch_genomes(
         organism_uuid=organism_uuid,
-        group=group
+        group=group,
+        unreleased_only=cfg.unreleased_data_only
     )
 
     species_name = []
@@ -169,7 +172,8 @@ def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
     genome_uuid_result = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
         assembly_name=assembly_name,
-        use_default_assembly=use_default
+        use_default_assembly=use_default,
+        unreleased_only=cfg.unreleased_data_only
     )
 
     if len(genome_uuid_result) == 1:
@@ -186,7 +190,8 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
 
     genome_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
-        release_version=release_version
+        release_version=release_version,
+        unreleased_only=cfg.unreleased_data_only
     )
 
     if len(genome_results) == 1:
@@ -228,14 +233,15 @@ def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
     genome_results = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
         site_name=site_name,
-        release_version=release_version
+        release_version=release_version,
+        unreleased_only=cfg.unreleased_data_only
     )
     if len(genome_results) == 1:
         return create_genome(genome_results[0])
     return create_genome()
 
 
-def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version=0):
+def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
     if genome_uuid is None:
         return create_datasets()
 
@@ -243,7 +249,8 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version=0):
         genome_uuid=genome_uuid,
         # fetch all datasets, default is 'assembly' only
         dataset_name="all",
-        release_version=release_version
+        release_version=release_version,
+        unreleased_datasets=cfg.unreleased_data_only
     )
 
     if len(datasets_results) > 0:

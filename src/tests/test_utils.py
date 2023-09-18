@@ -159,7 +159,7 @@ class TestUtils:
         # because of the returned attributes
         # TODO: Fix this later
         output = json_format.MessageToJson(
-            utils.get_datasets_list_by_uuid(genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3"))
+            utils.get_datasets_list_by_uuid(genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3", 108.0))
 
         expected_output = {
             "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
