@@ -258,7 +258,28 @@ class TestMetadataDB:
         test = conn.fetch_genomes(
             ensembl_name=ensembl_name,
             assembly_name=assembly_name,
-            use_default_assembly=use_default_assembly
+            use_default_assembly=use_default_assembly,
+            unreleased_only=False,
+            current_only=False
+        )
+        assert len(test) == 1
+        assert test[0].Genome.genome_uuid == expected_output
+
+    @pytest.mark.parametrize(
+        "ensembl_name, assembly_name, use_default_assembly, expected_output",
+        [
+            ("homo_sapiens", "GRCh38.p13", False, "a7335667-93e7-11ec-a39d-005056b38ce3"),
+            ("homo_sapiens", "GRCh38", True, "a7335667-93e7-11ec-a39d-005056b38ce3"),
+        ]
+    )
+    def test_fetch_genome_uuid_is_current(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly, expected_output):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genomes(
+            ensembl_name=ensembl_name,
+            assembly_name=assembly_name,
+            use_default_assembly=use_default_assembly,
+            unreleased_only=False
         )
         assert len(test) == 1
         assert test[0].Genome.genome_uuid == expected_output

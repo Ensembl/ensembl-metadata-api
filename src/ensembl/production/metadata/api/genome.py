@@ -146,7 +146,11 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Apply additional filters based on the provided parameters
         if unreleased_only:
-            genome_select = genome_select.filter(Genome.genome_releases is None)
+            # this filter will get all Genome entries where there's no associated GenomeRelease
+            # the tilde (~) symbol is used for negation.
+            genome_select = genome_select.filter(~Genome.genome_releases.any())
+            # since we are getting only unreleased data
+            current_only = False
 
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
@@ -206,14 +210,9 @@ class GenomeAdaptor(BaseAdaptor):
         if release_type is not None:
             genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
 
-        # get current_only only if release_version is Not specified
-        if release_version is None or release_version == 0:
-            # grab released and unreleased genomes if release_version is not specified
-            pass
-        elif release_version is not None and release_version > 0:
+        if release_version is not None and release_version > 0:
             genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
         elif current_only:
-            # current_only will be executed only if none of the condition above are met
             genome_select = genome_select.filter(GenomeRelease.is_current == 1)
 
         # print(f"genome_select query ====> {str(genome_select)}")
@@ -468,7 +467,9 @@ class GenomeAdaptor(BaseAdaptor):
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
-                genome_select = genome_select.filter(GenomeDataset.ensembl_release is None)
+                # this filter will get all GenomeDataset entries where there's no associated EnsemblRelease
+                # the tilde (~) symbol is used for negation.
+                genome_select = genome_select.filter(~GenomeDataset.ensembl_release.any())
 
             if dataset_name is not None and "all" not in dataset_name:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
