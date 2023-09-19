@@ -23,7 +23,7 @@ from ensembl.production.metadata.api.genome import GenomeAdaptor
 from ensembl.production.metadata.api.dataset import DatasetAdaptor
 from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
-
+import logging
 
 class CoreMetaUpdater(BaseMetaUpdater):
     def __init__(self, db_uri, metadata_uri, taxonomy_uri):
@@ -73,7 +73,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
             self.process_species(species, metadata_uri, taxonomy_uri, db_uri)
 
     def process_species(self, species_id, metadata_uri, taxonomy_uri, db_uri):
-        print(db_uri)
         """
         Process an individual species from a core database to update the metadata db.
         This method contains the logic for updating the metadata
@@ -91,7 +90,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genebuild_release_status = conn.check_release_status(self.genebuild_dataset.dataset_uuid)
 
             if organism_status == "New":
-                print("New organism")
+                logging.info('New organism')
                 # ###############################Checks that dataset and assembly are new ##################
                 if assembly_status != "New" or genebuild_status != "New":
                     raise Exception("New organism, but existing assembly accession and/or genebuild version")
@@ -104,7 +103,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                                                                 self.genebuild_dataset)
 
             elif assembly_status == "New":
-                print("New assembly")
+                logging.info('New assembly')
 
                 # ###############################Checks that dataset and update are new ##################
                 if genebuild_status != "New":
@@ -119,7 +118,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
                 # Create genome and populate the database with assembly and dataset
             elif genebuild_status == "New":
-                print("New genebuild")
+                logging.info('New genebuild')
 
                 # Create genome and populate the database with genebuild dataset
                 new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
@@ -132,7 +131,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 if genebuild_release_status is True:
                     raise Exception("Existing Organism, Assembly, and Datasets within a release")
                 else:
-                    print("Rewrite")
+                    logging.info('Rewrite of existing data')
                     # Need to do a rewrite, so that it only redoes the geneset data.
 
                     # Delete the data from the database and repopulate assembly and genebuild.
@@ -351,9 +350,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                         accession = matching_accessions[0] if matching_accessions else accession
                         name = preferred_name
 
-                # Combine all unique names with ";". If a name appears in multiple sequences with the same accession,
-                #        name = ";".join(info["names"])
-                # Create an AssemblySequence object.
                 assembly_sequence = AssemblySequence(
                     name=name,
                     assembly=assembly,
