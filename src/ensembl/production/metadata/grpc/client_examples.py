@@ -24,7 +24,7 @@ from ensembl_metadata_pb2 import (
     DatasetsRequest,
     GenomeDatatypeRequest,
     GenomeInfoRequest,
-    EmptyRequest
+    OrganismsGroupRequest
 )
 
 import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
@@ -251,7 +251,7 @@ def get_genome_uuid(stub):
 
 
 def get_organisms_group_count(stub):
-    request = EmptyRequest()
+    request = OrganismsGroupRequest()
     organisms_group_count = stub.GetOrganismsGroupCount(request)
     print(organisms_group_count)
 
