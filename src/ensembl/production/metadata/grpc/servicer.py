@@ -87,5 +87,5 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetOrganismsGroupCount(self, request, context):
         return get_organisms_group_count(
-            self.db
+            self.db, request.release_version
         )

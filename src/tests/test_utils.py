@@ -847,7 +847,12 @@ class TestUtils:
         assert json.loads(output) == expected_output
 
     def test_get_organisms_group_count(self, genome_db_conn):
-        output = json_format.MessageToJson(utils.get_organisms_group_count(genome_db_conn))
+        output = json_format.MessageToJson(
+            utils.get_organisms_group_count(
+                db_conn=genome_db_conn,
+                release_version=None
+            )
+        )
         expected_output = {
             "organismsGroupCount": [
                 {

@@ -193,5 +193,10 @@ class TestClass:
         # we have 6 organism in the test data
         assert len(input_data) == 6
         # send just the first element
-        output = json_format.MessageToJson(utils.create_organisms_group_count([input_data[0]]))
+        output = json_format.MessageToJson(
+            utils.create_organisms_group_count(
+                data=[input_data[0]],
+                release_version=None
+            )
+        )
         assert json.loads(output) == expected_result

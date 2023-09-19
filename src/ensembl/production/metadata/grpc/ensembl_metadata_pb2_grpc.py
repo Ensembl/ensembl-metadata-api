@@ -100,7 +100,7 @@ class EnsemblMetadataStub(object):
                 )
         self.GetOrganismsGroupCount = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetOrganismsGroupCount',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.EmptyRequest.SerializeToString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupCount.FromString,
                 )
 
@@ -316,7 +316,7 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
             ),
             'GetOrganismsGroupCount': grpc.unary_unary_rpc_method_handler(
                     servicer.GetOrganismsGroupCount,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.EmptyRequest.FromString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupCount.SerializeToString,
             ),
     }
@@ -617,7 +617,7 @@ class EnsemblMetadata(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetOrganismsGroupCount',
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.EmptyRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupCount.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

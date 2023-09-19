@@ -328,6 +328,6 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
     return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
 
 
-def get_organisms_group_count(db_conn):
-    count_result = db_conn.fetch_organisms_group_counts()
-    return create_organisms_group_count(count_result)
+def get_organisms_group_count(db_conn, release_version):
+    count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
+    return create_organisms_group_count(count_result, release_version)
