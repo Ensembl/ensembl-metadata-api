@@ -33,7 +33,7 @@ class Assembly(Base):
     created = Column(DateTime)
     ensembl_name = Column(String(255), unique=True)
     alt_accession = Column(String(16), nullable=True)
-    is_reference = Column(TINYINT(1), nullable=False)
+    is_reference = Column(TINYINT(1), nullable=False, default=0)
     url_name = Column(String(128), nullable=False)
     # One to many relationships
     # assembly_id within assembly_sequence
@@ -52,7 +52,7 @@ class AssemblySequence(Base):
     name = Column(String(128), unique=True)
     assembly_id = Column(ForeignKey('assembly.assembly_id'), nullable=False, index=True)
     accession = Column(String(128), nullable=False)
-    chromosomal = Column(TINYINT(1), nullable=False)
+    chromosomal = Column(TINYINT(1), nullable=False, default=0)
     chromosome_rank = Column(Integer)
     length = Column(Integer, nullable=False)
     sequence_location = Column(String(10))

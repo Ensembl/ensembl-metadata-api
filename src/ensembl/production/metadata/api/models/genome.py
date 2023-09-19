@@ -26,7 +26,7 @@ class Genome(Base):
     assembly_id = Column(ForeignKey("assembly.assembly_id"), nullable=False, index=True)
     organism_id = Column(ForeignKey("organism.organism_id"), nullable=False, index=True)
     created = Column(DATETIME(fsp=6), nullable=False)
-    is_best = Column(TINYINT(1), nullable=False)
+    is_best = Column(TINYINT(1), nullable=False, default=0)
     # One to many relationships
     # genome_id to genome_dataset and genome release
     genome_datasets = relationship("GenomeDataset", back_populates="genome", cascade="all, delete, delete-orphan")
@@ -45,7 +45,7 @@ class GenomeDataset(Base):
     dataset_id = Column(ForeignKey("dataset.dataset_id"), nullable=False, index=True)
     genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
     release_id = Column(ForeignKey("ensembl_release.release_id"), index=True)
-    is_current = Column(TINYINT(1), nullable=False)
+    is_current = Column(TINYINT(1), nullable=False, default=0)
 
     # One to many relationships
     # none
@@ -64,7 +64,7 @@ class GenomeRelease(Base):
     genome_release_id = Column(Integer, primary_key=True)
     genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
     release_id = Column(ForeignKey("ensembl_release.release_id"), nullable=False, index=True)
-    is_current = Column(TINYINT(1), nullable=False)
+    is_current = Column(TINYINT(1), nullable=False, default=0)
     # One to many relationships
     # none
     # many to one relationships
