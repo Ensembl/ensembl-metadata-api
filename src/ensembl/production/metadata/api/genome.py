@@ -514,7 +514,7 @@ class GenomeAdaptor(BaseAdaptor):
             logger.debug(genome_select)
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
-            return session.execute(genome_select).all()
+                return session.execute(genome_select).all()
 
         except Exception as e:
             raise ValueError(str(e))
