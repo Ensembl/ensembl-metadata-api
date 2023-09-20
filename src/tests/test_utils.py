@@ -845,3 +845,29 @@ class TestUtils:
                                "taxonomyId": 4565
                            }}
         assert json.loads(output) == expected_output
+
+    def test_get_organisms_group_count(self, genome_db_conn):
+        output = json_format.MessageToJson(
+            utils.get_organisms_group_count(
+                db_conn=genome_db_conn,
+                release_version=None
+            )
+        )
+        expected_output = {
+            "organismsGroupCount": [
+                {
+                    "speciesTaxonomyId": 9606,
+                    "ensemblName": "Homo_sapiens",
+                    "commonName": "Human",
+                    "scientificName": "Homo sapiens",
+                    "order": 1,
+                    "count": 3
+                }
+            ]
+        }
+        # make sure it returns 6 organisms
+        json_output = json.loads(output)
+        assert len(json_output['organismsGroupCount']) == 6
+        # and pick up the first element to check if it matches the expected output
+        # I picked up only the first element for the sake of shortening the code
+        assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]

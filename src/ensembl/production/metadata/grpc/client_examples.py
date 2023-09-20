@@ -23,7 +23,8 @@ from ensembl_metadata_pb2 import (
     OrganismIDRequest,
     DatasetsRequest,
     GenomeDatatypeRequest,
-    GenomeInfoRequest
+    GenomeInfoRequest,
+    OrganismsGroupRequest
 )
 
 import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
@@ -249,6 +250,12 @@ def get_genome_uuid(stub):
     print(genome_uuid3)
 
 
+def get_organisms_group_count(stub):
+    request = OrganismsGroupRequest()
+    organisms_group_count = stub.GetOrganismsGroupCount(request)
+    print(organisms_group_count)
+
+
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
@@ -282,6 +289,8 @@ def run():
         get_dataset_infos_by_dataset_type(stub)
         print("-------------- Get Genome UUID --------------")
         get_genome_uuid(stub)
+        print("-------------- Get Organisms Group Count --------------")
+        get_organisms_group_count(stub)
 
 
 if __name__ == "__main__":

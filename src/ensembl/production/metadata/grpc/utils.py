@@ -20,7 +20,7 @@ from ensembl.production.metadata.api.release import ReleaseAdaptor
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
     create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
-    create_dataset_infos, populate_dataset_info
+    create_dataset_infos, populate_dataset_info, create_organisms_group_count
 
 
 def connect_to_db():
@@ -326,3 +326,8 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
         dataset_type=requested_dataset_type
     )
     return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
+
+
+def get_organisms_group_count(db_conn, release_version):
+    count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
+    return create_organisms_group_count(count_result, release_version)

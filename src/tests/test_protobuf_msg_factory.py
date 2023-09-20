@@ -175,3 +175,28 @@ class TestClass:
         }
         output = json_format.MessageToJson(utils.create_release(input_data[0]))
         assert json.loads(output) == expected_output
+
+    def test_create_organisms_group_count(self, multi_dbs, genome_db_conn):
+        input_data = genome_db_conn.fetch_organisms_group_counts()
+        expected_result = {
+            "organismsGroupCount": [
+                {
+                    "speciesTaxonomyId": 9606,
+                    "ensemblName": "Homo_sapiens",
+                    "commonName": "Human",
+                    "scientificName": "Homo sapiens",
+                    "order": 1,
+                    "count": 3
+                }
+            ]
+        }
+        # we have 6 organism in the test data
+        assert len(input_data) == 6
+        # send just the first element
+        output = json_format.MessageToJson(
+            utils.create_organisms_group_count(
+                data=[input_data[0]],
+                release_version=None
+            )
+        )
+        assert json.loads(output) == expected_result
