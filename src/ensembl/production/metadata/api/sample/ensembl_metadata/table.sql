@@ -12,7 +12,7 @@ CREATE TABLE assembly
     created          datetime null,
     ensembl_name     varchar(255) null,
     alt_accession    varchar(16) null,
-    is_reference     tinyint(1) not null,
+    is_reference     tinyint(1) not null default 0,
     url_name         varchar(128) null,
 
     constraint assembly_uuid
@@ -32,7 +32,7 @@ CREATE TABLE assembly_sequence
     name                 varchar(128) null,
     assembly_id          int not null,
     accession            varchar(128) null,
-    chromosomal          tinyint(1) not null,
+    chromosomal          tinyint(1) not null default 0,
     length               int not null,
     chromosome_rank      int null,
     sequence_location    varchar(10) null,
@@ -141,7 +141,7 @@ CREATE TABLE ensembl_release
     version      decimal(10, 1) not null,
     release_date date           not null,
     label        varchar(64) null,
-    is_current   tinyint(1) not null,
+    is_current   tinyint(1) not null default 0,
     site_id      int null,
     release_type varchar(16)    not null,
     constraint ensembl_release_version_site_id_b743399a_uniq
@@ -176,7 +176,9 @@ CREATE TABLE genome
     genome_uuid varchar(128) not null,
     assembly_id int          not null,
     organism_id int          not null,
-    created     datetime(6) not null,
+    created     datetime(6)  not null,
+    is_best     tinyint(1)   not null  default 0,
+
     constraint genome_uuid
         unique (genome_uuid),
     constraint genome_assembly_id_0a748388_fk_assembly_assembly_id
@@ -192,7 +194,7 @@ CREATE TABLE genome_dataset
     dataset_id        int not null,
     genome_id         int not null,
     release_id        int null,
-    is_current        tinyint(1) not null,
+    is_current        tinyint(1) not null  default 0,
     constraint ensembl_metadata_gen_dataset_id_26d7bac7_fk_dataset_d
         foreign key (dataset_id) references dataset (dataset_id),
     constraint ensembl_metadata_gen_genome_id_7670a2c5_fk_genome_ge
@@ -207,8 +209,7 @@ CREATE TABLE genome_release
         primary key,
     genome_id         int not null,
     release_id        int not null,
-    is_current        tinyint(1) not null,
-    is_best           tinyint(1) not null,
+    is_current        tinyint(1) not null default 0,
     constraint genome_release_genome_id_3e45dc04_fk
         foreign key (genome_id) references genome (genome_id),
     constraint genome_release_release_id_bca7e1e5_fk_ensembl_release_release_id
@@ -231,7 +232,7 @@ CREATE TABLE organism_group
 CREATE TABLE `organism_group_member`
 (
     `organism_group_member_id` int NOT NULL AUTO_INCREMENT,
-    `is_reference`             tinyint(1) DEFAULT NULL,
+    `is_reference`             tinyint(1) NOT NULL DEFAULT 0,
     `organism_id`              int NOT NULL,
     `organism_group_id`        int NOT NULL,
     `order`                    int DEFAULT NULL,

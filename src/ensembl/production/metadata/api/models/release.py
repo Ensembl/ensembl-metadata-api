@@ -40,7 +40,7 @@ class EnsemblRelease(Base):
     version = Column(DECIMAL(10, 1), nullable=False)
     release_date = Column(Date, nullable=False)
     label = Column(String(64))
-    is_current = Column(TINYINT(1), nullable=False)
+    is_current = Column(TINYINT(1), nullable=False, default=0)
     site_id = Column(ForeignKey('ensembl_site.site_id'), index=True)
     release_type = Column(String(16), nullable=False)
     # One to many relationships
