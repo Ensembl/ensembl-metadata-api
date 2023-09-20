@@ -391,7 +391,7 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, unreleased_datasets=False,
                               dataset_uuid=None, dataset_name=None, dataset_source=None, dataset_type=None,
-                              release_version=None):
+                              release_version=None, dataset_attributes=None):
         """
         Fetches genome datasets based on the provided parameters.
 
@@ -405,6 +405,7 @@ class GenomeAdaptor(BaseAdaptor):
             dataset_source (str or None): Dataset source to filter by.
             dataset_type (str or None): Dataset type to filter by.
             release_version (float or None): EnsemblRelease version to filter by.
+            dataset_attributes (bool): Flag to include dataset attributes
 
         Returns:
             List[Tuple[
@@ -433,15 +434,11 @@ class GenomeAdaptor(BaseAdaptor):
                 Dataset,
                 DatasetType,
                 DatasetSource,
-                DatasetAttribute,
-                Attribute
             ).select_from(Genome) \
                 .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
-                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id) \
-                .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
-                .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id)
+                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
 
             # set default group topic as 'assembly' to fetch unique datasource
             if not dataset_name:
@@ -479,6 +476,9 @@ class GenomeAdaptor(BaseAdaptor):
             if dataset_type is not None:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_type))
 
+            if dataset_attributes:
+                genome_select = genome_select.add_columns(DatasetAttribute,Attribute).join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
+                .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id)
 
             with self.metadata_db.session_scope() as session:
                 # This is needed in order to ovoid tests throwing:
@@ -517,7 +517,9 @@ class GenomeAdaptor(BaseAdaptor):
             group_type=None,
             unreleased_datasets=False,
             dataset_name=None,
-            dataset_source=None
+            dataset_source=None,
+            dataset_attributes=True,
+
     ):
         try:
             genome_id = check_parameter(genome_id)
@@ -550,7 +552,8 @@ class GenomeAdaptor(BaseAdaptor):
                     genome_uuid=genome[0].genome_uuid,
                     unreleased_datasets=unreleased_datasets,
                     dataset_name=dataset_name,
-                    dataset_source=dataset_source
+                    dataset_source=dataset_source,
+                    dataset_attributes=dataset_attributes
                 )
                 res = [{'genome': genome, 'datasets': dataset}]
                 yield res
