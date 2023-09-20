@@ -146,7 +146,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Apply additional filters based on the provided parameters
         if unreleased_only:
-            genome_select = genome_select.filter(Genome.genome_releases is None)
+            genome_select = genome_select.filter(~Genome.genome_releases.any())
 
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
@@ -216,7 +216,6 @@ class GenomeAdaptor(BaseAdaptor):
             # current_only will be executed only if none of the condition above are met
             genome_select = genome_select.filter(GenomeRelease.is_current == 1)
 
-        # print(f"genome_select query ====> {str(genome_select)}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("ensembl_name")).all()
@@ -389,9 +388,10 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
 
+
     def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, unreleased_datasets=False,
                               dataset_uuid=None, dataset_name=None, dataset_source=None, dataset_type=None,
-                              release_version=None):
+                              release_version=None, dataset_attributes=None):
         """
         Fetches genome datasets based on the provided parameters.
 
@@ -405,6 +405,7 @@ class GenomeAdaptor(BaseAdaptor):
             dataset_source (str or None): Dataset source to filter by.
             dataset_type (str or None): Dataset type to filter by.
             release_version (float or None): EnsemblRelease version to filter by.
+            dataset_attributes (bool): Flag to include dataset attributes
 
         Returns:
             List[Tuple[
@@ -433,15 +434,11 @@ class GenomeAdaptor(BaseAdaptor):
                 Dataset,
                 DatasetType,
                 DatasetSource,
-                DatasetAttribute,
-                Attribute
             ).select_from(Genome) \
                 .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
-                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id) \
-                .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
-                .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id)
+                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id)
 
             # set default group topic as 'assembly' to fetch unique datasource
             if not dataset_name:
@@ -468,7 +465,7 @@ class GenomeAdaptor(BaseAdaptor):
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
             if unreleased_datasets:
-                genome_select = genome_select.filter(GenomeDataset.ensembl_release is None)
+                genome_select = genome_select.filter(~GenomeDataset.ensembl_release.has())
 
             if dataset_name is not None and "all" not in dataset_name:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
@@ -479,6 +476,10 @@ class GenomeAdaptor(BaseAdaptor):
             if dataset_type is not None:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_type))
 
+            if dataset_attributes:
+                genome_select = genome_select.add_columns(DatasetAttribute,Attribute).join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
+                .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id)
+
             with self.metadata_db.session_scope() as session:
                 # This is needed in order to ovoid tests throwing:
                 # sqlalchemy.orm.exc.DetachedInstanceError: Instance <DatasetType at 0x7fc5c05a13d0>
@@ -487,19 +488,19 @@ class GenomeAdaptor(BaseAdaptor):
                 session.expire_on_commit = False
                 # copy genome_select as we don't want to include GenomeDataset
                 # because it results in multiple row for a given genome (genome can have many datasets)
-                prep_query = genome_select.filter(GenomeDataset.ensembl_release is not None)
-                is_genome_released = session.execute(prep_query).first()
 
-                if is_genome_released:
-                    # Include release related info if released_only is True
-                    genome_select = genome_select.add_columns(EnsemblRelease) \
+                if not unreleased_datasets:
+                    
+                    prep_query = genome_select.filter(GenomeDataset.ensembl_release.has())
+                    is_genome_released = session.execute(prep_query).first()
+                    
+                    if is_genome_released:
+                     # Include release related info if released_only is True
+                        genome_select = genome_select.add_columns(EnsemblRelease) \
                         .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
 
-                if release_version:
-                    genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-
-                # print(f"genome_select str ====> {str(genome_select)}")
-                logger.debug(genome_select)
+                    if release_version:
+                        genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
                 return session.execute(genome_select).all()
 
@@ -516,7 +517,9 @@ class GenomeAdaptor(BaseAdaptor):
             group_type=None,
             unreleased_datasets=False,
             dataset_name=None,
-            dataset_source=None
+            dataset_source=None,
+            dataset_attributes=True,
+
     ):
         try:
             genome_id = check_parameter(genome_id)
@@ -549,7 +552,8 @@ class GenomeAdaptor(BaseAdaptor):
                     genome_uuid=genome[0].genome_uuid,
                     unreleased_datasets=unreleased_datasets,
                     dataset_name=dataset_name,
-                    dataset_source=dataset_source
+                    dataset_source=dataset_source,
+                    dataset_attributes=dataset_attributes
                 )
                 res = [{'genome': genome, 'datasets': dataset}]
                 yield res
