@@ -199,8 +199,9 @@ class GenomeAdaptor(BaseAdaptor):
                 if release_version is not None and release_version > 0:
                     # if release is specified
                     genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-                elif current_only:
-                    # else get current only
+                    current_only = False
+
+                if current_only:
                     genome_select = genome_select.filter(GenomeRelease.is_current == 1)
 
                 if site_name is not None:
@@ -212,7 +213,7 @@ class GenomeAdaptor(BaseAdaptor):
             else:
                 # since both allow_unreleased and is_genome_released are False
                 # don't include unreleased Genomes
-                # for some reason this breaks test_updater tests
+                # TODO: for some reason this breaks test_updater tests
                 genome_select = genome_select.filter(Genome.genome_releases.any())
 
         # print(f"genome_select query ====> {str(genome_select)}")
@@ -388,7 +389,7 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
 
-    def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, unreleased_datasets=False,
+    def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, allow_unreleased=False,
                               dataset_uuid=None, dataset_name=None, dataset_source=None, dataset_type=None,
                               release_version=None):
         """
@@ -398,7 +399,7 @@ class GenomeAdaptor(BaseAdaptor):
             genome_id (int or list or None): Genome ID(s) to filter by.
             genome_uuid (str or list or None): Genome UUID(s) to filter by.
             organism_uuid (str or list or None): Organism UUID(s) to filter by.
-            unreleased_datasets (bool): Flag indicating whether to fetch only unreleased datasets.
+            allow_unreleased (bool): Flag indicating whether to allowing fetching unreleased datasets too or not.
             dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
             dataset_name (str or None): Dataset name to filter by, default is 'assembly'.
             dataset_source (str or None): Dataset source to filter by.
@@ -466,11 +467,6 @@ class GenomeAdaptor(BaseAdaptor):
             if dataset_uuid is not None:
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
-            if unreleased_datasets:
-                # this filter will get all GenomeDataset entries where there's no associated EnsemblRelease
-                # the tilde (~) symbol is used for negation.
-                genome_select = genome_select.filter(~GenomeDataset.ensembl_release.has())
-
             if "all" in dataset_name:
                 # TODO: fetch the list dynamically from the DB
                 dataset_type_names = [
@@ -487,28 +483,36 @@ class GenomeAdaptor(BaseAdaptor):
             if dataset_type is not None:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_type))
 
-            with self.metadata_db.session_scope() as session:
-                # This is needed in order to ovoid tests throwing:
-                # sqlalchemy.orm.exc.DetachedInstanceError: Instance <DatasetType at 0x7fc5c05a13d0>
-                # is not bound to a Session; attribute refresh operation cannot proceed
-                # (Background on this error at: https://sqlalche.me/e/14/bhk3)
-                session.expire_on_commit = False
-                # Check if GenomeDataset HAS an ensembl_release
-                prep_query = genome_select.filter(GenomeDataset.ensembl_release.has())
-                is_genome_released = session.execute(prep_query).first()
+            if not allow_unreleased:  # Get released datasets only
+                # Check if dataset is released
+                with self.metadata_db.session_scope() as session:
+                    # This is needed in order to ovoid tests throwing:
+                    # sqlalchemy.orm.exc.DetachedInstanceError: Instance <DatasetType at 0x7fc5c05a13d0>
+                    # is not bound to a Session; attribute refresh operation cannot proceed
+                    # (Background on this error at: https://sqlalche.me/e/14/bhk3)
+                    session.expire_on_commit = False
+                    # Check if GenomeDataset HAS an ensembl_release
+                    prep_query = genome_select.filter(GenomeDataset.ensembl_release.has())
+                    is_dataset_released = session.execute(prep_query).first()
 
-                if is_genome_released:
+                if is_dataset_released:
                     # Include release related info
                     genome_select = genome_select.add_columns(EnsemblRelease) \
                         .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
 
-                if release_version:
-                    genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+                    if release_version:
+                        genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
-                # print(f"genome_select str ====> {str(genome_select)}")
-                logger.debug(genome_select)
+                else:
+                    # since both allow_unreleased and is_dataset_released are False
+                    # don't include unreleased Datasets
+                    genome_select = genome_select.filter(GenomeDataset.ensembl_release.has())
 
-                return session.execute(genome_select).all()
+            # print(f"genome_select str ====> {str(genome_select)}")
+            logger.debug(genome_select)
+            with self.metadata_db.session_scope() as session:
+                session.expire_on_commit = False
+            return session.execute(genome_select).all()
 
         except Exception as e:
             raise ValueError(str(e))
@@ -517,11 +521,11 @@ class GenomeAdaptor(BaseAdaptor):
             self,
             genome_id=None,
             genome_uuid=None,
-            unreleased_genomes=False,
+            allow_unreleased_genomes=False,
             ensembl_name=None,
             group=None,
             group_type=None,
-            unreleased_datasets=False,
+            allow_unreleased_datasets=False,
             dataset_name=None,
             dataset_source=None
     ):
@@ -545,7 +549,7 @@ class GenomeAdaptor(BaseAdaptor):
             genomes = self.fetch_genomes(
                 genome_id=genome_id,
                 genome_uuid=genome_uuid,
-                allow_unreleased=unreleased_genomes,
+                allow_unreleased=allow_unreleased_genomes,
                 ensembl_name=ensembl_name,
                 group=group,
                 group_type=group_type,
@@ -554,7 +558,7 @@ class GenomeAdaptor(BaseAdaptor):
             for genome in genomes:
                 dataset = self.fetch_genome_datasets(
                     genome_uuid=genome[0].genome_uuid,
-                    unreleased_datasets=unreleased_datasets,
+                    allow_unreleased=allow_unreleased_datasets,
                     dataset_name=dataset_name,
                     dataset_source=dataset_source
                 )
