@@ -5,3 +5,4 @@
 5	0dc46f87-0b61-403a-8cd3-86b7e0cce8f0	559292	4932	Saccharomyces cerevisiae	S288C	Saccharomyces cerevisiae S288c	Saccharomyces_cerevisiae	saccharomyces_cerevisiae	\N
 6	0f4aad7b-db15-4a72-af1e-82bbae54226	6239	6239	Caenorhabditis elegans (PRJNA13758)	N2	Caenorhabditis elegans	Caenorhabditis_elegans	caenorhabditis_elegans	\N
 7	dbbsaf09-2db8-429b-a407-c15a4ca2876d	9606	9606	Human T2T	\N	Homo sapiens	Homo_sapiens	homo_sapiens_t2t	\N
+8	02b934c5-83af-4b3c-9fc1-5a0f01823396	3702	3702	thale-cress	\N	Arabidopsis thaliana	arabidopsis_thaliana	arabidopsis_thaliana	\N

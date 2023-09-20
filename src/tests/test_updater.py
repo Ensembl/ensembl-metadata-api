@@ -71,7 +71,7 @@ class TestUpdater:
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test_collect = conn.fetch_genomes_by_ensembl_name('Jabberwocky')
         assert test_collect[1].Organism.scientific_name == 'carol_jabberwocky'
-        assert test_collect[1].Assembly.accession == 'weird01'
+        assert test_collect[1].Assembly.accession == 'weird02'
 
     #
     def test_update_geneset(self, multi_dbs):

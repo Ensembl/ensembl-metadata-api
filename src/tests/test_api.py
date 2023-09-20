@@ -43,7 +43,7 @@ class TestMetadataDB:
             ensembl_name="caenorhabditis_elegans",
             taxonomy_id="6239",
             group="EnsemblMetazoa",
-            unreleased_only=False,
+            allow_unreleased=False,
             site_name="Ensembl",
             release_type="integrated",
             release_version="108.0",
@@ -60,7 +60,7 @@ class TestMetadataDB:
             ensembl_name="caenorhabditis_elegans",
             taxonomy_id="9606",  # Conflicting taxonomy_id
             group="EnsemblBacteria",  # Conflicting group
-            unreleased_only=False,
+            allow_unreleased=False,
             site_name="Ensembl",
             release_type="integrated",
             release_version="108.0",
@@ -259,7 +259,7 @@ class TestMetadataDB:
             ensembl_name=ensembl_name,
             assembly_name=assembly_name,
             use_default_assembly=use_default_assembly,
-            unreleased_only=False,
+            allow_unreleased=False,
             current_only=False
         )
         assert len(test) == 1
@@ -279,7 +279,7 @@ class TestMetadataDB:
             ensembl_name=ensembl_name,
             assembly_name=assembly_name,
             use_default_assembly=use_default_assembly,
-            unreleased_only=False
+            allow_unreleased=False
         )
         assert len(test) == 1
         assert test[0].Genome.genome_uuid == expected_output
@@ -312,3 +312,19 @@ class TestMetadataDB:
         for data in test[1:]:
             # All others have only one genome in test DB
             assert data[5] == 1
+
+    # def test_fetch_genomes_info(self, multi_dbs):
+    #     conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+    #                          taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+    #     test = conn.fetch_genomes_info(
+    #         unreleased_genomes=True,
+    #         # unreleased_datasets=True,
+    #         # dataset_name="all"
+    #     )
+    #     print(f"len(test)  ===> {len(list(test))}")
+    #     # print(f"type(test)  ===> {type(test)}")
+    #     for test_res in test:
+    #         print(f"test_res  ===> {test_res}")
+    #         # print(f"Genome.genome_uuid  ===> {test_res[0]['genome'].Genome.genome_uuid}")
+
+

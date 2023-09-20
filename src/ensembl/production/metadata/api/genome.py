@@ -78,7 +78,7 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genomes(self, genome_id=None, genome_uuid=None, organism_uuid=None, assembly_accession=None,
                       assembly_name=None, use_default_assembly=False, ensembl_name=None, taxonomy_id=None,
-                      group=None, group_type=None, unreleased_only=False, site_name=None, release_type=None,
+                      group=None, group_type=None, allow_unreleased=False, site_name=None, release_type=None,
                       release_version=None, current_only=True):
         """
         Fetches genome information based on the specified parameters.
@@ -94,7 +94,7 @@ class GenomeAdaptor(BaseAdaptor):
             taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
             group_type (Union[str, List[str]]): The type(s) of the organism group(s) to filter by.
-            unreleased_only (bool): Whether to fetch only genomes that have not been released (default: False).
+            allow_unreleased (bool): Whether to fetch unreleased genomes too or not (default: False).
             site_name (str): The name of the Ensembl site to filter by.
             release_type (str): The type of the Ensembl release to filter by.
             release_version (int): The maximum version of the Ensembl release to filter by.
@@ -145,15 +145,6 @@ class GenomeAdaptor(BaseAdaptor):
                 .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
 
         # Apply additional filters based on the provided parameters
-        if unreleased_only:
-            # this filter will get all Genome entries where there's no associated GenomeRelease
-            # the tilde (~) symbol is used for negation.
-            genome_select = genome_select.filter(~Genome.genome_releases.any())
-            # since we are getting only unreleased data
-            current_only = False
-
-        # These options are in order of decreasing specificity,
-        # and thus the ones later in the list can be redundant.
         if genome_id is not None:
             genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
 
@@ -186,78 +177,87 @@ class GenomeAdaptor(BaseAdaptor):
         if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
 
-        # Check if genome is released
-        with self.metadata_db.session_scope() as session:
-            session.expire_on_commit = False
-            # copy genome_select as we don't want to include GenomeDataset
-            # because it results in multiple row for a given genome (genome can have many datasets)
-            check_query = genome_select
-            prep_query = check_query.add_columns(GenomeDataset) \
-                .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
-                .filter(GenomeDataset.release_id.isnot(None))
-            is_genome_released = session.execute(prep_query).first()
+        if not allow_unreleased:
+            # Check if genome is released
+            with self.metadata_db.session_scope() as session:
+                session.expire_on_commit = False
+                # copy genome_select as we don't want to include GenomeDataset
+                # because it results in multiple row for a given genome (genome can have many datasets)
+                check_query = genome_select
+                prep_query = check_query.add_columns(GenomeDataset) \
+                    .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
+                    .filter(GenomeDataset.release_id.isnot(None))
+                is_genome_released = session.execute(prep_query).first()
 
-        if is_genome_released:
-            # Include release related info if released_only is True
-            genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
-                .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
-                .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
-                .join(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id)
+            if is_genome_released:
+                # Include release related info if released_only is True
+                genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
+                    .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
+                    .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
+                    .join(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id)
 
-        if site_name is not None:
-            genome_select = genome_select.add_columns(EnsemblSite).filter(EnsemblSite.name == site_name)
+                if release_version is not None and release_version > 0:
+                    # if release is specified
+                    genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+                elif current_only:
+                    # else get current only
+                    genome_select = genome_select.filter(GenomeRelease.is_current == 1)
 
-        if release_type is not None:
-            genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
+                if site_name is not None:
+                    genome_select = genome_select.add_columns(EnsemblSite).filter(EnsemblSite.name == site_name)
 
-        if release_version is not None and release_version > 0:
-            genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-        elif current_only:
-            genome_select = genome_select.filter(GenomeRelease.is_current == 1)
+                if release_type is not None:
+                    genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
+
+            else:
+                # since both allow_unreleased and is_genome_released are False
+                # don't include unreleased Genomes
+                # for some reason this breaks test_updater tests
+                genome_select = genome_select.filter(Genome.genome_releases.any())
 
         # print(f"genome_select query ====> {str(genome_select)}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("ensembl_name")).all()
 
-    def fetch_genomes_by_genome_uuid(self, genome_uuid, unreleased_only=False, site_name=None, release_type=None,
+    def fetch_genomes_by_genome_uuid(self, genome_uuid, allow_unreleased=False, site_name=None, release_type=None,
                                      release_version=None, current_only=True):
         return self.fetch_genomes(
             genome_uuid=genome_uuid,
-            unreleased_only=unreleased_only,
+            allow_unreleased=allow_unreleased,
             site_name=site_name,
             release_type=release_type,
             release_version=release_version,
             current_only=current_only,
         )
 
-    def fetch_genomes_by_assembly_accession(self, assembly_accession, unreleased_only=False, site_name=None,
+    def fetch_genomes_by_assembly_accession(self, assembly_accession, allow_unreleased=False, site_name=None,
                                             release_type=None, release_version=None, current_only=True):
         return self.fetch_genomes(
             assembly_accession=assembly_accession,
-            unreleased_only=unreleased_only,
+            allow_unreleased=allow_unreleased,
             site_name=site_name,
             release_type=release_type,
             release_version=release_version,
             current_only=current_only,
         )
 
-    def fetch_genomes_by_ensembl_name(self, ensembl_name, unreleased_only=False, site_name=None, release_type=None,
+    def fetch_genomes_by_ensembl_name(self, ensembl_name, allow_unreleased=False, site_name=None, release_type=None,
                                       release_version=None, current_only=True):
         return self.fetch_genomes(
             ensembl_name=ensembl_name,
-            unreleased_only=unreleased_only,
+            allow_unreleased=allow_unreleased,
             site_name=site_name,
             release_type=release_type,
             release_version=release_version,
             current_only=current_only,
         )
 
-    def fetch_genomes_by_taxonomy_id(self, taxonomy_id, unreleased_only=False, site_name=None, release_type=None,
+    def fetch_genomes_by_taxonomy_id(self, taxonomy_id, allow_unreleased=False, site_name=None, release_type=None,
                                      release_version=None, current_only=True):
         return self.fetch_genomes(
             taxonomy_id=taxonomy_id,
-            unreleased_only=unreleased_only,
+            allow_unreleased=allow_unreleased,
             site_name=site_name,
             release_type=release_type,
             release_version=release_version,
@@ -267,7 +267,7 @@ class GenomeAdaptor(BaseAdaptor):
     def fetch_genomes_by_scientific_name(
             self,
             scientific_name,
-            unreleased_only=False,
+            allow_unreleased=False,
             site_name=None,
             release_type=None,
             release_version=None,
@@ -277,7 +277,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         return self.fetch_genomes_by_taxonomy_id(
             taxonomy_ids,
-            unreleased_only=unreleased_only,
+            allow_unreleased=allow_unreleased,
             site_name=site_name,
             release_type=release_type,
             release_version=release_version,
@@ -469,9 +469,16 @@ class GenomeAdaptor(BaseAdaptor):
             if unreleased_datasets:
                 # this filter will get all GenomeDataset entries where there's no associated EnsemblRelease
                 # the tilde (~) symbol is used for negation.
-                genome_select = genome_select.filter(~GenomeDataset.ensembl_release.any())
+                genome_select = genome_select.filter(~GenomeDataset.ensembl_release.has())
 
-            if dataset_name is not None and "all" not in dataset_name:
+            if "all" in dataset_name:
+                # TODO: fetch the list dynamically from the DB
+                dataset_type_names = [
+                    'assembly', 'genebuild', 'variation', 'evidence',
+                    'regulation_build', 'homologies', 'regulatory_features'
+                ]
+                genome_select = genome_select.filter(DatasetType.name.in_(dataset_type_names))
+            else:
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
 
             if dataset_source is not None:
@@ -486,13 +493,12 @@ class GenomeAdaptor(BaseAdaptor):
                 # is not bound to a Session; attribute refresh operation cannot proceed
                 # (Background on this error at: https://sqlalche.me/e/14/bhk3)
                 session.expire_on_commit = False
-                # copy genome_select as we don't want to include GenomeDataset
-                # because it results in multiple row for a given genome (genome can have many datasets)
-                prep_query = genome_select.filter(GenomeDataset.ensembl_release is not None)
+                # Check if GenomeDataset HAS an ensembl_release
+                prep_query = genome_select.filter(GenomeDataset.ensembl_release.has())
                 is_genome_released = session.execute(prep_query).first()
 
                 if is_genome_released:
-                    # Include release related info if released_only is True
+                    # Include release related info
                     genome_select = genome_select.add_columns(EnsemblRelease) \
                         .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
 
@@ -539,7 +545,7 @@ class GenomeAdaptor(BaseAdaptor):
             genomes = self.fetch_genomes(
                 genome_id=genome_id,
                 genome_uuid=genome_uuid,
-                unreleased_only=unreleased_genomes,
+                allow_unreleased=unreleased_genomes,
                 ensembl_name=ensembl_name,
                 group=group,
                 group_type=group_type,

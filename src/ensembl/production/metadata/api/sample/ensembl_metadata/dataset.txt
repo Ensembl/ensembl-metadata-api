@@ -30,4 +30,5 @@
 42	ea044d8e-33f1-4c9f-9b9f-8c0bd1dcf642	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
 44	feaa37ea-4217-4d9d-afca-599bdae11b36	2	genebuild	\N	2023-09-12 13:32:52.00	7	2023-05	Submitted
 45	feaa37ea-4217-4d9d-afca-600bdae11b36	1	asssembly	\N	2023-09-12 13:32:52.00	7	2023-05	Submitted
+46	385f1ec2-bd06-40ce-873a-98e199f10505	1	asssembly	\N	2023-08-18 12:22:34	13	GCA_000001735.1	Submitted
 

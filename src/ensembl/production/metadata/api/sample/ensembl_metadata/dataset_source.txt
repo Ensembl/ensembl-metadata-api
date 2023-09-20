@@ -8,3 +8,4 @@
 10	variation	gathered_data_1
 11	compara	gathered_data_2
 12	regulation	gathered_data_3
+13	core	arabidopsis_thaliana_core_57_110_11
