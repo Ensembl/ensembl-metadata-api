@@ -65,7 +65,7 @@ class OrganismGroupMember(Base):
     )
 
     organism_group_member_id = Column(Integer, primary_key=True)
-    is_reference = Column(TINYINT(1), nullable=False)
+    is_reference = Column(TINYINT(1), nullable=False, default=0)
     order = Column(Integer, nullable=True)
     organism_id = Column(ForeignKey("organism.organism_id"), nullable=False)
     organism_group_id = Column(ForeignKey("organism_group.organism_group_id"), nullable=False, index=True)
