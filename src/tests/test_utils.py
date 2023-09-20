@@ -502,7 +502,6 @@ class TestUtils:
         assert output == expected_output
 
     def test_get_dataset_by_genome_and_dataset_type(self, genome_db_conn):
-        # TODO: Fix
         output = json_format.MessageToJson(
             utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
                                                          "assembly")
