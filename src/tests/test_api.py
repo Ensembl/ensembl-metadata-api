@@ -29,13 +29,32 @@ class TestMetadataDB:
         db_test = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
         assert db_test, "DB should not be empty"
 
-    def fetch_all_genomes(self, multi_dbs):
-        conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
-        test = conn.fetch_genomes()
-        assert len(test) == 7
+    @pytest.mark.parametrize(
+        "allow_unreleased, unreleased_only, current_only, output_count",
+        [
+            # fetches everything (7 released + 2 unreleased)
+            (True, False, True, 9),
+            # fetches all released genomes (with current_only=0)
+            (False, False, False, 7),
+            # fetches released genomes with current_only=1 (default)
+            (False, False, True, 6),
+            # fetches all unreleased genomes
+            (False, True, True, 2),
+        ]
+    )
+    def test_fetch_all_genomes(self, multi_dbs, allow_unreleased, unreleased_only, current_only, output_count):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genomes(
+            allow_unreleased=allow_unreleased,
+            unreleased_only=unreleased_only,
+            current_only=current_only
+        )
+        assert len(test) == output_count
 
-    def fetch_with_all_args_no_conflict(self, multi_dbs):
-        conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
+    def test_fetch_with_all_args_no_conflict(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes(
             genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
             assembly_accession="GCA_000002985.3",
@@ -43,7 +62,7 @@ class TestMetadataDB:
             ensembl_name="caenorhabditis_elegans",
             taxonomy_id="6239",
             group="EnsemblMetazoa",
-            unreleased_only=False,
+            allow_unreleased=False,
             site_name="Ensembl",
             release_type="integrated",
             release_version="108.0",
@@ -51,8 +70,9 @@ class TestMetadataDB:
         )
         assert len(test) == 0
 
-    def fetch_with_all_args_conflict(self, multi_dbs):
-        conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
+    def test_fetch_with_all_args_conflict(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes(
             genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
             assembly_accession="GCA_000002985.3",
@@ -60,13 +80,13 @@ class TestMetadataDB:
             ensembl_name="caenorhabditis_elegans",
             taxonomy_id="9606",  # Conflicting taxonomy_id
             group="EnsemblBacteria",  # Conflicting group
-            unreleased_only=False,
+            allow_unreleased=False,
             site_name="Ensembl",
             release_type="integrated",
             release_version="108.0",
             current_only=True
         )
-        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+        assert len(test) == 0
 
     def test_fetch_releases(self, multi_dbs):
         conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
@@ -106,7 +126,6 @@ class TestMetadataDB:
         test = conn.fetch_genomes(genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3')
         assert test[0].Organism.scientific_name == 'Homo sapiens'
 
-
     # def test_fetch_genomes_by_group_division(self, multi_dbs):
     #     conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
     #                          taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
@@ -115,7 +134,6 @@ class TestMetadataDB:
     #     assert len(test) == 1
 #        Other PR will likely change this drastically, so the effort is not really necessary. Their are 7 groups.
 #        assert division_filter in division_results
-
 
     def test_fetch_genomes_by_genome_uuid(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -206,44 +224,37 @@ class TestMetadataDB:
         )
         assert test[-1].AssemblySequence.chromosomal == 1
 
-    def test_fetch_genome_dataset_default_topic_assembly(self, multi_dbs):
+    @pytest.mark.parametrize(
+        "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
+        [
+            # nothing specified + allow_unreleased -> fetches everything
+            (None, None, True, False, "559d7660-d92d-47e1-924e-e741151c2cef", 33),
+            # specifying genome_uuid
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "b4ff55e3-d06a-4772-bb13-81c3207669e3", 5),
+            # specifying dataset_uuid
+            (None, "0dc05c6e-2910-4dbd-879a-719ba97d5824", False, False, "0dc05c6e-2910-4dbd-879a-719ba97d5824", 1),
+            # fetch unreleased datasets only
+            (None, None, False, True, "feaa37ea-4217-4d9d-afca-600bdae11b36", 3),
+        ]
+    )
+    def test_fetch_genome_dataset_all(
+        self, multi_dbs, genome_uuid,
+        dataset_uuid, allow_unreleased,
+        unreleased_only, expected_dataset_uuid,
+        expected_count
+    ):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(genome_uuid='a73357ab-93e7-11ec-a39d-005056b38ce3')
-        assert test[0].DatasetType.topic == 'Core Annotation'
-
-    def test_fetch_genome_dataset_uuid(self, multi_dbs):
-        uuid = '0dc05c6e-2910-4dbd-879a-719ba97d5824'
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(dataset_uuid=uuid, dataset_name='genebuild')
-        assert test[0].Dataset.dataset_uuid == uuid
-
-    def test_fetch_genome_dataset_genome_uuid(self, multi_dbs):
-        uuid = 'a73357ab-93e7-11ec-a39d-005056b38ce3'
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(genome_uuid=uuid)
-        assert test[0].Genome.genome_uuid == uuid
-
-    def test_fetch_genome_datasets(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets()
-        assert test[0].Dataset.dataset_uuid == '559d7660-d92d-47e1-924e-e741151c2cef'
-        assert test[0].DatasetType.name == 'assembly'
-
-    # TODO: fix it, there are no unreleased datasets (add one?)
-    # def test_fetch_genome_datasets_unreleased(self, multi_dbs):
-    #     conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-    #                          taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-    #     test = conn.fetch_genome_datasets(
-    #         dataset_name="all",
-    #         unreleased_datasets=True
-    #     )
-    #     print(f"test ===> {test}")
-    #     assert test[0].GenomeDataset.release_id is None
-    #     assert test[0].GenomeDataset.is_current == 0
+        test = conn.fetch_genome_datasets(
+            genome_uuid=genome_uuid,
+            dataset_uuid=dataset_uuid,
+            unreleased_only=unreleased_only,
+            allow_unreleased=allow_unreleased,
+            # fetch all datasets (default: dataset_name="assembly")
+            dataset_name="all"
+        )
+        assert test[0].Dataset.dataset_uuid == expected_dataset_uuid
+        assert len(test) == expected_count
 
     @pytest.mark.parametrize(
         "ensembl_name, assembly_name, use_default_assembly, expected_output",
@@ -258,7 +269,28 @@ class TestMetadataDB:
         test = conn.fetch_genomes(
             ensembl_name=ensembl_name,
             assembly_name=assembly_name,
-            use_default_assembly=use_default_assembly
+            use_default_assembly=use_default_assembly,
+            allow_unreleased=False,
+            current_only=False
+        )
+        assert len(test) == 1
+        assert test[0].Genome.genome_uuid == expected_output
+
+    @pytest.mark.parametrize(
+        "ensembl_name, assembly_name, use_default_assembly, expected_output",
+        [
+            ("homo_sapiens", "GRCh38.p13", False, "a7335667-93e7-11ec-a39d-005056b38ce3"),
+            ("homo_sapiens", "GRCh38", True, "a7335667-93e7-11ec-a39d-005056b38ce3"),
+        ]
+    )
+    def test_fetch_genome_uuid_is_current(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly, expected_output):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genomes(
+            ensembl_name=ensembl_name,
+            assembly_name=assembly_name,
+            use_default_assembly=use_default_assembly,
+            allow_unreleased=False
         )
         assert len(test) == 1
         assert test[0].Genome.genome_uuid == expected_output
@@ -291,3 +323,26 @@ class TestMetadataDB:
         for data in test[1:]:
             # All others have only one genome in test DB
             assert data[5] == 1
+
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count, expected_genome_uuid",
+        [
+            # fetches everything
+            (True, 9, "90720316-006c-470b-a7dd-82d28f952264"),
+            # fetches released datasets and genomes with current_only=1 (default)
+            (False, 6, "a733550b-93e7-11ec-a39d-005056b38ce3"),
+        ]
+    )
+    def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genomes_info(
+            allow_unreleased_genomes=allow_unreleased,
+            allow_unreleased_datasets=allow_unreleased,
+            group_type=['division', 'internal']
+        )
+        output_to_list = list(test)
+        assert len(output_to_list) == output_count
+        assert output_to_list[0][0]['genome'].Genome.genome_uuid == expected_genome_uuid
+
+
