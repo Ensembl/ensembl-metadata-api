@@ -118,6 +118,7 @@ class TestClass:
         organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
         input_data = genome_db_conn.fetch_genome_datasets(
             organism_uuid=organism_uuid,
+            dataset_attributes=True,
             dataset_name="all"
         )
 
