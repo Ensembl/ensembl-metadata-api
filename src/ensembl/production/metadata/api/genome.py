@@ -78,8 +78,8 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genomes(self, genome_id=None, genome_uuid=None, organism_uuid=None, assembly_accession=None,
                       assembly_name=None, use_default_assembly=False, ensembl_name=None, taxonomy_id=None,
-                      group=None, group_type=None, allow_unreleased=False, site_name=None, release_type=None,
-                      release_version=None, current_only=True):
+                      group=None, group_type=None, allow_unreleased=False, unreleased_only=False, site_name=None,
+                      release_type=None, release_version=None, current_only=True):
         """
         Fetches genome information based on the specified parameters.
 
@@ -95,6 +95,9 @@ class GenomeAdaptor(BaseAdaptor):
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
             group_type (Union[str, List[str]]): The type(s) of the organism group(s) to filter by.
             allow_unreleased (bool): Whether to fetch unreleased genomes too or not (default: False).
+            unreleased_only (bool): Fetch only unreleased genomes (default: False). allow_unreleased is used by gRPC
+                                     to fetch both released and unreleased genomes, while unreleased_only
+                                     is used in production pipelines (fetches only unreleased genomes)
             site_name (str): The name of the Ensembl site to filter by.
             release_type (str): The type of the Ensembl release to filter by.
             release_version (int): The maximum version of the Ensembl release to filter by.
@@ -177,8 +180,18 @@ class GenomeAdaptor(BaseAdaptor):
         if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
 
-        if not allow_unreleased:
+        if allow_unreleased:
+            # fetch everything (released + unreleased)
+            pass
+        elif unreleased_only:
+            # fetch unreleased only
+            # this filter will get all Genome entries where there's no associated GenomeRelease
+            # the tilde (~) symbol is used for negation.
+            genome_select = genome_select.filter(~Genome.genome_releases.any())
+        else:
+            # fetch released only
             # Check if genome is released
+            # TODO: why did I add this check?! -> removing this breaks the test_update tests
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
                 # copy genome_select as we don't want to include GenomeDataset
@@ -209,12 +222,6 @@ class GenomeAdaptor(BaseAdaptor):
 
                 if release_type is not None:
                     genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
-
-            else:
-                # since both allow_unreleased and is_genome_released are False
-                # don't include unreleased Genomes
-                # TODO: for some reason this breaks test_updater tests
-                genome_select = genome_select.filter(Genome.genome_releases.any())
 
         # print(f"genome_select query ====> {str(genome_select)}")
         with self.metadata_db.session_scope() as session:
@@ -390,8 +397,8 @@ class GenomeAdaptor(BaseAdaptor):
         )
 
     def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, allow_unreleased=False,
-                              dataset_uuid=None, dataset_name=None, dataset_source=None, dataset_type=None,
-                              release_version=None, dataset_attributes=None):
+                              unreleased_only=False, dataset_uuid=None, dataset_name=None, dataset_source=None,
+                              dataset_type=None, release_version=None, dataset_attributes=None):
         """
         Fetches genome datasets based on the provided parameters.
 
@@ -400,6 +407,9 @@ class GenomeAdaptor(BaseAdaptor):
             genome_uuid (str or list or None): Genome UUID(s) to filter by.
             organism_uuid (str or list or None): Organism UUID(s) to filter by.
             allow_unreleased (bool): Flag indicating whether to allowing fetching unreleased datasets too or not.
+            unreleased_only (bool): Fetch only unreleased datasets (default: False). allow_unreleased is used by gRPC
+                                     to fetch both released and unreleased datasets, while unreleased_only
+                                     is used in production pipelines (fetches only unreleased datasets)
             dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
             dataset_name (str or None): Dataset name to filter by, default is 'assembly'.
             dataset_source (str or None): Dataset source to filter by.
@@ -485,7 +495,16 @@ class GenomeAdaptor(BaseAdaptor):
                     .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
                     .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id)
 
-            if not allow_unreleased:  # Get released datasets only
+            if allow_unreleased:
+                # Get everything
+                pass
+            elif unreleased_only:
+                # Get only unreleased datasets
+                # this filter will get all Datasets entries where there's no associated GenomeDataset
+                # the tilde (~) symbol is used for negation.
+                genome_select = genome_select.filter(~GenomeDataset.ensembl_release.has())
+            else:
+                # Get released datasets only
                 # Check if dataset is released
                 with self.metadata_db.session_scope() as session:
                     # This is needed in order to ovoid tests throwing:
@@ -504,11 +523,6 @@ class GenomeAdaptor(BaseAdaptor):
 
                     if release_version:
                         genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-
-                else:
-                    # since both allow_unreleased and is_dataset_released are False
-                    # don't include unreleased Datasets
-                    genome_select = genome_select.filter(GenomeDataset.ensembl_release.has())
 
             # print(f"genome_select str ====> {str(genome_select)}")
             logger.debug(genome_select)
