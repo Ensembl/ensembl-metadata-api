@@ -213,10 +213,17 @@ def get_top_level_statistics_by_uuid(stub):
 
 def get_datasets_list_by_uuid(stub):
     request1 = DatasetsRequest(
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
+    )
+    request2 = DatasetsRequest(
         genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", release_version=108.0
     )
-    datasets = stub.GetDatasetsListByUUID(request1)
-    print(datasets)
+    print("**** Release not specified ****")
+    datasets1 = stub.GetDatasetsListByUUID(request1)
+    print(datasets1)
+    print("**** Release specified ****")
+    datasets2 = stub.GetDatasetsListByUUID(request2)
+    print(datasets2)
 
 
 def get_dataset_infos_by_dataset_type(stub):

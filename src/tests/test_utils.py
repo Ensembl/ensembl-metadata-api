@@ -159,7 +159,7 @@ class TestUtils:
         # because of the returned attributes
         # TODO: Fix this later
         output = json_format.MessageToJson(
-            utils.get_datasets_list_by_uuid(genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3"))
+            utils.get_datasets_list_by_uuid(genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3", 108.0))
 
         expected_output = {
             "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
@@ -502,7 +502,6 @@ class TestUtils:
         assert output == expected_output
 
     def test_get_dataset_by_genome_and_dataset_type(self, genome_db_conn):
-        # TODO: Fix
         output = json_format.MessageToJson(
             utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
                                                          "assembly")
