@@ -512,16 +512,32 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genebuild_dataset_attributes.append(dataset_attribute)
 
         # Grab the necessary sample data and add it as an datasetattribute
+        gene_param_attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.gene_param").one_or_none()
+        if gene_param_attribute is None:
+            gene_param_attribute = Attribute(
+                name="sample.gene_param",
+                label="sample.gene_param",
+                description="Sample Gene Data",
+                type="string",
+            )
         sample_gene_param = DatasetAttribute(
             value=self.get_meta_single_meta_key(species_id, "sample.gene_param"),
             dataset=genebuild_dataset,
-            attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.gene_param").one_or_none(),
+            attribute=gene_param_attribute,
         )
         genebuild_dataset_attributes.append(sample_gene_param)
+        sample_location_attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.location_param").one_or_none()
+        if sample_location_attribute is None:
+            sample_location_attribute = Attribute(
+                name="sample.gene_param",
+                label="sample.gene_param",
+                description="Sample Gene Data",
+                type="string",
+            )
         sample_location_param = DatasetAttribute(
             value=self.get_meta_single_meta_key(species_id, "sample.location_param"),
             dataset=genebuild_dataset,
-            attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.location_param").one_or_none(),
+            attribute=sample_location_attribute,
         )
         genebuild_dataset_attributes.append(sample_location_param)
 
