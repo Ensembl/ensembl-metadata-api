@@ -529,9 +529,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
         sample_location_attribute=meta_session.query(Attribute).filter(Attribute.name == "sample.location_param").one_or_none()
         if sample_location_attribute is None:
             sample_location_attribute = Attribute(
-                name="sample.gene_param",
-                label="sample.gene_param",
-                description="Sample Gene Data",
+                name="sample.location_param",
+                label="sample.location_param",
+                description="Sample Location Data",
                 type="string",
             )
         sample_location_param = DatasetAttribute(
