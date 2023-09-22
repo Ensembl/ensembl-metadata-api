@@ -433,7 +433,12 @@ class CoreMetaUpdater(BaseMetaUpdater):
             for attribute, value in attributes.items():
                 meta_attribute = meta_session.query(Attribute).filter(Attribute.name == attribute).one_or_none()
                 if meta_attribute is None:
-                    raise Exception(f"Attribute {attribute} not found. Please enter it into the db manually")
+                    meta_attribute = Attribute(
+                        name=attribute,
+                        label=attribute,
+                        description=attribute,
+                        type="string",
+                    )
                 dataset_attribute = DatasetAttribute(
                     value=value,
                     dataset=assembly_dataset,
