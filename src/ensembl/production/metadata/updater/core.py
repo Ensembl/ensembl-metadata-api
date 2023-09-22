@@ -180,7 +180,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Fetch the Ensembl name of the organism from metadata using either 'species.ensembl_name'
         # or 'species.production_name' as the key.
-        ensembl_name = self.get_meta_single_meta_key(species_id, "species.ensembl_name")
+        ensembl_name = self.get_meta_single_meta_key(species_id, "organism.ensembl_name")
         if ensembl_name is None:
             ensembl_name = self.get_meta_single_meta_key(species_id, "species.production_name")
 
