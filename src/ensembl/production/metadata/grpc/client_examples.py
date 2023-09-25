@@ -24,6 +24,7 @@ from ensembl_metadata_pb2 import (
     DatasetsRequest,
     GenomeDatatypeRequest,
     GenomeInfoRequest,
+    OrganismsGroupRequest,
     GenomeAssemblySequenceRequest,
     GenomeAssemblySequenceRegionRequest
 )
@@ -106,8 +107,10 @@ def list_genome_sequences(stub):
 
 def list_genome_assembly_sequences(stub):
     request1 = GenomeAssemblySequenceRequest(
-        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
-        assembly_accession="GCA_000001405.28",
+        # genome_uuid="1e5a85d5-6099-4ade-8dc0-b096a298334b",
+        genome_uuid="90720316-006c-470b-a7dd-82d28f952264",
+        # assembly_accession="GCA_019721115.1",
+        assembly_accession="GCA_000001735.1",
         chromosomal_only=False
     )
     genome_assembly_sequences1 = stub.GetGenomeAssemblySequence(request1)
@@ -263,10 +266,17 @@ def get_top_level_statistics_by_uuid(stub):
 
 def get_datasets_list_by_uuid(stub):
     request1 = DatasetsRequest(
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
+    )
+    request2 = DatasetsRequest(
         genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3", release_version=108.0
     )
-    datasets = stub.GetDatasetsListByUUID(request1)
-    print(datasets)
+    print("**** Release not specified ****")
+    datasets1 = stub.GetDatasetsListByUUID(request1)
+    print(datasets1)
+    print("**** Release specified ****")
+    datasets2 = stub.GetDatasetsListByUUID(request2)
+    print(datasets2)
 
 
 def get_dataset_infos_by_dataset_type(stub):
@@ -297,6 +307,12 @@ def get_genome_uuid(stub):
     print(genome_uuid2)
     print("**** Using assembly_default (No results) ****")
     print(genome_uuid3)
+
+
+def get_organisms_group_count(stub):
+    request = OrganismsGroupRequest()
+    organisms_group_count = stub.GetOrganismsGroupCount(request)
+    print(organisms_group_count)
 
 
 def run():

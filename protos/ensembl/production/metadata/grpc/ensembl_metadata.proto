@@ -71,6 +71,9 @@ service EnsemblMetadata {
   
   // Retrieve dataset info by genome uuid and dataset_type
   rpc GetDatasetInformation(GenomeDatatypeRequest) returns (DatasetInfos) {}
+
+  // Retrieve organisms group count
+  rpc GetOrganismsGroupCount(OrganismsGroupRequest) returns (OrganismsGroupCount) {}
 }
 
 /*
@@ -224,7 +227,7 @@ Metadata about the sequences that comprise a genome's assembly.
  */
 message GenomeAssemblySequence {
   string name = 1;
-  string rank = 2;  // To be added
+  int32 rank = 2;
   string md5 = 3;
   uint32 length = 4;
   string sha512t4u = 5;
@@ -257,6 +260,20 @@ Genome UUID
  */
 message GenomeUUID {
   string genome_uuid = 1;
+}
+
+message OrganismsGroup {
+  uint32 species_taxonomy_id = 1;
+  string ensembl_name = 2;
+  string common_name = 3;
+  string scientific_name = 4;
+  uint32 order = 5;
+  uint32 count = 6;
+}
+
+message OrganismsGroupCount {
+  repeated OrganismsGroup organisms_group_count = 1;
+  double release_version = 2;
 }
 
 /*
@@ -373,4 +390,11 @@ message GenomeInfoRequest {
   string ensembl_name = 1;     // Mandatory
   string assembly_name = 2;    // Mandatory
   bool use_default = 3;        // Optional
+}
+
+/*
+Organisms group count request
+ */
+message OrganismsGroupRequest {
+  double release_version = 1; // Optional
 }

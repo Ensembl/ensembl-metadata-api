@@ -20,7 +20,8 @@ from ensembl.production.metadata.api.release import ReleaseAdaptor
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
     create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
-    create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, create_genome_assembly_sequence_region
+    create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, \
+    create_genome_assembly_sequence_region, create_organisms_group_count
 
 
 def connect_to_db():
@@ -38,7 +39,8 @@ def get_karyotype_information(db_conn, genome_uuid):
     karyotype_info_result = db_conn.fetch_sequences(
         genome_uuid=genome_uuid
     )
-
+    # Wow! this returns 109583 rows for 'a7335667-93e7-11ec-a39d-005056b38ce3'
+    # TODO: Understand what's going on
     if len(karyotype_info_result) == 1:
         return create_karyotype(karyotype_info_result[0])
 
@@ -51,7 +53,8 @@ def get_top_level_statistics(db_conn, organism_uuid, group):
 
     stats_results = db_conn.fetch_genome_datasets(
         organism_uuid=organism_uuid,
-        dataset_name="all"
+        dataset_name="all",
+        dataset_attributes=True
     )
 
     statistics = []
@@ -77,7 +80,8 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
 
     stats_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
-        dataset_name="all"
+        dataset_name="all",
+        dataset_attributes=True
     )
 
     statistics = []
@@ -114,7 +118,8 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
         return create_genome()
 
     genome_results = db_conn.fetch_genomes(
-        assembly_accession=assembly_accession
+        assembly_accession=assembly_accession,
+        allow_unreleased=cfg.allow_unreleased
     )
     for genome in genome_results:
         yield create_genome(genome)
@@ -125,7 +130,8 @@ def get_species_information(db_conn, genome_uuid):
         return create_species()
 
     species_results = db_conn.fetch_genomes(
-        genome_uuid=genome_uuid
+        genome_uuid=genome_uuid,
+        allow_unreleased=cfg.allow_unreleased
     )
     if len(species_results) == 1:
         tax_id = species_results[0].Organism.taxonomy_id
@@ -141,7 +147,8 @@ def get_sub_species_info(db_conn, organism_uuid, group):
 
     sub_species_results = db_conn.fetch_genomes(
         organism_uuid=organism_uuid,
-        group=group
+        group=group,
+        allow_unreleased=cfg.allow_unreleased
     )
 
     species_name = []
@@ -169,7 +176,8 @@ def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
     genome_uuid_result = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
         assembly_name=assembly_name,
-        use_default_assembly=use_default
+        use_default_assembly=use_default,
+        allow_unreleased=cfg.allow_unreleased
     )
 
     if len(genome_uuid_result) == 1:
@@ -186,7 +194,8 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
 
     genome_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
-        release_version=release_version
+        release_version=release_version,
+        allow_unreleased=cfg.allow_unreleased
     )
 
     if len(genome_results) == 1:
@@ -228,14 +237,15 @@ def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
     genome_results = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
         site_name=site_name,
-        release_version=release_version
+        release_version=release_version,
+        allow_unreleased=cfg.allow_unreleased
     )
     if len(genome_results) == 1:
         return create_genome(genome_results[0])
     return create_genome()
 
 
-def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version=0):
+def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
     if genome_uuid is None:
         return create_datasets()
 
@@ -243,7 +253,9 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version=0):
         genome_uuid=genome_uuid,
         # fetch all datasets, default is 'assembly' only
         dataset_name="all",
-        release_version=release_version
+        release_version=release_version,
+        allow_unreleased=cfg.allow_unreleased,
+        dataset_attributes=True
     )
 
     if len(datasets_results) > 0:
@@ -350,6 +362,12 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
 
     dataset_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
-        dataset_type=requested_dataset_type
+        dataset_type=requested_dataset_type,
+        dataset_attributes=True
     )
     return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
+
+
+def get_organisms_group_count(db_conn, release_version):
+    count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
+    return create_organisms_group_count(count_result, release_version)
