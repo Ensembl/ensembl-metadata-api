@@ -18,4 +18,4 @@ class MetadataConfig:
     pool_size = os.environ.get("POOL_SIZE", 20)
     max_overflow = os.environ.get("MAX_OVERFLOW", 0)
 
-    allow_unreleased = os.environ.get("ALLOW_UNRELEASED", True)
+    allow_unreleased = os.environ.get("ALLOW_UNRELEASED", False)
