@@ -18,9 +18,9 @@ from ensembl.production.metadata.api.genome import GenomeAdaptor
 from ensembl.production.metadata.api.release import ReleaseAdaptor
 
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
-    create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly, create_species, \
+    create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
-    create_dataset_infos, populate_dataset_info, create_organisms_group_count
+    create_dataset_infos, populate_dataset_info, create_organisms_group_count, create_genome_info
 
 
 def connect_to_db():
@@ -101,15 +101,15 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
 
 def get_assembly_information(db_conn, assembly_uuid):
     if assembly_uuid is None:
-        return create_assembly()
+        return create_assembly_info()
 
     assembly_results = db_conn.fetch_sequences(
         assembly_uuid=assembly_uuid
     )
     if len(assembly_results) > 0:
-        return create_assembly(assembly_results[0])
+        return create_assembly_info(assembly_results[0])
 
-    return create_assembly()
+    return create_assembly_info()
 
 
 def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
@@ -343,3 +343,34 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
 def get_organisms_group_count(db_conn, release_version):
     count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
     return create_organisms_group_count(count_result, release_version)
+
+
+def get_info_by_assembly_uuid(db_conn, assembly_uuid):  # , release_version
+    if assembly_uuid is None:
+        return create_genome_info()
+
+    # We first get the genome info
+    genome_info_results = db_conn.fetch_genomes(
+        assembly_uuid=assembly_uuid,
+        # release_version=release_version,
+        allow_unreleased=cfg.allow_unreleased
+    )
+
+    if len(genome_info_results) == 1:
+        # we fetch attributes related to that genome
+        # TODO: is this the right way to do it? because one genome can have multiple assemblies
+        attrib_data_results = db_conn.fetch_genome_datasets(
+            genome_uuid=genome_info_results[0].Genome.genome_uuid,
+            dataset_attributes=True
+        )
+        print(f"len(attrib_data_results) --> {len(attrib_data_results)}")
+        print(f"genome_info_results[0].Organism.species_taxonomy_id --> {genome_info_results[0].Organism.species_taxonomy_id}")
+
+        # res = db_conn.fetch_related_assemblies_count(
+        #     species_taxonomy_id=genome_info_results[0].Organism.species_taxonomy_id
+        # )
+        # print(f"res ------> {res}")
+
+        return create_genome_info(genome_info_results[0], attrib_data_results)
+
+    return create_genome_info()

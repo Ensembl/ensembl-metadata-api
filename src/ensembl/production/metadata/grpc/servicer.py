@@ -16,7 +16,7 @@ from ensembl.production.metadata.grpc.utils import connect_to_db, get_species_in
     get_top_level_statistics, get_top_level_statistics_by_uuid, get_genome_uuid, get_genome_by_uuid, \
     get_genomes_by_keyword_iterator, get_genome_by_name, release_iterator, release_by_uuid_iterator, \
     genome_sequence_iterator, get_datasets_list_by_uuid, get_dataset_by_genome_and_dataset_type, \
-    get_organisms_group_count
+    get_organisms_group_count, get_info_by_assembly_uuid
 
 
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):
@@ -89,3 +89,6 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return get_organisms_group_count(
             self.db, request.release_version
         )
+
+    def GetInfoByAssemblyUUID(self, request, context):
+        return get_info_by_assembly_uuid(self.db, request.assembly_uuid)  # , request.release_version

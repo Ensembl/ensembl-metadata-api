@@ -72,7 +72,7 @@ class TestClass:
         output = json_format.MessageToJson(utils.create_genome(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_assembly(self, multi_dbs, genome_db_conn):
+    def test_create_assembly_info(self, multi_dbs, genome_db_conn):
         input_data = genome_db_conn.fetch_sequences(assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e")
         expected_output = {
             "accession": "GCA_000001405.28",
@@ -84,7 +84,7 @@ class TestClass:
             "sequenceLocation": "SO:0000738"
         }
 
-        output = json_format.MessageToJson(utils.create_assembly(input_data[0]))
+        output = json_format.MessageToJson(utils.create_assembly_info(input_data[0]))
         assert json.loads(output) == expected_output
 
     def test_create_karyotype(self, multi_dbs, genome_db_conn):

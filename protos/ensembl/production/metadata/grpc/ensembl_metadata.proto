@@ -68,6 +68,9 @@ service EnsemblMetadata {
 
   // Retrieve organisms group count
   rpc GetOrganismsGroupCount(OrganismsGroupRequest) returns (OrganismsGroupCount) {}
+
+  // Retrieve genome by its UUID.
+  rpc GetInfoByAssemblyUUID(AssemblyIDRequest) returns (GenomeInfo) {}
 }
 
 /*
@@ -148,7 +151,8 @@ message Assembly {
   string ucsc_name = 3;
   string level = 4;
   string ensembl_name = 5;
-  string tol_id = 6;
+  string assembly_uuid = 6;
+  bool is_reference = 7;
 }
 
 /*
@@ -181,6 +185,28 @@ message Organism {
   string ensembl_name = 4;
   string scientific_parlance_name = 5;
   string organism_uuid = 6;
+  string strain_type = 7;
+  int32 taxonomy_id = 8;
+  int32 species_taxonomy_id = 9;
+}
+
+message Attribute {
+  string name = 1;
+  string label = 2;
+  string description = 3;
+  string type = 4;
+}
+
+message AttributesInfo {
+  string genebuild_method = 1;
+  string genebuild_last_geneset_update = 2;
+  string genebuild_version = 3;
+  string annotation_provider_name = 4;
+  string annotation_provider_url = 5;
+  string assembly_level = 6;
+  string assembly_date = 7;
+  string sample_gene_param = 8;
+  string sample_location_param = 9;
 }
 
 /*
@@ -245,6 +271,19 @@ message OrganismsGroup {
 message OrganismsGroupCount {
   repeated OrganismsGroup organisms_group_count = 1;
   double release_version = 2;
+}
+
+/*
+Genome Info associated with the provided assembly UUID.
+ */
+message GenomeInfo {
+  string genome_uuid = 1;
+  Assembly assembly = 2;
+  Organism organism = 3;
+  string created = 4;
+  AttributesInfo attributes_info = 5;
+  int32 related_assemblies_count = 6;
+//  Release release = 6;
 }
 
 /*

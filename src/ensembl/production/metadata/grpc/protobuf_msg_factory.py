@@ -65,6 +65,7 @@ def create_karyotype(data=None):
 def create_sub_species(data=None):
     if data is None:
         return ensembl_metadata_pb2.SubSpecies()
+
     sub_species = ensembl_metadata_pb2.SubSpecies(
         organism_uuid=data["organism_uuid"],
         species_name=data["species_name"],
@@ -77,7 +78,104 @@ def create_assembly(data=None):
     if data is None:
         return ensembl_metadata_pb2.AssemblyInfo()
 
-    assembly = ensembl_metadata_pb2.AssemblyInfo(
+    assembly = ensembl_metadata_pb2.Assembly(
+        assembly_uuid=data.Assembly.assembly_uuid,
+        accession=data.Assembly.accession,
+        level=data.Assembly.level,
+        name=data.Assembly.name,
+        ucsc_name=data.Assembly.ucsc_name,
+        ensembl_name=data.Assembly.ensembl_name,
+        is_reference=data.Assembly.is_reference,
+    )
+    return assembly
+
+
+def create_taxon(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.Taxon()
+
+    taxon = ensembl_metadata_pb2.Taxon(
+        taxonomy_id=data.Organism.taxonomy_id,
+        scientific_name=data.Organism.scientific_name,
+        strain=data.Organism.strain,
+    )
+    # TODO: fetch common_name(s) from ncbi_taxonomy database
+    return taxon
+
+
+def create_organism(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.Organism()
+
+    organism = ensembl_metadata_pb2.Organism(
+        common_name=data.Organism.common_name,
+        strain=data.Organism.strain,
+        strain_type=data.Organism.strain_type,
+        scientific_name=data.Organism.scientific_name,
+        ensembl_name=data.Organism.ensembl_name,
+        scientific_parlance_name=data.Organism.scientific_parlance_name,
+        organism_uuid=data.Organism.organism_uuid,
+        taxonomy_id=data.Organism.taxonomy_id,
+        species_taxonomy_id=data.Organism.species_taxonomy_id,
+    )
+    return organism
+
+
+def create_attribute(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.Attribute()
+
+    attribute = ensembl_metadata_pb2.Attribute(
+        name=data.Attribute.name,
+        label=data.Attribute.label,
+        description=data.Attribute.description,
+        type=data.Attribute.type,
+    )
+    return attribute
+
+
+def create_attributes_info(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.AttributesInfo()
+
+    # from EA-1105
+    required_attributes = {
+        "genebuild.method": "",
+        "genebuild.last_geneset_update": "",
+        "genebuild.version": "",
+        "annotation.provider_name": "",
+        "annotation.provider_url": "",
+        "assembly.level": "",
+        "assembly.date": "",
+        "sample.gene_param": "",
+        "sample.location_param": ""
+    }
+
+    # set required_attributes values
+    for attrib_data in data:
+        attrib_name = attrib_data.Attribute.name
+        if attrib_name in list(required_attributes.keys()):
+            required_attributes[attrib_name] = attrib_data.DatasetAttribute.value
+
+    print(f"required_attributes ----> {required_attributes}")
+    return ensembl_metadata_pb2.AttributesInfo(
+        genebuild_method=required_attributes["genebuild.method"],
+        genebuild_last_geneset_update=required_attributes["genebuild.last_geneset_update"],
+        genebuild_version=required_attributes["genebuild.version"],
+        annotation_provider_name=required_attributes["annotation.provider_name"],
+        annotation_provider_url=required_attributes["annotation.provider_url"],
+        assembly_level=required_attributes["assembly.level"],
+        assembly_date=required_attributes["assembly.date"],
+        sample_gene_param=required_attributes["sample.gene_param"],
+        sample_location_param=required_attributes["sample.location_param"]
+    )
+
+
+def create_assembly_info(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.AssemblyInfo()
+
+    assembly_info = ensembl_metadata_pb2.AssemblyInfo(
         assembly_uuid=data.Assembly.assembly_uuid,
         accession=data.Assembly.accession,
         level=data.Assembly.level,
@@ -88,7 +186,7 @@ def create_assembly(data=None):
         md5=data.AssemblySequence.md5,
         sha512t4u=data.AssemblySequence.sha512t4u,
     )
-    return assembly
+    return assembly_info
 
 
 def create_genome_uuid(data=None):
@@ -105,30 +203,9 @@ def create_genome(data=None):
     if data is None:
         return ensembl_metadata_pb2.Genome()
 
-    assembly = ensembl_metadata_pb2.Assembly(
-        accession=data.Assembly.accession,
-        name=data.Assembly.name,
-        ucsc_name=data.Assembly.ucsc_name,
-        level=data.Assembly.level,
-        ensembl_name=data.Assembly.ensembl_name,
-    )
-
-    taxon = ensembl_metadata_pb2.Taxon(
-        taxonomy_id=data.Organism.taxonomy_id,
-        scientific_name=data.Organism.scientific_name,
-        strain=data.Organism.strain,
-    )
-    # TODO: fetch common_name(s) from ncbi_taxonomy database
-
-    organism = ensembl_metadata_pb2.Organism(
-        common_name=data.Organism.common_name,
-        strain=data.Organism.strain,
-        scientific_name=data.Organism.scientific_name,
-        ensembl_name=data.Organism.ensembl_name,
-        scientific_parlance_name=data.Organism.scientific_parlance_name,
-        organism_uuid=data.Organism.organism_uuid,
-    )
-
+    assembly = create_assembly(data)
+    taxon = create_taxon(data)
+    organism = create_organism(data)
     release = create_release(data)
 
     genome = ensembl_metadata_pb2.Genome(
@@ -139,7 +216,6 @@ def create_genome(data=None):
         organism=organism,
         release=release,
     )
-
     return genome
 
 
@@ -154,7 +230,6 @@ def create_genome_sequence(data=None):
         length=data.AssemblySequence.length,
         chromosomal=data.AssemblySequence.chromosomal
     )
-
     return genome_sequence
 
 
@@ -171,7 +246,6 @@ def create_release(data=None):
         site_label=data.EnsemblSite.label if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
         site_uri=data.EnsemblSite.uri if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
     )
-
     return release
 
 
@@ -242,3 +316,25 @@ def create_organisms_group_count(data, release_version):
         organisms_group_count=organisms_list,
         release_version=release_version
     )
+
+
+def create_genome_info(data=None, attributes=None):
+    if data is None:
+        return ensembl_metadata_pb2.GenomeInfo()
+
+    assembly = create_assembly(data)
+    organism = create_organism(data)
+    attributes_info = create_attributes_info(attributes)
+
+    # release = create_release(data)
+
+    genome_info = ensembl_metadata_pb2.GenomeInfo(
+        genome_uuid=data.Genome.genome_uuid,
+        created=str(data.Genome.created),
+        assembly=assembly,
+        organism=organism,
+        attributes_info=attributes_info,
+        # release=release,
+    )
+
+    return genome_info
