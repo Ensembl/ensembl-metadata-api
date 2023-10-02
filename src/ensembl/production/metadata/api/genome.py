@@ -76,10 +76,10 @@ class GenomeAdaptor(BaseAdaptor):
                 taxids.append(taxid[0])
         return taxids
 
-    def fetch_genomes(self, genome_id=None, genome_uuid=None, organism_uuid=None, assembly_accession=None,
-                      assembly_name=None, use_default_assembly=False, ensembl_name=None, taxonomy_id=None,
-                      group=None, group_type=None, allow_unreleased=False, unreleased_only=False, site_name=None,
-                      release_type=None, release_version=None, current_only=True):
+    def fetch_genomes(self, genome_id=None, genome_uuid=None, organism_uuid=None, assembly_uuid=None,
+                      assembly_accession=None, assembly_name=None, use_default_assembly=False, ensembl_name=None,
+                      taxonomy_id=None, group=None, group_type=None, allow_unreleased=False, unreleased_only=False,
+                      site_name=None, release_type=None, release_version=None, current_only=True):
         """
         Fetches genome information based on the specified parameters.
 
@@ -87,6 +87,7 @@ class GenomeAdaptor(BaseAdaptor):
             genome_id (Union[int, List[int]]): The ID(s) of the genome(s) to fetch.
             genome_uuid (Union[str, List[str]]): The UUID(s) of the genome(s) to fetch.
             organism_uuid (Union[str, List[str]]): The UUID(s) of the organism(s) to fetch.
+            assembly_uuid (Union[str, List[str]]): The UUID(s) of the assembly(s) to fetch.
             assembly_accession (Union[str, List[str]]): The assenbly accession of the assembly(s) to fetch.
             assembly_name (Union[str, List[str]]): The name(s) of the assembly(s) to fetch.
             use_default_assembly (bool): Whether to use default assembly name or not.
@@ -123,6 +124,7 @@ class GenomeAdaptor(BaseAdaptor):
         genome_id = check_parameter(genome_id)
         genome_uuid = check_parameter(genome_uuid)
         organism_uuid = check_parameter(organism_uuid)
+        assembly_uuid = check_parameter(assembly_uuid)
         assembly_accession = check_parameter(assembly_accession)
         assembly_name = check_parameter(assembly_name)
         ensembl_name = check_parameter(ensembl_name)
@@ -156,6 +158,9 @@ class GenomeAdaptor(BaseAdaptor):
 
         if organism_uuid is not None:
             genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
+
+        if assembly_uuid is not None:
+            genome_select = genome_select.filter(Assembly.assembly_uuid.in_(assembly_uuid))
 
         if assembly_accession is not None:
             genome_select = genome_select.filter(Assembly.accession.in_(assembly_accession))
@@ -623,3 +628,26 @@ class GenomeAdaptor(BaseAdaptor):
         with self.metadata_db.session_scope() as session:
             # TODO check if we should return a dictionary instead
             return session.execute(query).all()
+
+    # def fetch_related_assemblies_count(self, species_taxonomy_id=None, release_version=None, group_code='popular'):
+    #
+    #     species_taxonomy_id = check_parameter(species_taxonomy_id)
+    #
+    #     count_expr = db.func.count().label('count')
+    #
+    #     if not release_version:
+    #         query = (
+    #             db.select(Organism, count_expr)
+    #             .filter(Organism.species_taxonomy_id == species_taxonomy_id)
+    #             # .group_by(Organism)
+    #         )
+    #
+    #         # if species_taxonomy_id is not None:
+    #         #     query = query.filter(Organism.species_taxonomy_id.in_(species_taxonomy_id))
+    #
+    #         print("\n")
+    #         print(f"query ===> {query}")
+    #         print("\n")
+    #         with self.metadata_db.session_scope() as session:
+    #             session.expire_on_commit = False
+    #             return session.execute(query).all()
