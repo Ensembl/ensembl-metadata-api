@@ -183,6 +183,18 @@ def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
         return create_genome_uuid(
             {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
         )
+    # PATCH: This is a special case, see EA-1112 for more details
+    elif len(genome_uuid_result) == 0:
+        # Try looking using only assembly_default (no ensembl_name is needed)
+        using_default_assembly_only_result = db_conn.fetch_genomes(
+            assembly_name=assembly_name,
+            use_default_assembly=True,
+            allow_unreleased=cfg.allow_unreleased
+        )
+        if len(using_default_assembly_only_result) == 1:
+            return create_genome_uuid(
+                {"genome_uuid": using_default_assembly_only_result[0].Genome.genome_uuid}
+            )
 
     return create_genome_uuid()
 
