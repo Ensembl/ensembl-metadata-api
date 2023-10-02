@@ -180,9 +180,9 @@ def create_genome_assembly_sequence_region(data=None):
 
     genome_assembly_sequence_region = ensembl_metadata_pb2.GenomeAssemblySequenceRegion(
         name=data.AssemblySequence.name,
-        sequence_checksum=data.AssemblySequence.sequence_checksum,
+        md5=data.AssemblySequence.md5,
         length=data.AssemblySequence.length,
-        ga4gh_identifier=data.AssemblySequence.ga4gh_identifier,
+        sha512t4u=data.AssemblySequence.sha512t4u,
         chromosomal=data.AssemblySequence.chromosomal
     )
 
