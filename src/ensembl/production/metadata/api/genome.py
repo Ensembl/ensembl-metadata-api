@@ -591,7 +591,7 @@ class GenomeAdaptor(BaseAdaptor):
         except Exception as e:
             raise ValueError(str(e))
 
-    def fetch_organisms_group_counts(self, release_version=None, group_code='popular'):
+    def fetch_organisms_group_counts(self, species_taxonomy_id=None, release_version=None, group_code='popular'):
         o_species = aliased(Organism)
         o = aliased(Organism)
         if not release_version:
@@ -612,6 +612,10 @@ class GenomeAdaptor(BaseAdaptor):
             query = query.join(OrganismGroup,
                                OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
             query = query.filter(OrganismGroup.code == group_code)
+
+            if species_taxonomy_id is not None:
+                query = query.filter(o_species.species_taxonomy_id == species_taxonomy_id)
+
             query = query.group_by(
                 o_species.species_taxonomy_id,
                 o_species.ensembl_name,
@@ -628,26 +632,3 @@ class GenomeAdaptor(BaseAdaptor):
         with self.metadata_db.session_scope() as session:
             # TODO check if we should return a dictionary instead
             return session.execute(query).all()
-
-    # def fetch_related_assemblies_count(self, species_taxonomy_id=None, release_version=None, group_code='popular'):
-    #
-    #     species_taxonomy_id = check_parameter(species_taxonomy_id)
-    #
-    #     count_expr = db.func.count().label('count')
-    #
-    #     if not release_version:
-    #         query = (
-    #             db.select(Organism, count_expr)
-    #             .filter(Organism.species_taxonomy_id == species_taxonomy_id)
-    #             # .group_by(Organism)
-    #         )
-    #
-    #         # if species_taxonomy_id is not None:
-    #         #     query = query.filter(Organism.species_taxonomy_id.in_(species_taxonomy_id))
-    #
-    #         print("\n")
-    #         print(f"query ===> {query}")
-    #         print("\n")
-    #         with self.metadata_db.session_scope() as session:
-    #             session.expire_on_commit = False
-    #             return session.execute(query).all()
