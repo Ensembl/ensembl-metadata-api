@@ -574,7 +574,21 @@ class TestUtils:
                                'type': 'percent',
                                'datasetLabel': 'GCA_000001405.28',
                                'version': 108.0,
-                               'value': '38.87'}]
+                               'value': '38.87'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'assembly.date',
+                               'type': 'string',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': '2013-12'},
+                              {'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+                               'datasetName': 'assembly',
+                               'name': 'assembly.level',
+                               'type': 'string',
+                               'datasetLabel': 'GCA_000001405.28',
+                               'version': 108.0,
+                               'value': 'chromosome'}]
                           }
 
     def test_get_dataset_by_genome_id_no_results(self, genome_db_conn):
@@ -899,3 +913,55 @@ class TestUtils:
         # and pick up the first element to check if it matches the expected output
         # I picked up only the first element for the sake of shortening the code
         assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
+
+    def test_get_info_by_assembly_uuid(self, genome_db_conn):
+        output = json_format.MessageToJson(utils.get_info_by_assembly_uuid(
+            db_conn=genome_db_conn,
+            assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e",
+            release_version=None
+        ))
+        expected_output = {
+          "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+          "assembly": {
+            "accession": "GCA_000001405.28",
+            "name": "GRCh38.p13",
+            "ucscName": "hg38",
+            "level": "chromosome",
+            "ensemblName": "GRCh38.p13",
+            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
+            "isReference": True
+          },
+          "organism": {
+            "commonName": "Human",
+            "scientificName": "Homo sapiens",
+            "ensemblName": "Homo_sapiens",
+            "scientificParlanceName": "homo_sapiens",
+            "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
+            "taxonomyId": 9606,
+            "speciesTaxonomyId": 9606
+          },
+          "created": "2023-05-12 13:30:58",
+          "attributesInfo": {
+            "assemblyLevel": "chromosome",
+            "assemblyDate": "2013-12"
+          },
+          "relatedAssembliesCount": 3,
+          "release": {
+            "releaseVersion": 108.0,
+            "releaseDate": "2023-05-15",
+            "releaseLabel": "Beta Release 1",
+            "isCurrent": True,
+            "siteName": "Ensembl",
+            "siteLabel": "Ensembl Genome Browser",
+            "siteUri": "https://beta.ensembl.org"
+          }
+        }
+        assert json.loads(output) == expected_output
+
+    def test_get_info_by_assembly_uuid_fake_release(self, genome_db_conn):
+        output = json_format.MessageToJson(utils.get_info_by_assembly_uuid(
+            db_conn=genome_db_conn,
+            assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e",
+            release_version=11
+        ))
+        assert json.loads(output) == {}
