@@ -41,10 +41,12 @@ class TestClass:
           "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
           "assembly": {
             "accession": "GCA_000001405.28",
+            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
             "name": "GRCh38.p13",
             "ucscName": "hg38",
             "level": "chromosome",
-            "ensemblName": "GRCh38.p13"
+            "ensemblName": "GRCh38.p13",
+            "isReference": True
           },
           "taxon": {
             "taxonomyId": 9606,
@@ -56,7 +58,9 @@ class TestClass:
             "ensemblName": "Homo_sapiens",
             "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
             "scientificName": "Homo sapiens",
-            "scientificParlanceName": "homo_sapiens"
+            "scientificParlanceName": "homo_sapiens",
+            "speciesTaxonomyId": 9606,
+            "taxonomyId": 9606
           },
           "release": {
             "releaseVersion": 108.0,

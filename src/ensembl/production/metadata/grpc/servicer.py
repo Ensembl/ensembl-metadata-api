@@ -91,4 +91,4 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         )
 
     def GetInfoByAssemblyUUID(self, request, context):
-        return get_info_by_assembly_uuid(self.db, request.assembly_uuid)  # , request.release_version
+        return get_info_by_assembly_uuid(self.db, request.assembly_uuid, request.release_version)

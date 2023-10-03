@@ -324,7 +324,7 @@ def create_genome_info(data=None, attributes=None, count=0):
     assembly = create_assembly(data)
     organism = create_organism(data)
     attributes_info = create_attributes_info(attributes)
-    # release = create_release(data)
+    release = create_release(data)
 
     genome_info = ensembl_metadata_pb2.GenomeInfo(
         genome_uuid=data.Genome.genome_uuid,
@@ -332,7 +332,7 @@ def create_genome_info(data=None, attributes=None, count=0):
         assembly=assembly,
         organism=organism,
         attributes_info=attributes_info,
-        # release=release,
+        release=release,
         related_assemblies_count=count
     )
 

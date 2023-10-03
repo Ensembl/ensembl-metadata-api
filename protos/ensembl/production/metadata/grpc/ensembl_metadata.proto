@@ -283,7 +283,7 @@ message GenomeInfo {
   string created = 4;
   AttributesInfo attributes_info = 5;
   int32 related_assemblies_count = 6;
-//  Release release = 6;
+  Release release = 7;
 }
 
 /*
@@ -324,7 +324,8 @@ message GenomeNameRequest {
 Assembly ID filter
  */
 message AssemblyIDRequest {
-  string assembly_uuid = 1; // Mandatory
+  string assembly_uuid = 1;    // Mandatory
+  double release_version = 2;  // Optional
 }
 
 /*

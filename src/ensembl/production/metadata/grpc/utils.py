@@ -345,14 +345,14 @@ def get_organisms_group_count(db_conn, release_version):
     return create_organisms_group_count(count_result, release_version)
 
 
-def get_info_by_assembly_uuid(db_conn, assembly_uuid):  # , release_version
+def get_info_by_assembly_uuid(db_conn, assembly_uuid, release_version):
     if assembly_uuid is None:
         return create_genome_info()
 
     # We first get the genome info
     genome_info_results = db_conn.fetch_genomes(
         assembly_uuid=assembly_uuid,
-        # release_version=release_version,
+        release_version=release_version,
         allow_unreleased=cfg.allow_unreleased
     )
 
@@ -361,6 +361,7 @@ def get_info_by_assembly_uuid(db_conn, assembly_uuid):  # , release_version
         # TODO/TO ASK: is this the right way to do it? because one genome can have multiple assemblies
         attrib_data_results = db_conn.fetch_genome_datasets(
             genome_uuid=genome_info_results[0].Genome.genome_uuid,
+            release_version=release_version,
             dataset_attributes=True
         )
 
