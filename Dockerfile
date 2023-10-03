@@ -13,4 +13,4 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install .
 
-CMD ["python", "src/ensembl/production/metadata/service.py"]
+CMD ["python", "/usr/src/app/src/ensembl/production/metadata/grpc/service.py"]
