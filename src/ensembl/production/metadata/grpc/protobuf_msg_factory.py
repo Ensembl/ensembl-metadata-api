@@ -157,7 +157,6 @@ def create_attributes_info(data=None):
         if attrib_name in list(required_attributes.keys()):
             required_attributes[attrib_name] = attrib_data.DatasetAttribute.value
 
-    print(f"required_attributes ----> {required_attributes}")
     return ensembl_metadata_pb2.AttributesInfo(
         genebuild_method=required_attributes["genebuild.method"],
         genebuild_last_geneset_update=required_attributes["genebuild.last_geneset_update"],
@@ -318,14 +317,13 @@ def create_organisms_group_count(data, release_version):
     )
 
 
-def create_genome_info(data=None, attributes=None):
+def create_genome_info(data=None, attributes=None, count=0):
     if data is None:
         return ensembl_metadata_pb2.GenomeInfo()
 
     assembly = create_assembly(data)
     organism = create_organism(data)
     attributes_info = create_attributes_info(attributes)
-
     # release = create_release(data)
 
     genome_info = ensembl_metadata_pb2.GenomeInfo(
@@ -335,6 +333,7 @@ def create_genome_info(data=None, attributes=None):
         organism=organism,
         attributes_info=attributes_info,
         # release=release,
+        related_assemblies_count=count
     )
 
     return genome_info

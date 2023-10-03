@@ -358,19 +358,21 @@ def get_info_by_assembly_uuid(db_conn, assembly_uuid):  # , release_version
 
     if len(genome_info_results) == 1:
         # we fetch attributes related to that genome
-        # TODO: is this the right way to do it? because one genome can have multiple assemblies
+        # TODO/TO ASK: is this the right way to do it? because one genome can have multiple assemblies
         attrib_data_results = db_conn.fetch_genome_datasets(
             genome_uuid=genome_info_results[0].Genome.genome_uuid,
             dataset_attributes=True
         )
-        print(f"len(attrib_data_results) --> {len(attrib_data_results)}")
-        print(f"genome_info_results[0].Organism.species_taxonomy_id --> {genome_info_results[0].Organism.species_taxonomy_id}")
 
-        # res = db_conn.fetch_related_assemblies_count(
-        #     species_taxonomy_id=genome_info_results[0].Organism.species_taxonomy_id
-        # )
-        # print(f"res ------> {res}")
+        # fetch related assemblies count
+        related_assemblies_count = db_conn.fetch_organisms_group_counts(
+            species_taxonomy_id=genome_info_results[0].Organism.species_taxonomy_id
+        )[0].count
 
-        return create_genome_info(genome_info_results[0], attrib_data_results)
+        return create_genome_info(
+            data=genome_info_results[0],
+            attributes=attrib_data_results,
+            count=related_assemblies_count
+        )
 
     return create_genome_info()

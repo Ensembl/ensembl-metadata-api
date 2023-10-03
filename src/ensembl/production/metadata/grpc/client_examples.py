@@ -264,6 +264,21 @@ def get_organisms_group_count(stub):
     print(organisms_group_count)
 
 
+def get_info_by_assembly_uuid(stub):
+    request1 = AssemblyIDRequest(
+        assembly_uuid="fd7fea38-981a-4d73-a879-6f9daef86f08"
+    )
+    info_by_assembly_uuid1 = stub.GetInfoByAssemblyUUID(request1)
+    request2 = AssemblyIDRequest(
+        assembly_uuid="some-random-assembly-uuid-bla"
+    )
+    info_by_assembly_uuid2 = stub.GetInfoByAssemblyUUID(request2)
+    print("**** Correct assembly UUID ****")
+    print(info_by_assembly_uuid1)
+    print("**** Random assembly UUID (no result) ****")
+    print(info_by_assembly_uuid2)
+
+
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
@@ -299,6 +314,8 @@ def run():
         get_genome_uuid(stub)
         print("-------------- Get Organisms Group Count --------------")
         get_organisms_group_count(stub)
+        print("-------------- Get Info By Assembly UUID --------------")
+        get_info_by_assembly_uuid(stub)
 
 
 if __name__ == "__main__":
