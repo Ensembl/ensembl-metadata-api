@@ -312,14 +312,24 @@ class TestMetadataDB:
         )
         assert len(test) == 0
 
-    def test_popular_species(self, multi_dbs):
+    @pytest.mark.parametrize(
+        "species_taxonomy_id, expected_organism, expected_assemblies_count",
+        [
+            # fetch everything
+            (None, "Human", 3),
+            # fetch Triticum aestivum only
+            (4565, "Triticum aestivum", 1),
+        ]
+    )
+    def test_fetch_organisms_group_counts(self, multi_dbs, species_taxonomy_id, expected_organism, expected_assemblies_count):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_organisms_group_counts()
+        test = conn.fetch_organisms_group_counts(species_taxonomy_id=species_taxonomy_id)
+        # When fetching everything:
         # First result should be Human
-        assert test[0][2] == 'Human'
+        assert test[0][2] == expected_organism
         # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
-        assert test[0][5] == 3
+        assert test[0][5] == expected_assemblies_count
         for data in test[1:]:
             # All others have only one genome in test DB
             assert data[5] == 1
