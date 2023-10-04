@@ -119,7 +119,7 @@ class TestUtils:
             )
         )
         output = json.loads(output)
-        assert len(output["statistics"]) == 400
+        assert len(output["statistics"]) == 402
         assert output["statistics"][0] == {
             "label": "Contig N50",
             "name": "contig_n50",
