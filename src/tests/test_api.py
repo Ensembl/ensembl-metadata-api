@@ -204,25 +204,46 @@ class TestMetadataDB:
         # to please bothI'm using 'sequence_location' for now
         assert test[0].AssemblySequence.sequence_location == 'SO:0000738'
 
-    def test_fetch_sequences_by_gneome_assembly(self, multi_dbs):
+    @pytest.mark.parametrize(
+        "genome_uuid, assembly_accession, chromosomal_only, expected_output",
+        [
+            # Chromosomal and non-chromosomal
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.28", False, 0),
+            # Chromosomal only
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.28", True, 1),
+        ]
+    )
+    def test_fetch_sequences_chromosomal(self, multi_dbs, genome_uuid, assembly_accession, chromosomal_only, expected_output):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_sequences(
-            genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3',
-            assembly_accession='GCA_000001405.28',
-            chromosomal_only=False
+            genome_uuid=genome_uuid,
+            assembly_accession=assembly_accession,
+            chromosomal_only=chromosomal_only
         )
-        assert test[-1].AssemblySequence.chromosomal == 0
+        assert test[-1].AssemblySequence.chromosomal == expected_output
 
-    def test_fetch_sequences_chromosomal_only(self, multi_dbs):
+    @pytest.mark.parametrize(
+        "genome_uuid, assembly_sequence_name, chromosomal_only, expected_output",
+        [
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", "MT", False, "J01415.2"),
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", "LRG_778", False, "LRG_778"),
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", "LRG_778", True, None),
+            ("some-random-genome-uuid", "LRG_778", False, None),
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", "fake_assembly_name", False, None),
+            ("some-random-genome-uuid", "fake_assembly_name", False, None),
+        ]
+    )
+    def test_fetch_sequences_by_assembly_seq_name(self, multi_dbs, genome_uuid, assembly_sequence_name, chromosomal_only, expected_output):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_sequences(
-            genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3',
-            assembly_accession='GCA_000001405.28',
-            chromosomal_only=True
+            genome_uuid=genome_uuid,
+            assembly_sequence_name=assembly_sequence_name,
+            chromosomal_only=chromosomal_only
         )
-        assert test[-1].AssemblySequence.chromosomal == 1
+        for result in test:
+            assert result.AssemblySequence.accession == expected_output
 
     @pytest.mark.parametrize(
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",

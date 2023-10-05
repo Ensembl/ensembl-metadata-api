@@ -338,7 +338,7 @@ class GenomeAdaptor(BaseAdaptor):
             return session.execute(genome_query).all()
 
     def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None, assembly_accession=None,
-                        assembly_sequence_accession=None, chromosomal_only=False):
+                        assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
         """
         Fetches sequences based on the provided parameters.
 
@@ -348,6 +348,7 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_uuid (Union[str, List[str]]): The assembly_uuid of the assembly(s) to fetch.
             assembly_accession (str or None): Assembly accession to filter by.
             assembly_sequence_accession (str or None): Assembly Sequence accession to filter by.
+            assembly_sequence_name (str or None): Assembly Sequence name to filter by.
             chromosomal_only (bool): Flag indicating whether to fetch only chromosomal sequences.
 
         Returns:
@@ -358,6 +359,7 @@ class GenomeAdaptor(BaseAdaptor):
         assembly_uuid = check_parameter(assembly_uuid)
         assembly_accession = check_parameter(assembly_accession)
         assembly_sequence_accession = check_parameter(assembly_sequence_accession)
+        assembly_sequence_name = check_parameter(assembly_sequence_name)
 
         seq_select = db.select(
             Genome, Assembly, AssemblySequence
@@ -384,6 +386,9 @@ class GenomeAdaptor(BaseAdaptor):
 
         if assembly_sequence_accession is not None:
             seq_select = seq_select.filter(AssemblySequence.accession == assembly_sequence_accession)
+
+        if assembly_sequence_name is not None:
+            seq_select = seq_select.filter(AssemblySequence.name == assembly_sequence_name)
 
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
