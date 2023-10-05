@@ -111,7 +111,10 @@ message AssemblyInfo {
   string level = 3;
   string name = 4;
   uint32 chromosomal = 5;
-  uint32 length = 6;
+  // length will be a string, because some browser can't handle a full 64bit value as a number,
+  // so the only way to ensure they can work for those clients is to handle them as strings
+  // source: https://github.com/protocolbuffers/protobuf/issues/2679
+  uint64 length = 6;
   string sequence_location = 7;
   string md5 = 8;
   string sha512t4u = 9;
@@ -229,7 +232,7 @@ message GenomeAssemblySequence {
   string name = 1;
   int32 rank = 2;
   string md5 = 3;
-  uint32 length = 4;
+  uint64 length = 4;
   string sha512t4u = 5;
   bool chromosomal = 6;
 }
@@ -240,7 +243,7 @@ Metadata about the sequences that comprise a genome's assembly.
 message GenomeAssemblySequenceRegion {
   string name = 1;
   string md5 = 2;
-  uint32 length = 3;
+  uint64 length = 3;
   string sha512t4u = 4;
   bool chromosomal = 5;
 }
@@ -352,8 +355,7 @@ Genome sequence filter.
  */
 message GenomeAssemblySequenceRequest {
   string genome_uuid = 1;          // Mandatory
-  string assembly_accession = 2;   // Mandatory
-  bool chromosomal_only = 3;       // Optional
+  bool chromosomal_only = 2;       // Optional
 }
 
 /*
@@ -362,9 +364,8 @@ TODO: Is there a way to DRY this since it's equivalent to GenomeAssemblySequence
  */
 message GenomeAssemblySequenceRegionRequest {
   string genome_uuid = 1;          // Mandatory
-  string assembly_accession = 2;   // Mandatory
-  string sequence_region_name = 3;   // Mandatory
-  bool chromosomal_only = 4;       // Optional
+  string sequence_region_name = 2;   // Mandatory
+  bool chromosomal_only = 3;       // Optional
 }
 
 /*

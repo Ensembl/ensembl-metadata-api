@@ -77,13 +77,12 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetGenomeAssemblySequence(self, request, context):
         return genome_assembly_sequence_iterator(
-            self.db, request.genome_uuid, request.assembly_accession, request.chromosomal_only
+            self.db, request.genome_uuid, request.chromosomal_only
         )
 
     def GetGenomeAssemblySequenceRegion(self, request, context):
         return genome_assembly_sequence_region_iterator(
             self.db, request.genome_uuid,
-            request.assembly_accession,
             request.sequence_region_name,
             request.chromosomal_only
         )

@@ -299,26 +299,24 @@ def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         yield create_genome_sequence(result)
 
 
-def genome_assembly_sequence_iterator(db_conn, genome_uuid, assembly_accession, chromosomal_only):
+def genome_assembly_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
     if genome_uuid is None:
         return
 
     assembly_sequence_results = db_conn.fetch_sequences(
         genome_uuid=genome_uuid,
-        assembly_accession=assembly_accession,
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
         yield create_genome_assembly_sequence(result)
 
 
-def genome_assembly_sequence_region_iterator(db_conn, genome_uuid, assembly_accession, sequence_region_name, chromosomal_only):
+def genome_assembly_sequence_region_iterator(db_conn, genome_uuid, sequence_region_name, chromosomal_only):
     if genome_uuid is None or sequence_region_name is None:
         return
 
     assembly_sequence_results = db_conn.fetch_sequences(
         genome_uuid=genome_uuid,
-        assembly_accession=assembly_accession,
         assembly_sequence_accession=sequence_region_name,
         chromosomal_only=chromosomal_only,
     )
