@@ -44,7 +44,7 @@ class TestUtils:
         expected_output = {"accession": "GCA_000001405.28",
                            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
                            # "chromosomal": 1,
-                           "length": 71251,
+                           "length": "71251",
                            "level": "chromosome",
                            "name": "GRCh38.p13",
                            "sequenceLocation": "SO:0000738"}

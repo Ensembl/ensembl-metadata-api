@@ -317,7 +317,7 @@ def genome_assembly_sequence_region_iterator(db_conn, genome_uuid, sequence_regi
 
     assembly_sequence_results = db_conn.fetch_sequences(
         genome_uuid=genome_uuid,
-        assembly_sequence_accession=sequence_region_name,
+        assembly_sequence_name=sequence_region_name,
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
