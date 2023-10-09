@@ -88,6 +88,16 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequence.FromString,
                 )
+        self.GetGenomeAssemblySequence = channel.unary_stream(
+                '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequence',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequence.FromString,
+                )
+        self.GetGenomeAssemblySequenceRegion = channel.unary_stream(
+                '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequenceRegion',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegionRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegion.FromString,
+                )
         self.GetDatasetsListByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetDatasetsListByUUID',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetsRequest.SerializeToString,
@@ -210,6 +220,20 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetGenomeAssemblySequence(self, request, context):
+        """Retrieve region information for a genome's assembly.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetGenomeAssemblySequenceRegion(self, request, context):
+        """Retrieve region information for a genome's assembly with a given sequence region name.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def GetDatasetsListByUUID(self, request, context):
         """Retrieve a list of dataset_ids associated with a genome UUID.
         """
@@ -303,6 +327,16 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetGenomeSequence,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequenceRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequence.SerializeToString,
+            ),
+            'GetGenomeAssemblySequence': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetGenomeAssemblySequence,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequence.SerializeToString,
+            ),
+            'GetGenomeAssemblySequenceRegion': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetGenomeAssemblySequenceRegion,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegionRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegion.SerializeToString,
             ),
             'GetDatasetsListByUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetDatasetsListByUUID,
@@ -568,6 +602,40 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeSequence',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequence.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetGenomeAssemblySequence(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequence',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequence.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetGenomeAssemblySequenceRegion(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequenceRegion',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegionRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegion.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
