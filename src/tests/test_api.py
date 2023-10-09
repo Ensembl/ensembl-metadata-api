@@ -224,6 +224,26 @@ class TestMetadataDB:
         assert test[-1].AssemblySequence.chromosomal == expected_output
 
     @pytest.mark.parametrize(
+        "genome_uuid, expected_output_length",
+        [
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", 1),
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", 3),
+            ("3704ceb1-948d-11ec-a39d-005056b38ce3", 0),
+            ("some-random-genome-uuid", 0),
+            # this will get them all
+            (None, 10),
+        ]
+    )
+    def test_fetch_sequences_karyotype(self, multi_dbs, genome_uuid, expected_output_length):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_sequences(
+            genome_uuid=genome_uuid,
+            get_karyotype=True
+        )
+        assert len(test) == expected_output_length
+
+    @pytest.mark.parametrize(
         "genome_uuid, assembly_sequence_name, chromosomal_only, expected_output",
         [
             ("a7335667-93e7-11ec-a39d-005056b38ce3", "MT", False, "J01415.2"),

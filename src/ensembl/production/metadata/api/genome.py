@@ -338,7 +338,8 @@ class GenomeAdaptor(BaseAdaptor):
             return session.execute(genome_query).all()
 
     def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None, assembly_accession=None,
-                        assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
+                        assembly_sequence_accession=None, assembly_sequence_name=None, get_karyotype=False,
+                        chromosomal_only=False):
         """
         Fetches sequences based on the provided parameters.
 
@@ -349,6 +350,7 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_accession (str or None): Assembly accession to filter by.
             assembly_sequence_accession (str or None): Assembly Sequence accession to filter by.
             assembly_sequence_name (str or None): Assembly Sequence name to filter by.
+            get_karyotype (bool): Flag indicating whether we are getting karyotype related info or not.
             chromosomal_only (bool): Flag indicating whether to fetch only chromosomal sequences.
 
         Returns:
@@ -390,6 +392,18 @@ class GenomeAdaptor(BaseAdaptor):
         if assembly_sequence_name is not None:
             seq_select = seq_select.filter(AssemblySequence.name == assembly_sequence_name)
 
+        # in case we're getting karyotype data, fetch using distinct
+        # to avoid duplicated values + fetch only the required columns
+        if get_karyotype:
+            columns_to_select = [
+                db.distinct(Assembly.level).label('level'),
+                AssemblySequence.chromosomal,
+                AssemblySequence.sequence_location,
+                Genome.genome_uuid
+            ]
+            seq_select = seq_select.with_only_columns(columns_to_select)
+
+        # print(f"seq_select ---> {seq_select}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(seq_select).all()
