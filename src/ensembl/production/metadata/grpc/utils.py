@@ -20,7 +20,8 @@ from ensembl.production.metadata.api.release import ReleaseAdaptor
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
     create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
-    create_dataset_infos, populate_dataset_info, create_organisms_group_count, create_genome_info
+    create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, \
+    create_genome_assembly_sequence_region, create_organisms_group_count, create_genome_info
 
 
 def connect_to_db():
@@ -183,6 +184,18 @@ def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
         return create_genome_uuid(
             {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
         )
+    # PATCH: This is a special case, see EA-1112 for more details
+    elif len(genome_uuid_result) == 0:
+        # Try looking using only assembly_default (no ensembl_name is needed)
+        using_default_assembly_only_result = db_conn.fetch_genomes(
+            assembly_name=assembly_name,
+            use_default_assembly=True,
+            allow_unreleased=cfg.allow_unreleased
+        )
+        if len(using_default_assembly_only_result) == 1:
+            return create_genome_uuid(
+                {"genome_uuid": using_default_assembly_only_result[0].Genome.genome_uuid}
+            )
 
     return create_genome_uuid()
 
@@ -296,6 +309,31 @@ def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
     )
     for result in assembly_sequence_results:
         yield create_genome_sequence(result)
+
+
+def genome_assembly_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
+    if genome_uuid is None:
+        return
+
+    assembly_sequence_results = db_conn.fetch_sequences(
+        genome_uuid=genome_uuid,
+        chromosomal_only=chromosomal_only,
+    )
+    for result in assembly_sequence_results:
+        yield create_genome_assembly_sequence(result)
+
+
+def genome_assembly_sequence_region_iterator(db_conn, genome_uuid, sequence_region_name, chromosomal_only):
+    if genome_uuid is None or sequence_region_name is None:
+        return
+
+    assembly_sequence_results = db_conn.fetch_sequences(
+        genome_uuid=genome_uuid,
+        assembly_sequence_name=sequence_region_name,
+        chromosomal_only=chromosomal_only,
+    )
+    for result in assembly_sequence_results:
+        yield create_genome_assembly_sequence_region(result)
 
 
 def release_iterator(metadata_db, site_name, release_version, current_only):

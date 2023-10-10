@@ -44,7 +44,7 @@ class TestUtils:
         expected_output = {"accession": "GCA_000001405.28",
                            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
                            # "chromosomal": 1,
-                           "length": 71251,
+                           "length": "71251",
                            "level": "chromosome",
                            "name": "GRCh38.p13",
                            "sequenceLocation": "SO:0000738"}
@@ -122,7 +122,7 @@ class TestUtils:
             )
         )
         output = json.loads(output)
-        assert len(output["statistics"]) == 400
+        assert len(output["statistics"]) == 402
         assert output["statistics"][0] == {
             "label": "Contig N50",
             "name": "contig_n50",
@@ -598,29 +598,25 @@ class TestUtils:
         output = json.loads(output)
         assert output == {}
 
-    def test_get_genome_uuid(self, genome_db_conn):
+    @pytest.mark.parametrize(
+        "ensembl_name, assembly_name, use_default, expected_output",
+        [
+            ("homo_sapiens", "GRCh38.p13", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            ("homo_sapiens", "GRCh38.p13", True, {}),
+            ("homo_sapiens", "GRCh38", True, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            ("random_ensembl_name", "GRCh38", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            ("random_ensembl_name", "random_assembly_name", True, {}),
+            ("random_ensembl_name", "random_assembly_name", False, {}),
+        ]
+    )
+    def test_get_genome_uuid(self, genome_db_conn, ensembl_name, assembly_name, use_default, expected_output):
         output = json_format.MessageToJson(
             utils.get_genome_uuid(
                 db_conn=genome_db_conn,
-                ensembl_name="homo_sapiens",
-                assembly_name="GRCh38.p13"
+                ensembl_name=ensembl_name,
+                assembly_name=assembly_name,
+                use_default=use_default
             ))
-        expected_output = {
-            "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
-        }
-        assert json.loads(output) == expected_output
-
-    def test_get_genome_uuid_use_default(self, genome_db_conn):
-        output = json_format.MessageToJson(
-            utils.get_genome_uuid(
-                db_conn=genome_db_conn,
-                ensembl_name="homo_sapiens",
-                assembly_name="GRCh38",
-                use_default=True
-            ))
-        expected_output = {
-            "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
-        }
         assert json.loads(output) == expected_output
 
     def test_get_genome_by_uuid(self, genome_db_conn):
