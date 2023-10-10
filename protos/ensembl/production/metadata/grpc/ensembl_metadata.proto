@@ -74,9 +74,6 @@ service EnsemblMetadata {
 
   // Retrieve organisms group count
   rpc GetOrganismsGroupCount(OrganismsGroupRequest) returns (OrganismsGroupCount) {}
-
-  // Retrieve genome by its UUID.
-  rpc GetInfoByAssemblyUUID(AssemblyIDRequest) returns (GenomeInfo) {}
 }
 
 /*
@@ -89,7 +86,9 @@ message Genome {
   Taxon taxon = 3;
   string created = 4;
   Organism organism = 5;
-  Release release = 6;
+  AttributesInfo attributes_info = 6;
+  int32 related_assemblies_count = 7;
+  Release release = 8;
 }
 
 message Karyotype {
@@ -305,18 +304,6 @@ message OrganismsGroupCount {
   double release_version = 2;
 }
 
-/*
-Genome Info associated with the provided assembly UUID.
- */
-message GenomeInfo {
-  string genome_uuid = 1;
-  Assembly assembly = 2;
-  Organism organism = 3;
-  string created = 4;
-  AttributesInfo attributes_info = 5;
-  int32 related_assemblies_count = 6;
-  Release release = 7;
-}
 
 /*
 The messages below are used to request data - required-ness is not enforced

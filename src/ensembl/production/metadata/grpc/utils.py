@@ -21,7 +21,7 @@ from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome,
     create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
     create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, \
-    create_genome_assembly_sequence_region, create_organisms_group_count, create_genome_info
+    create_genome_assembly_sequence_region, create_organisms_group_count
 
 
 def connect_to_db():
@@ -204,6 +204,7 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     if genome_uuid is None:
         return create_genome()
 
+    # We first get the genome info
     genome_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
         release_version=release_version,
@@ -211,7 +212,24 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     )
 
     if len(genome_results) == 1:
-        return create_genome(genome_results[0])
+        # we fetch attributes related to that genome
+        attrib_data_results = db_conn.fetch_genome_datasets(
+            genome_uuid=genome_results[0].Genome.genome_uuid,
+            release_version=release_version,
+            dataset_attributes=True
+        )
+
+        # fetch related assemblies count
+        related_assemblies_count = db_conn.fetch_organisms_group_counts(
+            species_taxonomy_id=genome_results[0].Organism.species_taxonomy_id
+        )[0].count
+
+        return create_genome(
+            data=genome_results[0],
+            attributes=attrib_data_results,
+            count=related_assemblies_count
+        )
+
     return create_genome()
 
 
@@ -383,37 +401,3 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
 def get_organisms_group_count(db_conn, release_version):
     count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
     return create_organisms_group_count(count_result, release_version)
-
-
-def get_info_by_assembly_uuid(db_conn, assembly_uuid, release_version):
-    if assembly_uuid is None:
-        return create_genome_info()
-
-    # We first get the genome info
-    genome_info_results = db_conn.fetch_genomes(
-        assembly_uuid=assembly_uuid,
-        release_version=release_version,
-        allow_unreleased=cfg.allow_unreleased
-    )
-
-    if len(genome_info_results) == 1:
-        # we fetch attributes related to that genome
-        # TODO/TO ASK: is this the right way to do it? because one genome can have multiple assemblies
-        attrib_data_results = db_conn.fetch_genome_datasets(
-            genome_uuid=genome_info_results[0].Genome.genome_uuid,
-            release_version=release_version,
-            dataset_attributes=True
-        )
-
-        # fetch related assemblies count
-        related_assemblies_count = db_conn.fetch_organisms_group_counts(
-            species_taxonomy_id=genome_info_results[0].Organism.species_taxonomy_id
-        )[0].count
-
-        return create_genome_info(
-            data=genome_info_results[0],
-            attributes=attrib_data_results,
-            count=related_assemblies_count
-        )
-
-    return create_genome_info()

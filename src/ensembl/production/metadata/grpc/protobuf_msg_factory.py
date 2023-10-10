@@ -198,13 +198,14 @@ def create_genome_uuid(data=None):
     return genome_uuid
 
 
-def create_genome(data=None):
+def create_genome(data=None, attributes=None, count=0):
     if data is None:
         return ensembl_metadata_pb2.Genome()
 
     assembly = create_assembly(data)
     taxon = create_taxon(data)
     organism = create_organism(data)
+    attributes_info = create_attributes_info(attributes)
     release = create_release(data)
 
     genome = ensembl_metadata_pb2.Genome(
@@ -213,7 +214,9 @@ def create_genome(data=None):
         assembly=assembly,
         taxon=taxon,
         organism=organism,
+        attributes_info=attributes_info,
         release=release,
+        related_assemblies_count=count
     )
     return genome
 
@@ -346,25 +349,3 @@ def create_organisms_group_count(data, release_version):
         organisms_group_count=organisms_list,
         release_version=release_version
     )
-
-
-def create_genome_info(data=None, attributes=None, count=0):
-    if data is None:
-        return ensembl_metadata_pb2.GenomeInfo()
-
-    assembly = create_assembly(data)
-    organism = create_organism(data)
-    attributes_info = create_attributes_info(attributes)
-    release = create_release(data)
-
-    genome_info = ensembl_metadata_pb2.GenomeInfo(
-        genome_uuid=data.Genome.genome_uuid,
-        created=str(data.Genome.created),
-        assembly=assembly,
-        organism=organism,
-        attributes_info=attributes_info,
-        release=release,
-        related_assemblies_count=count
-    )
-
-    return genome_info
