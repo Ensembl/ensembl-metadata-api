@@ -93,7 +93,7 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequence.FromString,
                 )
-        self.GetGenomeAssemblySequenceRegion = channel.unary_stream(
+        self.GetGenomeAssemblySequenceRegion = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequenceRegion',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegionRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegion.FromString,
@@ -333,7 +333,7 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequence.SerializeToString,
             ),
-            'GetGenomeAssemblySequenceRegion': grpc.unary_stream_rpc_method_handler(
+            'GetGenomeAssemblySequenceRegion': grpc.unary_unary_rpc_method_handler(
                     servicer.GetGenomeAssemblySequenceRegion,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegionRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegion.SerializeToString,
@@ -633,7 +633,7 @@ class EnsemblMetadata(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequenceRegion',
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequenceRegion',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegionRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRegion.FromString,
             options, channel_credentials,

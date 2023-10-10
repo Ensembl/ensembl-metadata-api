@@ -10,7 +10,7 @@ charset-normalizer==3.2.0
     # via requests
 ensembl-hive @ git+https://github.com/Ensembl/ensembl-hive.git
     # via ensembl-py
-ensembl-metadata-api @ git+https://github.com/Ensembl/ensembl-metadata-api.git@1.1.1a3
+ensembl-metadata-api @ git+https://github.com/Ensembl/ensembl-metadata-api.git@1.1.1a4
     # via -r requirements.in
 ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git@1.1.0.dev3
     # via -r requirements.in

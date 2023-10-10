@@ -323,17 +323,19 @@ def genome_assembly_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         yield create_genome_assembly_sequence(result)
 
 
-def genome_assembly_sequence_region_iterator(db_conn, genome_uuid, sequence_region_name, chromosomal_only):
+def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name, chromosomal_only):
     if genome_uuid is None or sequence_region_name is None:
-        return
+        return create_genome_assembly_sequence_region()
 
     assembly_sequence_results = db_conn.fetch_sequences(
         genome_uuid=genome_uuid,
         assembly_sequence_name=sequence_region_name,
         chromosomal_only=chromosomal_only,
     )
-    for result in assembly_sequence_results:
-        yield create_genome_assembly_sequence_region(result)
+    if len(assembly_sequence_results) == 1:
+        return create_genome_assembly_sequence_region(assembly_sequence_results[0])
+
+    return create_genome_assembly_sequence_region()
 
 
 def release_iterator(metadata_db, site_name, release_version, current_only):
