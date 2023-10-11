@@ -113,7 +113,26 @@ def get_assembly_information(db_conn, assembly_uuid):
     return create_assembly_info()
 
 
-def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
+def create_genome_with_attributes_and_count(db_conn, genome, release_version):
+    # we fetch attributes related to that genome
+    attrib_data_results = db_conn.fetch_genome_datasets(
+        genome_uuid=genome.Genome.genome_uuid,
+        release_version=release_version,
+        dataset_attributes=True
+    )
+    # fetch related assemblies count
+    related_assemblies_count = db_conn.fetch_organisms_group_counts(
+        species_taxonomy_id=genome.Organism.species_taxonomy_id
+    )[0].count
+
+    return create_genome(
+        data=genome,
+        attributes=attrib_data_results,
+        count=related_assemblies_count
+    )
+
+
+def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, release_version):
     if assembly_accession is None:
         return create_genome()
 
@@ -122,23 +141,9 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
         allow_unreleased=cfg.allow_unreleased
     )
     for genome in genome_results:
-        # we fetch attributes related to that genome
-        attrib_data_results = db_conn.fetch_genome_datasets(
-            genome_uuid=genome.Genome.genome_uuid,
-            # release_version=release_version,
-            dataset_attributes=True
+        yield create_genome_with_attributes_and_count(
+            db_conn=db_conn, genome=genome, release_version=release_version
         )
-        # fetch related assemblies count
-        related_assemblies_count = db_conn.fetch_organisms_group_counts(
-            species_taxonomy_id=genome.Organism.species_taxonomy_id
-        )[0].count
-
-        yield create_genome(
-            data=genome,
-            attributes=attrib_data_results,
-            count=related_assemblies_count
-        )
-
 
 def get_species_information(db_conn, genome_uuid):
     if genome_uuid is None:
@@ -227,22 +232,8 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     )
 
     if len(genome_results) == 1:
-        # we fetch attributes related to that genome
-        attrib_data_results = db_conn.fetch_genome_datasets(
-            genome_uuid=genome_results[0].Genome.genome_uuid,
-            release_version=release_version,
-            dataset_attributes=True
-        )
-
-        # fetch related assemblies count
-        related_assemblies_count = db_conn.fetch_organisms_group_counts(
-            species_taxonomy_id=genome_results[0].Organism.species_taxonomy_id
-        )[0].count
-
-        return create_genome(
-            data=genome_results[0],
-            attributes=attrib_data_results,
-            count=related_assemblies_count
+        return create_genome_with_attributes_and_count(
+            db_conn=db_conn, genome=genome_results[0], release_version=release_version
         )
 
     return create_genome()
@@ -270,21 +261,8 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
             most_recent_genomes.append(most_recent_genome)
 
         for genome_row in most_recent_genomes:
-            # we fetch attributes related to that genome
-            attrib_data_results = db_conn.fetch_genome_datasets(
-                genome_uuid=genome_row.Genome.genome_uuid,
-                release_version=release_version,
-                dataset_attributes=True
-            )
-            # fetch related assemblies count
-            related_assemblies_count = db_conn.fetch_organisms_group_counts(
-                species_taxonomy_id=genome_row.Organism.species_taxonomy_id
-            )[0].count
-
-            yield create_genome(
-                data=genome_row,
-                attributes=attrib_data_results,
-                count=related_assemblies_count
+            yield create_genome_with_attributes_and_count(
+                db_conn=db_conn, genome=genome_row, release_version=release_version
             )
 
         return create_genome()
@@ -301,21 +279,8 @@ def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
         allow_unreleased=cfg.allow_unreleased
     )
     if len(genome_results) == 1:
-        # we fetch attributes related to that genome
-        attrib_data_results = db_conn.fetch_genome_datasets(
-            genome_uuid=genome_results[0].Genome.genome_uuid,
-            release_version=release_version,
-            dataset_attributes=True
-        )
-        # fetch related assemblies count
-        related_assemblies_count = db_conn.fetch_organisms_group_counts(
-            species_taxonomy_id=genome_results[0].Organism.species_taxonomy_id
-        )[0].count
-
-        return create_genome(
-            data=genome_results[0],
-            attributes=attrib_data_results,
-            count=related_assemblies_count
+        return create_genome_with_attributes_and_count(
+            db_conn=db_conn, genome=genome_results[0], release_version=release_version
         )
 
     return create_genome()

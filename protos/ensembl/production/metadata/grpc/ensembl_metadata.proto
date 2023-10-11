@@ -352,6 +352,7 @@ Assembly ID filter
  */
 message AssemblyAccessionIDRequest {
   string assembly_accession = 1; // Mandatory
+  double release_version = 2;  // Optional
 }
 
 message OrganismIDRequest {

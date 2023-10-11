@@ -57,14 +57,6 @@ class TestUtils:
                 db_conn=genome_db_conn, assembly_accession="GCA_000005845.2"
             )
         ]
-        # print(f"output ---> {output}")
-        # outo = []
-        # respos = utils.get_genomes_from_assembly_accession_iterator(
-        #     db_conn=genome_db_conn, assembly_accession="GCA_000005845.2"
-        # )
-        # for resp in respos:
-        #     outo.append(json.loads(json_format.MessageToJson(resp)))
-        # print(f"outo ---> {outo}")
 
         expected_output = [
           {
