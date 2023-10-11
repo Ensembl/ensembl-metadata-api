@@ -278,6 +278,27 @@ class TestMetadataDB:
         assert len(test) == expected_count
 
     @pytest.mark.parametrize(
+        "organism_uuid, expected_count",
+        [
+            # homo_sapien
+            ("db2a5f09-2db8-429b-a407-c15a4ca2876d", 11),
+            # e-coli
+            ("21279e3e-e651-43e1-a6fc-79e390b9e8a8", 3),
+            # non-existing organism
+            ("organism-yet-to-be-discovered", 0),
+        ]
+    )
+    def test_fetch_genome_dataset_by_organism_uuid(self, multi_dbs, organism_uuid, expected_count):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genome_datasets(
+            organism_uuid=organism_uuid,
+            # fetch all datasets (default: dataset_name="assembly")
+            dataset_name="all"
+        )
+        assert len(test) == expected_count
+
+    @pytest.mark.parametrize(
         "ensembl_name, assembly_name, use_default_assembly, expected_output",
         [
             ("homo_sapiens", "GRCh37.p13", False, "3704ceb1-948d-11ec-a39d-005056b38ce3"),

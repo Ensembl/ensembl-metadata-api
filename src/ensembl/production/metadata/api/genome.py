@@ -479,7 +479,8 @@ class GenomeAdaptor(BaseAdaptor):
                 genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
 
             if organism_uuid is not None:
-                genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
+                genome_select = genome_select.join(Organism, Organism.organism_id == Genome.organism_id) \
+                    .filter(Organism.organism_uuid.in_(organism_uuid))
 
             if dataset_uuid is not None:
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
