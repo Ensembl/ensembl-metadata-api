@@ -51,35 +51,58 @@ class TestUtils:
         assert json.loads(output) == expected_output
 
     def test_get_genomes_from_assembly_accession_iterator(self, genome_db_conn):
-        output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_from_assembly_accession_iterator(
-                      genome_db_conn, "GCA_000005845.2")]
-        expected_output = [{"assembly": {"accession": "GCA_000005845.2",
-                                         "assemblyUuid": "f78618ef-1075-47ee-a496-be26cad47912",
-                                         "ensemblName": "ASM584v2",
-                                         "level": "chromosome",
-                                         "name": "ASM584v2"},
-                            "created": "2023-05-12 13:32:14",
-                            "genomeUuid": "a73351f7-93e7-11ec-a39d-005056b38ce3",
-                            "organism": {"commonName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
-                                         "ensemblName": "Escherichia_coli_str_k_12_substr_mg1655_gca_000005845",
-                                         "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
-                                         "scientificName": "Escherichia coli str. K-12 substr. MG1655 "
-                                                           "str. K12 (GCA_000005845)",
-                                         "scientificParlanceName": "escherichia_coli_str_k_12_substr_mg1655_gca_000005845",
-                                         "speciesTaxonomyId": 562,
-                                         "taxonomyId": 511145},
-                            "release": {"isCurrent": True,
-                                        "releaseDate": "2023-05-15",
-                                        "releaseLabel": "Beta Release 1",
-                                        "releaseVersion": 108.0,
-                                        "siteLabel": "Ensembl Genome Browser",
-                                        "siteName": "Ensembl",
-                                        "siteUri": "https://beta.ensembl.org"
-                                        },
-                            "taxon": {"scientificName": "Escherichia coli str. K-12 substr. MG1655 str. "
-                                                        "K12 (GCA_000005845)",
-                                      "taxonomyId": 511145}}]
+        output = [
+            json.loads(json_format.MessageToJson(response)) for response in
+            utils.get_genomes_from_assembly_accession_iterator(
+                db_conn=genome_db_conn, assembly_accession="GCA_000005845.2"
+            )
+        ]
+        # print(f"output ---> {output}")
+        # outo = []
+        # respos = utils.get_genomes_from_assembly_accession_iterator(
+        #     db_conn=genome_db_conn, assembly_accession="GCA_000005845.2"
+        # )
+        # for resp in respos:
+        #     outo.append(json.loads(json_format.MessageToJson(resp)))
+        # print(f"outo ---> {outo}")
+
+        expected_output = [
+          {
+            "assembly": {
+              "accession": "GCA_000005845.2",
+              "assemblyUuid": "f78618ef-1075-47ee-a496-be26cad47912",
+              "ensemblName": "ASM584v2",
+              "level": "chromosome",
+              "name": "ASM584v2"
+            },
+            "attributesInfo": {},
+            "created": "2023-05-12 13:32:14",
+            "genomeUuid": "a73351f7-93e7-11ec-a39d-005056b38ce3",
+            "organism": {
+              "commonName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
+              "ensemblName": "Escherichia_coli_str_k_12_substr_mg1655_gca_000005845",
+              "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
+              "scientificName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
+              "scientificParlanceName": "escherichia_coli_str_k_12_substr_mg1655_gca_000005845",
+              "speciesTaxonomyId": 562,
+              "taxonomyId": 511145
+            },
+            "relatedAssembliesCount": 1,
+            "release": {
+              "isCurrent": True,
+              "releaseDate": "2023-05-15",
+              "releaseLabel": "Beta Release 1",
+              "releaseVersion": 108.0,
+              "siteLabel": "Ensembl Genome Browser",
+              "siteName": "Ensembl",
+              "siteUri": "https://beta.ensembl.org"
+            },
+            "taxon": {
+              "scientificName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
+              "taxonomyId": 511145
+            }
+          }
+        ]
         assert output == expected_output
 
     def test_get_genomes_from_assembly_accession_iterator_null(self, genome_db_conn):
@@ -665,6 +688,7 @@ class TestUtils:
                                         "assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
                                         "level": "chromosome",
                                         "name": "IWGSC"},
+                           "attributesInfo": {},
                            "created": "2023-05-12 13:32:36",
                            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
                            "organism": {"commonName": "Triticum aestivum",
@@ -675,6 +699,7 @@ class TestUtils:
                                         "speciesTaxonomyId": 4565,
                                         "taxonomyId": 4565,
                                         "strain": "reference (Chinese spring)"},
+                           "relatedAssembliesCount": 1,
                            "release": {"isCurrent": True,
                                        "releaseDate": "2023-05-15",
                                        "releaseLabel": "Beta Release 1",
@@ -724,6 +749,7 @@ class TestUtils:
                                          "level": "chromosome",
                                          "name": "GRCh37.p13",
                                          "ucscName": "hg19"},
+                            "attributesInfo": {},
                             "created": "2023-05-12 13:32:06",
                             "genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3",
                             "organism": {"commonName": "Human",
@@ -733,6 +759,7 @@ class TestUtils:
                                          "speciesTaxonomyId": 9606,
                                          "taxonomyId": 9606,
                                          "scientificParlanceName": "homo_sapiens"},
+                            "relatedAssembliesCount": 3,
                             "release": {"isCurrent": True,
                                         "releaseDate": "2023-05-15",
                                         "releaseLabel": "Beta Release 1",
@@ -778,6 +805,9 @@ class TestUtils:
                                          "level": "chromosome",
                                          "name": "GRCh37.p13",
                                          "ucscName": "hg19"},
+                            # "attributesInfo": {},
+                            "attributesInfo": {"assemblyDate": "2013-12",
+                                               "assemblyLevel": "chromosome"},
                             "created": "2023-05-12 13:32:06",
                             "genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3",
                             "organism": {"commonName": "Human",
@@ -787,6 +817,7 @@ class TestUtils:
                                          "speciesTaxonomyId": 9606,
                                          "taxonomyId": 9606,
                                          "scientificParlanceName": "homo_sapiens"},
+                            "relatedAssembliesCount": 3,
                             "release": {"isCurrent": True,
                                         "releaseDate": "2023-05-15",
                                         "releaseLabel": "Beta Release 1",
@@ -821,6 +852,9 @@ class TestUtils:
                                         "assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
                                         "level": "chromosome",
                                         "name": "IWGSC"},
+                           # "attributesInfo": {},
+                           "attributesInfo": {"assemblyDate": "2013-12",
+                                              "assemblyLevel": "chromosome"},
                            "created": "2023-05-12 13:32:36",
                            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
                            "organism": {"commonName": "Triticum aestivum",
@@ -831,6 +865,7 @@ class TestUtils:
                                         "speciesTaxonomyId": 4565,
                                         "taxonomyId": 4565,
                                         "strain": "reference (Chinese spring)"},
+                           "relatedAssembliesCount": 1,
                            "release": {"isCurrent": True,
                                        "releaseDate": "2023-05-15",
                                        "releaseLabel": "Beta Release 1",
@@ -860,16 +895,18 @@ class TestUtils:
                                         "assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
                                         "level": "chromosome",
                                         "name": "IWGSC"},
+                           "attributesInfo": {},
                            "created": "2023-05-12 13:32:36",
                            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
                            "organism": {"commonName": "Triticum aestivum",
                                         "ensemblName": "Triticum_aestivum",
-                                        "speciesTaxonomyId": 4565,
-                                        "taxonomyId": 4565,
                                         "organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
                                         "scientificName": "Triticum aestivum",
                                         "scientificParlanceName": "triticum_aestivum",
+                                        "speciesTaxonomyId": 4565,
+                                        "taxonomyId": 4565,
                                         "strain": "reference (Chinese spring)"},
+                           "relatedAssembliesCount": 1,
                            "release": {"isCurrent": True,
                                        "releaseDate": "2023-05-15",
                                        "releaseLabel": "Beta Release 1",
@@ -909,55 +946,3 @@ class TestUtils:
         # and pick up the first element to check if it matches the expected output
         # I picked up only the first element for the sake of shortening the code
         assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
-
-    def test_get_info_by_assembly_uuid(self, genome_db_conn):
-        output = json_format.MessageToJson(utils.get_info_by_assembly_uuid(
-            db_conn=genome_db_conn,
-            assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e",
-            release_version=None
-        ))
-        expected_output = {
-          "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
-          "assembly": {
-            "accession": "GCA_000001405.28",
-            "name": "GRCh38.p13",
-            "ucscName": "hg38",
-            "level": "chromosome",
-            "ensemblName": "GRCh38.p13",
-            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-            "isReference": True
-          },
-          "organism": {
-            "commonName": "Human",
-            "scientificName": "Homo sapiens",
-            "ensemblName": "Homo_sapiens",
-            "scientificParlanceName": "homo_sapiens",
-            "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
-            "taxonomyId": 9606,
-            "speciesTaxonomyId": 9606
-          },
-          "created": "2023-05-12 13:30:58",
-          "attributesInfo": {
-            "assemblyLevel": "chromosome",
-            "assemblyDate": "2013-12"
-          },
-          "relatedAssembliesCount": 3,
-          "release": {
-            "releaseVersion": 108.0,
-            "releaseDate": "2023-05-15",
-            "releaseLabel": "Beta Release 1",
-            "isCurrent": True,
-            "siteName": "Ensembl",
-            "siteLabel": "Ensembl Genome Browser",
-            "siteUri": "https://beta.ensembl.org"
-          }
-        }
-        assert json.loads(output) == expected_output
-
-    def test_get_info_by_assembly_uuid_fake_release(self, genome_db_conn):
-        output = json_format.MessageToJson(utils.get_info_by_assembly_uuid(
-            db_conn=genome_db_conn,
-            assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e",
-            release_version=11
-        ))
-        assert json.loads(output) == {}

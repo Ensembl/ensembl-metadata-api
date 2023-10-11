@@ -34,9 +34,25 @@ class TestClass:
 
     def test_create_genome(self, multi_dbs, genome_db_conn):
         """Test service.create_genome function"""
-        input_data = genome_db_conn.fetch_genomes(
+        genome_input_data = genome_db_conn.fetch_genomes(
             genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
         )
+        # Make sure we are only getting one
+        assert len(genome_input_data) == 1
+
+        attrib_input_data = genome_db_conn.fetch_genome_datasets(
+            genome_uuid=genome_input_data[0].Genome.genome_uuid,
+            dataset_attributes=True
+        )
+        # 11 attributes
+        assert len(attrib_input_data) == 11
+
+        related_assemblies_input_count = genome_db_conn.fetch_organisms_group_counts(
+            species_taxonomy_id=genome_input_data[0].Organism.species_taxonomy_id
+        )[0].count
+        # There are three related assemblies
+        assert related_assemblies_input_count == 3
+
         expected_output = {
           "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
           "assembly": {
@@ -53,6 +69,10 @@ class TestClass:
             "scientificName": "Homo sapiens"
           },
           "created": "2023-05-12 13:30:58",
+          "attributesInfo": {
+            "assemblyLevel": "chromosome",
+            "assemblyDate": "2013-12"
+          },
           "organism": {
             "commonName": "Human",
             "ensemblName": "Homo_sapiens",
@@ -62,6 +82,7 @@ class TestClass:
             "speciesTaxonomyId": 9606,
             "taxonomyId": 9606
           },
+          "relatedAssembliesCount": 3,
           "release": {
             "releaseVersion": 108.0,
             "releaseDate": "2023-05-15",
@@ -73,7 +94,13 @@ class TestClass:
           }
         }
 
-        output = json_format.MessageToJson(utils.create_genome(input_data[0]))
+        output = json_format.MessageToJson(
+            utils.create_genome(
+                data=genome_input_data[0],
+                attributes=attrib_input_data,
+                count=related_assemblies_input_count
+            )
+        )
         assert json.loads(output) == expected_output
 
     def test_create_assembly_info(self, multi_dbs, genome_db_conn):
@@ -231,71 +258,4 @@ class TestClass:
                 release_version=None
             )
         )
-        assert json.loads(output) == expected_result
-
-    def test_create_genome_info(self, genome_db_conn):
-        genome_input_data = genome_db_conn.fetch_genomes(
-            assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e"
-        )
-        # Make sure we are only getting one
-        assert len(genome_input_data) == 1
-
-        attrib_input_data = genome_db_conn.fetch_genome_datasets(
-            genome_uuid=genome_input_data[0].Genome.genome_uuid,
-            dataset_attributes=True
-        )
-        # 11 attributes
-        assert len(attrib_input_data) == 11
-
-        related_assemblies_input_count = genome_db_conn.fetch_organisms_group_counts(
-            species_taxonomy_id=genome_input_data[0].Organism.species_taxonomy_id
-        )[0].count
-        # There are three related assemblies
-        assert related_assemblies_input_count == 3
-
-        expected_result = {
-          "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
-          "assembly": {
-            "accession": "GCA_000001405.28",
-            "name": "GRCh38.p13",
-            "ucscName": "hg38",
-            "level": "chromosome",
-            "ensemblName": "GRCh38.p13",
-            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-            "isReference": True
-          },
-          "organism": {
-            "commonName": "Human",
-            "scientificName": "Homo sapiens",
-            "ensemblName": "Homo_sapiens",
-            "scientificParlanceName": "homo_sapiens",
-            "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
-            "taxonomyId": 9606,
-            "speciesTaxonomyId": 9606
-          },
-          "created": "2023-05-12 13:30:58",
-          "attributesInfo": {
-            "assemblyLevel": "chromosome",
-            "assemblyDate": "2013-12"
-          },
-          "relatedAssembliesCount": 3,
-          "release": {
-            "releaseVersion": 108.0,
-            "releaseDate": "2023-05-15",
-            "releaseLabel": "Beta Release 1",
-            "isCurrent": True,
-            "siteName": "Ensembl",
-            "siteLabel": "Ensembl Genome Browser",
-            "siteUri": "https://beta.ensembl.org"
-          }
-        }
-
-        output = json_format.MessageToJson(
-            utils.create_genome_info(
-                data=genome_input_data[0],
-                attributes=attrib_input_data,
-                count=related_assemblies_input_count
-            )
-        )
-
         assert json.loads(output) == expected_result
