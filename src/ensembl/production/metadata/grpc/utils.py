@@ -47,7 +47,7 @@ def get_karyotype_information(db_conn, genome_uuid):
     return create_karyotype()
 
 
-def get_top_level_statistics(db_conn, organism_uuid):
+def get_top_level_statistics(db_conn, organism_uuid, group):
     if organism_uuid is None:
         return create_top_level_statistics()
 
