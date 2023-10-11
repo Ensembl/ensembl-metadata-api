@@ -383,3 +383,19 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
 def get_organisms_group_count(db_conn, release_version):
     count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
     return create_organisms_group_count(count_result, release_version)
+
+
+def get_genome_uuid_by_tag(db_conn, genome_tag):
+    if genome_tag is None:
+        return create_genome_uuid()
+
+    genome_uuid_result = db_conn.fetch_genomes(
+        genome_tag=genome_tag,
+        allow_unreleased=cfg.allow_unreleased
+    )
+
+    if len(genome_uuid_result) == 1:
+        return create_genome_uuid(
+            {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
+        )
+    return create_genome_uuid()
