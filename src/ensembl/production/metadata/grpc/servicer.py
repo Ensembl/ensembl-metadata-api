@@ -31,7 +31,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetGenomesByAssemblyAccessionID(self, request, context):
         return get_genomes_from_assembly_accession_iterator(
-            self.db, request.assembly_accession
+            self.db, request.assembly_accession, request.release_version
         )
 
     def GetSubSpeciesInformation(self, request, context):
