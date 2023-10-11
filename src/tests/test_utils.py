@@ -54,7 +54,7 @@ class TestUtils:
         output = [
             json.loads(json_format.MessageToJson(response)) for response in
             utils.get_genomes_from_assembly_accession_iterator(
-                db_conn=genome_db_conn, assembly_accession="GCA_000005845.2"
+                db_conn=genome_db_conn, assembly_accession="GCA_000005845.2", release_version=None
             )
         ]
 
@@ -97,14 +97,23 @@ class TestUtils:
         ]
         assert output == expected_output
 
-    def test_get_genomes_from_assembly_accession_iterator_null(self, genome_db_conn):
-        output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_from_assembly_accession_iterator(genome_db_conn, None)]
-        assert output == []
 
-    def test_get_genomes_from_assembly_accession_iterator_no_matches(self, genome_db_conn):
-        output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_from_assembly_accession_iterator(genome_db_conn, "asdfasdfadf")]
+    @pytest.mark.parametrize(
+        "assembly_accession, release_version",
+        [
+            # null
+            (None, None),
+            # no matches
+            ("asdfasdfadf", None),
+        ]
+    )
+    def test_get_genomes_from_assembly_accession_iterator_null(self, genome_db_conn, assembly_accession, release_version):
+        output = [
+            json.loads(json_format.MessageToJson(response)) for response in
+            utils.get_genomes_from_assembly_accession_iterator(
+                db_conn=genome_db_conn, assembly_accession=assembly_accession, release_version=release_version
+            )
+        ]
         assert output == []
 
     # TODO: Ask Daniel / Investigate why organism_group_member test table is not populated

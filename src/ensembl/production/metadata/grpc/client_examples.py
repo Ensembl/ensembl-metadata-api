@@ -238,8 +238,7 @@ def get_karyotype_information(stub):
 
 def get_top_level_statistics(stub):
     request1 = OrganismIDRequest(
-        organism_uuid="86dd50f1-421e-4829-aca5-13ccc9a459f6",
-        group="EnsemblPlants"
+        organism_uuid="86dd50f1-421e-4829-aca5-13ccc9a459f6"
     )
     releases1 = stub.GetTopLevelStatistics(request1)
     print("**** Top level statistics ****")
