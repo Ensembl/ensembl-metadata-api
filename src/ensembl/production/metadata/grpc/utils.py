@@ -18,7 +18,7 @@ from ensembl.production.metadata.api.genome import GenomeAdaptor
 from ensembl.production.metadata.api.release import ReleaseAdaptor
 
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
-    create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly, create_species, \
+    create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
     create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, \
     create_genome_assembly_sequence_region, create_organisms_group_count
@@ -102,18 +102,37 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
 
 def get_assembly_information(db_conn, assembly_uuid):
     if assembly_uuid is None:
-        return create_assembly()
+        return create_assembly_info()
 
     assembly_results = db_conn.fetch_sequences(
         assembly_uuid=assembly_uuid
     )
     if len(assembly_results) > 0:
-        return create_assembly(assembly_results[0])
+        return create_assembly_info(assembly_results[0])
 
-    return create_assembly()
+    return create_assembly_info()
 
 
-def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
+def create_genome_with_attributes_and_count(db_conn, genome, release_version):
+    # we fetch attributes related to that genome
+    attrib_data_results = db_conn.fetch_genome_datasets(
+        genome_uuid=genome.Genome.genome_uuid,
+        release_version=release_version,
+        dataset_attributes=True
+    )
+    # fetch related assemblies count
+    related_assemblies_count = db_conn.fetch_organisms_group_counts(
+        species_taxonomy_id=genome.Organism.species_taxonomy_id
+    )[0].count
+
+    return create_genome(
+        data=genome,
+        attributes=attrib_data_results,
+        count=related_assemblies_count
+    )
+
+
+def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, release_version):
     if assembly_accession is None:
         return create_genome()
 
@@ -122,8 +141,9 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
         allow_unreleased=cfg.allow_unreleased
     )
     for genome in genome_results:
-        yield create_genome(genome)
-
+        yield create_genome_with_attributes_and_count(
+            db_conn=db_conn, genome=genome, release_version=release_version
+        )
 
 def get_species_information(db_conn, genome_uuid):
     if genome_uuid is None:
@@ -204,6 +224,7 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     if genome_uuid is None:
         return create_genome()
 
+    # We first get the genome info
     genome_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
         release_version=release_version,
@@ -211,7 +232,10 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     )
 
     if len(genome_results) == 1:
-        return create_genome(genome_results[0])
+        return create_genome_with_attributes_and_count(
+            db_conn=db_conn, genome=genome_results[0], release_version=release_version
+        )
+
     return create_genome()
 
 
@@ -237,7 +261,9 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
             most_recent_genomes.append(most_recent_genome)
 
         for genome_row in most_recent_genomes:
-            yield create_genome(genome_row)
+            yield create_genome_with_attributes_and_count(
+                db_conn=db_conn, genome=genome_row, release_version=release_version
+            )
 
         return create_genome()
 
@@ -253,7 +279,10 @@ def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
         allow_unreleased=cfg.allow_unreleased
     )
     if len(genome_results) == 1:
-        return create_genome(genome_results[0])
+        return create_genome_with_attributes_and_count(
+            db_conn=db_conn, genome=genome_results[0], release_version=release_version
+        )
+
     return create_genome()
 
 

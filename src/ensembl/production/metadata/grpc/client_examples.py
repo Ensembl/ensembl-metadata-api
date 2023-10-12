@@ -249,7 +249,7 @@ def get_top_level_statistics(stub):
 
 def get_top_level_statistics_by_uuid(stub):
     genome_request = GenomeUUIDRequest(
-        genome_uuid="9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1"
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
     )
     toplevel_stats_by_uuid_request = stub.GetTopLevelStatisticsByUUID(genome_request)
     print("**** Top level statistics by UUID ****")

@@ -90,7 +90,9 @@ message Genome {
   Taxon taxon = 3;
   string created = 4;
   Organism organism = 5;
-  Release release = 6;
+  AttributesInfo attributes_info = 6;
+  int32 related_assemblies_count = 7;
+  Release release = 8;
 }
 
 message Karyotype {
@@ -161,7 +163,8 @@ message Assembly {
   string ucsc_name = 3;
   string level = 4;
   string ensembl_name = 5;
-  string tol_id = 6;
+  string assembly_uuid = 6;
+  bool is_reference = 7;
 }
 
 /*
@@ -194,6 +197,28 @@ message Organism {
   string ensembl_name = 4;
   string scientific_parlance_name = 5;
   string organism_uuid = 6;
+  string strain_type = 7;
+  int32 taxonomy_id = 8;
+  int32 species_taxonomy_id = 9;
+}
+
+message Attribute {
+  string name = 1;
+  string label = 2;
+  string description = 3;
+  string type = 4;
+}
+
+message AttributesInfo {
+  string genebuild_method = 1;
+  string genebuild_last_geneset_update = 2;
+  string genebuild_version = 3;
+  string annotation_provider_name = 4;
+  string annotation_provider_url = 5;
+  string assembly_level = 6;
+  string assembly_date = 7;
+  string sample_gene_param = 8;
+  string sample_location_param = 9;
 }
 
 /*
@@ -283,6 +308,7 @@ message OrganismsGroupCount {
   double release_version = 2;
 }
 
+
 /*
 The messages below are used to request data - required-ness is not enforced
 by protocol buffers, but in practice some fields are mandatory in order to
@@ -321,7 +347,8 @@ message GenomeNameRequest {
 Assembly ID filter
  */
 message AssemblyIDRequest {
-  string assembly_uuid = 1; // Mandatory
+  string assembly_uuid = 1;    // Mandatory
+  double release_version = 2;  // Optional
 }
 
 /*
@@ -329,6 +356,7 @@ Assembly ID filter
  */
 message AssemblyAccessionIDRequest {
   string assembly_accession = 1; // Mandatory
+  double release_version = 2;  // Optional
 }
 
 message OrganismIDRequest {
