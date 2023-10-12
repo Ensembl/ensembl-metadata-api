@@ -228,3 +228,27 @@ class TestClass:
             )
         )
         assert json.loads(output) == expected_result
+
+    @pytest.mark.parametrize(
+        "genome_tag, current_only, expected_output",
+        [
+            # url_name = GRCh38 => homo_sapien 38
+            ("GRCh38", True, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            # tol_id = mHomSap1 => homo_sapien 37
+            # I randomly picked up this tol_id, probably wrong (biologically speaking)
+            ("mHomSap1", False, {"genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"}),
+            # Null
+            ("iDontExist", False, {}),
+        ]
+    )
+    def test_create_genome_uuid(self, genome_db_conn, genome_tag, current_only, expected_output):
+        input_data = genome_db_conn.fetch_genomes(
+            genome_tag=genome_tag,
+            current_only=current_only
+        )
+
+        genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) == 1 else ""
+        output = json_format.MessageToJson(
+            utils.create_genome_uuid({"genome_uuid": genome_uuid})
+        )
+        assert json.loads(output) == expected_output

@@ -880,3 +880,20 @@ class TestUtils:
         # and pick up the first element to check if it matches the expected output
         # I picked up only the first element for the sake of shortening the code
         assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
+
+    @pytest.mark.parametrize(
+        "genome_tag, expected_output",
+        [
+            # url_name = GRCh38 => homo_sapien 38
+            ("GRCh38", {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            # Null
+            ("iDontExist", {}),
+        ]
+    )
+    def test_get_genome_uuid_by_tag(self, genome_db_conn, genome_tag, expected_output):
+        output = json_format.MessageToJson(
+            utils.get_genome_uuid_by_tag(
+                db_conn=genome_db_conn,
+                genome_tag=genome_tag,
+            ))
+        assert json.loads(output) == expected_output
