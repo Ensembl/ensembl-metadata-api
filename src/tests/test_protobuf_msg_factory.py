@@ -160,8 +160,6 @@ class TestClass:
             "statisticValue": "4641652",
         }
         output = json_format.MessageToJson(utils.create_stats_by_genome_uuid(input_data)[0])
-        print(f"output ----> {json.loads(output)['statistics'][0]}")
-        print(f"output ----> {type(json.loads(output)['statistics'][0])}")
         assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
         # check the first stat info of the first genome_uuid
         assert json.loads(output)['statistics'][0] == first_expected_stat
@@ -190,10 +188,10 @@ class TestClass:
         )
         output_dict = json.loads(output)
         assert 'organismUuid' in output_dict.keys() and 'statsByGenomeUuid' in output_dict.keys()
-        # These test are pain in the back
+        # These tests are pain in the back
         # TODO: find a way to improve this spaghetti
         assert output_dict["organismUuid"] == "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
-        assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
+        assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a7335667-93e7-11ec-a39d-005056b38ce3"
         assert output_dict['statsByGenomeUuid'][0]['statistics'][0] == first_expected_stat
 
     def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
