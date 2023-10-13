@@ -166,10 +166,10 @@ class TestClass:
             "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
             "statistics": [
                 {
-                    "label": "Contig N50",
-                    "name": "contig_n50",
+                    "label": "Total genome length",
+                    "name": "total_genome_length",
                     "statisticType": "bp",
-                    "statisticValue": "56413054"
+                    "statisticValue": "4641652"
                 }
             ]
         }

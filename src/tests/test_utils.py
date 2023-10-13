@@ -146,19 +146,18 @@ class TestUtils:
             )
         )
         output = json.loads(output)
-        # TODO: set it to 51 instead of 402 once the latest API changes (PR#43) are merged to main
-        assert len(output["statistics"]) == 402
+        assert len(output["statistics"]) == 51
         assert output["statistics"][0] == {
             "label": "Contig N50",
             "name": "contig_n50",
             "statisticType": "bp",
-            "statisticValue": "56413054",
+            "statisticValue": "51842",
         }
         assert output["statistics"][1] == {
             "label": "Total genome length",
             "name": "total_genome_length",
             "statisticType": "bp",
-            "statisticValue": "3272116950",
+            "statisticValue": "14547261565",
         }
 
     def test_get_top_level_statistics_by_uuid(self, genome_db_conn):
