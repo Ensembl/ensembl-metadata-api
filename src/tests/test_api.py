@@ -397,4 +397,31 @@ class TestMetadataDB:
         assert len(output_to_list) == output_count
         assert output_to_list[0][0]['genome'].Genome.genome_uuid == expected_genome_uuid
 
+    @pytest.mark.parametrize(
+        "genome_tag, current_only, expected_output",
+        [
+            # url_name = GRCh38 => homo_sapien 38
+            ("GRCh38", True, "a7335667-93e7-11ec-a39d-005056b38ce3"),
+            # tol_id = mHomSap1 => homo_sapien 37
+            # I randomly picked up this tol_id, probably wrong (biologically speaking)
+            ("mHomSap1", False, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
+        ]
+    )
+    def test_fetch_genome_uuid_by_tag(self, multi_dbs, genome_tag, current_only, expected_output):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genomes(
+            genome_tag=genome_tag,
+            current_only=current_only,
+            allow_unreleased=False,
+        )
+        assert len(test) == 1
+        assert test[0].Genome.genome_uuid == expected_output
 
+    def test_fetch_genome_uuid_by_tag_empty(self, multi_dbs):
+        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+        test = conn.fetch_genomes(
+            genome_tag="iDontExist"
+        )
+        assert len(test) == 0
