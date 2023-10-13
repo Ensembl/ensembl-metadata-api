@@ -145,6 +145,27 @@ class TestClass:
         output = json_format.MessageToJson(utils.create_species(species_input_data[0], taxo_results[tax_id]))
         assert json.loads(output) == expected_output
 
+    def test_create_stats_by_genome_uuid(self, genome_db_conn):
+        organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
+        input_data = genome_db_conn.fetch_genome_datasets(
+            organism_uuid=organism_uuid,
+            dataset_attributes=True,
+            dataset_name="all"
+        )
+
+        first_expected_stat = {
+            "name": "total_genome_length",
+            "label": "Total genome length",
+            "statisticType": "bp",
+            "statisticValue": "4641652",
+        }
+        output = json_format.MessageToJson(utils.create_stats_by_genome_uuid(input_data)[0])
+        print(f"output ----> {json.loads(output)['statistics'][0]}")
+        print(f"output ----> {type(json.loads(output)['statistics'][0])}")
+        assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
+        # check the first stat info of the first genome_uuid
+        assert json.loads(output)['statistics'][0] == first_expected_stat
+
     def test_create_top_level_statistics(self, multi_dbs, genome_db_conn):
         organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
         input_data = genome_db_conn.fetch_genome_datasets(
@@ -153,34 +174,27 @@ class TestClass:
             dataset_name="all"
         )
 
-        statistics = []
-        # getting just the first element
-        statistics.append({
-            'name': input_data[0].Attribute.name,
-            'label': input_data[0].Attribute.label,
-            'statistic_type': input_data[0].Attribute.type,
-            'statistic_value': input_data[0].DatasetAttribute.value
-        })
-
-        expected_output = {
-            "organismUuid": "21279e3e-e651-43e1-a6fc-79e390b9e8a8",
-            "statistics": [
-                {
-                    "label": "Contig N50",
-                    "name": "contig_n50",
-                    "statisticType": "bp",
-                    "statisticValue": "56413054"
-                }
-            ]
+        first_expected_stat = {
+            "name": "total_genome_length",
+            "label": "Total genome length",
+            "statisticType": "bp",
+            "statisticValue": "4641652",
         }
+        stats_by_genome_uuid = utils.create_stats_by_genome_uuid(input_data)
 
         output = json_format.MessageToJson(
             utils.create_top_level_statistics({
                 'organism_uuid': organism_uuid,
-                'statistics': statistics
+                'stats_by_genome_uuid': stats_by_genome_uuid
             })
         )
-        assert json.loads(output) == expected_output
+        output_dict = json.loads(output)
+        assert 'organismUuid' in output_dict.keys() and 'statsByGenomeUuid' in output_dict.keys()
+        # These test are pain in the back
+        # TODO: find a way to improve this spaghetti
+        assert output_dict["organismUuid"] == "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
+        assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
+        assert output_dict['statsByGenomeUuid'][0]['statistics'][0] == first_expected_stat
 
     def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
         input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")

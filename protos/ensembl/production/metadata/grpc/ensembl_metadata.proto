@@ -128,26 +128,24 @@ message SubSpecies {
   repeated string species_name = 3;
 }
 
-message TopLevelStatistics {
-  string organism_uuid = 1;
-  message AttributeStatistics {
-    string name = 2;
-    string label = 3;
-    string statistic_type = 4;
-    string statistic_value = 5;
-  }
-  repeated AttributeStatistics statistics = 2;
+/*
+Statistics related objects.
+ */
+message AttributeStatistics {
+  string name = 1;
+  string label = 2;
+  string statistic_type = 3;
+  string statistic_value = 4;
 }
 
 message TopLevelStatisticsByUUID {
   string genome_uuid = 1;
-  message AttributeStatistics {
-    string name = 2;
-    string label = 3;
-    string statistic_type = 4;
-    string statistic_value = 5;
-  }
   repeated AttributeStatistics statistics = 2;
+}
+
+message TopLevelStatistics {
+  string organism_uuid = 1;
+  repeated TopLevelStatisticsByUUID stats_by_genome_uuid = 2;
 }
 
 /*
