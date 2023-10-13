@@ -191,7 +191,7 @@ class TestClass:
         # These tests are pain in the back
         # TODO: find a way to improve this spaghetti
         assert output_dict["organismUuid"] == "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
-        assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a7335667-93e7-11ec-a39d-005056b38ce3"
+        assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
         assert output_dict['statsByGenomeUuid'][0]['statistics'][0] == first_expected_stat
 
     def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
