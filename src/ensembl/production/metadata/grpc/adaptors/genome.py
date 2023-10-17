@@ -74,7 +74,7 @@ class GenomeAdaptor(BaseAdaptor):
 				taxids.append(taxid[0])
 		return taxids
 
-	def fetch_genomes(self, genome_id=None, genome_uuid=None, organism_uuid=None, assembly_uuid=None,
+	def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None, assembly_uuid=None,
 					  assembly_accession=None, assembly_name=None, use_default_assembly=False, ensembl_name=None,
 					  taxonomy_id=None, group=None, group_type=None, allow_unreleased=False, unreleased_only=False,
 					  site_name=None, release_type=None, release_version=None, current_only=True):
@@ -84,6 +84,7 @@ class GenomeAdaptor(BaseAdaptor):
 		Args:
 			genome_id (Union[int, List[int]]): The ID(s) of the genome(s) to fetch.
 			genome_uuid (Union[str, List[str]]): The UUID(s) of the genome(s) to fetch.
+			genome_tag (Union[str, List[str]]): genome_tag value is either in Assembly.url_name or told_id.
 			organism_uuid (Union[str, List[str]]): The UUID(s) of the organism(s) to fetch.
 			assembly_uuid (Union[str, List[str]]): The UUID(s) of the assembly(s) to fetch.
 			assembly_accession (Union[str, List[str]]): The assenbly accession of the assembly(s) to fetch.
@@ -121,6 +122,7 @@ class GenomeAdaptor(BaseAdaptor):
 		# Parameter validation
 		genome_id = check_parameter(genome_id)
 		genome_uuid = check_parameter(genome_uuid)
+		genome_tag = check_parameter(genome_tag)
 		organism_uuid = check_parameter(organism_uuid)
 		assembly_uuid = check_parameter(assembly_uuid)
 		assembly_accession = check_parameter(assembly_accession)
@@ -135,8 +137,8 @@ class GenomeAdaptor(BaseAdaptor):
 			Genome, Organism, Assembly
 		).select_from(Genome) \
 			.join(Organism, Organism.organism_id == Genome.organism_id) \
-			.join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
- \
+			.join(Assembly, Assembly.assembly_id == Genome.assembly_id)
+
 		# Apply group filtering if group parameter is provided
 		if group:
 			group_type = group_type if group_type else ['Division']
@@ -153,6 +155,14 @@ class GenomeAdaptor(BaseAdaptor):
 
 		if genome_uuid is not None:
 			genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
+
+		if genome_tag is not None:
+			genome_select = genome_select.filter(
+				db.or_(
+					Assembly.url_name.in_(genome_tag),
+					Assembly.tol_id.in_(genome_tag)
+				)
+			)
 
 		if organism_uuid is not None:
 			genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))

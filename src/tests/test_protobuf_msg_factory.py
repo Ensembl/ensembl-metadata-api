@@ -145,24 +145,24 @@ class TestClass:
 		output = json_format.MessageToJson(utils.create_species(species_input_data[0], taxo_results[tax_id]))
 		assert json.loads(output) == expected_output
 
-    def test_create_stats_by_genome_uuid(self, genome_db_conn):
-        organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
-        input_data = genome_db_conn.fetch_genome_datasets(
-            organism_uuid=organism_uuid,
-            dataset_attributes=True,
-            dataset_name="all"
-        )
+	def test_create_stats_by_genome_uuid(self, genome_db_conn):
+		organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
+		input_data = genome_db_conn.fetch_genome_datasets(
+			organism_uuid=organism_uuid,
+			dataset_attributes=True,
+			dataset_name="all"
+		)
 
-        first_expected_stat = {
-            "name": "total_genome_length",
-            "label": "Total genome length",
-            "statisticType": "bp",
-            "statisticValue": "4641652",
-        }
-        output = json_format.MessageToJson(utils.create_stats_by_genome_uuid(input_data)[0])
-        assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
-        # check the first stat info of the first genome_uuid
-        assert json.loads(output)['statistics'][0] == first_expected_stat
+		first_expected_stat = {
+			'label': 'Average CDS length',
+			'name': 'average_cds_length',
+			'statisticType': 'bp',
+			'statisticValue': '938.55'
+		}
+		output = json_format.MessageToJson(utils.create_stats_by_genome_uuid(input_data)[0])
+		assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
+		# check the first stat info of the first genome_uuid
+		assert json.loads(output)['statistics'][0] == first_expected_stat
 
 	def test_create_top_level_statistics(self, multi_dbs, genome_db_conn):
 		organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
@@ -172,27 +172,27 @@ class TestClass:
 			dataset_name="all"
 		)
 
-        first_expected_stat = {
-            "name": "total_genome_length",
-            "label": "Total genome length",
-            "statisticType": "bp",
-            "statisticValue": "4641652",
-        }
-        stats_by_genome_uuid = utils.create_stats_by_genome_uuid(input_data)
+		first_expected_stat = {
+			'label': 'Average CDS length',
+			'name': 'average_cds_length',
+			'statisticType': 'bp',
+			'statisticValue': '938.55'
+		}
+		stats_by_genome_uuid = utils.create_stats_by_genome_uuid(input_data)
 
 		output = json_format.MessageToJson(
 			utils.create_top_level_statistics({
 				'organism_uuid': organism_uuid,
-                'stats_by_genome_uuid': stats_by_genome_uuid
+				'stats_by_genome_uuid': stats_by_genome_uuid
 			})
 		)
-        output_dict = json.loads(output)
-        assert 'organismUuid' in output_dict.keys() and 'statsByGenomeUuid' in output_dict.keys()
-        # These tests are pain in the back
-        # TODO: find a way to improve this spaghetti
-        assert output_dict["organismUuid"] == "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
-        assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
-        assert output_dict['statsByGenomeUuid'][0]['statistics'][0] == first_expected_stat
+		output_dict = json.loads(output)
+		assert 'organismUuid' in output_dict.keys() and 'statsByGenomeUuid' in output_dict.keys()
+		# These tests are pain in the back
+		# TODO: find a way to improve this spaghetti
+		assert output_dict["organismUuid"] == "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
+		assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
+		assert output_dict['statsByGenomeUuid'][0]['statistics'][0] == first_expected_stat
 
 	def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
 		input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
@@ -272,26 +272,26 @@ class TestClass:
 		)
 		assert json.loads(output) == expected_result
 
-    @pytest.mark.parametrize(
-        "genome_tag, current_only, expected_output",
-        [
-            # url_name = GRCh38 => homo_sapien 38
-            ("GRCh38", True, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-            # tol_id = mHomSap1 => homo_sapien 37
-            # I randomly picked up this tol_id, probably wrong (biologically speaking)
-            ("mHomSap1", False, {"genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"}),
-            # Null
-            ("iDontExist", False, {}),
-        ]
-    )
-    def test_create_genome_uuid(self, genome_db_conn, genome_tag, current_only, expected_output):
-        input_data = genome_db_conn.fetch_genomes(
-            genome_tag=genome_tag,
-            current_only=current_only
-        )
+	@pytest.mark.parametrize(
+		"genome_tag, current_only, expected_output",
+		[
+			# url_name = GRCh38 => homo_sapien 38
+			("GRCh38", True, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+			# tol_id = mHomSap1 => homo_sapien 37
+			# I randomly picked up this tol_id, probably wrong (biologically speaking)
+			("GRCh37", False, {"genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"}),
+			# Null
+			("iDontExist", False, {}),
+		]
+	)
+	def test_create_genome_uuid(self, genome_db_conn, genome_tag, current_only, expected_output):
+		input_data = genome_db_conn.fetch_genomes(
+			genome_tag=genome_tag,
+			current_only=current_only
+		)
 
-        genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) == 1 else ""
-        output = json_format.MessageToJson(
-            utils.create_genome_uuid({"genome_uuid": genome_uuid})
-        )
-        assert json.loads(output) == expected_output
+		genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) == 1 else ""
+		output = json_format.MessageToJson(
+			utils.create_genome_uuid({"genome_uuid": genome_uuid})
+		)
+		assert json.loads(output) == expected_output
