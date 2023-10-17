@@ -14,8 +14,8 @@ from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 
 from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
 
-from ensembl.production.metadata.api.genome import GenomeAdaptor
-from ensembl.production.metadata.api.release import ReleaseAdaptor
+from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
+from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
     create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly_info, create_species, \

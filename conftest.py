@@ -14,8 +14,8 @@ import os
 import pytest
 import sqlalchemy as db
 
-from ensembl.production.metadata.api.genome import GenomeAdaptor
-from ensembl.production.metadata.api.release import ReleaseAdaptor
+from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
+from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 
 pytest_plugins = ("ensembl.plugins.pytest_unittest",)
 
