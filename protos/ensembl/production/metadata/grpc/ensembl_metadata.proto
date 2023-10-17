@@ -74,6 +74,10 @@ service EnsemblMetadata {
 
   // Retrieve organisms group count
   rpc GetOrganismsGroupCount(OrganismsGroupRequest) returns (OrganismsGroupCount) {}
+
+  // Retrieve genome UUID by genome_tag.
+  // genome_tag value will be either in assembly.url_name or tol_id column
+  rpc GetGenomeUUIDByTag(GenomeTagRequest) returns (GenomeUUID) {}
 }
 
 /*
@@ -424,4 +428,11 @@ Organisms group count request
  */
 message OrganismsGroupRequest {
   double release_version = 1; // Optional
+}
+
+/*
+Genome Tag request
+ */
+message GenomeTagRequest {
+  string genome_tag = 1; // Mandatory
 }
