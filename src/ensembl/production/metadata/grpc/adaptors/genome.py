@@ -457,7 +457,7 @@ class GenomeAdaptor(BaseAdaptor):
 				.join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
 				.join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
 				.join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id).order_by(
-				Genome.genome_uuid)
+				Genome.genome_uuid, Dataset.dataset_uuid)
 
 			# set default group topic as 'assembly' to fetch unique datasource
 			if not dataset_name:

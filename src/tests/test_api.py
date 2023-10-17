@@ -259,7 +259,7 @@ class TestMetadataDB:
 			# nothing specified + allow_unreleased -> fetches everything
 			(None, None, True, False, "6e82999b-7a8c-429c-a2af-8d77a59a2e81", 33),
 			# specifying genome_uuid
-			("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "b4ff55e3-d06a-4772-bb13-81c3207669e3", 5),
+			("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "0dc05c6e-2910-4dbd-879a-719ba97d5824", 5),
 			# specifying dataset_uuid
 			(None, "0dc05c6e-2910-4dbd-879a-719ba97d5824", False, False, "0dc05c6e-2910-4dbd-879a-719ba97d5824", 1),
 			# fetch unreleased datasets only
