@@ -13,14 +13,11 @@ import re
 from collections import defaultdict
 import sqlalchemy as db
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
-    SeqRegionSynonym, AttribType, ExternalDb
-from sqlalchemy import select, func
+    SeqRegionSynonym, AttribType
+from sqlalchemy import select
 from sqlalchemy import or_
-from sqlalchemy.orm import aliased
 from ensembl.database import DBConnection
 from sqlalchemy.exc import NoResultFound
-from ensembl.production.metadata.api.genome import GenomeAdaptor
-from ensembl.production.metadata.api.dataset import DatasetAdaptor
 from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
 import logging
@@ -86,8 +83,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             self.genebuild_dataset, self.genebuild_dataset_attributes, \
                 genebuild_status = self.new_genebuild(species_id, meta_session, db_uri, self.dataset_source)
 
-            conn = DatasetAdaptor(metadata_uri=metadata_uri)
-            genebuild_release_status = conn.check_release_status(self.genebuild_dataset.dataset_uuid)
+            genebuild_release_status = check_release_status(DBConnection(metadata_uri), self.genebuild_dataset.dataset_uuid)
 
             if organism_status == "New":
                 logging.info('New organism')
@@ -177,7 +173,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         """
         Get an existing Organism instance or create a new one, depending on the information from the metadata database.
         """
-
+        dbc = DBConnection(taxonomy_uri)
         # Fetch the Ensembl name of the organism from metadata using either 'species.ensembl_name'
         # or 'species.production_name' as the key.
         ensembl_name = self.get_meta_single_meta_key(species_id, "organism.ensembl_name")
@@ -186,11 +182,17 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
         common_name = self.get_meta_single_meta_key(species_id, "species.common_name")
+        from ensembl.ncbi_taxonomy.api.utils import Taxonomy
         if common_name is None:
             taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
-            temp_adapt = GenomeAdaptor(metadata_uri, taxonomy_uri)
-            names = temp_adapt.fetch_taxonomy_names(taxid)
-            common_name = names[taxid]["genbank_common_name"]
+
+            with dbc.session_scope() as session:
+                # temp_adapt = GenomeAdaptor(metadata_uri, taxonomy_uri)
+                taxon = Taxonomy.fetch_node_by_id(session, taxid)
+                result = dict(taxon)
+                names = result.name_node_join.get('the right name class')
+                # TODO fetch name from taxonomy Entity.
+                common_name = names[taxid]["genbank_common_name"]
         # Instantiate a new Organism object using data fetched from metadata.
         new_organism = Organism(
             species_taxonomy_id=self.get_meta_single_meta_key(species_id, "species.species_taxonomy_id"),
@@ -220,11 +222,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # If no existing Organism is found, conduct additional checks before creating a new one.
 
             # Check if the new organism's taxonomy ID exists in the taxonomy database.
-            conn = GenomeAdaptor(metadata_uri=metadata_uri, taxonomy_uri=taxonomy_uri)
-            try:
-                conn.fetch_taxonomy_names(taxonomy_ids=new_organism.taxonomy_id)
-            except NoResultFound:
-                raise Exception("taxid not found in taxonomy database for scientific name")
+            with dbc.session_scope() as session:
+                try:
+                    Taxonomy.fetch_node_by_id(session, new_organism.taxonomy_id)
+                except NoResultFound:
+                    raise RuntimeError(f"taxon id {new_organism.taxonomy_id} not found in taxonomy database for scientific name")
 
             # Check if an Assembly with the same accession already exists in the metadata database.
             accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
