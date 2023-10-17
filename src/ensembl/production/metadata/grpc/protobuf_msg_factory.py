@@ -27,13 +27,47 @@ def create_species(species_data=None, taxo_info=None):
     return species
 
 
+def create_stats_by_genome_uuid(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.TopLevelStatisticsByUUID()
+
+    # list of TopLevelStatisticsByUUID (see the proto file)
+    genome_uuid_stats = []
+    # this dict will help us group stats by genome_uuid, protobuf is pain in the back...
+    # it won't let us do that while constructing the object
+    statistics = {}
+    for result in data:
+        # start creating a dictionary with genome_uuid as key and stats as value list
+        if result.Genome.genome_uuid not in list(statistics.keys()):
+            statistics[result.Genome.genome_uuid] = []
+
+        one_stat = ensembl_metadata_pb2.AttributeStatistics(
+            name=result.Attribute.name,
+            label=result.Attribute.label,
+            statistic_type=result.Attribute.type,
+            statistic_value=result.DatasetAttribute.value
+        )
+        statistics[result.Genome.genome_uuid].append(one_stat)
+
+    # now we can construct the object after having everything in statistics grouped by genome_uuid
+    for genome_uuid in list(statistics.keys()):
+        genome_uuid_stat = ensembl_metadata_pb2.TopLevelStatisticsByUUID()
+        genome_uuid_stat.genome_uuid = genome_uuid
+        for stat in statistics[genome_uuid]:
+            genome_uuid_stat.statistics.append(stat)
+
+        genome_uuid_stats.append(genome_uuid_stat)
+
+    return genome_uuid_stats
+
+
 def create_top_level_statistics(data=None):
     if data is None:
         return ensembl_metadata_pb2.TopLevelStatistics()
 
     species = ensembl_metadata_pb2.TopLevelStatistics(
         organism_uuid=data["organism_uuid"],
-        statistics=data["statistics"],
+        stats_by_genome_uuid=data["stats_by_genome_uuid"],
     )
     return species
 

@@ -113,6 +113,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupCount.FromString,
                 )
+        self.GetGenomeUUIDByTag = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetGenomeUUIDByTag',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeTagRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
+                )
 
 
 class EnsemblMetadataServicer(object):
@@ -255,6 +260,14 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetGenomeUUIDByTag(self, request, context):
+        """Retrieve genome UUID by genome_tag.
+        genome_tag value will be either in assembly.url_name or tol_id column
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_EnsemblMetadataServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -352,6 +365,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetOrganismsGroupCount,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupCount.SerializeToString,
+            ),
+            'GetGenomeUUIDByTag': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetGenomeUUIDByTag,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeTagRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -687,5 +705,22 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetOrganismsGroupCount',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismsGroupCount.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetGenomeUUIDByTag(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeUUIDByTag',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeTagRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
