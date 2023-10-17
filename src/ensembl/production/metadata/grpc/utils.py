@@ -14,14 +14,14 @@ from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 
 from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
 
-from ensembl.production.metadata.api.genome import GenomeAdaptor
-from ensembl.production.metadata.api.release import ReleaseAdaptor
+from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
+from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
     create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
     create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, \
-    create_genome_assembly_sequence_region, create_organisms_group_count
+    create_genome_assembly_sequence_region, create_organisms_group_count, create_stats_by_genome_uuid
 
 
 def connect_to_db():
@@ -57,18 +57,11 @@ def get_top_level_statistics(db_conn, organism_uuid, group):
         dataset_attributes=True
     )
 
-    statistics = []
     if len(stats_results) > 0:
-        for result in stats_results:
-            statistics.append({
-                    'name': result.Attribute.name,
-                    'label': result.Attribute.label,
-                    'statistic_type': result.Attribute.type,
-                    'statistic_value': result.DatasetAttribute.value
-                })
+        stats_by_genome_uuid = create_stats_by_genome_uuid(stats_results)
         return create_top_level_statistics({
             'organism_uuid': organism_uuid,
-            'statistics': statistics
+            'stats_by_genome_uuid': stats_by_genome_uuid
         })
 
     return create_top_level_statistics()
