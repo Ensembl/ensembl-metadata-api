@@ -83,6 +83,6 @@ class TestUpdater:
                 (Dataset.version == 1) & (Dataset.name == 'genebuild')
             ).first()
             assert dataset is not None
-            assert re.match(".*core_4", dataset.dataset_source.name)
+            assert re.match(".*_core_4", dataset.dataset_source.name)
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
