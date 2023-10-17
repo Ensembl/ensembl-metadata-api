@@ -163,6 +163,8 @@ message Assembly {
   string ensembl_name = 5;
   string assembly_uuid = 6;
   bool is_reference = 7;
+  string url_name = 8;
+  string tol_id = 9;
 }
 
 /*
@@ -217,6 +219,8 @@ message AttributesInfo {
   string assembly_date = 7;
   string sample_gene_param = 8;
   string sample_location_param = 9;
+  string assembly_provider_name = 10;
+  string assembly_provider_url = 11;
 }
 
 /*
