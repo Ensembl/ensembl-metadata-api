@@ -213,8 +213,8 @@ message AttributesInfo {
   string genebuild_method = 1;
   string genebuild_last_geneset_update = 2;
   string genebuild_version = 3;
-  string annotation_provider_name = 4;
-  string annotation_provider_url = 5;
+  string genebuild_provider_name = 4;
+  string genebuild_provider_url = 5;
   string assembly_level = 6;
   string assembly_date = 7;
   string sample_gene_param = 8;
