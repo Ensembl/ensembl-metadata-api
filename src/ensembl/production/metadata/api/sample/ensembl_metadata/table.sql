@@ -112,8 +112,8 @@ CREATE TABLE dataset_attribute
     dataset_attribute_id int auto_increment
         primary key,
     value                varchar(128) null,
-    attribute_id         int          not null,
-    dataset_id           int          not null,
+    attribute_id         int not null,
+    dataset_id           int not null,
     constraint dataset_attribute_dataset_id_attribute_id__d3b34d8c_uniq
         unique (dataset_id, attribute_id),
     constraint dataset_attribute_attribute_id_55c51407_fk_attribute
@@ -176,8 +176,8 @@ CREATE TABLE genome
     genome_uuid varchar(128) not null,
     assembly_id int          not null,
     organism_id int          not null,
-    created     datetime(6)  not null,
-    is_best     tinyint(1)   not null  default 0,
+    created     datetime(6) not null,
+    is_best     tinyint(1) not null default 0,
 
     constraint genome_uuid
         unique (genome_uuid),
@@ -194,13 +194,13 @@ CREATE TABLE genome_dataset
     dataset_id        int not null,
     genome_id         int not null,
     release_id        int null,
-    is_current        tinyint(1) not null  default 0,
+    is_current        tinyint(1) not null default 0,
     constraint ensembl_metadata_gen_dataset_id_26d7bac7_fk_dataset_d
-        foreign key (dataset_id) references dataset (dataset_id),
+        foreign key (dataset_id) references dataset (dataset_id) on DELETE CASCADE,
     constraint ensembl_metadata_gen_genome_id_7670a2c5_fk_genome_ge
-        foreign key (genome_id) references genome (genome_id),
+        foreign key (genome_id) references genome (genome_id) ON DELETE CASCADE,
     constraint ensembl_metadata_gen_release_id_c5440b9a_fk_ensembl_r
-        foreign key (release_id) references ensembl_release (release_id)
+        foreign key (release_id) references ensembl_release (release_id) ON DELETE CASCADE
 );
 
 CREATE TABLE genome_release

@@ -16,27 +16,26 @@ from sqlalchemy.sql import func
 import datetime
 import uuid
 
-from ensembl.production.metadata.api.models.base import Base, LoadAble
+from ensembl.production.metadata.api.models.base import Base
 
 
-class Attribute(LoadAble, Base):
+class Attribute(Base):
     __tablename__ = 'attribute'
 
     attribute_id = Column(Integer, primary_key=True)
     name = Column(String(128), nullable=False)
     label = Column(String(128), nullable=False)
     description = Column(String(255))
-    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp', 'number'), server_default=text("'string'"))
+    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp'), server_default=text("'string'"))
     # One to many relationships
     # attribute_id within dataset attribute
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
     # many to one relationships
     # none
 
-class Dataset(LoadAble, Base):
+
+class Dataset(Base):
     __tablename__ = 'dataset'
-
-
 
     dataset_id = Column(Integer, primary_key=True)
     dataset_uuid = Column(String(128), nullable=False, unique=True, default=str(uuid.uuid4))
