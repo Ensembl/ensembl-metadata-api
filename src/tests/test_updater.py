@@ -70,7 +70,7 @@ class TestUpdater:
         with metadata_db.session_scope() as session:
             organism = session.query(Organism).where(Organism.ensembl_name == 'Jabberwocky').first()
             assert organism.scientific_name == 'carol_jabberwocky'
-            assert organism.genomes[0].assembly.accession == 'weird02'
+            assert organism.genomes[1].assembly.accession == 'weird02'
 
     #
     def test_update_geneset(self, multi_dbs):
@@ -80,7 +80,7 @@ class TestUpdater:
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).where(
-                (Dataset.version == 1) & (Dataset.name == 'genebuild')
+                (Dataset.version == 2) & (Dataset.name == 'genebuild')
             ).first()
             assert dataset is not None
             assert re.match(".*_core_4", dataset.dataset_source.name)

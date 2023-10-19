@@ -20,6 +20,7 @@ from ensembl.database import DBConnection
 from sqlalchemy.exc import NoResultFound
 from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
+from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 import logging
 
 class CoreMetaUpdater(BaseMetaUpdater):
@@ -173,7 +174,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         """
         Get an existing Organism instance or create a new one, depending on the information from the metadata database.
         """
-        dbc = DBConnection(taxonomy_uri)
+        tdbc = DBConnection(taxonomy_uri)
         # Fetch the Ensembl name of the organism from metadata using either 'species.ensembl_name'
         # or 'species.production_name' as the key.
         ensembl_name = self.get_meta_single_meta_key(species_id, "organism.ensembl_name")
@@ -182,11 +183,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
         common_name = self.get_meta_single_meta_key(species_id, "species.common_name")
-        from ensembl.ncbi_taxonomy.api.utils import Taxonomy
         if common_name is None:
             taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
 
-            with dbc.session_scope() as session:
+            with tdbc.session_scope() as session:
                 # temp_adapt = GenomeAdaptor(metadata_uri, taxonomy_uri)
                 taxon = Taxonomy.fetch_node_by_id(session, taxid)
                 result = dict(taxon)
