@@ -36,8 +36,6 @@ class Attribute(LoadAble, Base):
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
 
-
-
     dataset_id = Column(Integer, primary_key=True)
     dataset_uuid = Column(String(128), nullable=False, unique=True, default=str(uuid.uuid4))
     dataset_type_id = Column(ForeignKey('dataset_type.dataset_type_id'), nullable=False, index=True)
