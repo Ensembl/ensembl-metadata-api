@@ -24,7 +24,8 @@ db_directory = db_directory.resolve()
 
 @pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'},
                                         {'src': db_directory / 'core_1'}, {'src': db_directory / 'core_2'},
-                                        {'src': db_directory / 'core_3'}, {'src': db_directory / 'core_4'}]],
+                                        {'src': db_directory / 'core_3'}, {'src': db_directory / 'core_4'},
+                                        {'src': db_directory / 'core_5'}]],
                          indirect=True)
 class TestUpdater:
     dbc = None  # type: UnitTestDB
@@ -86,3 +87,13 @@ class TestUpdater:
             assert re.match(".*_core_4", dataset.dataset_source.name)
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
+
+
+    def test_taxonomy_common_name(self, multi_dbs):
+        test = meta_factory(multi_dbs['core_5'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+                            multi_dbs['ncbi_taxonomy'].dbc.url)
+        test.process_core()
+        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        with metadata_db.session_scope() as session:
+            organism = session.query(Organism).where(Organism.ensembl_name == 'Hominoide').first()
+            assert organism.common_name == 'apes'

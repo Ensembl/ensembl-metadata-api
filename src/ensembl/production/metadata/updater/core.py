@@ -21,6 +21,7 @@ from sqlalchemy.exc import NoResultFound
 from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
+from ensembl.ncbi_taxonomy.models import NCBITaxaName
 import logging
 
 class CoreMetaUpdater(BaseMetaUpdater):
@@ -187,12 +188,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
             taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
 
             with tdbc.session_scope() as session:
-                # temp_adapt = GenomeAdaptor(metadata_uri, taxonomy_uri)
-                taxon = Taxonomy.fetch_node_by_id(session, taxid)
-                result = dict(taxon)
-                names = result.name_node_join.get('the right name class')
-                # TODO fetch name from taxonomy Entity.
-                common_name = names[taxid]["genbank_common_name"]
+                common_name = session.query(NCBITaxaName).filter(
+                    NCBITaxaName.taxon_id == taxid,
+                    NCBITaxaName.name_class == "genbank common name"
+                ).one_or_none().name
+            common_name = common_name if common_name is not None else '-'
         # Instantiate a new Organism object using data fetched from metadata.
         new_organism = Organism(
             species_taxonomy_id=self.get_meta_single_meta_key(species_id, "species.species_taxonomy_id"),
