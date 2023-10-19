@@ -222,7 +222,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # If no existing Organism is found, conduct additional checks before creating a new one.
 
             # Check if the new organism's taxonomy ID exists in the taxonomy database.
-            with dbc.session_scope() as session:
+            with tdbc.session_scope() as session:
                 try:
                     Taxonomy.fetch_node_by_id(session, new_organism.taxonomy_id)
                 except NoResultFound:
