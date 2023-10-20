@@ -12,27 +12,28 @@
 from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+import datetime
 import uuid
 
-from ensembl.production.metadata.api.models.base import Base
+from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 
-class Attribute(Base):
+class Attribute(LoadAble, Base):
     __tablename__ = 'attribute'
 
     attribute_id = Column(Integer, primary_key=True)
     name = Column(String(128), nullable=False)
     label = Column(String(128), nullable=False)
     description = Column(String(255))
-    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp'), server_default=text("'string'"))
+    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp', 'number'), server_default=text("'string'"))
     # One to many relationships
     # attribute_id within dataset attribute
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
     # many to one relationships
     # none
 
-
-class Dataset(Base):
+class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
 
     dataset_id = Column(Integer, primary_key=True)
@@ -40,7 +41,7 @@ class Dataset(Base):
     dataset_type_id = Column(ForeignKey('dataset_type.dataset_type_id'), nullable=False, index=True)
     name = Column(String(128), nullable=False)
     version = Column(String(128))
-    created = Column(DATETIME(fsp=6), nullable=False)
+    created = Column(DATETIME(fsp=6), server_default=func.now(), default=datetime.datetime.utcnow)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
     status = Column(Enum('Submitted', 'Progressing', 'Processed'), server_default=text("'Submitted'"))
@@ -56,7 +57,7 @@ class Dataset(Base):
     dataset_source = relationship('DatasetSource', back_populates="datasets")
 
 
-class DatasetAttribute(Base):
+class DatasetAttribute(LoadAble, Base):
     __tablename__ = 'dataset_attribute'
     __table_args__ = (
         Index('dataset_attribute_dataset_id_attribute_id__d3b34d8c_uniq', 'dataset_id', 'attribute_id', 'value',
@@ -76,7 +77,7 @@ class DatasetAttribute(Base):
     dataset = relationship('Dataset', back_populates="dataset_attributes")
 
 
-class DatasetSource(Base):
+class DatasetSource(LoadAble, Base):
     __tablename__ = 'dataset_source'
 
     dataset_source_id = Column(Integer, primary_key=True)
@@ -89,7 +90,7 @@ class DatasetSource(Base):
     # none
 
 
-class DatasetType(Base):
+class DatasetType(LoadAble, Base):
     __tablename__ = 'dataset_type'
 
     dataset_type_id = Column(Integer, primary_key=True)

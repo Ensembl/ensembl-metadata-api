@@ -1,0 +1,2 @@
+6	toplevel	Top Level	Top Level Non-Redundant Sequence Region
+547	sequence_location	sequence_location	To identify sequence locations / cellular compartments that DNA sequence comes from.Values are supposed to be SO compliant (children of the plastid_sequence SO:0000740 and nuclear_sequence SO:0000738 ): "apicoplast_chromosome", "chloroplast_chromosome", "chromoplast_chromosome", "cyanelle_chromosome", "leucoplast_chromosome", "macronuclear_chromosome", "micronuclear_chromosome", "mitochondrial_chromosome", "nuclear_chromosome".
