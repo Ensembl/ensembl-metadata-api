@@ -62,7 +62,8 @@ class TestClass:
 				"ucscName": "hg38",
 				"level": "chromosome",
 				"ensemblName": "GRCh38.p13",
-				"isReference": True
+				"isReference": True,
+				"urlName": "GRCh38"
 			},
 			"taxon": {
 				"taxonomyId": 9606,

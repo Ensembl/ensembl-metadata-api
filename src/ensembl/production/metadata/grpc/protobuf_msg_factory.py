@@ -120,6 +120,8 @@ def create_assembly(data=None):
         ucsc_name=data.Assembly.ucsc_name,
         ensembl_name=data.Assembly.ensembl_name,
         is_reference=data.Assembly.is_reference,
+        url_name=data.Assembly.url_name,
+        tol_id=data.Assembly.tol_id,
     )
     return assembly
 
@@ -177,12 +179,14 @@ def create_attributes_info(data=None):
         "genebuild.method": "",
         "genebuild.last_geneset_update": "",
         "genebuild.version": "",
-        "annotation.provider_name": "",
-        "annotation.provider_url": "",
+        "genebuild.provider_name": "",
+        "genebuild.provider_url": "",
         "assembly.level": "",
         "assembly.date": "",
         "sample.gene_param": "",
-        "sample.location_param": ""
+        "sample.location_param": "",
+        "assembly.provider_name": "",
+        "assembly.provider_url": ""
     }
 
     # set required_attributes values
@@ -195,12 +199,14 @@ def create_attributes_info(data=None):
         genebuild_method=required_attributes["genebuild.method"],
         genebuild_last_geneset_update=required_attributes["genebuild.last_geneset_update"],
         genebuild_version=required_attributes["genebuild.version"],
-        annotation_provider_name=required_attributes["annotation.provider_name"],
-        annotation_provider_url=required_attributes["annotation.provider_url"],
+        genebuild_provider_name=required_attributes["genebuild.provider_name"],
+        genebuild_provider_url=required_attributes["genebuild.provider_url"],
         assembly_level=required_attributes["assembly.level"],
         assembly_date=required_attributes["assembly.date"],
         sample_gene_param=required_attributes["sample.gene_param"],
-        sample_location_param=required_attributes["sample.location_param"]
+        sample_location_param=required_attributes["sample.location_param"],
+        assembly_provider_name=required_attributes["assembly.provider_name"],
+        assembly_provider_url=required_attributes["assembly.provider_url"],
     )
 
 

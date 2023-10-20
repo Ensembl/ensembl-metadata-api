@@ -163,6 +163,8 @@ message Assembly {
   string ensembl_name = 5;
   string assembly_uuid = 6;
   bool is_reference = 7;
+  string url_name = 8;
+  string tol_id = 9;
 }
 
 /*
@@ -211,12 +213,14 @@ message AttributesInfo {
   string genebuild_method = 1;
   string genebuild_last_geneset_update = 2;
   string genebuild_version = 3;
-  string annotation_provider_name = 4;
-  string annotation_provider_url = 5;
+  string genebuild_provider_name = 4;
+  string genebuild_provider_url = 5;
   string assembly_level = 6;
   string assembly_date = 7;
   string sample_gene_param = 8;
   string sample_location_param = 9;
+  string assembly_provider_name = 10;
+  string assembly_provider_url = 11;
 }
 
 /*
