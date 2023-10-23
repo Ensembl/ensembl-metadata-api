@@ -57,7 +57,7 @@ class AssemblySequence(Base):
     length = Column(Integer, nullable=False)
     sequence_location = Column(String(10))
     md5 = Column(String(32))
-    sha512t4u = Column(String(128))
+    sha512t24u = Column(String(128))
     # One to many relationships
     # none
     # many to one relationships
