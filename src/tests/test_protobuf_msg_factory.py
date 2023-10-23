@@ -195,7 +195,7 @@ class TestClass:
 		output = json_format.MessageToJson(utils.create_genome_sequence(input_data[0]))
 		assert json.loads(output) == expected_output
 
-	def test_create_genome_assembly_sequence(self, multi_dbs, genome_db_conn):
+	def test_create_assembly_region(self, multi_dbs, genome_db_conn):
 		input_data = genome_db_conn.fetch_sequences(
 			genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
 		)
@@ -205,7 +205,7 @@ class TestClass:
 			"length": "71251",
 			# "chromosomal": True
 		}
-		output = json_format.MessageToJson(utils.create_genome_assembly_sequence(input_data[0]))
+		output = json_format.MessageToJson(utils.create_assembly_region(input_data[0]))
 		assert json.loads(output) == expected_output
 
 	def test_create_genome_assembly_sequence_region(self, multi_dbs, genome_db_conn):

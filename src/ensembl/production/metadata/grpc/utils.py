@@ -20,7 +20,7 @@ from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_top_level_statistics, \
     create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
-    create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, \
+    create_dataset_infos, populate_dataset_info, create_assembly_region, \
     create_genome_assembly_sequence_region, create_organisms_group_count, create_stats_by_genome_uuid
 
 
@@ -318,7 +318,7 @@ def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         yield create_genome_sequence(result)
 
 
-def genome_assembly_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
+def assembly_region_iterator(db_conn, genome_uuid, chromosomal_only):
     if genome_uuid is None:
         return
 
@@ -327,7 +327,7 @@ def genome_assembly_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
-        yield create_genome_assembly_sequence(result)
+        yield create_assembly_region(result)
 
 
 def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name):
