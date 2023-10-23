@@ -330,14 +330,13 @@ def genome_assembly_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         yield create_genome_assembly_sequence(result)
 
 
-def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name, chromosomal_only):
+def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name):
     if genome_uuid is None or sequence_region_name is None:
         return create_genome_assembly_sequence_region()
 
     assembly_sequence_results = db_conn.fetch_sequences(
         genome_uuid=genome_uuid,
-        assembly_sequence_name=sequence_region_name,
-        chromosomal_only=chromosomal_only,
+        assembly_sequence_name=sequence_region_name
     )
     if len(assembly_sequence_results) == 1:
         return create_genome_assembly_sequence_region(assembly_sequence_results[0])

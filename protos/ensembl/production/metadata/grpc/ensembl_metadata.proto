@@ -389,7 +389,6 @@ TODO: Is there a way to DRY this since it's equivalent to GenomeAssemblySequence
 message GenomeAssemblySequenceRegionRequest {
   string genome_uuid = 1;          // Mandatory
   string sequence_region_name = 2;   // Mandatory
-  bool chromosomal_only = 3;       // Optional
 }
 
 /*

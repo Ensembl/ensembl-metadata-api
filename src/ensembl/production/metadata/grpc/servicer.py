@@ -80,9 +80,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetGenomeAssemblySequenceRegion(self, request, context):
         return genome_assembly_sequence_region(
-            self.db, request.genome_uuid,
-            request.sequence_region_name,
-            request.chromosomal_only
+            self.db, request.genome_uuid, request.sequence_region_name
         )
 
     def GetDatasetsListByUUID(self, request, context):

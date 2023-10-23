@@ -130,20 +130,18 @@ def list_genome_assembly_sequences(stub):
 def list_genome_assembly_sequences_region(stub):
     request1 = GenomeAssemblySequenceRegionRequest(
         genome_uuid="9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1",
-        sequence_region_name="HG03540#1#h1tg000001l",
-        chromosomal_only=False
+        sequence_region_name="HG03540#1#h1tg000001l"
     )
     genome_assembly_sequences_region1 = stub.GetGenomeAssemblySequenceRegion(request1)
-    print("**** Chromosomal and non-chromosomal ****")
+    print("**** Non-chromosomal ****")
     print(genome_assembly_sequences_region1)
 
     request2 = GenomeAssemblySequenceRegionRequest(
         genome_uuid="2afef36f-3660-4b8c-819b-d1e5a77c9918",
-        sequence_region_name="3",
-        chromosomal_only=True
+        sequence_region_name="3"
     )
     genome_assembly_sequences_region2 = stub.GetGenomeAssemblySequenceRegion(request2)
-    print("**** Chromosomal_only ****")
+    print("**** Chromosomal ****")
     print(genome_assembly_sequences_region2)
 
 
