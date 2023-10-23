@@ -333,6 +333,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     accession_info[seq_region_name]["karyotype_rank"] = karyotype_rank
             # Now, create AssemblySequence objects for each unique accession.
             for accession, info in accession_info.items():
+                seq_region_name = accession
                 accession_pattern = r'^[a-zA-Z]{2}\d+\.\d+'
                 names = info["names"]
                 if not names:
@@ -353,7 +354,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                         name = preferred_name
 
                 assembly_sequence = AssemblySequence(
-                    name=name,
+                    name=seq_region_name,
                     assembly=assembly,
                     accession=accession,
                     chromosomal=info["chromosomal"],
@@ -542,7 +543,22 @@ class CoreMetaUpdater(BaseMetaUpdater):
             attribute=sample_location_attribute,
         )
         genebuild_dataset_attributes.append(sample_location_param)
-
+        # Add the production name:
+        production_name_attribute = meta_session.query(Attribute).filter(
+            Attribute.name == "production.production_name").one_or_none()
+        if production_name_attribute is None:
+            production_name_attribute = Attribute(
+                name="production.production_name",
+                label="Internal Production Name",
+                description="Backward compatibility for registry production Name",
+                type="string",
+            )
+        production_name = DatasetAttribute(
+            value=self.get_meta_single_meta_key(species_id, "species.production_name"),
+            dataset=genebuild_dataset,
+            attribute=production_name_attribute,
+        )
+        genebuild_dataset_attributes.append(production_name)
         # Check if the genebuild dataset with the given label already exists
         test_status = meta_session.query(Dataset).filter(Dataset.label == genebuild_accession).one_or_none()
 
