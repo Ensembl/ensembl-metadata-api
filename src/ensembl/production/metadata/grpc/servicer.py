@@ -12,8 +12,8 @@
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc
 
 from ensembl.production.metadata.grpc.utils import connect_to_db, get_species_information, get_assembly_information, \
-    get_genomes_from_assembly_accession_iterator, get_sub_species_info, get_karyotype_information, \
-    get_top_level_statistics, get_top_level_statistics_by_uuid, get_genome_uuid, get_genome_by_uuid, \
+    get_genomes_from_assembly_accession_iterator, get_sub_species_info, get_top_level_statistics, \
+    get_top_level_statistics_by_uuid, get_genome_uuid, get_genome_by_uuid, \
     get_genomes_by_keyword_iterator, get_genome_by_name, release_iterator, release_by_uuid_iterator, \
     genome_sequence_iterator, get_datasets_list_by_uuid, get_dataset_by_genome_and_dataset_type, \
     genome_assembly_sequence_iterator, genome_assembly_sequence_region, get_organisms_group_count, \
@@ -37,9 +37,6 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetSubSpeciesInformation(self, request, context):
         return get_sub_species_info(self.db, request.organism_uuid, request.group)
-
-    def GetKaryotypeInformation(self, request, context):
-        return get_karyotype_information(self.db, request.genome_uuid)
 
     def GetTopLevelStatistics(self, request, context):
         return get_top_level_statistics(self.db, request.organism_uuid, request.group)

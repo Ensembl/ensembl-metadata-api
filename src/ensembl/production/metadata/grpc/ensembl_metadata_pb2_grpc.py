@@ -53,11 +53,6 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.SubSpecies.FromString,
                 )
-        self.GetKaryotypeInformation = channel.unary_unary(
-                '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.FromString,
-                )
         self.GetTopLevelStatistics = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetTopLevelStatistics',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
@@ -171,13 +166,6 @@ class EnsemblMetadataServicer(object):
 
     def GetSubSpeciesInformation(self, request, context):
         """Get subspecies information
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetKaryotypeInformation(self, request, context):
-        """Get karyotype information
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -305,11 +293,6 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetSubSpeciesInformation,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.SubSpecies.SerializeToString,
-            ),
-            'GetKaryotypeInformation': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetKaryotypeInformation,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.SerializeToString,
             ),
             'GetTopLevelStatistics': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTopLevelStatistics,
@@ -501,23 +484,6 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetSubSpeciesInformation',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.SubSpecies.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def GetKaryotypeInformation(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

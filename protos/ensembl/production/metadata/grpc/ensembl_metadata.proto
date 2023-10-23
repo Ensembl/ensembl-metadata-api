@@ -39,9 +39,6 @@ service EnsemblMetadata {
   // Get subspecies information
   rpc GetSubSpeciesInformation(OrganismIDRequest) returns (SubSpecies) {}
 
-  // Get karyotype information
-  rpc GetKaryotypeInformation(GenomeUUIDRequest) returns (Karyotype) {}
-
   // Get top level statistics
   rpc GetTopLevelStatistics(OrganismIDRequest) returns (TopLevelStatistics) {}
 
@@ -93,13 +90,6 @@ message Genome {
   AttributesInfo attributes_info = 6;
   int32 related_assemblies_count = 7;
   Release release = 8;
-}
-
-message Karyotype {
-   string code = 1;
-   string chromosomal = 2;
-   string location = 3;
-   string genome_uuid = 4;
 }
 
 message Species {

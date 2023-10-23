@@ -83,19 +83,6 @@ def create_top_level_statistics_by_uuid(data=None):
     return species
 
 
-def create_karyotype(data=None):
-    if data is None:
-        return ensembl_metadata_pb2.Karyotype()
-
-    karyotype = ensembl_metadata_pb2.Karyotype(
-        genome_uuid=data.Genome.genome_uuid,
-        code=data.Assembly.level,
-        chromosomal=str(data.AssemblySequence.chromosomal),
-        location=data.AssemblySequence.sequence_location,
-    )
-    return karyotype
-
-
 def create_sub_species(data=None):
     if data is None:
         return ensembl_metadata_pb2.SubSpecies()

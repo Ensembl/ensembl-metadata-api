@@ -17,8 +17,8 @@ from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 
-from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
-    create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
+from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_top_level_statistics, \
+    create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
     create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
     create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, \
     create_genome_assembly_sequence_region, create_organisms_group_count, create_stats_by_genome_uuid
@@ -30,21 +30,6 @@ def connect_to_db():
         taxonomy_uri=cfg.taxon_uri
     )
     return conn
-
-
-def get_karyotype_information(db_conn, genome_uuid):
-    if genome_uuid is None:
-        return create_karyotype()
-
-    karyotype_info_result = db_conn.fetch_sequences(
-        genome_uuid=genome_uuid
-    )
-    # Wow! this returns 109583 rows for 'a7335667-93e7-11ec-a39d-005056b38ce3'
-    # TODO: Understand what's going on
-    if len(karyotype_info_result) == 1:
-        return create_karyotype(karyotype_info_result[0])
-
-    return create_karyotype()
 
 
 def get_top_level_statistics(db_conn, organism_uuid, group):

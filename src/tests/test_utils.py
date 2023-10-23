@@ -32,12 +32,6 @@ sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata
 class TestUtils:
 	dbc = None  # type: UnitTestDB
 
-	def test_get_karyotype_information(self, genome_db_conn):
-		output = json_format.MessageToJson(
-			utils.get_karyotype_information(genome_db_conn, "3c4cec7f-fb69-11eb-8dac-005056b32883"))
-		expected_output = {}
-		assert json.loads(output) == expected_output
-
 	def test_get_assembly_information(self, genome_db_conn):
 		output = json_format.MessageToJson(
 			utils.get_assembly_information(genome_db_conn, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))

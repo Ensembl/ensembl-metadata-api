@@ -119,18 +119,6 @@ class TestClass:
 		output = json_format.MessageToJson(utils.create_assembly_info(input_data[0]))
 		assert json.loads(output) == expected_output
 
-	def test_create_karyotype(self, multi_dbs, genome_db_conn):
-		input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
-		expected_output = {
-			"code": "chromosome",
-			"chromosomal": "0",
-			"location": "SO:0000738",
-			"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"
-		}
-
-		output = json_format.MessageToJson(utils.create_karyotype(input_data[0]))
-		assert json.loads(output) == expected_output
-
 	def test_create_species(self, multi_dbs, genome_db_conn):
 		species_input_data = genome_db_conn.fetch_genomes(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
 		tax_id = species_input_data[0].Organism.taxonomy_id
