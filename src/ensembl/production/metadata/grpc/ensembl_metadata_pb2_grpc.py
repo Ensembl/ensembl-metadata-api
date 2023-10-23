@@ -215,7 +215,6 @@ class EnsemblMetadataServicer(object):
 
     def GetAssemblyRegions(self, request, context):
         """Retrieve region information for a genome's assembly.
-        rpc GetGenomeAssemblySequence(GenomeAssemblySequenceRequest) returns (stream GenomeAssemblySequence) {}
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

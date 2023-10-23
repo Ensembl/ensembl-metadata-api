@@ -219,7 +219,7 @@ class TestClass:
 			"length": "57227415",
 			"chromosomal": True
 		}
-		output = json_format.MessageToJson(utils.create_genome_assembly_sequence(input_data[0]))
+		output = json_format.MessageToJson(utils.create_assembly_region(input_data[0]))
 		assert json.loads(output) == expected_output
 
 	def test_create_release(self, multi_dbs, release_db_conn):
