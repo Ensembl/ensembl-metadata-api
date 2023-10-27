@@ -25,7 +25,7 @@ from ensembl_metadata_pb2 import (
     GenomeDatatypeRequest,
     GenomeInfoRequest,
     OrganismsGroupRequest,
-    AssemblyRegionsRequest,
+    AssemblyRegionRequest,
     GenomeAssemblySequenceRegionRequest,
     GenomeTagRequest
 )
@@ -107,17 +107,17 @@ def list_genome_sequences(stub):
 
 
 def list_genome_assembly_sequences(stub):
-    request1 = AssemblyRegionsRequest(
+    request1 = AssemblyRegionRequest(
         genome_uuid="2afef36f-3660-4b8c-819b-d1e5a77c9918",
         chromosomal_only=False
     )
-    genome_assembly_sequences1 = stub.GetAssemblyRegions(request1)
+    genome_assembly_sequences1 = stub.GetAssemblyRegion(request1)
 
-    request2 = AssemblyRegionsRequest(
+    request2 = AssemblyRegionRequest(
         genome_uuid="2afef36f-3660-4b8c-819b-d1e5a77c9918",
         chromosomal_only=True
     )
-    genome_assembly_sequences2 = stub.GetAssemblyRegions(request2)
+    genome_assembly_sequences2 = stub.GetAssemblyRegion(request2)
     print("**** Chromosomal and non-chromosomal ****")
     for seq in genome_assembly_sequences1:
         print(seq)

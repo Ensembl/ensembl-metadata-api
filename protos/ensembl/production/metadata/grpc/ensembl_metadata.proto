@@ -58,7 +58,7 @@ service EnsemblMetadata {
   rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
 
   // Retrieve region information for a genome's assembly.
-  rpc GetAssemblyRegions(AssemblyRegionsRequest) returns (stream AssemblyRegions) {}
+  rpc GetAssemblyRegion(AssemblyRegionRequest) returns (stream AssemblyRegion) {}
 
   // Retrieve region information for a genome's assembly with a given sequence region name.
   rpc GetGenomeAssemblySequenceRegion(GenomeAssemblySequenceRegionRequest) returns (GenomeAssemblySequenceRegion) {}
@@ -249,7 +249,7 @@ message GenomeSequence {
 /*
 Metadata about the sequences that comprise a genome's assembly.
  */
-message AssemblyRegions {
+message AssemblyRegion {
   string name = 1;
   int32 rank = 2;
   string md5 = 3;
@@ -377,14 +377,14 @@ message GenomeSequenceRequest {
 /*
 Genome sequence filter.
  */
-message AssemblyRegionsRequest {
+message AssemblyRegionRequest {
   string genome_uuid = 1;          // Mandatory
   bool chromosomal_only = 2;       // Optional
 }
 
 /*
 Genome sequence filter.
-TODO: Is there a way to DRY this since it's equivalent to GetAssemblyRegionsRequest above plus sequence_region_name
+TODO: Is there a way to DRY this since it's equivalent to GetAssemblyRegionRequest above plus sequence_region_name
  */
 message GenomeAssemblySequenceRegionRequest {
   string genome_uuid = 1;          // Mandatory

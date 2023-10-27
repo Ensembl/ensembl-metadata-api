@@ -20,7 +20,7 @@ import pytest
 from ensembl.database import UnitTestDB
 from google.protobuf import json_format
 
-from ensembl.production.metadata.grpc import utils
+import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 
 distribution = pkg_resources.get_distribution("ensembl-metadata-api")
 sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
@@ -96,7 +96,7 @@ class TestClass:
 		}
 
 		output = json_format.MessageToJson(
-			utils.create_genome(
+			msg_factory.create_genome(
 				data=genome_input_data[0],
 				attributes=attrib_input_data,
 				count=related_assemblies_input_count
@@ -116,7 +116,7 @@ class TestClass:
 			"sequenceLocation": "SO:0000738"
 		}
 
-		output = json_format.MessageToJson(utils.create_assembly_info(input_data[0]))
+		output = json_format.MessageToJson(msg_factory.create_assembly_info(input_data[0]))
 		assert json.loads(output) == expected_output
 
 	def test_create_species(self, multi_dbs, genome_db_conn):
@@ -131,7 +131,7 @@ class TestClass:
 			"taxonId": 9606
 		}
 
-		output = json_format.MessageToJson(utils.create_species(species_input_data[0], taxo_results[tax_id]))
+		output = json_format.MessageToJson(msg_factory.create_species(species_input_data[0], taxo_results[tax_id]))
 		assert json.loads(output) == expected_output
 
 	def test_create_stats_by_genome_uuid(self, genome_db_conn):
@@ -148,7 +148,7 @@ class TestClass:
 			'statisticType': 'bp',
 			'statisticValue': '938.55'
 		}
-		output = json_format.MessageToJson(utils.create_stats_by_genome_uuid(input_data)[0])
+		output = json_format.MessageToJson(msg_factory.create_stats_by_genome_uuid(input_data)[0])
 		assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
 		# check the first stat info of the first genome_uuid
 		assert json.loads(output)['statistics'][0] == first_expected_stat
@@ -167,10 +167,10 @@ class TestClass:
 			'statisticType': 'bp',
 			'statisticValue': '938.55'
 		}
-		stats_by_genome_uuid = utils.create_stats_by_genome_uuid(input_data)
+		stats_by_genome_uuid = msg_factory.create_stats_by_genome_uuid(input_data)
 
 		output = json_format.MessageToJson(
-			utils.create_top_level_statistics({
+			msg_factory.create_top_level_statistics({
 				'organism_uuid': organism_uuid,
 				'stats_by_genome_uuid': stats_by_genome_uuid
 			})
@@ -192,7 +192,7 @@ class TestClass:
 			# "name": "CHR_HG1_PATCH",
 			"sequenceLocation": "SO:0000738"
 		}
-		output = json_format.MessageToJson(utils.create_genome_sequence(input_data[0]))
+		output = json_format.MessageToJson(msg_factory.create_genome_sequence(input_data[0]))
 		assert json.loads(output) == expected_output
 
 	def test_create_assembly_region(self, multi_dbs, genome_db_conn):
@@ -205,7 +205,7 @@ class TestClass:
 			"length": "71251",
 			# "chromosomal": True
 		}
-		output = json_format.MessageToJson(utils.create_assembly_region(input_data[0]))
+		output = json_format.MessageToJson(msg_factory.create_assembly_region(input_data[0]))
 		assert json.loads(output) == expected_output
 
 	def test_create_genome_assembly_sequence_region(self, multi_dbs, genome_db_conn):
@@ -219,7 +219,7 @@ class TestClass:
 			"length": "57227415",
 			"chromosomal": True
 		}
-		output = json_format.MessageToJson(utils.create_assembly_region(input_data[0]))
+		output = json_format.MessageToJson(msg_factory.create_assembly_region(input_data[0]))
 		assert json.loads(output) == expected_output
 
 	def test_create_release(self, multi_dbs, release_db_conn):
@@ -233,7 +233,7 @@ class TestClass:
 			"siteLabel": "Ensembl Genome Browser",
 			"siteUri": "https://beta.ensembl.org"
 		}
-		output = json_format.MessageToJson(utils.create_release(input_data[0]))
+		output = json_format.MessageToJson(msg_factory.create_release(input_data[0]))
 		assert json.loads(output) == expected_output
 
 	def test_create_organisms_group_count(self, multi_dbs, genome_db_conn):
@@ -254,7 +254,7 @@ class TestClass:
 		assert len(input_data) == 6
 		# send just the first element
 		output = json_format.MessageToJson(
-			utils.create_organisms_group_count(
+			msg_factory.create_organisms_group_count(
 				data=[input_data[0]],
 				release_version=None
 			)
@@ -281,6 +281,6 @@ class TestClass:
 
 		genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) == 1 else ""
 		output = json_format.MessageToJson(
-			utils.create_genome_uuid({"genome_uuid": genome_uuid})
+			msg_factory.create_genome_uuid({"genome_uuid": genome_uuid})
 		)
 		assert json.loads(output) == expected_output

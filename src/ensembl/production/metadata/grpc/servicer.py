@@ -11,92 +11,86 @@
 #  limitations under the License.
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc
 
-from ensembl.production.metadata.grpc.utils import connect_to_db, get_species_information, get_assembly_information, \
-    get_genomes_from_assembly_accession_iterator, get_sub_species_info, get_top_level_statistics, \
-    get_top_level_statistics_by_uuid, get_genome_uuid, get_genome_by_uuid, \
-    get_genomes_by_keyword_iterator, get_genome_by_name, release_iterator, release_by_uuid_iterator, \
-    genome_sequence_iterator, get_datasets_list_by_uuid, get_dataset_by_genome_and_dataset_type, \
-    assembly_region_iterator, genome_assembly_sequence_region, get_organisms_group_count, \
-    get_genome_uuid_by_tag
+import ensembl.production.metadata.grpc.utils as utils
 
 
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):
     def __init__(self):
-        self.db = connect_to_db()
+        self.db = utils.connect_to_db()
 
     def GetSpeciesInformation(self, request, context):
-        return get_species_information(self.db, request.genome_uuid)
+        return utils.get_species_information(self.db, request.genome_uuid)
 
     def GetAssemblyInformation(self, request, context):
-        return get_assembly_information(self.db, request.assembly_uuid)
+        return utils.get_assembly_information(self.db, request.assembly_uuid)
 
     def GetGenomesByAssemblyAccessionID(self, request, context):
-        return get_genomes_from_assembly_accession_iterator(
+        return utils.get_genomes_from_assembly_accession_iterator(
             self.db, request.assembly_accession, request.release_version
         )
 
     def GetSubSpeciesInformation(self, request, context):
-        return get_sub_species_info(self.db, request.organism_uuid, request.group)
+        return utils.get_sub_species_info(self.db, request.organism_uuid, request.group)
 
     def GetTopLevelStatistics(self, request, context):
-        return get_top_level_statistics(self.db, request.organism_uuid, request.group)
+        return utils.get_top_level_statistics(self.db, request.organism_uuid, request.group)
 
     def GetTopLevelStatisticsByUUID(self, request, context):
-        return get_top_level_statistics_by_uuid(self.db, request.genome_uuid)
+        return utils.get_top_level_statistics_by_uuid(self.db, request.genome_uuid)
 
     def GetGenomeUUID(self, request, context):
-        return get_genome_uuid(self.db, request.ensembl_name, request.assembly_name, request.use_default)
+        return utils.get_genome_uuid(self.db, request.ensembl_name, request.assembly_name, request.use_default)
 
     def GetGenomeByUUID(self, request, context):
-        return get_genome_by_uuid(self.db, request.genome_uuid, request.release_version)
+        return utils.get_genome_by_uuid(self.db, request.genome_uuid, request.release_version)
 
     def GetGenomesByKeyword(self, request, context):
-        return get_genomes_by_keyword_iterator(
+        return utils.get_genomes_by_keyword_iterator(
             self.db, request.keyword, request.release_version
         )
 
     def GetGenomeByName(self, request, context):
-        return get_genome_by_name(
+        return utils.get_genome_by_name(
             self.db, request.ensembl_name, request.site_name, request.release_version
         )
 
     def GetRelease(self, request, context):
-        return release_iterator(
+        return utils.release_iterator(
             self.db, request.site_name, request.release_version, request.current_only
         )
 
     def GetReleaseByUUID(self, request, context):
-        return release_by_uuid_iterator(self.db, request.genome_uuid)
+        return utils.release_by_uuid_iterator(self.db, request.genome_uuid)
 
     def GetGenomeSequence(self, request, context):
-        return genome_sequence_iterator(
+        return utils.genome_sequence_iterator(
             self.db, request.genome_uuid, request.chromosomal_only
         )
 
-    def GetAssemblyRegions(self, request, context):
-        return assembly_region_iterator(
+    def GetAssemblyRegion(self, request, context):
+        return utils.assembly_region_iterator(
             self.db, request.genome_uuid, request.chromosomal_only
         )
 
     def GetGenomeAssemblySequenceRegion(self, request, context):
-        return genome_assembly_sequence_region(
+        return utils.genome_assembly_sequence_region(
             self.db, request.genome_uuid, request.sequence_region_name
         )
 
     def GetDatasetsListByUUID(self, request, context):
-        return get_datasets_list_by_uuid(
+        return utils.get_datasets_list_by_uuid(
             self.db, request.genome_uuid, request.release_version
         )
 
     def GetDatasetInformation(self, request, context):
-        return get_dataset_by_genome_and_dataset_type(
+        return utils.get_dataset_by_genome_and_dataset_type(
             self.db, request.genome_uuid, request.dataset_type
         )
 
     def GetOrganismsGroupCount(self, request, context):
-        return get_organisms_group_count(
+        return utils.get_organisms_group_count(
             self.db, request.release_version
         )
 
     def GetGenomeUUIDByTag(self, request, context):
-        return get_genome_uuid_by_tag(self.db, request.genome_tag)
+        return utils.get_genome_uuid_by_tag(self.db, request.genome_tag)

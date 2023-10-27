@@ -264,9 +264,9 @@ def create_genome_sequence(data=None):
 
 def create_assembly_region(data=None):
     if data is None:
-        return ensembl_metadata_pb2.AssemblyRegions()
+        return ensembl_metadata_pb2.AssemblyRegion()
 
-    assembly_region = ensembl_metadata_pb2.AssemblyRegions(
+    assembly_region = ensembl_metadata_pb2.AssemblyRegion(
         name=data.AssemblySequence.name,
         rank=data.AssemblySequence.chromosome_rank,
         md5=data.AssemblySequence.md5,
