@@ -685,11 +685,11 @@ class TestUtils:
 			},
 			"taxon": {
 				"commonName": [
-					"bread wheat",
 					"Canadian hard winter wheat",
-					"common wheat",
 					"Triticum aestivum subsp. aestivum",
 					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
 					"wheat"
 				],
 				"scientificName": "Triticum aestivum",
@@ -739,11 +739,11 @@ class TestUtils:
 			},
 			"taxon": {
 				"commonName": [
-					"bread wheat",
 					"Canadian hard winter wheat",
-					"common wheat",
 					"Triticum aestivum subsp. aestivum",
 					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
 					"wheat"
 				],
 				"scientificName": "Triticum aestivum",
@@ -983,11 +983,11 @@ class TestUtils:
 			},
 			"taxon": {
 				"commonName": [
-					"bread wheat",
 					"Canadian hard winter wheat",
-					"common wheat",
 					"Triticum aestivum subsp. aestivum",
 					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
 					"wheat"
 				],
 				"scientificName": "Triticum aestivum",
@@ -1040,11 +1040,11 @@ class TestUtils:
 			},
 			"taxon": {
 				"commonName": [
-					"bread wheat",
 					"Canadian hard winter wheat",
-					"common wheat",
 					"Triticum aestivum subsp. aestivum",
 					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
 					"wheat"
 				],
 				"scientificName": "Triticum aestivum",
