@@ -25,6 +25,17 @@ def connect_to_db():
     return conn
 
 
+def get_common_name(db_conn, taxon_id):
+    """ Get cpmmon name(s) for a given taxon ID"""
+    taxon_ifo = db_conn.fetch_taxonomy_names(taxon_id)
+
+    common_name = [
+        taxon_ifo[taxon_id].get('genbank_common_name'),
+    ] + taxon_ifo[taxon_id].get('synonym')
+
+    return common_name
+
+
 def get_top_level_statistics(db_conn, organism_uuid, group):
     if organism_uuid is None:
         return msg_factory.create_top_level_statistics()
@@ -96,10 +107,13 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
         species_taxonomy_id=genome.Organism.species_taxonomy_id
     )[0].count
 
+    taxon_common_name = get_common_name(db_conn, genome.Organism.taxonomy_id)
+
     return msg_factory.create_genome(
         data=genome,
         attributes=attrib_data_results,
-        count=related_assemblies_count
+        count=related_assemblies_count,
+        taxon_common_name=taxon_common_name
     )
 
 
