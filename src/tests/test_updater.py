@@ -52,7 +52,7 @@ class TestUpdater:
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
 
-    #
+    # Just this one!.
     def test_update_organism(self, multi_dbs):
         test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
