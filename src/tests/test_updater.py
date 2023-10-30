@@ -52,7 +52,6 @@ class TestUpdater:
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
 
-    #
     def test_update_organism(self, multi_dbs):
         test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
@@ -87,7 +86,6 @@ class TestUpdater:
             assert re.match(".*_core_4", dataset.dataset_source.name)
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
-
 
     def test_taxonomy_common_name(self, multi_dbs):
         test = meta_factory(multi_dbs['core_5'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,

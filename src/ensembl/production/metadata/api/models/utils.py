@@ -22,6 +22,6 @@ def check_release_status(meta_dbc, dataset_uuid):
         # Now we check if there exists a genome dataset with the corresponding dataset_id and a non-null release_id
         result = session.query(
             session.query(GenomeDataset).filter(GenomeDataset.dataset_id == dataset_id,
-                                                GenomeDataset.ensembl_release is not None).exists()
+                                                GenomeDataset.ensembl_release != None).exists()
         ).scalar()
         return result
