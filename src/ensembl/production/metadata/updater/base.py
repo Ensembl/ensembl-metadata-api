@@ -43,7 +43,7 @@ class BaseMetaUpdater:
         return insp.transient or insp.pending
 
     def get_or_new_source(self, meta_session, db_type):
-        db_uri=self.db_uri
+        db_uri = self.db_uri
         name = make_url(db_uri).database
         dataset_source = meta_session.query(DatasetSource).filter(DatasetSource.name == name).one_or_none()
         if dataset_source is None:

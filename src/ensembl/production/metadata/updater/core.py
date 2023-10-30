@@ -89,7 +89,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
             organism, division, organism_group_member = self.get_or_new_organism(species_id, meta_session)
             assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source = self.get_or_new_assembly(
                 species_id, meta_session)
-            genebuild_dataset, genebuild_dataset_attributes = self.get_or_new_genebuild(species_id, meta_session, dataset_source)
+            genebuild_dataset, genebuild_dataset_attributes = self.get_or_new_genebuild(species_id, meta_session,
+                                                                                        dataset_source)
 
             if self.is_object_new(organism):
                 logging.info('New organism')
@@ -294,8 +295,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 attribute_dict[name][code] = value
 
             accession_info = defaultdict(
-                #The None's here are improper, but they break far too much for this update if they are changed.
-                #When accession is decided I will fix them.
+                # The None's here are improper, but they break far too much for this update if they are changed.
+                # When accession is decided I will fix them.
                 lambda: {"names": set(), "accession": None, "length": None, "location": None, "chromosomal": None,
                          "karyotype_rank": None})
 
@@ -381,7 +382,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 level = (session.execute(db.select(CoordSystem.name).filter(
                     CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
                 tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")
-
 
             assembly = Assembly(
                 ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
@@ -522,13 +522,12 @@ class CoreMetaUpdater(BaseMetaUpdater):
         # Check if the genebuild dataset with the given label already exists
         test_status = meta_session.query(Dataset).filter(Dataset.label == genebuild_accession).one_or_none()
 
-
         if test_status is None:
-            #New object
+            # New object
             meta_session.add(genebuild_dataset)
             meta_session.add_all(genebuild_dataset_attributes)
         else:
-            #old object. grabbed for tests.
+            # old object. grabbed for tests.
             genebuild_dataset = meta_session.query(Dataset).filter(Dataset.label == genebuild_accession).one_or_none()
             genebuild_dataset_attributes = genebuild_dataset.dataset_attributes
         # The method returns the Dataset instance, the list of DatasetAttribute instances, and the status
