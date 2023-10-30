@@ -26,14 +26,17 @@ def connect_to_db():
 
 
 def get_common_name(db_conn, taxon_id):
-    """ Get cpmmon name(s) for a given taxon ID"""
+    """ Get common name(s) for a given taxon ID"""
     taxon_ifo = db_conn.fetch_taxonomy_names(taxon_id)
 
     common_name = [
         taxon_ifo[taxon_id].get('genbank_common_name'),
     ] + taxon_ifo[taxon_id].get('synonym')
 
-    return common_name
+    # remove duplicates
+    unique_common_name = list(set(common_name))
+    # sort before returning (otherwise the test breaks)
+    return sorted(unique_common_name)
 
 
 def get_top_level_statistics(db_conn, organism_uuid, group):

@@ -84,11 +84,18 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"commonName": [
+						"Escherichia coli MG1655",
+						"Escherichia coli str. K12 substr. MG1655",
+						"Escherichia coli str. MG1655",
+						"Escherichia coli strain MG1655",
+					],
 					"scientificName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
 					"taxonomyId": 511145
 				}
 			}
 		]
+		print(output)
 		assert output == expected_output
 
 	@pytest.mark.parametrize(

@@ -123,7 +123,6 @@ def create_taxon(data=None, taxon_common_name=[]):
         scientific_name=data.Organism.scientific_name,
         strain=data.Organism.strain,
     )
-    # TODO: fetch common_name(s) from ncbi_taxonomy database
     return taxon
 
 
