@@ -25,7 +25,7 @@ from ensembl_metadata_pb2 import (
     GenomeDatatypeRequest,
     GenomeInfoRequest,
     OrganismsGroupRequest,
-    GenomeAssemblySequenceRequest,
+    AssemblyRegionRequest,
     GenomeAssemblySequenceRegionRequest,
     GenomeTagRequest
 )
@@ -107,17 +107,17 @@ def list_genome_sequences(stub):
 
 
 def list_genome_assembly_sequences(stub):
-    request1 = GenomeAssemblySequenceRequest(
+    request1 = AssemblyRegionRequest(
         genome_uuid="2afef36f-3660-4b8c-819b-d1e5a77c9918",
         chromosomal_only=False
     )
-    genome_assembly_sequences1 = stub.GetGenomeAssemblySequence(request1)
+    genome_assembly_sequences1 = stub.GetAssemblyRegion(request1)
 
-    request2 = GenomeAssemblySequenceRequest(
+    request2 = AssemblyRegionRequest(
         genome_uuid="2afef36f-3660-4b8c-819b-d1e5a77c9918",
         chromosomal_only=True
     )
-    genome_assembly_sequences2 = stub.GetGenomeAssemblySequence(request2)
+    genome_assembly_sequences2 = stub.GetAssemblyRegion(request2)
     print("**** Chromosomal and non-chromosomal ****")
     for seq in genome_assembly_sequences1:
         print(seq)
@@ -130,20 +130,18 @@ def list_genome_assembly_sequences(stub):
 def list_genome_assembly_sequences_region(stub):
     request1 = GenomeAssemblySequenceRegionRequest(
         genome_uuid="9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1",
-        sequence_region_name="HG03540#1#h1tg000001l",
-        chromosomal_only=False
+        sequence_region_name="HG03540#1#h1tg000001l"
     )
     genome_assembly_sequences_region1 = stub.GetGenomeAssemblySequenceRegion(request1)
-    print("**** Chromosomal and non-chromosomal ****")
+    print("**** Non-chromosomal ****")
     print(genome_assembly_sequences_region1)
 
     request2 = GenomeAssemblySequenceRegionRequest(
         genome_uuid="2afef36f-3660-4b8c-819b-d1e5a77c9918",
-        sequence_region_name="3",
-        chromosomal_only=True
+        sequence_region_name="3"
     )
     genome_assembly_sequences_region2 = stub.GetGenomeAssemblySequenceRegion(request2)
-    print("**** Chromosomal_only ****")
+    print("**** Chromosomal ****")
     print(genome_assembly_sequences_region2)
 
 
@@ -227,13 +225,6 @@ def get_sub_species_info(stub):
     )
     releases1 = stub.GetSubSpeciesInformation(request1)
     print("**** Sub species information ****")
-    print(releases1)
-
-
-def get_karyotype_information(stub):
-    request1 = GenomeUUIDRequest(genome_uuid="9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1")
-    releases1 = stub.GetKaryotypeInformation(request1)
-    print("**** Karyotype ****")
     print(releases1)
 
 
@@ -340,8 +331,6 @@ def run():
         get_genomes_by_assembly_accession(stub)
         print("---------------Get Subspecies Information-----------")
         get_sub_species_info(stub)
-        print("---------------Get Karyotype Information-----------")
-        get_karyotype_information(stub)
         print("---------------Get Top Level Statistics-----------")
         get_top_level_statistics(stub)
         print("---------------Get Top Level Statistics By UUID-----------")

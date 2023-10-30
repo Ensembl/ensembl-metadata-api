@@ -39,9 +39,6 @@ service EnsemblMetadata {
   // Get subspecies information
   rpc GetSubSpeciesInformation(OrganismIDRequest) returns (SubSpecies) {}
 
-  // Get karyotype information
-  rpc GetKaryotypeInformation(GenomeUUIDRequest) returns (Karyotype) {}
-
   // Get top level statistics
   rpc GetTopLevelStatistics(OrganismIDRequest) returns (TopLevelStatistics) {}
 
@@ -61,7 +58,7 @@ service EnsemblMetadata {
   rpc GetGenomeSequence(GenomeSequenceRequest) returns (stream GenomeSequence) {}
 
   // Retrieve region information for a genome's assembly.
-  rpc GetGenomeAssemblySequence(GenomeAssemblySequenceRequest) returns (stream GenomeAssemblySequence) {}
+  rpc GetAssemblyRegion(AssemblyRegionRequest) returns (stream AssemblyRegion) {}
 
   // Retrieve region information for a genome's assembly with a given sequence region name.
   rpc GetGenomeAssemblySequenceRegion(GenomeAssemblySequenceRegionRequest) returns (GenomeAssemblySequenceRegion) {}
@@ -93,13 +90,6 @@ message Genome {
   AttributesInfo attributes_info = 6;
   int32 related_assemblies_count = 7;
   Release release = 8;
-}
-
-message Karyotype {
-   string code = 1;
-   string chromosomal = 2;
-   string location = 3;
-   string genome_uuid = 4;
 }
 
 message Species {
@@ -259,7 +249,7 @@ message GenomeSequence {
 /*
 Metadata about the sequences that comprise a genome's assembly.
  */
-message GenomeAssemblySequence {
+message AssemblyRegion {
   string name = 1;
   int32 rank = 2;
   string md5 = 3;
@@ -387,19 +377,18 @@ message GenomeSequenceRequest {
 /*
 Genome sequence filter.
  */
-message GenomeAssemblySequenceRequest {
+message AssemblyRegionRequest {
   string genome_uuid = 1;          // Mandatory
   bool chromosomal_only = 2;       // Optional
 }
 
 /*
 Genome sequence filter.
-TODO: Is there a way to DRY this since it's equivalent to GenomeAssemblySequenceRequest above plus sequence_region_name
+TODO: Is there a way to DRY this since it's equivalent to GetAssemblyRegionRequest above plus sequence_region_name
  */
 message GenomeAssemblySequenceRegionRequest {
   string genome_uuid = 1;          // Mandatory
   string sequence_region_name = 2;   // Mandatory
-  bool chromosomal_only = 3;       // Optional
 }
 
 /*

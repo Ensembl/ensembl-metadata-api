@@ -83,19 +83,6 @@ def create_top_level_statistics_by_uuid(data=None):
     return species
 
 
-def create_karyotype(data=None):
-    if data is None:
-        return ensembl_metadata_pb2.Karyotype()
-
-    karyotype = ensembl_metadata_pb2.Karyotype(
-        genome_uuid=data.Genome.genome_uuid,
-        code=data.Assembly.level,
-        chromosomal=str(data.AssemblySequence.chromosomal),
-        location=data.AssemblySequence.sequence_location,
-    )
-    return karyotype
-
-
 def create_sub_species(data=None):
     if data is None:
         return ensembl_metadata_pb2.SubSpecies()
@@ -275,11 +262,11 @@ def create_genome_sequence(data=None):
     return genome_sequence
 
 
-def create_genome_assembly_sequence(data=None):
+def create_assembly_region(data=None):
     if data is None:
-        return ensembl_metadata_pb2.GenomeAssemblySequence()
+        return ensembl_metadata_pb2.AssemblyRegion()
 
-    genome_assembly_sequence = ensembl_metadata_pb2.GenomeAssemblySequence(
+    assembly_region = ensembl_metadata_pb2.AssemblyRegion(
         name=data.AssemblySequence.name,
         rank=data.AssemblySequence.chromosome_rank,
         md5=data.AssemblySequence.md5,
@@ -288,7 +275,7 @@ def create_genome_assembly_sequence(data=None):
         chromosomal=data.AssemblySequence.chromosomal
     )
 
-    return genome_assembly_sequence
+    return assembly_region
 
 
 def create_genome_assembly_sequence_region(data=None):

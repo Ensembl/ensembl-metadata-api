@@ -53,11 +53,6 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.SubSpecies.FromString,
                 )
-        self.GetKaryotypeInformation = channel.unary_unary(
-                '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.FromString,
-                )
         self.GetTopLevelStatistics = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetTopLevelStatistics',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.SerializeToString,
@@ -88,10 +83,10 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequenceRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequence.FromString,
                 )
-        self.GetGenomeAssemblySequence = channel.unary_stream(
-                '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequence',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequence.FromString,
+        self.GetAssemblyRegion = channel.unary_stream(
+                '/ensembl_metadata.EnsemblMetadata/GetAssemblyRegion',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyRegionRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyRegion.FromString,
                 )
         self.GetGenomeAssemblySequenceRegion = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequenceRegion',
@@ -176,13 +171,6 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetKaryotypeInformation(self, request, context):
-        """Get karyotype information
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def GetTopLevelStatistics(self, request, context):
         """Get top level statistics
         """
@@ -225,7 +213,7 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetGenomeAssemblySequence(self, request, context):
+    def GetAssemblyRegion(self, request, context):
         """Retrieve region information for a genome's assembly.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -306,11 +294,6 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.SubSpecies.SerializeToString,
             ),
-            'GetKaryotypeInformation': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetKaryotypeInformation,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.SerializeToString,
-            ),
             'GetTopLevelStatistics': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTopLevelStatistics,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.OrganismIDRequest.FromString,
@@ -341,10 +324,10 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequenceRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeSequence.SerializeToString,
             ),
-            'GetGenomeAssemblySequence': grpc.unary_stream_rpc_method_handler(
-                    servicer.GetGenomeAssemblySequence,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequence.SerializeToString,
+            'GetAssemblyRegion': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetAssemblyRegion,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyRegionRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyRegion.SerializeToString,
             ),
             'GetGenomeAssemblySequenceRegion': grpc.unary_unary_rpc_method_handler(
                     servicer.GetGenomeAssemblySequenceRegion,
@@ -505,23 +488,6 @@ class EnsemblMetadata(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def GetKaryotypeInformation(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetKaryotypeInformation',
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Karyotype.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
     def GetTopLevelStatistics(request,
             target,
             options=(),
@@ -624,7 +590,7 @@ class EnsemblMetadata(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def GetGenomeAssemblySequence(request,
+    def GetAssemblyRegion(request,
             target,
             options=(),
             channel_credentials=None,
@@ -634,9 +600,9 @@ class EnsemblMetadata(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeAssemblySequence',
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequenceRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeAssemblySequence.FromString,
+        return grpc.experimental.unary_stream(request, target, '/ensembl_metadata.EnsemblMetadata/GetAssemblyRegion',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyRegionRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyRegion.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

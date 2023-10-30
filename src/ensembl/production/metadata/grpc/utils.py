@@ -11,17 +11,10 @@
 #  limitations under the License.
 import itertools
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-
 from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
-
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
-
-from ensembl.production.metadata.grpc.protobuf_msg_factory import create_genome, create_karyotype, \
-    create_top_level_statistics, create_top_level_statistics_by_uuid, create_assembly_info, create_species, \
-    create_sub_species, create_genome_uuid, create_datasets, create_genome_sequence, create_release, \
-    create_dataset_infos, populate_dataset_info, create_genome_assembly_sequence, \
-    create_genome_assembly_sequence_region, create_organisms_group_count, create_stats_by_genome_uuid
+import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 
 
 def connect_to_db():
@@ -32,24 +25,9 @@ def connect_to_db():
     return conn
 
 
-def get_karyotype_information(db_conn, genome_uuid):
-    if genome_uuid is None:
-        return create_karyotype()
-
-    karyotype_info_result = db_conn.fetch_sequences(
-        genome_uuid=genome_uuid
-    )
-    # Wow! this returns 109583 rows for 'a7335667-93e7-11ec-a39d-005056b38ce3'
-    # TODO: Understand what's going on
-    if len(karyotype_info_result) == 1:
-        return create_karyotype(karyotype_info_result[0])
-
-    return create_karyotype()
-
-
 def get_top_level_statistics(db_conn, organism_uuid, group):
     if organism_uuid is None:
-        return create_top_level_statistics()
+        return msg_factory.create_top_level_statistics()
 
     stats_results = db_conn.fetch_genome_datasets(
         organism_uuid=organism_uuid,
@@ -58,18 +36,18 @@ def get_top_level_statistics(db_conn, organism_uuid, group):
     )
 
     if len(stats_results) > 0:
-        stats_by_genome_uuid = create_stats_by_genome_uuid(stats_results)
-        return create_top_level_statistics({
+        stats_by_genome_uuid = msg_factory.create_stats_by_genome_uuid(stats_results)
+        return msg_factory.create_top_level_statistics({
             'organism_uuid': organism_uuid,
             'stats_by_genome_uuid': stats_by_genome_uuid
         })
 
-    return create_top_level_statistics()
+    return msg_factory.create_top_level_statistics()
 
 
 def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
     if genome_uuid is None:
-        return create_top_level_statistics_by_uuid()
+        return msg_factory.create_top_level_statistics_by_uuid()
 
     stats_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
@@ -86,24 +64,24 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
                 'statistic_type': result.Attribute.type,
                 'statistic_value': result.DatasetAttribute.value
             })
-        return create_top_level_statistics_by_uuid(
+        return msg_factory.create_top_level_statistics_by_uuid(
             ({"genome_uuid": genome_uuid, "statistics": statistics})
         )
 
-    return create_top_level_statistics_by_uuid()
+    return msg_factory.create_top_level_statistics_by_uuid()
 
 
 def get_assembly_information(db_conn, assembly_uuid):
     if assembly_uuid is None:
-        return create_assembly_info()
+        return msg_factory.create_assembly_info()
 
     assembly_results = db_conn.fetch_sequences(
         assembly_uuid=assembly_uuid
     )
     if len(assembly_results) > 0:
-        return create_assembly_info(assembly_results[0])
+        return msg_factory.create_assembly_info(assembly_results[0])
 
-    return create_assembly_info()
+    return msg_factory.create_assembly_info()
 
 
 def create_genome_with_attributes_and_count(db_conn, genome, release_version):
@@ -118,7 +96,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
         species_taxonomy_id=genome.Organism.species_taxonomy_id
     )[0].count
 
-    return create_genome(
+    return msg_factory.create_genome(
         data=genome,
         attributes=attrib_data_results,
         count=related_assemblies_count
@@ -127,7 +105,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
 
 def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, release_version):
     if assembly_accession is None:
-        return create_genome()
+        return msg_factory.create_genome()
 
     genome_results = db_conn.fetch_genomes(
         assembly_accession=assembly_accession,
@@ -140,7 +118,7 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, re
 
 def get_species_information(db_conn, genome_uuid):
     if genome_uuid is None:
-        return create_species()
+        return msg_factory.create_species()
 
     species_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
@@ -149,14 +127,14 @@ def get_species_information(db_conn, genome_uuid):
     if len(species_results) == 1:
         tax_id = species_results[0].Organism.taxonomy_id
         taxo_results = db_conn.fetch_taxonomy_names(tax_id)
-        return create_species(species_results[0], taxo_results[tax_id])
+        return msg_factory.create_species(species_results[0], taxo_results[tax_id])
 
-    return create_species()
+    return msg_factory.create_species()
 
 
 def get_sub_species_info(db_conn, organism_uuid, group):
     if organism_uuid is None:
-        return create_sub_species()
+        return msg_factory.create_sub_species()
 
     sub_species_results = db_conn.fetch_genomes(
         organism_uuid=organism_uuid,
@@ -173,18 +151,18 @@ def get_sub_species_info(db_conn, organism_uuid, group):
             if result.OrganismGroup.name not in species_name:
                 species_name.append(result.OrganismGroup.name)
 
-        return create_sub_species({
+        return msg_factory.create_sub_species({
             'organism_uuid': organism_uuid,
             'species_type': species_type,
             'species_name': species_name
         })
 
-    return create_sub_species()
+    return msg_factory.create_sub_species()
 
 
 def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
     if ensembl_name is None or assembly_name is None:
-        return create_genome_uuid()
+        return msg_factory.create_genome_uuid()
 
     genome_uuid_result = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
@@ -194,7 +172,7 @@ def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
     )
 
     if len(genome_uuid_result) == 1:
-        return create_genome_uuid(
+        return msg_factory.create_genome_uuid(
             {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
         )
     # PATCH: This is a special case, see EA-1112 for more details
@@ -206,16 +184,16 @@ def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
             allow_unreleased=cfg.allow_unreleased
         )
         if len(using_default_assembly_only_result) == 1:
-            return create_genome_uuid(
+            return msg_factory.create_genome_uuid(
                 {"genome_uuid": using_default_assembly_only_result[0].Genome.genome_uuid}
             )
 
-    return create_genome_uuid()
+    return msg_factory.create_genome_uuid()
 
 
 def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     if genome_uuid is None:
-        return create_genome()
+        return msg_factory.create_genome()
 
     # We first get the genome info
     genome_results = db_conn.fetch_genomes(
@@ -229,12 +207,12 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
             db_conn=db_conn, genome=genome_results[0], release_version=release_version
         )
 
-    return create_genome()
+    return msg_factory.create_genome()
 
 
 def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
     if not keyword:
-        return create_genome()
+        return msg_factory.create_genome()
 
     genome_results = db_conn.fetch_genome_by_keyword(
         keyword=keyword,
@@ -258,12 +236,12 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
                 db_conn=db_conn, genome=genome_row, release_version=release_version
             )
 
-        return create_genome()
+        return msg_factory.create_genome()
 
 
 def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
     if ensembl_name is None and site_name is None:
-        return create_genome()
+        return msg_factory.create_genome()
 
     genome_results = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
@@ -276,12 +254,12 @@ def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
             db_conn=db_conn, genome=genome_results[0], release_version=release_version
         )
 
-    return create_genome()
+    return msg_factory.create_genome()
 
 
 def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
     if genome_uuid is None:
-        return create_datasets()
+        return msg_factory.create_datasets()
 
     datasets_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
@@ -299,7 +277,7 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
         for result in datasets_results:
             dataset_type = result.DatasetType.name
             # Populate the objects bottom up
-            datasets_info = populate_dataset_info(result)
+            datasets_info = msg_factory.populate_dataset_info(result)
             # Construct the datasets dictionary
             if dataset_type in ds_obj_dict:
                 ds_obj_dict[dataset_type].append(datasets_info)
@@ -313,12 +291,12 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
                 dataset_infos=ds_obj_dict[dataset_type_key]
             )
 
-        return create_datasets({
+        return msg_factory.create_datasets({
             'genome_uuid': genome_uuid,
             'datasets': dataset_object_dict
         })
 
-    return create_datasets()
+    return msg_factory.create_datasets()
 
 
 def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
@@ -330,10 +308,10 @@ def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
-        yield create_genome_sequence(result)
+        yield msg_factory.create_genome_sequence(result)
 
 
-def genome_assembly_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
+def assembly_region_iterator(db_conn, genome_uuid, chromosomal_only):
     if genome_uuid is None:
         return
 
@@ -342,22 +320,21 @@ def genome_assembly_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
-        yield create_genome_assembly_sequence(result)
+        yield msg_factory.create_assembly_region(result)
 
 
-def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name, chromosomal_only):
+def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name):
     if genome_uuid is None or sequence_region_name is None:
-        return create_genome_assembly_sequence_region()
+        return msg_factory.create_genome_assembly_sequence_region()
 
     assembly_sequence_results = db_conn.fetch_sequences(
         genome_uuid=genome_uuid,
-        assembly_sequence_name=sequence_region_name,
-        chromosomal_only=chromosomal_only,
+        assembly_sequence_name=sequence_region_name
     )
     if len(assembly_sequence_results) == 1:
-        return create_genome_assembly_sequence_region(assembly_sequence_results[0])
+        return msg_factory.create_genome_assembly_sequence_region(assembly_sequence_results[0])
 
-    return create_genome_assembly_sequence_region()
+    return msg_factory.create_genome_assembly_sequence_region()
 
 
 def release_iterator(metadata_db, site_name, release_version, current_only):
@@ -374,7 +351,7 @@ def release_iterator(metadata_db, site_name, release_version, current_only):
     )
 
     for result in release_results:
-        yield create_release(result)
+        yield msg_factory.create_release(result)
 
 
 def release_by_uuid_iterator(metadata_db, genome_uuid):
@@ -387,29 +364,29 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
     )
 
     for result in release_results:
-        yield create_release(result)
+        yield msg_factory.create_release(result)
 
 
 def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_dataset_type):
     if genome_uuid is None:
-        return create_dataset_infos()
+        return msg_factory.create_dataset_infos()
 
     dataset_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
         dataset_type=requested_dataset_type,
         dataset_attributes=True
     )
-    return create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
+    return msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
 
 
 def get_organisms_group_count(db_conn, release_version):
     count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
-    return create_organisms_group_count(count_result, release_version)
+    return msg_factory.create_organisms_group_count(count_result, release_version)
 
 
 def get_genome_uuid_by_tag(db_conn, genome_tag):
     if genome_tag is None:
-        return create_genome_uuid()
+        return msg_factory.create_genome_uuid()
 
     genome_uuid_result = db_conn.fetch_genomes(
         genome_tag=genome_tag,
@@ -417,7 +394,7 @@ def get_genome_uuid_by_tag(db_conn, genome_tag):
     )
 
     if len(genome_uuid_result) == 1:
-        return create_genome_uuid(
+        return msg_factory.create_genome_uuid(
             {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
         )
-    return create_genome_uuid()
+    return msg_factory.create_genome_uuid()
