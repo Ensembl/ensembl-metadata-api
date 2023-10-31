@@ -164,7 +164,7 @@ message Taxon {
   uint32 taxonomy_id = 1;
   string scientific_name = 2;
   string strain = 3;
-  repeated string common_name = 4;
+  repeated string alternative_names = 4;
 }
 
 /*

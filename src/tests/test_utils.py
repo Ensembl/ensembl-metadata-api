@@ -84,7 +84,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"commonName": [
+					"alternativeNames": [
 						"Escherichia coli MG1655",
 						"Escherichia coli str. K12 substr. MG1655",
 						"Escherichia coli str. MG1655",
@@ -684,7 +684,7 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
-				"commonName": [
+				"alternativeNames": [
 					"Canadian hard winter wheat",
 					"Triticum aestivum subsp. aestivum",
 					"Triticum vulgare",
@@ -738,7 +738,7 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
-				"commonName": [
+				"alternativeNames": [
 					"Canadian hard winter wheat",
 					"Triticum aestivum subsp. aestivum",
 					"Triticum vulgare",
@@ -797,7 +797,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"commonName": ["human"],
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
@@ -836,7 +836,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"commonName": ["human"],
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
@@ -885,7 +885,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"commonName": ["human"],
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
@@ -924,7 +924,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"commonName": ["human"],
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
@@ -982,7 +982,7 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
-				"commonName": [
+				"alternativeNames": [
 					"Canadian hard winter wheat",
 					"Triticum aestivum subsp. aestivum",
 					"Triticum vulgare",
@@ -1039,7 +1039,7 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
-				"commonName": [
+				"alternativeNames": [
 					"Canadian hard winter wheat",
 					"Triticum aestivum subsp. aestivum",
 					"Triticum vulgare",

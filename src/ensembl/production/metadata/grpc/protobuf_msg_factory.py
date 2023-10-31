@@ -113,12 +113,12 @@ def create_assembly(data=None):
     return assembly
 
 
-def create_taxon(data=None, taxon_common_name=[]):
+def create_taxon(data=None, alternative_names=[]):
     if data is None:
         return ensembl_metadata_pb2.Taxon()
 
     taxon = ensembl_metadata_pb2.Taxon(
-        common_name=taxon_common_name,
+        alternative_names=alternative_names,
         taxonomy_id=data.Organism.taxonomy_id,
         scientific_name=data.Organism.scientific_name,
         strain=data.Organism.strain,
@@ -225,12 +225,12 @@ def create_genome_uuid(data=None):
     return genome_uuid
 
 
-def create_genome(data=None, attributes=None, count=0, taxon_common_name=[]):
+def create_genome(data=None, attributes=None, count=0, alternative_names=[]):
     if data is None:
         return ensembl_metadata_pb2.Genome()
 
     assembly = create_assembly(data)
-    taxon = create_taxon(data, taxon_common_name)
+    taxon = create_taxon(data, alternative_names)
     organism = create_organism(data)
     attributes_info = create_attributes_info(attributes)
     release = create_release(data)
