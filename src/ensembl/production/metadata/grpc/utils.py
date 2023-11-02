@@ -89,6 +89,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     attrib_data_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome.Genome.genome_uuid,
         release_version=release_version,
+        dataset_name="all",
         dataset_attributes=True
     )
     # fetch related assemblies count
