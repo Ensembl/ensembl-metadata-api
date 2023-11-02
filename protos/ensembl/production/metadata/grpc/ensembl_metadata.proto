@@ -201,16 +201,18 @@ message Attribute {
 
 message AttributesInfo {
   string genebuild_method = 1;
-  string genebuild_last_geneset_update = 2;
-  string genebuild_version = 3;
-  string genebuild_provider_name = 4;
-  string genebuild_provider_url = 5;
-  string assembly_level = 6;
-  string assembly_date = 7;
-  string sample_gene_param = 8;
-  string sample_location_param = 9;
-  string assembly_provider_name = 10;
-  string assembly_provider_url = 11;
+  string genebuild_method_display = 2;
+  string genebuild_last_geneset_update = 3;
+  string genebuild_version = 4;
+  string genebuild_provider_name = 5;
+  string genebuild_provider_url = 6;
+  string genebuild_sample_gene = 7;
+  string genebuild_sample_location = 8;
+  string assembly_level = 9;
+  string assembly_date = 10;
+  string assembly_provider_name = 11;
+  string assembly_provider_url = 12;
+  string variation_sample_variant = 13;
 }
 
 /*
