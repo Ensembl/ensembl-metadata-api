@@ -164,6 +164,7 @@ def create_attributes_info(data=None):
     # from EA-1105
     required_attributes = {
         "genebuild.method": "",
+        "genebuild.method_display": "",
         "genebuild.last_geneset_update": "",
         "genebuild.version": "",
         "genebuild.provider_name": "",
@@ -180,10 +181,12 @@ def create_attributes_info(data=None):
     for attrib_data in data:
         attrib_name = attrib_data.Attribute.name
         if attrib_name in list(required_attributes.keys()):
+            # print(f"%%%%%% {attrib_name} => {attrib_data.DatasetAttribute.value}")
             required_attributes[attrib_name] = attrib_data.DatasetAttribute.value
 
     return ensembl_metadata_pb2.AttributesInfo(
         genebuild_method=required_attributes["genebuild.method"],
+        genebuild_method_display=required_attributes["genebuild.method_display"],
         genebuild_last_geneset_update=required_attributes["genebuild.last_geneset_update"],
         genebuild_version=required_attributes["genebuild.version"],
         genebuild_provider_name=required_attributes["genebuild.provider_name"],
