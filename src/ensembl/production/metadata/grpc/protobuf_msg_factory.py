@@ -174,7 +174,8 @@ def create_attributes_info(data=None):
         "assembly.level": "",
         "assembly.date": "",
         "assembly.provider_name": "",
-        "assembly.provider_url": ""
+        "assembly.provider_url": "",
+        "variation.sample_variant": ""
     }
 
     # set required_attributes values
@@ -197,6 +198,7 @@ def create_attributes_info(data=None):
         assembly_date=required_attributes["assembly.date"],
         assembly_provider_name=required_attributes["assembly.provider_name"],
         assembly_provider_url=required_attributes["assembly.provider_url"],
+        variation_sample_variant=required_attributes["variation.sample_variant"],
     )
 
 

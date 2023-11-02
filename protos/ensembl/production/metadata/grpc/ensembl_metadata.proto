@@ -212,6 +212,7 @@ message AttributesInfo {
   string assembly_date = 10;
   string assembly_provider_name = 11;
   string assembly_provider_url = 12;
+  string variation_sample_variant = 13;
 }
 
 /*
