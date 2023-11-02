@@ -206,10 +206,10 @@ message AttributesInfo {
   string genebuild_version = 4;
   string genebuild_provider_name = 5;
   string genebuild_provider_url = 6;
-  string assembly_level = 7;
-  string assembly_date = 8;
-  string sample_gene_param = 9;
-  string sample_location_param = 10;
+  string genebuild_sample_gene = 7;
+  string genebuild_sample_location = 8;
+  string assembly_level = 9;
+  string assembly_date = 10;
   string assembly_provider_name = 11;
   string assembly_provider_url = 12;
 }
