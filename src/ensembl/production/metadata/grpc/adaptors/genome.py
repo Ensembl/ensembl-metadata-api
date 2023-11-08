@@ -216,7 +216,7 @@ class GenomeAdaptor(BaseAdaptor):
 				is_genome_released = session.execute(prep_query).first()
 
 			if is_genome_released:
-				# Include release related info if released_only is True
+				# Include release related info if is_genome_released is True
 				genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
 					.join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
 					.join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
@@ -235,6 +235,13 @@ class GenomeAdaptor(BaseAdaptor):
 
 				if release_type is not None:
 					genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
+
+			# if is_genome_released and allow_unreleased are False
+			# the query shouldn't return anything
+			else:
+				# This represents an empty list, simulating zero rows returned
+				# it prevents returning unreleased data
+				return []
 
 		# print(f"genome_select query ====> {str(genome_select)}")
 		with self.metadata_db.session_scope() as session:
