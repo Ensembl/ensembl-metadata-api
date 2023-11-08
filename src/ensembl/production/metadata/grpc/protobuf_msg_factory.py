@@ -164,36 +164,41 @@ def create_attributes_info(data=None):
     # from EA-1105
     required_attributes = {
         "genebuild.method": "",
+        "genebuild.method_display": "",
         "genebuild.last_geneset_update": "",
         "genebuild.version": "",
         "genebuild.provider_name": "",
         "genebuild.provider_url": "",
+        "genebuild.sample_gene": "",
+        "genebuild.sample_location": "",
         "assembly.level": "",
         "assembly.date": "",
-        "sample.gene_param": "",
-        "sample.location_param": "",
         "assembly.provider_name": "",
-        "assembly.provider_url": ""
+        "assembly.provider_url": "",
+        "variation.sample_variant": ""
     }
 
     # set required_attributes values
     for attrib_data in data:
         attrib_name = attrib_data.Attribute.name
         if attrib_name in list(required_attributes.keys()):
+            # print(f"%%%%%% {attrib_name} => {attrib_data.DatasetAttribute.value}")
             required_attributes[attrib_name] = attrib_data.DatasetAttribute.value
 
     return ensembl_metadata_pb2.AttributesInfo(
         genebuild_method=required_attributes["genebuild.method"],
+        genebuild_method_display=required_attributes["genebuild.method_display"],
         genebuild_last_geneset_update=required_attributes["genebuild.last_geneset_update"],
         genebuild_version=required_attributes["genebuild.version"],
         genebuild_provider_name=required_attributes["genebuild.provider_name"],
         genebuild_provider_url=required_attributes["genebuild.provider_url"],
+        genebuild_sample_gene=required_attributes["genebuild.sample_gene"],
+        genebuild_sample_location=required_attributes["genebuild.sample_location"],
         assembly_level=required_attributes["assembly.level"],
         assembly_date=required_attributes["assembly.date"],
-        sample_gene_param=required_attributes["sample.gene_param"],
-        sample_location_param=required_attributes["sample.location_param"],
         assembly_provider_name=required_attributes["assembly.provider_name"],
         assembly_provider_url=required_attributes["assembly.provider_url"],
+        variation_sample_variant=required_attributes["variation.sample_variant"],
     )
 
 
