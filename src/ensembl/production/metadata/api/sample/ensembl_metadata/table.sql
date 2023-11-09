@@ -37,7 +37,7 @@ CREATE TABLE assembly_sequence
     chromosome_rank      int null,
     sequence_location    varchar(10) null,
     md5                  varchar(32) null,
-    sha512t24u            varchar(128) null,
+    sha512t4u            varchar(128) null,
     constraint assembly_sequence_assembly_id_accession_5f3e5119_uniq
         unique (assembly_id, accession),
     constraint assembly_sequence_assembly_id_2a84ddcb_fk_assembly_assembly_id

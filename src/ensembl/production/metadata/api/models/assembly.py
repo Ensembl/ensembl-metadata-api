@@ -57,15 +57,10 @@ class AssemblySequence(Base):
     length = Column(Integer, nullable=False)
     sequence_location = Column(String(10))
     md5 = Column(String(32))
-    # column need renaming as well
-    sha512t24u = Column(String(128))
+    sha512t4u = Column(String(128))
+    # One to many relationships
+    # none
+    # many to one relationships
+    # assembly_id within assembly
     assembly = relationship('Assembly', back_populates="assembly_sequences")
 
-    # backward compatibility with old column name sha512t2u
-    @property
-    def sha512t2u(self):
-        return self.sha512t24u
-
-    @sha512t2u.setter
-    def sha512t2u(self, checksum):
-        self.sha512t24u = checksum
