@@ -63,9 +63,9 @@ class AssemblySequence(Base):
 
     # backward compatibility with old column name sha512t2u
     @property
-    def sha512t2u(self):
+    def sha512t4u(self):
         return self.sha512t24u
 
-    @sha512t2u.setter
-    def sha512t2u(self, checksum):
+    @sha512t4u.setter
+    def sha512t4u(self, checksum):
         self.sha512t24u = checksum
