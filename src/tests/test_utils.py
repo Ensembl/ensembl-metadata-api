@@ -84,11 +84,18 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": [
+						"Escherichia coli MG1655",
+						"Escherichia coli str. K12 substr. MG1655",
+						"Escherichia coli str. MG1655",
+						"Escherichia coli strain MG1655",
+					],
 					"scientificName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
 					"taxonomyId": 511145
 				}
 			}
 		]
+		print(output)
 		assert output == expected_output
 
 	@pytest.mark.parametrize(
@@ -677,6 +684,14 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
+				"alternativeNames": [
+					"Canadian hard winter wheat",
+					"Triticum aestivum subsp. aestivum",
+					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
+					"wheat"
+				],
 				"scientificName": "Triticum aestivum",
 				"strain": "reference (Chinese spring)",
 				"taxonomyId": 4565
@@ -723,6 +738,14 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
+				"alternativeNames": [
+					"Canadian hard winter wheat",
+					"Triticum aestivum subsp. aestivum",
+					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
+					"wheat"
+				],
 				"scientificName": "Triticum aestivum",
 				"strain": "reference (Chinese spring)",
 				"taxonomyId": 4565
@@ -774,6 +797,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
@@ -812,6 +836,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
@@ -860,6 +885,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
@@ -898,6 +924,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
@@ -923,35 +950,51 @@ class TestUtils:
 			ensembl_name="Triticum_aestivum",
 			release_version=108.0
 		))
-		expected_output = {"assembly": {"accession": "GCA_900519105.1",
-										"ensemblName": "IWGSC",
-										"assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
-										"level": "chromosome",
-										"name": "IWGSC"},
-						   "attributesInfo": {},
-						   "created": "2023-05-12 13:32:36",
-						   "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
-						   "organism": {"commonName": "Triticum aestivum",
-										"ensemblName": "Triticum_aestivum",
-										"organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
-										"scientificName": "Triticum aestivum",
-										"scientificParlanceName": "triticum_aestivum",
-										"speciesTaxonomyId": 4565,
-										"taxonomyId": 4565,
-										"strain": "reference (Chinese spring)"},
-						   "relatedAssembliesCount": 1,
-						   "release": {"isCurrent": True,
-									   "releaseDate": "2023-05-15",
-									   "releaseLabel": "Beta Release 1",
-									   "releaseVersion": 108.0,
-									   "siteLabel": "Ensembl Genome Browser",
-									   "siteName": "Ensembl",
-									   "siteUri": "https://beta.ensembl.org"},
-						   "taxon": {
-							   "scientificName": "Triticum aestivum",
-							   "strain": "reference (Chinese spring)",
-							   "taxonomyId": 4565
-						   }}
+		expected_output = {
+			"assembly": {
+				"accession": "GCA_900519105.1",
+				"ensemblName": "IWGSC",
+				"assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
+				"level": "chromosome",
+				"name": "IWGSC"
+			},
+			"attributesInfo": {},
+			"created": "2023-05-12 13:32:36",
+			"genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
+			"organism": {
+				"commonName": "Triticum aestivum",
+				"ensemblName": "Triticum_aestivum",
+				"organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+				"scientificName": "Triticum aestivum",
+				"scientificParlanceName": "triticum_aestivum",
+				"speciesTaxonomyId": 4565,
+				"taxonomyId": 4565,
+				"strain": "reference (Chinese spring)"
+			},
+			"relatedAssembliesCount": 1,
+			"release": {
+				"isCurrent": True,
+				"releaseDate": "2023-05-15",
+				"releaseLabel": "Beta Release 1",
+				"releaseVersion": 108.0,
+				"siteLabel": "Ensembl Genome Browser",
+				"siteName": "Ensembl",
+				"siteUri": "https://beta.ensembl.org"
+			},
+			"taxon": {
+				"alternativeNames": [
+					"Canadian hard winter wheat",
+					"Triticum aestivum subsp. aestivum",
+					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
+					"wheat"
+				],
+				"scientificName": "Triticum aestivum",
+				"strain": "reference (Chinese spring)",
+				"taxonomyId": 4565
+			}
+		}
 		assert json.loads(output) == expected_output
 
 	def test_get_genomes_by_name_release_unspecified(self, genome_db_conn):
@@ -964,35 +1007,51 @@ class TestUtils:
 			ensembl_name="Triticum_aestivum",
 			release_version=None
 		))
-		expected_output = {"assembly": {"accession": "GCA_900519105.1",
-										"ensemblName": "IWGSC",
-										"assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
-										"level": "chromosome",
-										"name": "IWGSC"},
-						   "attributesInfo": {},
-						   "created": "2023-05-12 13:32:36",
-						   "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
-						   "organism": {"commonName": "Triticum aestivum",
-										"ensemblName": "Triticum_aestivum",
-										"organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
-										"scientificName": "Triticum aestivum",
-										"scientificParlanceName": "triticum_aestivum",
-										"speciesTaxonomyId": 4565,
-										"taxonomyId": 4565,
-										"strain": "reference (Chinese spring)"},
-						   "relatedAssembliesCount": 1,
-						   "release": {"isCurrent": True,
-									   "releaseDate": "2023-05-15",
-									   "releaseLabel": "Beta Release 1",
-									   "releaseVersion": 108.0,
-									   "siteLabel": "Ensembl Genome Browser",
-									   "siteName": "Ensembl",
-									   "siteUri": "https://beta.ensembl.org"},
-						   "taxon": {
-							   "scientificName": "Triticum aestivum",
-							   "strain": "reference (Chinese spring)",
-							   "taxonomyId": 4565
-						   }}
+		expected_output = {
+			"assembly": {
+				"accession": "GCA_900519105.1",
+				"ensemblName": "IWGSC",
+				"assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
+				"level": "chromosome",
+				"name": "IWGSC"
+			},
+			"attributesInfo": {},
+			"created": "2023-05-12 13:32:36",
+			"genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
+			"organism": {
+				"commonName": "Triticum aestivum",
+				"ensemblName": "Triticum_aestivum",
+				"organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+				"scientificName": "Triticum aestivum",
+				"scientificParlanceName": "triticum_aestivum",
+				"speciesTaxonomyId": 4565,
+				"taxonomyId": 4565,
+				"strain": "reference (Chinese spring)"
+			},
+			"relatedAssembliesCount": 1,
+			"release": {
+				"isCurrent": True,
+				"releaseDate": "2023-05-15",
+				"releaseLabel": "Beta Release 1",
+				"releaseVersion": 108.0,
+				"siteLabel": "Ensembl Genome Browser",
+				"siteName": "Ensembl",
+				"siteUri": "https://beta.ensembl.org"
+			},
+			"taxon": {
+				"alternativeNames": [
+					"Canadian hard winter wheat",
+					"Triticum aestivum subsp. aestivum",
+					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
+					"wheat"
+				],
+				"scientificName": "Triticum aestivum",
+				"strain": "reference (Chinese spring)",
+				"taxonomyId": 4565
+			}
+		}
 		assert json.loads(output) == expected_output
 
 	def test_get_organisms_group_count(self, genome_db_conn):

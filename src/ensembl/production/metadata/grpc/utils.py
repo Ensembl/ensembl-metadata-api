@@ -25,6 +25,20 @@ def connect_to_db():
     return conn
 
 
+def get_alternative_names(db_conn, taxon_id):
+    """ Get alternative names for a given taxon ID """
+    taxon_ifo = db_conn.fetch_taxonomy_names(taxon_id)
+
+    alternative_names = [
+        taxon_ifo[taxon_id].get('genbank_common_name'),
+    ] + taxon_ifo[taxon_id].get('synonym')
+
+    # remove duplicates
+    unique_alternative_names = list(set(alternative_names))
+    # sort before returning (otherwise the test breaks)
+    return sorted(unique_alternative_names)
+
+
 def get_top_level_statistics(db_conn, organism_uuid, group):
     if organism_uuid is None:
         return msg_factory.create_top_level_statistics()
@@ -97,10 +111,13 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
         species_taxonomy_id=genome.Organism.species_taxonomy_id
     )[0].count
 
+    alternative_names = get_alternative_names(db_conn, genome.Organism.taxonomy_id)
+
     return msg_factory.create_genome(
         data=genome,
         attributes=attrib_data_results,
-        count=related_assemblies_count
+        count=related_assemblies_count,
+        alternative_names=alternative_names
     )
 
 
