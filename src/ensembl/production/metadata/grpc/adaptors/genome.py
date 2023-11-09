@@ -214,7 +214,8 @@ class GenomeAdaptor(BaseAdaptor):
 					.join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
 					.filter(GenomeDataset.release_id.isnot(None))
 				is_genome_released = session.execute(prep_query).first()
-
+			print(f"is_genome_released ---> {is_genome_released}")
+			print(f"AWWWWWWAAWAW !!!")
 			if is_genome_released:
 				# Include release related info if is_genome_released is True
 				genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
@@ -613,7 +614,7 @@ class GenomeAdaptor(BaseAdaptor):
 		except Exception as e:
 			raise ValueError(str(e))
 
-	def fetch_organisms_group_counts(self, species_taxonomy_id=None, release_version=None, group_code='popular'):
+	def fetch_organisms_group_counts(self, release_version=None, group_code='popular'):
 		o_species = aliased(Organism)
 		o = aliased(Organism)
 		if not release_version:
@@ -635,9 +636,6 @@ class GenomeAdaptor(BaseAdaptor):
 							   OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
 			query = query.filter(OrganismGroup.code == group_code)
 
-			if species_taxonomy_id is not None:
-				query = query.filter(o_species.species_taxonomy_id == species_taxonomy_id)
-
 			query = query.group_by(
 				o_species.species_taxonomy_id,
 				o_species.ensembl_name,
@@ -655,7 +653,6 @@ class GenomeAdaptor(BaseAdaptor):
 			# TODO check if we should return a dictionary instead
 			return session.execute(query).all()
 
-
 	def fetch_related_assemblies_counts(self, species_taxonomy_id=None, release_version=None):
 		o_species = aliased(Organism)
 		o = aliased(Organism)
@@ -672,7 +669,7 @@ class GenomeAdaptor(BaseAdaptor):
 			query = query.join(o, o_species.species_taxonomy_id == o.species_taxonomy_id)
 			query = query.join(Genome, o.organism_id == Genome.organism_id)
 			query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
-			# query = query.filter(o_species.species_taxonomy_id == species_taxonomy_id)
+			query = query.filter(o_species.species_taxonomy_id == species_taxonomy_id)
 
 			query = query.group_by(
 				o_species.species_taxonomy_id,
@@ -685,6 +682,7 @@ class GenomeAdaptor(BaseAdaptor):
 			raise NotImplementedError('Not implemented yet')
 			pass
 
+		# print(f"query ---> {query}")
 		with self.metadata_db.session_scope() as session:
 			# TODO check if we should return a dictionary instead
 			return session.execute(query).all()

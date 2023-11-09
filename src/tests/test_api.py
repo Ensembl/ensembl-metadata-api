@@ -362,28 +362,35 @@ class TestMetadataDB:
 		)
 		assert len(test) == 0
 
-	@pytest.mark.parametrize(
-		"species_taxonomy_id, expected_organism, expected_assemblies_count",
-		[
-			# fetch everything
-			(None, "Human", 3),
-			# fetch Triticum aestivum only
-			(4565, "Triticum aestivum", 1),
-		]
-	)
-	def test_fetch_organisms_group_counts(self, multi_dbs, species_taxonomy_id, expected_organism,
-										  expected_assemblies_count):
-		conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
-							 taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-		test = conn.fetch_organisms_group_counts(species_taxonomy_id=species_taxonomy_id)
-		# When fetching everything:
+	def test_fetch_organisms_group_counts(self, multi_dbs):
+		conn = GenomeAdaptor(
+			metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+			taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url
+		)
+		test = conn.fetch_organisms_group_counts()
 		# First result should be Human
-		assert test[0][2] == expected_organism
+		assert test[0][2] == "Human"
 		# We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
-		assert test[0][5] == expected_assemblies_count
+		assert test[0][5] == 3
 		for data in test[1:]:
 			# All others have only one genome in test DB
 			assert data[5] == 1
+
+	@pytest.mark.parametrize(
+		"species_taxonomy_id, expected_organism, expected_assemblies_count",
+		[
+			(9606, "Human", 3),
+			(4565, "Triticum aestivum", 1),
+		]
+	)
+	def test_fetch_related_assemblies_counts(self, multi_dbs, species_taxonomy_id, expected_organism,
+											 expected_assemblies_count):
+		conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
+							 taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
+		test = conn.fetch_related_assemblies_counts(species_taxonomy_id=species_taxonomy_id)
+		assert test[0][2] == expected_organism
+		# We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
+		assert test[0][4] == expected_assemblies_count
 
 	@pytest.mark.parametrize(
 		"allow_unreleased, output_count, expected_genome_uuid",

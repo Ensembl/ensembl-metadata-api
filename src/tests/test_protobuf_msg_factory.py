@@ -47,7 +47,7 @@ class TestClass:
 		# 11 attributes
 		assert len(attrib_input_data) == 11
 
-		related_assemblies_input_count = genome_db_conn.fetch_organisms_group_counts(
+		related_assemblies_input_count = genome_db_conn.fetch_related_assemblies_counts(
 			species_taxonomy_id=genome_input_data[0].Organism.species_taxonomy_id
 		)[0].count
 		# There are three related assemblies
