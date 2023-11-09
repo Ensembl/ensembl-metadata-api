@@ -383,11 +383,11 @@ class TestMetadataDB:
 			(4565, "Triticum aestivum", 1),
 		]
 	)
-	def test_fetch_related_assemblies_counts(self, multi_dbs, species_taxonomy_id, expected_organism,
+	def test_fetch_related_assemblies_count(self, multi_dbs, species_taxonomy_id, expected_organism,
 											 expected_assemblies_count):
 		conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
 							 taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-		test = conn.fetch_related_assemblies_counts(species_taxonomy_id=species_taxonomy_id)
+		test = conn.fetch_related_assemblies_count(species_taxonomy_id=species_taxonomy_id)
 		assert test[0][2] == expected_organism
 		# We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
 		assert test[0][4] == expected_assemblies_count

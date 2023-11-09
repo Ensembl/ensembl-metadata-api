@@ -651,7 +651,7 @@ class GenomeAdaptor(BaseAdaptor):
 			# TODO check if we should return a dictionary instead
 			return session.execute(query).all()
 
-	def fetch_related_assemblies_counts(self, species_taxonomy_id=None, release_version=None):
+	def fetch_related_assemblies_count(self, species_taxonomy_id=None, release_version=None):
 		o_species = aliased(Organism)
 		o = aliased(Organism)
 		if not release_version:
