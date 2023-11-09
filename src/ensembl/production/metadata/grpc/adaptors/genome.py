@@ -214,8 +214,6 @@ class GenomeAdaptor(BaseAdaptor):
 					.join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
 					.filter(GenomeDataset.release_id.isnot(None))
 				is_genome_released = session.execute(prep_query).first()
-			print(f"is_genome_released ---> {is_genome_released}")
-			print(f"AWWWWWWAAWAW !!!")
 			if is_genome_released:
 				# Include release related info if is_genome_released is True
 				genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
