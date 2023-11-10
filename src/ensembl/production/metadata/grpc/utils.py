@@ -94,7 +94,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     )
     # fetch related assemblies count
     related_assemblies_count = db_conn.fetch_related_assemblies_count(
-        species_taxonomy_id=genome.Organism.species_taxonomy_id
+        organism_uuid=genome.Organism.organism_uuid
     )
 
     return msg_factory.create_genome(

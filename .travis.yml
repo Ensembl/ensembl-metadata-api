@@ -13,3 +13,4 @@ install:
 
 script:
   - coverage run -m pytest --server mysql://travis@127.0.0.1:3306
+--server mysql://ensprod:ensembl@localhost:3306/

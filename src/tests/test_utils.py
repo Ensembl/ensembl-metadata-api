@@ -27,21 +27,23 @@ sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata
 
 
 @pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_metadata"},
-										{"src": sample_path / "ncbi_taxonomy"}]],
-						 indirect=True)
+                                        {"src": sample_path / "ncbi_taxonomy"}]],
+                         indirect=True)
 class TestUtils:
 	dbc = None  # type: UnitTestDB
 
 	def test_get_assembly_information(self, genome_db_conn):
 		output = json_format.MessageToJson(
 			utils.get_assembly_information(genome_db_conn, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))
-		expected_output = {"accession": "GCA_000001405.28",
-						   "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-						   # "chromosomal": 1,
-						   "length": "71251",
-						   "level": "chromosome",
-						   "name": "GRCh38.p13",
-						   "sequenceLocation": "SO:0000738"}
+		expected_output = {
+			"accession": "GCA_000001405.28",
+			"assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
+			# "chromosomal": 1,
+			"length": "71251",
+			"level": "chromosome",
+			"name": "GRCh38.p13",
+			"sequenceLocation": "SO:0000738"
+		}
 		assert json.loads(output) == expected_output
 
 	def test_get_genomes_from_assembly_accession_iterator(self, genome_db_conn):
@@ -101,7 +103,7 @@ class TestUtils:
 		]
 	)
 	def test_get_genomes_from_assembly_accession_iterator_null(self, genome_db_conn, assembly_accession,
-															   release_version):
+	                                                           release_version):
 		output = [
 			json.loads(json_format.MessageToJson(response)) for response in
 			utils.get_genomes_from_assembly_accession_iterator(
@@ -148,11 +150,17 @@ class TestUtils:
 			'statisticType': 'bp',
 			'statisticValue': '1332.42'
 		}
+		# assert first_genome_stats[1] == {
+		#	'label': 'Average coding exons per transcript',
+		#	'name': 'average_coding_exons_per_coding_transcript',
+		#	'statisticType': 'float',
+		#	'statisticValue': '5.34'
+		# }
 		assert first_genome_stats[1] == {
-			'label': 'Average coding exons per transcript',
-			'name': 'average_coding_exons_per_coding_transcript',
-			'statisticType': 'float',
-			'statisticValue': '5.34'
+			'label': 'Average exon length per coding gene',
+			'name': 'average_coding_exon_length',
+			'statisticType': 'bp',
+			'statisticValue': '249.47'
 		}
 
 	def test_get_top_level_statistics_by_uuid(self, genome_db_conn):
@@ -169,11 +177,18 @@ class TestUtils:
 			'statisticType': 'bp',
 			'statisticValue': '1332.42'
 		}
+
+		#assert output["statistics"][2] == {
+		#	'label': 'Average exon length per coding gene',
+		#	'name': 'average_coding_exon_length',
+		#	'statisticType': 'bp',
+		#	'statisticValue': '249.47'
+		#}
 		assert output["statistics"][2] == {
-			'label': 'Average exon length per coding gene',
-			'name': 'average_coding_exon_length',
-			'statisticType': 'bp',
-			'statisticValue': '249.47'
+			'label': 'Average coding exons per transcript',
+			'name': 'average_coding_exons_per_coding_transcript',
+			'statisticType': 'float',
+			'statisticValue': '5.34'
 		}
 
 	def test_get_datasets_list_by_uuid(self, genome_db_conn):
@@ -526,94 +541,117 @@ class TestUtils:
 	def test_get_dataset_by_genome_and_dataset_type(self, genome_db_conn):
 		output = json_format.MessageToJson(
 			utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
-														 "assembly")
+			                                             "assembly")
 		)
 		output = json.loads(output)
-		assert output == {'datasetInfos': [{'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'assembly.date',
-											'type': 'string',
-											'value': '2013-12',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'assembly.level',
-											'type': 'string',
-											'value': 'chromosome',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'chromosomes',
-											'type': 'integer',
-											'value': '25',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'component_sequences',
-											'type': 'integer',
-											'value': '36734',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'contig_n50',
-											'type': 'bp',
-											'value': '56413054',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'gc_percentage',
-											'type': 'percent',
-											'value': '38.87',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'spanned_gaps',
-											'type': 'integer',
-											'value': '661',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'toplevel_sequences',
-											'type': 'integer',
-											'value': '640',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'total_coding_sequence_length',
-											'type': 'bp',
-											'value': '34459298',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'total_gap_length',
-											'type': 'bp',
-											'value': '161368351',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'total_genome_length',
-											'type': 'bp',
-											'value': '3272116950',
-											'version': 108.0}],
-						  'datasetType': 'assembly',
-						  'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'
-						  }
+		assert output == {
+			'datasetInfos': [{
+				'datasetLabel': 'GCA_000001405.28',
+				'datasetName': 'assembly',
+				'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+				'name': 'assembly.date',
+				'type': 'string',
+				'value': '2013-12',
+				'version': 108.0
+			},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'assembly.level',
+					'type': 'string',
+					'value': 'chromosome',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'chromosomes',
+					'type': 'integer',
+					'value': '25',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'component_sequences',
+					'type': 'integer',
+					'value': '36734',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'contig_n50',
+					'type': 'bp',
+					'value': '56413054',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'gc_percentage',
+					'type': 'percent',
+					'value': '38.87',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'spanned_gaps',
+					'type': 'integer',
+					'value': '661',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'toplevel_sequences',
+					'type': 'integer',
+					'value': '640',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'total_coding_sequence_length',
+					'type': 'bp',
+					'value': '34459298',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'total_gap_length',
+					'type': 'bp',
+					'value': '161368351',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'total_genome_length',
+					'type': 'bp',
+					'value': '3272116950',
+					'version': 108.0
+				}],
+			'datasetType': 'assembly',
+			'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'
+		}
 
 	def test_get_dataset_by_genome_id_no_results(self, genome_db_conn):
 		output = json_format.MessageToJson(
 			utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
-														 "blah blah blah"))
+			                                             "blah blah blah"))
 		output = json.loads(output)
 		assert output == {}
 
@@ -736,7 +774,7 @@ class TestUtils:
 
 	def test_get_genomes_by_keyword(self, genome_db_conn):
 		output = [json.loads(json_format.MessageToJson(response)) for response in
-				  utils.get_genomes_by_keyword_iterator(genome_db_conn, "Human", 108.0)]
+		          utils.get_genomes_by_keyword_iterator(genome_db_conn, "Human", 108.0)]
 		expected_output = [
 			{
 				"assembly": {
@@ -821,7 +859,7 @@ class TestUtils:
 
 	def test_get_genomes_by_keyword_release_unspecified(self, genome_db_conn):
 		output = [json.loads(json_format.MessageToJson(response)) for response in
-				  utils.get_genomes_by_keyword_iterator(genome_db_conn, "Homo Sapiens", 0.0)]
+		          utils.get_genomes_by_keyword_iterator(genome_db_conn, "Homo Sapiens", 0.0)]
 		# TODO: DRY the expected_output
 		expected_output = [
 			{
@@ -913,7 +951,7 @@ class TestUtils:
 	def test_get_genomes_by_keyword_no_matches(self, genome_db_conn):
 		output = list(
 			utils.get_genomes_by_keyword_iterator(genome_db_conn, "bigfoot",
-												  1))
+			                                      1))
 		assert output == []
 
 	def test_get_genomes_by_name(self, genome_db_conn):
@@ -923,35 +961,43 @@ class TestUtils:
 			ensembl_name="Triticum_aestivum",
 			release_version=108.0
 		))
-		expected_output = {"assembly": {"accession": "GCA_900519105.1",
-										"ensemblName": "IWGSC",
-										"assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
-										"level": "chromosome",
-										"name": "IWGSC"},
-						   "attributesInfo": {},
-						   "created": "2023-05-12 13:32:36",
-						   "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
-						   "organism": {"commonName": "Triticum aestivum",
-										"ensemblName": "Triticum_aestivum",
-										"organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
-										"scientificName": "Triticum aestivum",
-										"scientificParlanceName": "triticum_aestivum",
-										"speciesTaxonomyId": 4565,
-										"taxonomyId": 4565,
-										"strain": "reference (Chinese spring)"},
-						   "relatedAssembliesCount": 1,
-						   "release": {"isCurrent": True,
-									   "releaseDate": "2023-05-15",
-									   "releaseLabel": "Beta Release 1",
-									   "releaseVersion": 108.0,
-									   "siteLabel": "Ensembl Genome Browser",
-									   "siteName": "Ensembl",
-									   "siteUri": "https://beta.ensembl.org"},
-						   "taxon": {
-							   "scientificName": "Triticum aestivum",
-							   "strain": "reference (Chinese spring)",
-							   "taxonomyId": 4565
-						   }}
+		expected_output = {
+			"assembly": {
+				"accession": "GCA_900519105.1",
+				"ensemblName": "IWGSC",
+				"assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
+				"level": "chromosome",
+				"name": "IWGSC"
+			},
+			"attributesInfo": {},
+			"created": "2023-05-12 13:32:36",
+			"genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
+			"organism": {
+				"commonName": "Triticum aestivum",
+				"ensemblName": "Triticum_aestivum",
+				"organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+				"scientificName": "Triticum aestivum",
+				"scientificParlanceName": "triticum_aestivum",
+				"speciesTaxonomyId": 4565,
+				"taxonomyId": 4565,
+				"strain": "reference (Chinese spring)"
+			},
+			"relatedAssembliesCount": 1,
+			"release": {
+				"isCurrent": True,
+				"releaseDate": "2023-05-15",
+				"releaseLabel": "Beta Release 1",
+				"releaseVersion": 108.0,
+				"siteLabel": "Ensembl Genome Browser",
+				"siteName": "Ensembl",
+				"siteUri": "https://beta.ensembl.org"
+			},
+			"taxon": {
+				"scientificName": "Triticum aestivum",
+				"strain": "reference (Chinese spring)",
+				"taxonomyId": 4565
+			}
+		}
 		assert json.loads(output) == expected_output
 
 	def test_get_genomes_by_name_release_unspecified(self, genome_db_conn):
@@ -964,35 +1010,43 @@ class TestUtils:
 			ensembl_name="Triticum_aestivum",
 			release_version=None
 		))
-		expected_output = {"assembly": {"accession": "GCA_900519105.1",
-										"ensemblName": "IWGSC",
-										"assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
-										"level": "chromosome",
-										"name": "IWGSC"},
-						   "attributesInfo": {},
-						   "created": "2023-05-12 13:32:36",
-						   "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
-						   "organism": {"commonName": "Triticum aestivum",
-										"ensemblName": "Triticum_aestivum",
-										"organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
-										"scientificName": "Triticum aestivum",
-										"scientificParlanceName": "triticum_aestivum",
-										"speciesTaxonomyId": 4565,
-										"taxonomyId": 4565,
-										"strain": "reference (Chinese spring)"},
-						   "relatedAssembliesCount": 1,
-						   "release": {"isCurrent": True,
-									   "releaseDate": "2023-05-15",
-									   "releaseLabel": "Beta Release 1",
-									   "releaseVersion": 108.0,
-									   "siteLabel": "Ensembl Genome Browser",
-									   "siteName": "Ensembl",
-									   "siteUri": "https://beta.ensembl.org"},
-						   "taxon": {
-							   "scientificName": "Triticum aestivum",
-							   "strain": "reference (Chinese spring)",
-							   "taxonomyId": 4565
-						   }}
+		expected_output = {
+			"assembly": {
+				"accession": "GCA_900519105.1",
+				"ensemblName": "IWGSC",
+				"assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
+				"level": "chromosome",
+				"name": "IWGSC"
+			},
+			"attributesInfo": {},
+			"created": "2023-05-12 13:32:36",
+			"genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
+			"organism": {
+				"commonName": "Triticum aestivum",
+				"ensemblName": "Triticum_aestivum",
+				"organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+				"scientificName": "Triticum aestivum",
+				"scientificParlanceName": "triticum_aestivum",
+				"speciesTaxonomyId": 4565,
+				"taxonomyId": 4565,
+				"strain": "reference (Chinese spring)"
+			},
+			"relatedAssembliesCount": 1,
+			"release": {
+				"isCurrent": True,
+				"releaseDate": "2023-05-15",
+				"releaseLabel": "Beta Release 1",
+				"releaseVersion": 108.0,
+				"siteLabel": "Ensembl Genome Browser",
+				"siteName": "Ensembl",
+				"siteUri": "https://beta.ensembl.org"
+			},
+			"taxon": {
+				"scientificName": "Triticum aestivum",
+				"strain": "reference (Chinese spring)",
+				"taxonomyId": 4565
+			}
+		}
 		assert json.loads(output) == expected_output
 
 	def test_get_organisms_group_count(self, genome_db_conn):

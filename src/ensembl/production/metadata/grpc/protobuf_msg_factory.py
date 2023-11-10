@@ -215,7 +215,7 @@ def create_assembly_info(data=None):
         length=data.AssemblySequence.length,
         sequence_location=data.AssemblySequence.sequence_location,
         md5=data.AssemblySequence.md5,
-        sha512t4u=data.AssemblySequence.sha512t4u,
+        sha512t24u=data.AssemblySequence.sha512t24u,
     )
     return assembly_info
 
@@ -276,7 +276,7 @@ def create_assembly_region(data=None):
         rank=data.AssemblySequence.chromosome_rank,
         md5=data.AssemblySequence.md5,
         length=data.AssemblySequence.length,
-        sha512t4u=data.AssemblySequence.sha512t4u,
+        sha512t24u=data.AssemblySequence.sha512t24u,
         chromosomal=data.AssemblySequence.chromosomal
     )
 
@@ -291,7 +291,7 @@ def create_genome_assembly_sequence_region(data=None):
         name=data.AssemblySequence.name,
         md5=data.AssemblySequence.md5,
         length=data.AssemblySequence.length,
-        sha512t4u=data.AssemblySequence.sha512t4u,
+        sha512t24u=data.AssemblySequence.sha512t24u,
         chromosomal=data.AssemblySequence.chromosomal
     )
 

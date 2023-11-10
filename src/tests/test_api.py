@@ -377,22 +377,21 @@ class TestMetadataDB:
 			assert data[5] == 1
 
 	@pytest.mark.parametrize(
-		"species_taxonomy_id, expected_assemblies_count",
+		"organism_uuid, expected_assemblies_count",
 		[
 			# Human
-			(9606, 3),
+			('db2a5f09-2db8-429b-a407-c15a4ca2876d', 3),
 			# Triticum aestivum
-			(4565, 1),
-			# species_taxonomy_id not specified
-			(None, 0),
+			('d64c34ca-b37a-476b-83b5-f21d07a3ae67', 1),
 		]
 	)
-	def test_fetch_related_assemblies_count(self, multi_dbs, species_taxonomy_id, expected_assemblies_count):
+	def test_fetch_related_assemblies_count(self, multi_dbs, organism_uuid, expected_assemblies_count):
 		conn = GenomeAdaptor(
 			metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
 			taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url
 		)
-		test = conn.fetch_related_assemblies_count(species_taxonomy_id=species_taxonomy_id)
+
+		test = conn.fetch_related_assemblies_count(organism_uuid=organism_uuid)
 		# We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
 		assert test == expected_assemblies_count
 
