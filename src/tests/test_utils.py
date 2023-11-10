@@ -151,18 +151,18 @@ class TestUtils:
 			'statisticType': 'bp',
 			'statisticValue': '1332.42'
 		}
-		# assert first_genome_stats[1] == {
-		#	'label': 'Average coding exons per transcript',
-		#	'name': 'average_coding_exons_per_coding_transcript',
-		#	'statisticType': 'float',
-		#	'statisticValue': '5.34'
-		# }
 		assert first_genome_stats[1] == {
-			'label': 'Average exon length per coding gene',
-			'name': 'average_coding_exon_length',
-			'statisticType': 'bp',
-			'statisticValue': '249.47'
+		'label': 'Average coding exons per transcript',
+		'name': 'average_coding_exons_per_coding_transcript',
+		'statisticType': 'float',
+		'statisticValue': '5.34'
 		}
+		#assert first_genome_stats[1] == {
+		#	'label': 'Average exon length per coding gene',
+		#	'name': 'average_coding_exon_length',
+		#	'statisticType': 'bp',
+		#	'statisticValue': '249.47'
+		#}
 
 	def test_get_top_level_statistics_by_uuid(self, genome_db_conn):
 		output = json_format.MessageToJson(
@@ -179,18 +179,18 @@ class TestUtils:
 			'statisticValue': '1332.42'
 		}
 
-		#assert output["statistics"][2] == {
-		#	'label': 'Average exon length per coding gene',
-		#	'name': 'average_coding_exon_length',
-		#	'statisticType': 'bp',
-		#	'statisticValue': '249.47'
-		#}
 		assert output["statistics"][2] == {
-			'label': 'Average coding exons per transcript',
-			'name': 'average_coding_exons_per_coding_transcript',
-			'statisticType': 'float',
-			'statisticValue': '5.34'
+			'label': 'Average exon length per coding gene',
+			'name': 'average_coding_exon_length',
+			'statisticType': 'bp',
+			'statisticValue': '249.47'
 		}
+		#assert output["statistics"][2] == {
+		#	'label': 'Average coding exons per transcript',
+		#	'name': 'average_coding_exons_per_coding_transcript',
+		#	'statisticType': 'float',
+		#	'statisticValue': '5.34'
+		#}
 
 	def test_get_datasets_list_by_uuid(self, genome_db_conn):
 		# the expected_output is too long and duplicated
