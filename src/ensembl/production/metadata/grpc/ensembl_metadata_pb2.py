@@ -556,7 +556,7 @@ _TAXON = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='common_name', full_name='ensembl_metadata.Taxon.common_name', index=3,
+      name='alternative_names', full_name='ensembl_metadata.Taxon.alternative_names', index=3,
       number=4, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
