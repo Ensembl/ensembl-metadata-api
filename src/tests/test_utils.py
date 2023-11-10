@@ -86,12 +86,6 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": [
-						"Escherichia coli MG1655",
-						"Escherichia coli str. K12 substr. MG1655",
-						"Escherichia coli str. MG1655",
-						"Escherichia coli strain MG1655",
-					],
 					"scientificName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
 					"taxonomyId": 511145
 				}
@@ -722,14 +716,6 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
-				"alternativeNames": [
-					"Canadian hard winter wheat",
-					"Triticum aestivum subsp. aestivum",
-					"Triticum vulgare",
-					"bread wheat",
-					"common wheat",
-					"wheat"
-				],
 				"scientificName": "Triticum aestivum",
 				"strain": "reference (Chinese spring)",
 				"taxonomyId": 4565
@@ -776,14 +762,6 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
-				"alternativeNames": [
-					"Canadian hard winter wheat",
-					"Triticum aestivum subsp. aestivum",
-					"Triticum vulgare",
-					"bread wheat",
-					"common wheat",
-					"wheat"
-				],
 				"scientificName": "Triticum aestivum",
 				"strain": "reference (Chinese spring)",
 				"taxonomyId": 4565
@@ -835,7 +813,6 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
@@ -874,7 +851,6 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
@@ -923,7 +899,6 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
@@ -962,7 +937,6 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
