@@ -113,12 +113,11 @@ def create_assembly(data=None):
     return assembly
 
 
-def create_taxon(data=None, common_names=[]):
+def create_taxon(data=None):
     if data is None:
         return ensembl_metadata_pb2.Taxon()
 
     taxon = ensembl_metadata_pb2.Taxon(
-        common_name=common_names,
         taxonomy_id=data.Organism.taxonomy_id,
         scientific_name=data.Organism.scientific_name,
         strain=data.Organism.strain,
