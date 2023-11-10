@@ -15,10 +15,10 @@ from sqlalchemy import Column, Integer, String, DateTime, Index, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
-from ensembl.production.metadata.api.models.base import Base
+from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 
-class Assembly(Base):
+class Assembly(LoadAble, Base):
     __tablename__ = 'assembly'
 
     assembly_id = Column(Integer, primary_key=True)
@@ -42,7 +42,7 @@ class Assembly(Base):
     genomes = relationship("Genome", back_populates="assembly", cascade="all, delete, delete-orphan")
 
 
-class AssemblySequence(Base):
+class AssemblySequence(LoadAble, Base):
     __tablename__ = 'assembly_sequence'
     __table_args__ = (
         Index('assembly_sequence_assembly_id_accession_5f3e5119_uniq', 'assembly_id', 'accession', unique=True),

@@ -15,10 +15,10 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship
 
-from ensembl.production.metadata.api.models.base import Base
+from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 
-class Genome(Base):
+class Genome(LoadAble, Base):
     __tablename__ = "genome"
 
     genome_id = Column(Integer, primary_key=True)
@@ -38,7 +38,7 @@ class Genome(Base):
     organism = relationship("Organism", back_populates="genomes")
 
 
-class GenomeDataset(Base):
+class GenomeDataset(LoadAble, Base):
     __tablename__ = "genome_dataset"
 
     genome_dataset_id = Column(Integer, primary_key=True)
@@ -58,7 +58,7 @@ class GenomeDataset(Base):
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_datasets")
 
 
-class GenomeRelease(Base):
+class GenomeRelease(LoadAble, Base):
     __tablename__ = "genome_release"
 
     genome_release_id = Column(Integer, primary_key=True)

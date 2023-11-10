@@ -15,10 +15,10 @@ from sqlalchemy import Column, Integer, String, Index, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
-from ensembl.production.metadata.api.models.base import Base
+from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 
-class Organism(Base):
+class Organism(LoadAble, Base):
     __tablename__ = "organism"
 
     organism_id = Column(Integer, primary_key=True)
@@ -39,7 +39,7 @@ class Organism(Base):
     # organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
 
 
-class OrganismGroup(Base):
+class OrganismGroup(LoadAble, Base):
     __tablename__ = "organism_group"
     __table_args__ = (
         Index("group_type_name_63c2f6ac_uniq", "type", "name", unique=True),
@@ -57,7 +57,7 @@ class OrganismGroup(Base):
     # none
 
 
-class OrganismGroupMember(Base):
+class OrganismGroupMember(LoadAble, Base):
     __tablename__ = "organism_group_member"
     __table_args__ = (
         Index("organism_group_member_organism_id_organism_gro_fe8f49ac_uniq", "organism_id", "organism_group_id",

@@ -13,10 +13,10 @@ from sqlalchemy import Column, Integer, String, Index, DECIMAL, Date, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
-from ensembl.production.metadata.api.models.base import Base
+from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 
-class EnsemblSite(Base):
+class EnsemblSite(LoadAble, Base):
     __tablename__ = 'ensembl_site'
 
     site_id = Column(Integer, primary_key=True)
@@ -30,7 +30,7 @@ class EnsemblSite(Base):
     # none
 
 
-class EnsemblRelease(Base):
+class EnsemblRelease(LoadAble, Base):
     __tablename__ = 'ensembl_release'
     __table_args__ = (
         Index('ensembl_release_version_site_id_b743399a_uniq', 'version', 'site_id', unique=True),
