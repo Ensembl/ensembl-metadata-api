@@ -93,13 +93,9 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
         dataset_attributes=True
     )
     # fetch related assemblies count
-    count_result = db_conn.fetch_related_assemblies_count(
+    related_assemblies_count = db_conn.fetch_related_assemblies_count(
         species_taxonomy_id=genome.Organism.species_taxonomy_id
     )
-
-    related_assemblies_count = 0
-    if len(count_result) > 0:
-        related_assemblies_count = count_result[0].count
 
     return msg_factory.create_genome(
         data=genome,

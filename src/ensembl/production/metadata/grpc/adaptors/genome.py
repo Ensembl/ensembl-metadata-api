@@ -682,5 +682,7 @@ class GenomeAdaptor(BaseAdaptor):
 
 		# print(f"query ---> {query}")
 		with self.metadata_db.session_scope() as session:
-			# TODO check if we should return a dictionary instead
-			return session.execute(query).all()
+			results = session.execute(query).all()
+			# Assuming the count is the last column in the query
+			count = results[0][-1] if results else 0
+			return count

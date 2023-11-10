@@ -49,7 +49,7 @@ class TestClass:
 
 		related_assemblies_input_count = genome_db_conn.fetch_related_assemblies_count(
 			species_taxonomy_id=genome_input_data[0].Organism.species_taxonomy_id
-		)[0].count
+		)
 		# There are three related assemblies
 		assert related_assemblies_input_count == 3
 
