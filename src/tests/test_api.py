@@ -374,7 +374,6 @@ class TestMetadataDB:
 		conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
 		                     taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
 		test = conn.fetch_organisms_group_counts()
-		print(test)
 		# When fetching everything:
 		# First result should be Human
 		assert test[0][2] == expected_organism

@@ -97,7 +97,6 @@ class TestUtils:
 				}
 			}
 		]
-		print(output)
 		assert output == expected_output
 
 	@pytest.mark.parametrize(

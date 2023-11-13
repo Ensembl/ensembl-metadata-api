@@ -151,7 +151,7 @@ class TestClass:
 		output = json_format.MessageToJson(msg_factory.create_stats_by_genome_uuid(input_data)[0])
 		assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
 		# check the first stat info of the first genome_uuid
-		print(json.loads(output)['statistics'])
+		# print(json.loads(output)['statistics'])
 		assert json.loads(output)['statistics'][0] == first_expected_stat
 
 	def test_create_top_level_statistics(self, multi_dbs, genome_db_conn):
