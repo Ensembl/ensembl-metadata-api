@@ -134,7 +134,7 @@ class TestClass:
 		output = json_format.MessageToJson(msg_factory.create_species(species_input_data[0], taxo_results[tax_id]))
 		assert json.loads(output) == expected_output
 
-	def test_create_stats_by_genome_uuid(self, genome_db_conn):
+	def test_create_stats_by_organism_uuid(self, genome_db_conn):
 		organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
 		input_data = genome_db_conn.fetch_genome_datasets(
 			organism_uuid=organism_uuid,
@@ -151,6 +151,7 @@ class TestClass:
 		output = json_format.MessageToJson(msg_factory.create_stats_by_genome_uuid(input_data)[0])
 		assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
 		# check the first stat info of the first genome_uuid
+		print(json.loads(output)['statistics'])
 		assert json.loads(output)['statistics'][0] == first_expected_stat
 
 	def test_create_top_level_statistics(self, multi_dbs, genome_db_conn):

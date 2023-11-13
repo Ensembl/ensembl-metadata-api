@@ -214,8 +214,9 @@ class GenomeAdaptor(BaseAdaptor):
 					.join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
 					.filter(GenomeDataset.release_id.isnot(None))
 				is_genome_released = session.execute(prep_query).first()
+
 			if is_genome_released:
-				# Include release related info if is_genome_released is True
+				# Include release related info if released_only is True
 				genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
 					.join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
 					.join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
@@ -235,20 +236,13 @@ class GenomeAdaptor(BaseAdaptor):
 				if release_type is not None:
 					genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
 
-			# if is_genome_released and allow_unreleased are False
-			# the query shouldn't return anything
-			else:
-				# This represents an empty list, simulating zero rows returned
-				# it prevents returning unreleased data
-				return []
-
 		# print(f"genome_select query ====> {str(genome_select)}")
 		with self.metadata_db.session_scope() as session:
 			session.expire_on_commit = False
 			return session.execute(genome_select.order_by("ensembl_name")).all()
 
 	def fetch_genomes_by_genome_uuid(self, genome_uuid, allow_unreleased=False, site_name=None, release_type=None,
-									 release_version=None, current_only=True):
+	                                 release_version=None, current_only=True):
 		return self.fetch_genomes(
 			genome_uuid=genome_uuid,
 			allow_unreleased=allow_unreleased,
@@ -259,7 +253,7 @@ class GenomeAdaptor(BaseAdaptor):
 		)
 
 	def fetch_genomes_by_assembly_accession(self, assembly_accession, allow_unreleased=False, site_name=None,
-											release_type=None, release_version=None, current_only=True):
+	                                        release_type=None, release_version=None, current_only=True):
 		return self.fetch_genomes(
 			assembly_accession=assembly_accession,
 			allow_unreleased=allow_unreleased,
@@ -352,7 +346,7 @@ class GenomeAdaptor(BaseAdaptor):
 			return session.execute(genome_query).all()
 
 	def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None, assembly_accession=None,
-						assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
+	                    assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
 		"""
 		Fetches sequences based on the provided parameters.
 
@@ -502,6 +496,7 @@ class GenomeAdaptor(BaseAdaptor):
 
 			if "all" in dataset_name:
 				# TODO: fetch the list dynamically from the DB
+				# TODO: you can as well simply remove the filter, if you want them all.
 				dataset_type_names = [
 					'assembly', 'genebuild', 'variation', 'evidence',
 					'regulation_build', 'homologies', 'regulatory_features'
@@ -631,7 +626,7 @@ class GenomeAdaptor(BaseAdaptor):
 			query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
 			query = query.join(OrganismGroupMember, o_species.organism_id == OrganismGroupMember.organism_id)
 			query = query.join(OrganismGroup,
-							   OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
+			                   OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
 			query = query.filter(OrganismGroup.code == group_code)
 
 			query = query.group_by(

@@ -27,8 +27,8 @@ sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata
 
 
 @pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_metadata"},
-                                        {"src": sample_path / "ncbi_taxonomy"}]],
-                         indirect=True)
+										{"src": sample_path / "ncbi_taxonomy"}]],
+						 indirect=True)
 class TestUtils:
 	dbc = None  # type: UnitTestDB
 
@@ -86,6 +86,12 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": [
+						"Escherichia coli MG1655",
+						"Escherichia coli str. K12 substr. MG1655",
+						"Escherichia coli str. MG1655",
+						"Escherichia coli strain MG1655",
+					],
 					"scientificName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
 					"taxonomyId": 511145
 				}
@@ -104,7 +110,7 @@ class TestUtils:
 		]
 	)
 	def test_get_genomes_from_assembly_accession_iterator_null(self, genome_db_conn, assembly_accession,
-	                                                           release_version):
+															   release_version):
 		output = [
 			json.loads(json_format.MessageToJson(response)) for response in
 			utils.get_genomes_from_assembly_accession_iterator(
@@ -152,10 +158,10 @@ class TestUtils:
 			'statisticValue': '1332.42'
 		}
 		assert first_genome_stats[1] == {
-		'label': 'Average coding exons per transcript',
-		'name': 'average_coding_exons_per_coding_transcript',
-		'statisticType': 'float',
-		'statisticValue': '5.34'
+			'label': 'Average coding exons per transcript',
+			'name': 'average_coding_exons_per_coding_transcript',
+			'statisticType': 'float',
+			'statisticValue': '5.34'
 		}
 		#assert first_genome_stats[1] == {
 		#	'label': 'Average exon length per coding gene',
@@ -178,7 +184,6 @@ class TestUtils:
 			'statisticType': 'bp',
 			'statisticValue': '1332.42'
 		}
-
 		assert output["statistics"][2] == {
 			'label': 'Average exon length per coding gene',
 			'name': 'average_coding_exon_length',
@@ -542,7 +547,7 @@ class TestUtils:
 	def test_get_dataset_by_genome_and_dataset_type(self, genome_db_conn):
 		output = json_format.MessageToJson(
 			utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
-			                                             "assembly")
+														 "assembly")
 		)
 		output = json.loads(output)
 		assert output == {
@@ -652,7 +657,7 @@ class TestUtils:
 	def test_get_dataset_by_genome_id_no_results(self, genome_db_conn):
 		output = json_format.MessageToJson(
 			utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
-			                                             "blah blah blah"))
+														 "blah blah blah"))
 		output = json.loads(output)
 		assert output == {}
 
@@ -716,6 +721,14 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
+				"alternativeNames": [
+					"Canadian hard winter wheat",
+					"Triticum aestivum subsp. aestivum",
+					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
+					"wheat"
+				],
 				"scientificName": "Triticum aestivum",
 				"strain": "reference (Chinese spring)",
 				"taxonomyId": 4565
@@ -762,6 +775,14 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
+				"alternativeNames": [
+					"Canadian hard winter wheat",
+					"Triticum aestivum subsp. aestivum",
+					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
+					"wheat"
+				],
 				"scientificName": "Triticum aestivum",
 				"strain": "reference (Chinese spring)",
 				"taxonomyId": 4565
@@ -775,7 +796,7 @@ class TestUtils:
 
 	def test_get_genomes_by_keyword(self, genome_db_conn):
 		output = [json.loads(json_format.MessageToJson(response)) for response in
-		          utils.get_genomes_by_keyword_iterator(genome_db_conn, "Human", 108.0)]
+				  utils.get_genomes_by_keyword_iterator(genome_db_conn, "Human", 108.0)]
 		expected_output = [
 			{
 				"assembly": {
@@ -813,6 +834,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
@@ -851,6 +873,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
@@ -860,7 +883,7 @@ class TestUtils:
 
 	def test_get_genomes_by_keyword_release_unspecified(self, genome_db_conn):
 		output = [json.loads(json_format.MessageToJson(response)) for response in
-		          utils.get_genomes_by_keyword_iterator(genome_db_conn, "Homo Sapiens", 0.0)]
+				  utils.get_genomes_by_keyword_iterator(genome_db_conn, "Homo Sapiens", 0.0)]
 		# TODO: DRY the expected_output
 		expected_output = [
 			{
@@ -899,6 +922,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
@@ -937,6 +961,7 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
+					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
@@ -952,7 +977,7 @@ class TestUtils:
 	def test_get_genomes_by_keyword_no_matches(self, genome_db_conn):
 		output = list(
 			utils.get_genomes_by_keyword_iterator(genome_db_conn, "bigfoot",
-			                                      1))
+												  1))
 		assert output == []
 
 	def test_get_genomes_by_name(self, genome_db_conn):
@@ -994,6 +1019,14 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
+				"alternativeNames": [
+					"Canadian hard winter wheat",
+					"Triticum aestivum subsp. aestivum",
+					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
+					"wheat"
+				],
 				"scientificName": "Triticum aestivum",
 				"strain": "reference (Chinese spring)",
 				"taxonomyId": 4565
@@ -1043,6 +1076,14 @@ class TestUtils:
 				"siteUri": "https://beta.ensembl.org"
 			},
 			"taxon": {
+				"alternativeNames": [
+					"Canadian hard winter wheat",
+					"Triticum aestivum subsp. aestivum",
+					"Triticum vulgare",
+					"bread wheat",
+					"common wheat",
+					"wheat"
+				],
 				"scientificName": "Triticum aestivum",
 				"strain": "reference (Chinese spring)",
 				"taxonomyId": 4565
