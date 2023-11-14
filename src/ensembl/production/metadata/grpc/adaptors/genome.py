@@ -242,7 +242,7 @@ class GenomeAdaptor(BaseAdaptor):
 			return session.execute(genome_select.order_by("ensembl_name")).all()
 
 	def fetch_genomes_by_genome_uuid(self, genome_uuid, allow_unreleased=False, site_name=None, release_type=None,
-									 release_version=None, current_only=True):
+	                                 release_version=None, current_only=True):
 		return self.fetch_genomes(
 			genome_uuid=genome_uuid,
 			allow_unreleased=allow_unreleased,
@@ -253,7 +253,7 @@ class GenomeAdaptor(BaseAdaptor):
 		)
 
 	def fetch_genomes_by_assembly_accession(self, assembly_accession, allow_unreleased=False, site_name=None,
-											release_type=None, release_version=None, current_only=True):
+	                                        release_type=None, release_version=None, current_only=True):
 		return self.fetch_genomes(
 			assembly_accession=assembly_accession,
 			allow_unreleased=allow_unreleased,
@@ -346,7 +346,7 @@ class GenomeAdaptor(BaseAdaptor):
 			return session.execute(genome_query).all()
 
 	def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None, assembly_accession=None,
-						assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
+	                    assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
 		"""
 		Fetches sequences based on the provided parameters.
 
@@ -496,6 +496,7 @@ class GenomeAdaptor(BaseAdaptor):
 
 			if "all" in dataset_name:
 				# TODO: fetch the list dynamically from the DB
+				# TODO: you can as well simply remove the filter, if you want them all.
 				dataset_type_names = [
 					'assembly', 'genebuild', 'variation', 'evidence',
 					'regulation_build', 'homologies', 'regulatory_features'
@@ -606,7 +607,7 @@ class GenomeAdaptor(BaseAdaptor):
 		except Exception as e:
 			raise ValueError(str(e))
 
-	def fetch_organisms_group_counts(self, species_taxonomy_id=None, release_version=None, group_code='popular'):
+	def fetch_organisms_group_counts(self, release_version=None, group_code='popular'):
 		o_species = aliased(Organism)
 		o = aliased(Organism)
 		if not release_version:
@@ -625,11 +626,8 @@ class GenomeAdaptor(BaseAdaptor):
 			query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
 			query = query.join(OrganismGroupMember, o_species.organism_id == OrganismGroupMember.organism_id)
 			query = query.join(OrganismGroup,
-							   OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
+			                   OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
 			query = query.filter(OrganismGroup.code == group_code)
-
-			if species_taxonomy_id is not None:
-				query = query.filter(o_species.species_taxonomy_id == species_taxonomy_id)
 
 			query = query.group_by(
 				o_species.species_taxonomy_id,
@@ -647,3 +645,26 @@ class GenomeAdaptor(BaseAdaptor):
 		with self.metadata_db.session_scope() as session:
 			# TODO check if we should return a dictionary instead
 			return session.execute(query).all()
+
+	def fetch_related_assemblies_count(self, organism_uuid, release_version=None):
+		"""
+		Fetch all related assemblies for the same organism and all the ones sharing the same species_taxon_id
+		release_version is to return only the ones which were available unitl this release_version (not implemented yet)
+		"""
+		o_species = aliased(Organism)
+		o = aliased(Organism)
+		if not release_version:
+			# Get latest released organisms
+			query = db.select(db.func.count(o_species.ensembl_name))
+			query = query.join(o, o_species.species_taxonomy_id == o.species_taxonomy_id)
+			query = query.join(Genome, o.organism_id == Genome.organism_id)
+			query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+			query = query.filter(o_species.organism_uuid == organism_uuid)
+		else:
+			# change group to release_version_state and related genomes
+			raise NotImplementedError('Not implemented yet')
+			pass
+
+		# print(f"query ---> {query}")
+		with self.metadata_db.session_scope() as session:
+			return session.execute(query).scalar()

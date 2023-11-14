@@ -35,13 +35,15 @@ class TestUtils:
 	def test_get_assembly_information(self, genome_db_conn):
 		output = json_format.MessageToJson(
 			utils.get_assembly_information(genome_db_conn, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))
-		expected_output = {"accession": "GCA_000001405.28",
-						   "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-						   # "chromosomal": 1,
-						   "length": "71251",
-						   "level": "chromosome",
-						   "name": "GRCh38.p13",
-						   "sequenceLocation": "SO:0000738"}
+		expected_output = {
+			"accession": "GCA_000001405.28",
+			"assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
+			# "chromosomal": 1,
+			"length": "71251",
+			"level": "chromosome",
+			"name": "GRCh38.p13",
+			"sequenceLocation": "SO:0000738"
+		}
 		assert json.loads(output) == expected_output
 
 	def test_get_genomes_from_assembly_accession_iterator(self, genome_db_conn):
@@ -95,7 +97,6 @@ class TestUtils:
 				}
 			}
 		]
-		print(output)
 		assert output == expected_output
 
 	@pytest.mark.parametrize(
@@ -161,6 +162,12 @@ class TestUtils:
 			'statisticType': 'float',
 			'statisticValue': '5.34'
 		}
+		#assert first_genome_stats[1] == {
+		#	'label': 'Average exon length per coding gene',
+		#	'name': 'average_coding_exon_length',
+		#	'statisticType': 'bp',
+		#	'statisticValue': '249.47'
+		#}
 
 	def test_get_top_level_statistics_by_uuid(self, genome_db_conn):
 		output = json_format.MessageToJson(
@@ -182,6 +189,12 @@ class TestUtils:
 			'statisticType': 'bp',
 			'statisticValue': '249.47'
 		}
+		#assert output["statistics"][2] == {
+		#	'label': 'Average coding exons per transcript',
+		#	'name': 'average_coding_exons_per_coding_transcript',
+		#	'statisticType': 'float',
+		#	'statisticValue': '5.34'
+		#}
 
 	def test_get_datasets_list_by_uuid(self, genome_db_conn):
 		# the expected_output is too long and duplicated
@@ -536,86 +549,109 @@ class TestUtils:
 														 "assembly")
 		)
 		output = json.loads(output)
-		assert output == {'datasetInfos': [{'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'assembly.date',
-											'type': 'string',
-											'value': '2013-12',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'assembly.level',
-											'type': 'string',
-											'value': 'chromosome',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'chromosomes',
-											'type': 'integer',
-											'value': '25',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'component_sequences',
-											'type': 'integer',
-											'value': '36734',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'contig_n50',
-											'type': 'bp',
-											'value': '56413054',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'gc_percentage',
-											'type': 'percent',
-											'value': '38.87',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'spanned_gaps',
-											'type': 'integer',
-											'value': '661',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'toplevel_sequences',
-											'type': 'integer',
-											'value': '640',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'total_coding_sequence_length',
-											'type': 'bp',
-											'value': '34459298',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'total_gap_length',
-											'type': 'bp',
-											'value': '161368351',
-											'version': 108.0},
-										   {'datasetLabel': 'GCA_000001405.28',
-											'datasetName': 'assembly',
-											'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
-											'name': 'total_genome_length',
-											'type': 'bp',
-											'value': '3272116950',
-											'version': 108.0}],
-						  'datasetType': 'assembly',
-						  'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'
-						  }
+		assert output == {
+			'datasetInfos': [{
+				'datasetLabel': 'GCA_000001405.28',
+				'datasetName': 'assembly',
+				'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+				'name': 'assembly.date',
+				'type': 'string',
+				'value': '2013-12',
+				'version': 108.0
+			},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'assembly.level',
+					'type': 'string',
+					'value': 'chromosome',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'chromosomes',
+					'type': 'integer',
+					'value': '25',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'component_sequences',
+					'type': 'integer',
+					'value': '36734',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'contig_n50',
+					'type': 'bp',
+					'value': '56413054',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'gc_percentage',
+					'type': 'percent',
+					'value': '38.87',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'spanned_gaps',
+					'type': 'integer',
+					'value': '661',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'toplevel_sequences',
+					'type': 'integer',
+					'value': '640',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'total_coding_sequence_length',
+					'type': 'bp',
+					'value': '34459298',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'total_gap_length',
+					'type': 'bp',
+					'value': '161368351',
+					'version': 108.0
+				},
+				{
+					'datasetLabel': 'GCA_000001405.28',
+					'datasetName': 'assembly',
+					'datasetUuid': '559d7660-d92d-47e1-924e-e741151c2cef',
+					'name': 'total_genome_length',
+					'type': 'bp',
+					'value': '3272116950',
+					'version': 108.0
+				}],
+			'datasetType': 'assembly',
+			'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'
+		}
 
 	def test_get_dataset_by_genome_id_no_results(self, genome_db_conn):
 		output = json_format.MessageToJson(

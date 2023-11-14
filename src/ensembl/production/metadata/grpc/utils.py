@@ -107,9 +107,9 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
         dataset_attributes=True
     )
     # fetch related assemblies count
-    related_assemblies_count = db_conn.fetch_organisms_group_counts(
-        species_taxonomy_id=genome.Organism.species_taxonomy_id
-    )[0].count
+    related_assemblies_count = db_conn.fetch_related_assemblies_count(
+        organism_uuid=genome.Organism.organism_uuid
+    )
 
     alternative_names = get_alternative_names(db_conn, genome.Organism.taxonomy_id)
 
