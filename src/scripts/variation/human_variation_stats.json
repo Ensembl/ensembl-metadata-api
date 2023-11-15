@@ -1,0 +1,46 @@
+[
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens",
+        "label": "GRCh38",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/a7335667-93e7-11ec-a39d-005056b38ce3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1047716160"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "1:230710048:rs699"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_37",
+        "label": "GRCh37",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/3704ceb1-948d-11ec-a39d-005056b38ce3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "3704ceb1-948d-11ec-a39d-005056b38ce3",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1042639434"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "1:230845794:rs699"
+            }
+        ]
+    }
+]

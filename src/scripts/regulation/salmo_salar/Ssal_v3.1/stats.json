@@ -1,0 +1,24 @@
+{
+	"user": "plins",
+	"name": "regulatory_features",
+	"label": "Regulatory Annotation",
+	"description": "Regulatory annotation for an assembly",
+	"dataset_attribute": [
+	  {
+	    "name": "regulation.open_chromatin_count",
+	    "value": "339079",
+	    "description": "Number of open chromatin regions"
+	  },
+	  {
+	    "name": "regulation.promoter_count",
+	    "value": "25307",
+	    "description": "Number of promoters"
+	  }
+	],
+	"dataset_source": { 
+		"name": "/nfs/production/flicek/ensembl/regulation/plins/110-mvp-handover/salmo_salar/Ssal_v3.1/salmo_salar.Ssal_v3.1.Regulatory_Build.regulatory_features.bb", 
+		"type": "regulation"
+	},
+	"dataset_type": "regulatory_features",
+	"genome_uuid": "ba305820-0d8a-4f53-9326-084a1fb0ea34"
+}

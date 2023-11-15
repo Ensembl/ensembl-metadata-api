@@ -1,0 +1,1960 @@
+[
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469665v1",
+        "label": "HG01123.pri.mat.f1_v2.1",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/69ba5f9d-0f47-4da3-960c-9810a59ee0cd/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "69ba5f9d-0f47-4da3-960c-9810a59ee0cd",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058859846"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYYY010000002.1:206009:rs2066409711"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471525v1",
+        "label": "HG02148.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/a0f73c3d-8a6b-4024-b8e6-5ef3babd6166/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "a0f73c3d-8a6b-4024-b8e6-5ef3babd6166",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1049405876"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAMG010000002.1:26983:rs199764943"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504085v1",
+        "label": "HG02080.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/bc23b9d8-e43d-490c-9e33-48a776b0b452/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "bc23b9d8-e43d-490c-9e33-48a776b0b452",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1059356484"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOV010000001.1:11989:rs1760881974"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018466845v1",
+        "label": "HG02257.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/889b2755-df98-40f0-bd06-47f314fd36d2/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "889b2755-df98-40f0-bd06-47f314fd36d2",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1060852010"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVH010000001.1:692830:rs1300211992"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504065v1",
+        "label": "HG02723.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/d278fb8c-5693-482e-a97d-13b5b9d1b828/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "d278fb8c-5693-482e-a97d-13b5b9d1b828",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1051007505"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOT010000001.1:278594:rs751647367"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469955v1",
+        "label": "HG02630.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/75156a18-47e0-4e59-8593-eaae7829e5ba/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "75156a18-47e0-4e59-8593-eaae7829e5ba",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1054345066"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOP010000001.1:3166496:rs996318078"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504055v1",
+        "label": "HG02080.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c6b529c7-2327-4aa8-ba4e-4e2379c39764/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c6b529c7-2327-4aa8-ba4e-4e2379c39764",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1054115900"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOW010000001.1:2526239:rs1453994370"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018506955v1",
+        "label": "HG00733.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/7f26ea2b-57a2-49ba-842e-a4eb7b84b2e4/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "7f26ea2b-57a2-49ba-842e-a4eb7b84b2e4",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1054376981"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPQ010000001.1:104622:rs1554110118"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471065v1",
+        "label": "HG01175.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/b9582605-8ca1-4731-a3ab-a4111b2c1c00/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "b9582605-8ca1-4731-a3ab-a4111b2c1c00",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1051121090"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAMA010000001.1:408599:rs773785585"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472605v1",
+        "label": "HG00621.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/feb866f5-ad6e-40c0-a173-ffa6c19c70f2/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "feb866f5-ad6e-40c0-a173-ffa6c19c70f2",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058557047"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBCC010000001.1:27526:rs1967566080"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472595v1",
+        "label": "HG00438.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/8d432f0a-eeb9-4609-b1d8-317ef3511703/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "8d432f0a-eeb9-4609-b1d8-317ef3511703",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1059737680"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBCB010000001.1:97325:rs528223803"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471345v1",
+        "label": "HG01106.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/68bc65fa-aad3-4a44-adc5-d05b500b52ac/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "68bc65fa-aad3-4a44-adc5-d05b500b52ac",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1059777477"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAMB010000001.1:180804:rs780652303"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018505835v1",
+        "label": "HG03492.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/87089938-e674-4120-be15-ffb5ea2e990a/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "87089938-e674-4120-be15-ffb5ea2e990a",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1012135142"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPI010000001.1:169235:rs2102427752"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471545v1",
+        "label": "HG01952.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/93a90edf-3f40-47cd-95ab-f0086977f3f2/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "93a90edf-3f40-47cd-95ab-f0086977f3f2",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056315064"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAMD010000001.1:33014:rs2087249854"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471105v1",
+        "label": "HG00741.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/ebc4a976-8daa-4d73-9424-264811baa2fb/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "ebc4a976-8daa-4d73-9424-264811baa2fb",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1059750836"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHALY010000001.1:429017:rs755120130"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504655v1",
+        "label": "NA21309.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/48b1b849-3b73-4242-ae83-af2290aeb071/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "48b1b849-3b73-4242-ae83-af2290aeb071",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1052659927"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPB010000001.1:249055:rs866085849"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472695v1",
+        "label": "HG01928.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/dae26260-9e8c-4c3d-abe7-ed16e057997b/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "dae26260-9e8c-4c3d-abe7-ed16e057997b",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058822131"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVP010000001.1:296147:rs770892120"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469965v1",
+        "label": "HG01358.alt.pat.f1_v2.1",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c28144ee-a635-4fb7-afb2-4cefd710d4e5/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c28144ee-a635-4fb7-afb2-4cefd710d4e5",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1014751264"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYZB010000001.1:68885:rs1277349781"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469945v1",
+        "label": "HG02630.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/691274c4-00a1-4ede-8bf9-1c53ccead533/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "691274c4-00a1-4ede-8bf9-1c53ccead533",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056384438"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOQ010000002.1:16230:rs148042673"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018467005v1",
+        "label": "HG02486.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/fc3df422-514f-4b31-a9fb-a1b6ddd762d4/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "fc3df422-514f-4b31-a9fb-a1b6ddd762d4",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1012960140"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVM010000001.1:1918213:rs1335620263"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018473305v1",
+        "label": "HG03453.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/f8f527ab-2f72-4676-8860-7ab8504b52d7/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "f8f527ab-2f72-4676-8860-7ab8504b52d7",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1054548390"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVW010000001.1:83676:rs1358937183"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471555v1",
+        "label": "HG01952.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/8a08b8db-ec11-4fe3-8ec2-7485ef877152/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "8a08b8db-ec11-4fe3-8ec2-7485ef877152",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1013625347"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAME010000001.1:17202:rs1760881974"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469695v1",
+        "label": "HG01123.alt.pat.f1_v2.1",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/8f301368-ae07-46c9-8497-d4465cb9a8d0/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "8f301368-ae07-46c9-8497-d4465cb9a8d0",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056817277"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYYZ010000001.1:252109:rs757330685"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504075v1",
+        "label": "HG02723.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/4e357550-7c34-4fb2-b766-6d803e04bc8e/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "4e357550-7c34-4fb2-b766-6d803e04bc8e",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1054520457"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOU010000001.1:347482:rs2105514476"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471075v1",
+        "label": "HG01106.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c31a91a1-0e68-452a-8c98-10c383c3f98d/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c31a91a1-0e68-452a-8c98-10c383c3f98d",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1018681419"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAMC010000001.1:629919:rs147049142"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469865v1",
+        "label": "HG01358.pri.mat.f1_v2.1",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/d59ff3ce-5b5a-4102-a534-980d63ce5e22/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "d59ff3ce-5b5a-4102-a534-980d63ce5e22",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056211672"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYZA010000001.1:2001257:rs1006764903"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018506125v1",
+        "label": "HG02055.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/3b8eeeab-70e0-4200-a279-9864849556b3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "3b8eeeab-70e0-4200-a279-9864849556b3",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1057547892"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPJ010000001.1:28535:rs768377945"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018506975v1",
+        "label": "HG00733.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/1ce32b94-d03b-49e9-9aac-fa6ce62e974f/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "1ce32b94-d03b-49e9-9aac-fa6ce62e974f",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1057411178"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPP010000001.1:1627081:rs1022813996"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018503285v1",
+        "label": "NA18906.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/ff7a2ba3-b5ce-4c24-b452-c0b56fcf16fa/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "ff7a2ba3-b5ce-4c24-b452-c0b56fcf16fa",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1048547808"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOO010000001.1:1832115:rs1465384102"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472865v1",
+        "label": "HG01978.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/aa67a6ec-fa98-4051-b3cb-35ac263df95d/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "aa67a6ec-fa98-4051-b3cb-35ac263df95d",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058238939"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVR010000001.1:1918142:rs1335620263"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018470435v1",
+        "label": "HG02572.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/fb40b884-a08c-432d-8026-4b8cd0aec53b/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "fb40b884-a08c-432d-8026-4b8cd0aec53b",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "996292607"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOW010000001.1:313768:rs1785553278"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018470455v1",
+        "label": "HG02886.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/f10945c8-6917-4e97-ae18-53f618fbfa15/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "f10945c8-6917-4e97-ae18-53f618fbfa15",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1045732562"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOT010000001.1:222545:rs1818949787"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca009914755v4",
+        "label": "T2T-CHM13v2.0",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/4c07817b-c7c5-463f-8624-982286bc4355/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "4c07817b-c7c5-463f-8624-982286bc4355",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1071302180"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "1:230720050:rs1346028634"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504045v1",
+        "label": "HG01243.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c1d4cef8-a96a-442e-82d4-9291f8d9d961/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c1d4cef8-a96a-442e-82d4-9291f8d9d961",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1015056228"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOY010000001.1:18158627:rs1554657345"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471085v1",
+        "label": "HG01175.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/efb8ec1c-73aa-40e6-9280-e062f3c024ae/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "efb8ec1c-73aa-40e6-9280-e062f3c024ae",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056637799"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHALZ010000001.1:5968:rs762174979"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469425v1",
+        "label": "HG03516.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/114e90e0-aa35-4af6-9204-267c988328c3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "114e90e0-aa35-4af6-9204-267c988328c3",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056117383"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYYS010000001.1:2233547:rs1453994370"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469685v1",
+        "label": "HG01361.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/463be090-4560-40c6-b184-af666d265c6c/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "463be090-4560-40c6-b184-af666d265c6c",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1055884861"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYYW010000001.1:48181:rs1863107282"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472585v1",
+        "label": "HG00673.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/d142cee3-efe5-44d4-b645-76feaa1add0b/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "d142cee3-efe5-44d4-b645-76feaa1add0b",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1017200128"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBBZ010000001.1:1671282:rs11550663"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504625v1",
+        "label": "NA20129.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/55bd3d43-2835-4dae-90da-95ff61d5d496/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "55bd3d43-2835-4dae-90da-95ff61d5d496",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1054264110"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPE010000001.1:102854:rs1719440516"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018467015v1",
+        "label": "HG02486.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/36e70e3a-1374-452b-bd69-fcdb71e9d75c/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "36e70e3a-1374-452b-bd69-fcdb71e9d75c",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056525034"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVL010000001.1:72209:rs750360488"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018467155v1",
+        "label": "HG01891.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/e62c9bbf-86af-4b92-8f0f-e8841ec4195e/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "e62c9bbf-86af-4b92-8f0f-e8841ec4195e",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058138274"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVN010000001.1:165516:rs1779760037"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469925v1",
+        "label": "HG02622.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/ef282def-9a17-4b35-a344-0f0c559e54ab/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "ef282def-9a17-4b35-a344-0f0c559e54ab",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1057589994"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOO010000001.1:9172:rs765031495"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504635v1",
+        "label": "NA20129.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/4c4bef1e-611a-44f2-b359-fa9a47f16252/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "4c4bef1e-611a-44f2-b359-fa9a47f16252",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1038618216"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPD010000001.1:195682:rs2131523201"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472845v1",
+        "label": "HG01978.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/5d2052b4-9d7a-46a5-bb85-d89d0656459a/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "5d2052b4-9d7a-46a5-bb85-d89d0656459a",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1048527241"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVS010000001.1:7410:rs1364637147"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472855v1",
+        "label": "HG03453.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/8e42ee2c-7a61-4840-ba1e-aae280168000/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "8e42ee2c-7a61-4840-ba1e-aae280168000",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1055627084"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVV010000001.1:40323:rs763599769"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018503245v1",
+        "label": "HG03486.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/b0e6274c-9d1c-4cce-a296-2acdc89d94a4/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "b0e6274c-9d1c-4cce-a296-2acdc89d94a4",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1050668661"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOQ010000001.1:825019:rs1675228731"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018473315v1",
+        "label": "HG03540.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1054338571"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVY010000001.1:710982:rs1737833592"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018852595v1",
+        "label": "HG02145.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/7569f6f1-e742-4e50-a829-1e8f2dd6db87/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "7569f6f1-e742-4e50-a829-1e8f2dd6db87",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1009464157"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHKSG010000001.1:1980755:rs11550663"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018505845v1",
+        "label": "HG03492.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/eaebb454-7987-44b3-b52a-e23bf138b2fa/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "eaebb454-7987-44b3-b52a-e23bf138b2fa",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1057634053"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPH010000001.1:8:rs936189895"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018470425v1",
+        "label": "HG02717.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/cd28bb60-0077-4030-bfe5-20603ab84368/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "cd28bb60-0077-4030-bfe5-20603ab84368",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1015825539"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOS010000001.1:15968:rs1197632505"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504665v1",
+        "label": "NA21309.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/bef6ae02-d671-44d1-9317-792c019ebdd1/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "bef6ae02-d671-44d1-9317-792c019ebdd1",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1053533480"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPC010000001.1:340170:rs370365440"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472715v1",
+        "label": "HG00735.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/edc91aeb-288d-41fb-a137-8156bfa24f14/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "edc91aeb-288d-41fb-a137-8156bfa24f14",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058677519"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBCH010000001.1:111277:rs1792586331"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504645v1",
+        "label": "HG01109.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/b6b019db-e3f8-468d-9d07-6475597b81b0/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "b6b019db-e3f8-468d-9d07-6475597b81b0",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1012335369"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPA010000001.1:58603:rs1963526832"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471095v1",
+        "label": "HG00741.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/0eece536-5bfb-442c-aaf2-d3c56cef5e75/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "0eece536-5bfb-442c-aaf2-d3c56cef5e75",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1053382991"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHALX010000001.1:1187620:rs2147894723"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471535v1",
+        "label": "HG02148.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c5646bf4-e7c5-446f-8c09-b84cde6daf62/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c5646bf4-e7c5-446f-8c09-b84cde6daf62",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1059952937"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAMF010000001.1:898685:rs867549872"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504375v1",
+        "label": "HG01243.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/9dffd0e5-51c7-4abc-bb51-52cd3165babe/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "9dffd0e5-51c7-4abc-bb51-52cd3165babe",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058396754"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOX010000001.1:896814:rs867549872"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018503575v1",
+        "label": "HG02818.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/38648b93-6db7-44f7-9d9a-72c517100d38/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "38648b93-6db7-44f7-9d9a-72c517100d38",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1053302551"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOS010000001.1:599038:rs202106035"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469705v1",
+        "label": "HG01361.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/932f1b21-8046-46b8-8a2a-4dcb0ad55892/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "932f1b21-8046-46b8-8a2a-4dcb0ad55892",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1060680995"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYYX010000001.1:81364:rs781197623"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018470445v1",
+        "label": "HG02572.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/52f1b3da-064d-405c-9626-d2e3f7069423/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "52f1b3da-064d-405c-9626-d2e3f7069423",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1047416115"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOV010000002.1:568:rs2079105752"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018504365v1",
+        "label": "HG01109.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/08b99cae-d007-4284-b20b-9f222827edb6/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "08b99cae-d007-4284-b20b-9f222827edb6",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056830966"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOZ010000001.1:2850311:rs1395475498"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469935v1",
+        "label": "HG02717.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/f167ff7b-e5d5-4d88-89f5-6ffab1fb343b/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "f167ff7b-e5d5-4d88-89f5-6ffab1fb343b",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1052675757"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOR010000001.1:1772537:rs1346478984"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018466835v1",
+        "label": "HG02257.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/df605024-0fbb-47eb-8769-4ef47d76d04c/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "df605024-0fbb-47eb-8769-4ef47d76d04c",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058716468"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVI010000001.1:13158:rs748846244"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469875v1",
+        "label": "HG02622.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/75b7ac15-6373-4ad5-9fb7-23813a5355a4/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "75b7ac15-6373-4ad5-9fb7-23813a5355a4",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056666201"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAON010000001.1:31416:rs1714786049"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018506155v1",
+        "label": "HG03098.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/a2660ec1-cfc1-497b-be61-fe2c74a1ae7d/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "a2660ec1-cfc1-497b-be61-fe2c74a1ae7d",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1015053474"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPM010000001.1:69809:rs1277349781"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018471515v1",
+        "label": "HG00438.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c54a9a5a-2f11-41e1-aeca-873933dc3ee0/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c54a9a5a-2f11-41e1-aeca-873933dc3ee0",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1057301224"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBCA010000001.1:1183:rs1318689461"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018505825v1",
+        "label": "HG02109.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/1220d766-6fcb-4b80-9106-121f238c0b3d/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "1220d766-6fcb-4b80-9106-121f238c0b3d",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1045449578"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPF010000001.1:187007:rs1378027620"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472575v1",
+        "label": "HG00621.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c5add743-a0fe-4fb4-b648-851e291cc05b/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c5add743-a0fe-4fb4-b648-851e291cc05b",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1018593371"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBCD010000001.1:58363:rs1243187823"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018505865v1",
+        "label": "HG02109.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/8364a820-5485-42d7-a648-1a5eeb858319/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "8364a820-5485-42d7-a648-1a5eeb858319",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1053740562"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPG010000001.1:5092:rs1002974720"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018467165v1",
+        "label": "HG01891.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/ef299a72-e235-4c94-b0b7-e3ff0630fbec/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "ef299a72-e235-4c94-b0b7-e3ff0630fbec",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1039734573"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVO010000001.1:2111610:rs1465384102"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018503525v1",
+        "label": "HG03486.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/a243824f-8ac4-4310-870e-c61430f7f49b/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "a243824f-8ac4-4310-870e-c61430f7f49b",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1050847938"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOP010000001.1:429809:rs1280912178"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472565v1",
+        "label": "HG00673.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/d7c7f211-336d-4245-8233-5d82e4f60c64/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "d7c7f211-336d-4245-8233-5d82e4f60c64",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056412269"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBBY010000001.1:62851:rs2118175334"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018852585v1",
+        "label": "HG02145.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/3d5ca882-670d-4d17-85dc-15185738c40a/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "3d5ca882-670d-4d17-85dc-15185738c40a",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1055186399"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHKSF010000001.1:14692:rs148042673"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469675v1",
+        "label": "HG01258.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/cd05419f-0977-40c3-8957-fa82b5b6dbe9/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "cd05419f-0977-40c3-8957-fa82b5b6dbe9",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1019012576"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYYV010000001.1:7375:rs1756693915"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018505855v1",
+        "label": "HG02055.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/2dae4886-5dca-455e-80fc-bb308ea06c93/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "2dae4886-5dca-455e-80fc-bb308ea06c93",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1016551905"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPK010000001.1:898512:rs867549872"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472765v1",
+        "label": "HG00735.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/e0232c0a-b1fb-4f22-bdc1-bb86c5818a09/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "e0232c0a-b1fb-4f22-bdc1-bb86c5818a09",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1059545632"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBCG010000001.1:56922:rs1863107282"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472705v1",
+        "label": "HG01928.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/1cbcb690-eef2-4b69-a3da-c2db949229b7/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "1cbcb690-eef2-4b69-a3da-c2db949229b7",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1017770031"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVQ010000001.1:30163:rs1304952704"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018470465v1",
+        "label": "HG02886.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/5410c91b-b99d-4a7f-b25d-243b623197c9/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "5410c91b-b99d-4a7f-b25d-243b623197c9",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1055637421"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHAOU010000001.1:177016:rs751280271"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018503585v1",
+        "label": "HG02818.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/bd6bfb90-bd5e-46ee-9799-6da19beb7927/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "bd6bfb90-bd5e-46ee-9799-6da19beb7927",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056869389"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEOR010000001.1:602884:rs202106035"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469415v1",
+        "label": "HG03516.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/2020e8d5-4d87-47af-be78-0b15e48970a7/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "2020e8d5-4d87-47af-be78-0b15e48970a7",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1054887454"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYYT010000001.1:2643538:rs1423484253"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018466985v1",
+        "label": "HG02559.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/f544f1e8-1d21-4667-883b-7a6a43022962/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "f544f1e8-1d21-4667-883b-7a6a43022962",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1057047252"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVJ010000001.1:17057:rs1296776979"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018473295v1",
+        "label": "HG03540.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/65d4f21f-695a-4ed0-be67-5732a551fea4/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "65d4f21f-695a-4ed0-be67-5732a551fea4",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1044482335"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVX010000001.1:28459:rs1278014195"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018466855v1",
+        "label": "HG02559.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/d7ead350-309e-4821-9b7a-31d9ce8197a9/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "d7ead350-309e-4821-9b7a-31d9ce8197a9",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1059679329"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVK010000001.1:2637353:rs1807675960"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018469405v1",
+        "label": "HG01258.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/6c00adb0-f094-4baa-b8be-3b457e917267/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "6c00adb0-f094-4baa-b8be-3b457e917267",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1059477832"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYYU010000001.1:24561:rs1225703950"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018503255v1",
+        "label": "NA18906.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/b2e719b8-91d6-48e4-9410-bf5ec1eec1bd/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "b2e719b8-91d6-48e4-9410-bf5ec1eec1bd",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056223129"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEON010000001.1:22888:rs1212966100"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018506165v1",
+        "label": "HG03098.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/f14141ae-9202-4639-a7db-6b5b4700e8fb/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "f14141ae-9202-4639-a7db-6b5b4700e8fb",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1058114961"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHEPL010000001.1:190966:rs1178079381"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472685v1",
+        "label": "HG01071.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/60cc8eff-d99c-4c00-898f-ac75af018e4f/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "60cc8eff-d99c-4c00-898f-ac75af018e4f",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1056897369"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBCE010000001.1:45525:rs1864455379"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472825v1",
+        "label": "HG03579.pri.mat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/9cc516a8-529e-4919-a429-0d7032e295c9/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "9cc516a8-529e-4919-a429-0d7032e295c9",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1055945368"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVT010000001.1:112498:rs916426118"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472835v1",
+        "label": "HG03579.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/dc98237b-2a1d-4eef-885d-6255d80fea67/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "dc98237b-2a1d-4eef-885d-6255d80fea67",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1013429910"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAGYVU010000001.1:516263:rs867477898"
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "variation",
+        "description": "Short variant data for homo_sapiens_gca018472725v1",
+        "label": "HG01071.alt.pat.f1_v2",
+        "dataset_type": "variation",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/431b66cf-5883-42b3-97c5-7407c7d00376/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "431b66cf-5883-42b3-97c5-7407c7d00376",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants",
+                "value": "1057950707"
+            },
+            {
+                "name": "variation.sample_variant",
+                "value": "JAHBCF010000001.1:29712:rs752383541"
+            }
+        ]
+    }
+]

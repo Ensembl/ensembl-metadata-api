@@ -1,0 +1,504 @@
+[
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for gallus_gallus",
+        "label": "bGalGal1.mat.broiler.GRCg7b",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/2b8df0a0-7000-495c-a9db-a093740f0264/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "2b8df0a0-7000-495c-a9db-a093740f0264",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 50701
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for oryctolagus_cuniculus",
+        "label": "OryCun2.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/52a74477-ca84-4d83-95ec-22a7418ec6a3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "52a74477-ca84-4d83-95ec-22a7418ec6a3",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for gallus_gallus_gca000002315v5",
+        "label": "GRCg6a",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c7d60942-b5b0-49f1-976f-8946cebd9ff1/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c7d60942-b5b0-49f1-976f-8946cebd9ff1",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for sorghum_bicolor",
+        "label": "Sorghum_bicolor_NCBIv3",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/48dd6ebd-04f4-433b-b79f-7afb752b8904/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "48dd6ebd-04f4-433b-b79f-7afb752b8904",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for macaca_mulatta",
+        "label": "Mmul_10",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/0b534dfd-97d5-4acc-a242-f31604237a6a/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "0b534dfd-97d5-4acc-a242-f31604237a6a",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for hordeum_vulgare",
+        "label": "MorexV3_pseudomolecules_assembly",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/e355c9df-75a2-411b-a470-36897d4f1515/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "e355c9df-75a2-411b-a470-36897d4f1515",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for sus_scrofa",
+        "label": "Sscrofa11.1",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/da38d82b-df50-419b-af74-886463b7bfa3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "da38d82b-df50-419b-af74-886463b7bfa3",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 800350
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for equus_caballus",
+        "label": "EquCab3.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/ca0c4d80-e0e7-4d4b-920f-f88ad90ff753/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "ca0c4d80-e0e7-4d4b-920f-f88ad90ff753",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 47031
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for glycine_max",
+        "label": "Glycine_max_v2.1",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/17ab5873-5000-41a8-a78d-105d01573c28/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "17ab5873-5000-41a8-a78d-105d01573c28",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for monodelphis_domestica",
+        "label": "ASM229v1",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/385f8f7f-00bd-42f4-b057-f04d0d1e6cb3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "385f8f7f-00bd-42f4-b057-f04d0d1e6cb3",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for saccharomyces_cerevisiae",
+        "label": "R64-1-1",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/a733574a-93e7-11ec-a39d-005056b38ce3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "a733574a-93e7-11ec-a39d-005056b38ce3",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for solanum_lycopersicum",
+        "label": "SL3.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/35a40586-9cb2-4d89-a7db-d00511691d09/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "35a40586-9cb2-4d89-a7db-d00511691d09",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for ovis_aries_rambouillet",
+        "label": "Oar_rambouillet_v1.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/7cc4a1b6-dd69-44ad-a8f1-ae5136e6dcdd/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "7cc4a1b6-dd69-44ad-a8f1-ae5136e6dcdd",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 69821
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for arabidopsis_thaliana",
+        "label": "TAIR10",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c0410902-1007-404d-a8dd-3adee003811e/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c0410902-1007-404d-a8dd-3adee003811e",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for mus_musculus",
+        "label": "GRCm39",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/8bce37f6-5353-4fb4-962f-f7e9a6c4303d/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "8bce37f6-5353-4fb4-962f-f7e9a6c4303d",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 34892588
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for oryza_sativa",
+        "label": "IRGSP-1.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/80c925c8-5c7d-4757-8a04-a53d2a689719/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "80c925c8-5c7d-4757-8a04-a53d2a689719",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for zea_mays",
+        "label": "Zm-B73-REFERENCE-NAM-5.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/4273b9f0-c927-4215-87bf-828ef65de984/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "4273b9f0-c927-4215-87bf-828ef65de984",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for vitis_vinifera",
+        "label": "PN40024.v4",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/08c83543-c3d9-4a7a-85d8-52f75d61aab0/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "08c83543-c3d9-4a7a-85d8-52f75d61aab0",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for triticum_turgidum",
+        "label": "Svevo.v1",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/bc9cb479-b1e3-460b-b4ac-d20b0fe1b350/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "bc9cb479-b1e3-460b-b4ac-d20b0fe1b350",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for plasmodium_falciparum",
+        "label": "ASM276v2",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/a73356e1-93e7-11ec-a39d-005056b38ce3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "a73356e1-93e7-11ec-a39d-005056b38ce3",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for bos_taurus",
+        "label": "ARS-UCD1.2",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/4106e9ef-1bb1-4ca4-974c-8de8875b8456/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "4106e9ef-1bb1-4ca4-974c-8de8875b8456",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 3085614
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for felis_catus",
+        "label": "Felis_catus_9.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/14fe0744-4b47-4d31-bddf-dc2b6ffc7f4e/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "14fe0744-4b47-4d31-bddf-dc2b6ffc7f4e",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 8501
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for oreochromis_niloticus",
+        "label": "O_niloticus_UMD_NMBU",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/3fb2bed5-aecd-4e36-88f1-7a464d64515d/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "3fb2bed5-aecd-4e36-88f1-7a464d64515d",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for brassica_oleracea",
+        "label": "BOL",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/51e4f3a0-8e22-436d-ad2f-3fdd2a7e1ad7/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "51e4f3a0-8e22-436d-ad2f-3fdd2a7e1ad7",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for canis_lupus_familiaris",
+        "label": "ROS_Cfam_1.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/a6edaf0c-daed-4f0f-8de3-f732502973b2/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "a6edaf0c-daed-4f0f-8de3-f732502973b2",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 461408
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for drosophila_melanogaster",
+        "label": "BDGP6.46",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/968e99a2-bb9b-44e9-a4ad-13c7a9672600/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "968e99a2-bb9b-44e9-a4ad-13c7a9672600",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for triticum_aestivum",
+        "label": "IWGSC",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/a73357ab-93e7-11ec-a39d-005056b38ce3/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for pan_troglodytes",
+        "label": "Pan_tro_3.0",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/e327126e-c395-4028-a8f9-a36d29436ad9/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "e327126e-c395-4028-a8f9-a36d29436ad9",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for canis_lupus_familiarisboxer",
+        "label": "Dog10K_Boxer_Tasha",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/2284d28a-2cf7-41f0-bed6-0982601f7888/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "2284d28a-2cf7-41f0-bed6-0982601f7888",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 57240
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for danio_rerio",
+        "label": "GRCz11",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/b29f62e6-992e-4049-a26b-b6bd673c51e7/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "b29f62e6-992e-4049-a26b-b6bd673c51e7",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 2913979
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for capra_hircus",
+        "label": "ARS1",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/c44a36bc-75f1-43dc-88ea-decc8573a850/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "c44a36bc-75f1-43dc-88ea-decc8573a850",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for salmo_salar",
+        "label": "Ssal_v3.1",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/ba305820-0d8a-4f53-9326-084a1fb0ea34/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "ba305820-0d8a-4f53-9326-084a1fb0ea34",
+        "dataset_attribute": []
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for ovis_aries",
+        "label": "Oar_v3.1",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/92ae33e2-666b-4eeb-aaaf-43606315bd28/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "92ae33e2-666b-4eeb-aaaf-43606315bd28",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 433618
+            }
+        ]
+    },
+    {
+        "user": "nakib",
+        "name": "evidence",
+        "description": "Short variant evidence data for rattus_norvegicus",
+        "label": "mRatBN7.2",
+        "dataset_type": "evidence",
+        "dataset_source": {
+            "name": "/nfs/production/flicek/ensembl/variation/new_website/v110/api/0cbc227a-7179-43c2-8061-a50d94423c4d/variation.vcf.gz",
+            "type": "vcf"
+        },
+        "genome_uuid": "0cbc227a-7179-43c2-8061-a50d94423c4d",
+        "dataset_attribute": [
+            {
+                "name": "variation.short_variants_with_phenotype_assertions",
+                "value": 9531449
+            }
+        ]
+    }
+]

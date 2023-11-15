@@ -1,0 +1,39 @@
+{
+	"user": "plins",
+	"name": "regulatory_features",
+	"label": "Regulatory Annotation",
+	"description": "Regulatory annotation for an assembly",
+	"dataset_attribute": [
+	  {
+	    "name": "regulation.open_chromatin_count",
+	    "value": "61964",
+	    "description": "Number of open chromatin regions"
+	  },
+	  {
+	    "name": "regulation.promoter_count",
+	    "value": "25131",
+	    "description": "Number of promoters"
+	  },
+	  {
+            "name": "regulation.enhancer_count",
+            "value": "149202",
+            "description": "Number of enhancers"
+          },
+	  {
+            "name": "regulation.ctcf_count",
+            "value": "50953",
+            "description": "Number of CTCF binding sites"
+          },
+          {
+            "name": "regulation.tfbs_count",
+            "value": "17486",
+            "description": "Number of regions enriched for transcription factor binding"
+          }
+	],
+	"dataset_source": { 
+		"name": "/nfs/production/flicek/ensembl/regulation/plins/110-mvp-handover/mus_musculus/GRCm39/mus_musculus.GRCm39.Regulatory_Build.regulatory_features.bb", 
+		"type": "bigbed"
+	},
+	"dataset_type": "regulatory_features",
+	"genome_uuid": "8bce37f6-5353-4fb4-962f-f7e9a6c4303d"
+}

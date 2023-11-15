@@ -1,0 +1,25 @@
+{
+	"user": "plins",
+	"name": "regulatory_features",
+	"label": "Regulatory Annotation",
+	"description": "Regulatory annotation for an assembly",
+	"dataset_attribute": [
+	  {
+	    "name": "regulation.open_chromatin_count",
+	    "value": "247808",
+	    "description": "Number of open chromatin regions"
+	  },
+	  {
+	    "name": "regulation.promoter_count",
+	    "value": "17540",
+	    "description": "Number of promoters"
+	  }
+	],
+	"dataset_source": { 
+		"name": "/nfs/production/flicek/ensembl/regulation/plins/110-mvp-handover/gallus_gallus/GRCg7b/gallus_gallus.GRCg7b.Regulatory_Build.regulatory_features.bb", 
+		"type": "regulation"
+	},
+	"dataset_type": "regulatory_features",
+	"genome_uuid": "2b8df0a0-7000-495c-a9db-a093740f0264"
+}
+
