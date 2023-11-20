@@ -159,7 +159,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     )
                     meta_session.add(genebuild_genome_dataset)
 
-    def new_genome(self, species_id, meta_session, organism, assembly, assembly_dataset, genebuild_dataset):
+    def new_genome(self, meta_session, species_id, organism, assembly, assembly_dataset, genebuild_dataset):
         production_name = self.get_meta_single_meta_key(species_id, "species.production_name")
         new_genome = Genome(
             genome_uuid=str(uuid.uuid4()),
