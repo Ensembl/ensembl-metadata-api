@@ -32,6 +32,35 @@ sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata
 class TestUtils:
 	dbc = None  # type: UnitTestDB
 
+	@pytest.mark.parametrize(
+		"taxon_id, expected_output",
+		[
+			# e-coli
+			(
+					562,
+					[
+						"Bacillus coli", "Bacterium coli", "Bacterium coli commune",
+						"E. coli", "Enterococcus coli", "Escherichia/Shigella coli"
+					]
+			),
+			# wheat
+			(
+					4565,
+					[
+						'Canadian hard winter wheat', 'Triticum aestivum subsp. aestivum',
+						'Triticum vulgare', 'bread wheat', 'common wheat', 'wheat'
+					]
+			),
+			# human
+			(9606, ["human"]),
+			# non-existent
+			(100, []),
+		]
+	)
+	def test_get_alternative_names(self, genome_db_conn, taxon_id, expected_output):
+		output = utils.get_alternative_names(genome_db_conn, taxon_id)
+		assert output == expected_output
+
 	def test_get_assembly_information(self, genome_db_conn):
 		output = json_format.MessageToJson(
 			utils.get_assembly_information(genome_db_conn, "eeaaa2bf-151c-4848-8b85-a05a9993101e"))

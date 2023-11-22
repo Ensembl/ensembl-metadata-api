@@ -28,10 +28,11 @@ def connect_to_db():
 def get_alternative_names(db_conn, taxon_id):
     """ Get alternative names for a given taxon ID """
     taxon_ifo = db_conn.fetch_taxonomy_names(taxon_id)
+    alternative_names = taxon_ifo[taxon_id].get('synonym')
+    genbank_common_name = taxon_ifo[taxon_id].get('genbank_common_name')
 
-    alternative_names = [
-        taxon_ifo[taxon_id].get('genbank_common_name'),
-    ] + taxon_ifo[taxon_id].get('synonym')
+    if genbank_common_name is not None:
+        alternative_names.append(genbank_common_name)
 
     # remove duplicates
     unique_alternative_names = list(set(alternative_names))
