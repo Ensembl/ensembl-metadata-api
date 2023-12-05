@@ -1,6 +1,6 @@
 grpcio
 grpcio-tools
-mysqlclient
 sqlalchemy
 types-pymysql
-ensembl-metadata-api@git+https://github.com/Ensembl/ensembl-metadata-api.git@1.3.1a1
+ensembl-metadata-api@git+https://github.com/Ensembl/ensembl-metadata-api.git@1.3.2.dev2
+
