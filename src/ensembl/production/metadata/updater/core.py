@@ -14,10 +14,12 @@ from collections import defaultdict
 import sqlalchemy as db
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
     SeqRegionSynonym, AttribType
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy import or_
 from ensembl.database import DBConnection
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import aliased
+
 from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
@@ -272,11 +274,15 @@ class CoreMetaUpdater(BaseMetaUpdater):
         """
         assembly_sequences = []
         with self.db.session_scope() as session:
-
-            results = (session.query(SeqRegion.name, SeqRegion.length, CoordSystem.name, SeqRegionSynonym.synonym)
-                       .join(SeqRegion.coord_system)
+            circular_seq_attrib = aliased(SeqRegionAttrib)
+            results = (session.query(SeqRegion.name, SeqRegion.length, CoordSystem.name.label("coord_system_name"),
+                                     SeqRegionSynonym.synonym, circular_seq_attrib.value.label("is_circular"))
+                       .outerjoin(SeqRegion.coord_system)
                        .outerjoin(SeqRegionSynonym, SeqRegionSynonym.seq_region_id == SeqRegion.seq_region_id)
-                       .join(SeqRegion.seq_region_attrib)
+                       .join(SeqRegion.seq_region_attrib)  # For other attributes
+                       .outerjoin(circular_seq_attrib,
+                                  and_(circular_seq_attrib.seq_region_id == SeqRegion.seq_region_id,
+                                       circular_seq_attrib.attrib_type.has(code="circular_seq")))
                        .join(SeqRegionAttrib.attrib_type)
                        .filter(CoordSystem.species_id == species_id)
                        .filter(AttribType.code == "toplevel")
@@ -300,7 +306,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 lambda: {"names": set(), "accession": None, "length": None, "location": None, "chromosomal": None,
                          "karyotype_rank": None})
 
-            for seq_region_name, seq_region_length, coord_system_name, synonym in results:
+            for seq_region_name, seq_region_length, coord_system_name, synonym, is_circular in results:
                 accession_info[seq_region_name]["names"].add(seq_region_name)
                 if synonym:
                     accession_info[seq_region_name]["names"].add(synonym)
@@ -339,10 +345,12 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
                 if not accession_info[seq_region_name]["karyotype_rank"]:
                     accession_info[seq_region_name]["karyotype_rank"] = karyotype_rank
-            # Now, create AssemblySequence objects for each unique accession.
+
+                accession_info[seq_region_name]["type"] = coord_system_name
+                accession_info[seq_region_name]["is_circular"] = 1 if is_circular == "1" else 0
+
             for accession, info in accession_info.items():
                 seq_region_name = accession
-
                 assembly_sequence = AssemblySequence(
                     name=seq_region_name,
                     assembly=assembly,
@@ -353,6 +361,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     chromosome_rank=info["karyotype_rank"],
                     # md5="", Populated after checksums are ran.
                     # sha512t4u="", Populated after checksums are ran.
+                    type=info["type"],
+                    is_circular=info["is_circular"]
                 )
 
                 assembly_sequences.append(assembly_sequence)

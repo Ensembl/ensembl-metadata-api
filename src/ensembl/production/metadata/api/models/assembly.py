@@ -59,6 +59,8 @@ class AssemblySequence(Base):
     md5 = Column(String(32))
     # column need renaming as well
     sha512t24u = Column(String(128))
+    type = Column(String(128), nullable=False)
+    is_circular = Column(TINYINT(1), nullable=False, default=0)
     assembly = relationship('Assembly', back_populates="assembly_sequences")
 
     # backward compatibility with old column name sha512t2u
