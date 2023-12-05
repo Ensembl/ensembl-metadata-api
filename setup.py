@@ -10,14 +10,21 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import os
+from pathlib import Path
+
 from setuptools import find_namespace_packages, setup
-import os
 
-with open('README.md') as f:
+with open(Path(__file__).parent / 'README.md') as f:
     readme = f.read()
-
-with open('VERSION') as f:
+with open(Path(__file__).parent / 'VERSION') as f:
     version = f.read()
+
+
+def import_requirements():
+    """Import ``requirements.txt`` file located at the root of the repository."""
+    with open(Path(__file__).parent / 'requirements.txt') as file:
+        return [line.rstrip() for line in file.readlines()]
+
 
 setup(
     name='ensembl_metadata_api',
@@ -33,6 +40,7 @@ setup(
     package_dir={'': 'src'},
     include_package_data=True,
     python_requires='>=3.8',
+    install_requires=import_requirements(),
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
