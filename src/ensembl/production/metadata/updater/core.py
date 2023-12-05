@@ -60,7 +60,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         result_dict = {k: v for k, v in species_meta.items() if k.startswith(prefix)}
         return result_dict
 
-    def process_core(self, **kwargs):
+    def process_core(self, force=False, **kwargs):
         # Special case for loading a single species from a collection database. Can be removed in a future release
         sel_species = kwargs.get('species', None)
         if sel_species:
@@ -81,7 +81,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         for species in multi_species:
             self.process_species(species)
 
-    def process_species(self, species_id):
+    def process_species(self, species_id, force=False):
         """
         Process an individual species from a core database to update the metadata db.
         This method contains the logic for updating the metadata
@@ -135,8 +135,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 # Check if the data has been released:
                 logging.info(genebuild_dataset.dataset_uuid)
                 logging.info(check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid))
-                if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid):
-                    raise Exception("Existing Organism, Assembly, and Datasets within a release")
+                if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid) and not force:
+                    raise Exception("Existing Organism, Assembly, and Datasets within a release. "
+                                    "To update released data set force=True. It will overwrite the data in all metadata"
+                                    "tables that is different from the core!!!!")
                 else:
                     logging.info('Rewrite of existing data')
                     # Delete the data from the database and repopulate assembly and genebuild.
