@@ -16,7 +16,7 @@ import re
 
 from ensembl.database import UnitTestDB, DBConnection
 from ensembl.production.metadata.api.factory import meta_factory
-from ensembl.production.metadata.api.models import Organism, Assembly, Dataset
+from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -51,6 +51,22 @@ class TestUpdater:
             assert re.match(".*_core_1", dataset.dataset_source.name)
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
+            #Testing assembly sequence is circular
+            sequence = session.query(AssemblySequence).where(
+                (AssemblySequence.is_circular == 1) & (AssemblySequence.name == 'TEST1_seq')
+            ).first()
+            assert sequence is not None
+            assert sequence.type == "primary_assembly"
+            sequence2 = session.query(AssemblySequence).where(
+                (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'TEST2_seq')
+            ).first()
+            assert sequence2 is not None
+            assert sequence.type == "primary_assembly"
+            sequence3 = session.query(AssemblySequence).where(
+                (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'TEST3_seq')
+            ).first()
+            assert sequence3 is not None
+
 
     def test_update_organism(self, multi_dbs):
         test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
