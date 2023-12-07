@@ -15,5 +15,5 @@
 5	1	species.url	Jabbe
 17	1	genebuild.version	1
 18	1	sample.gene_param	ENSAMXG00005000318
-19	1	sample.location_param   KB871578.1:9766653-9817473
+19	1	sample.location_param	KB871578.1:9766653-9817473
 20	1	strain.type	test
