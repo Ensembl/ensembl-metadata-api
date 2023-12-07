@@ -77,7 +77,6 @@ class TestUpdater:
                     Meta.species_id == species_id,
                     Meta.meta_key == 'genome.genome_uuid'
             )
-            print(inserted_genome_uuid)
             value = inserted_genome_uuid.first()
             assert value is not None
 
