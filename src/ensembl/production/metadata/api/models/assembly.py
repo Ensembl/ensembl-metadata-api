@@ -11,7 +11,7 @@
 #   limitations under the License.
 import uuid
 
-from sqlalchemy import Column, Integer, String, DateTime, Index, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Index, ForeignKey, Enum, text
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
@@ -37,7 +37,8 @@ class Assembly(Base):
     url_name = Column(String(128), nullable=False)
     # One to many relationships
     # assembly_id within assembly_sequence
-    assembly_sequences = relationship("AssemblySequence", back_populates="assembly", cascade="all, delete, delete-orphan")
+    assembly_sequences = relationship("AssemblySequence", back_populates="assembly",
+                                      cascade="all, delete, delete-orphan")
     # assembly_id within genome
     genomes = relationship("Genome", back_populates="assembly", cascade="all, delete, delete-orphan")
 
@@ -59,7 +60,8 @@ class AssemblySequence(Base):
     md5 = Column(String(32))
     # column need renaming as well
     sha512t24u = Column(String(128))
-    type = Column(String(128), nullable=False)
+    type = Column(Enum('chromosome_group', 'plasmid', 'primary_assembly', 'contig', 'chromosome', 'scaffold', 'lrg',
+                       'supercontig'), server_default=text("'primary_assembly'"))
     is_circular = Column(TINYINT(1), nullable=False, default=0)
     assembly = relationship('Assembly', back_populates="assembly_sequences")
 
