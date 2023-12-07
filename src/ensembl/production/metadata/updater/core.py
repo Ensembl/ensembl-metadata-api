@@ -175,6 +175,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
+        #set thyis up so if the update fails it e
         with self.db.session_scope() as session:
             try:
                 existing_row = session.query(Meta).filter(
