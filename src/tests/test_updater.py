@@ -17,7 +17,7 @@ import re
 from ensembl.database import UnitTestDB, DBConnection
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence
-
+from ensembl.core.models import Meta
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
 
@@ -34,6 +34,17 @@ class TestUpdater:
         test = meta_factory(multi_dbs['core_1'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
+
+        #Check for insertion of genome_uuid
+        core_1_db = DBConnection(multi_dbs['core_1'].dbc.url)
+        with core_1_db.session_scope() as session:
+            species_id = "1"
+            inserted_genome_uuid = session.query(Meta).filter(
+                Meta.species_id == species_id,
+                Meta.meta_key == 'genome_uuid'
+            ).first()
+            assert inserted_genome_uuid is not None
+
         # Look for organism, assembly and geneset
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         # Test the species
@@ -56,7 +67,7 @@ class TestUpdater:
                 (AssemblySequence.is_circular == 1) & (AssemblySequence.name == 'TEST1_seq')
             ).first()
             assert sequence is not None
-            assert sequence.type == "primary_assembly"
+            assert sequence.type == "primary_assembly"      #Testing assembly_sequence.type
             sequence2 = session.query(AssemblySequence).where(
                 (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'TEST2_seq')
             ).first()
@@ -67,7 +78,7 @@ class TestUpdater:
             ).first()
             assert sequence3 is not None
 
-
+#We no longer update organism.
     def test_update_organism(self, multi_dbs):
         test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
