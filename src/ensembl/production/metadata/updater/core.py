@@ -123,6 +123,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 ###############################################
                 # Create genome and populate the database with organism, assembly and dataset
                 new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
+                                                                                                species_id,
                                                                                                 organism,
                                                                                                 assembly,
                                                                                                 assembly_dataset,
@@ -138,6 +139,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 ###############################################
 
                 new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
+                                                                                                species_id,
                                                                                                 organism,
                                                                                                 assembly,
                                                                                                 assembly_dataset,
@@ -149,6 +151,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 logging.info('New genebuild')
                 # Create genome and populate the database with genebuild dataset
                 new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
+                                                                                                species_id,
                                                                                                 organism,
                                                                                                 assembly,
                                                                                                 assembly_dataset,
@@ -208,13 +211,15 @@ class CoreMetaUpdater(BaseMetaUpdater):
                         f"the metadata. Please insert {genome_uuid} for the species {species_id}")
                 # send_email(to_address=to_address, subject=subject, body=body)
 
-    def new_genome(self, meta_session, organism, assembly, assembly_dataset, genebuild_dataset):
+    def new_genome(self, meta_session, species_id, organism, assembly, assembly_dataset, genebuild_dataset):
+        production_name = self.get_meta_single_meta_key(species_id, "species.production_name")
         new_genome = Genome(
             genome_uuid=str(uuid.uuid4()),
             assembly=assembly,
             organism=organism,
             created=func.now(),
             is_best=0,
+            production_name=production_name,
         )
         meta_session.add(new_genome)
         assembly_genome_dataset = GenomeDataset(

@@ -181,6 +181,7 @@ CREATE TABLE genome
     organism_id int          not null,
     created     datetime(6) not null,
     is_best     tinyint(1) not null default 0,
+    production_name varchar(256) not null,
 
     constraint genome_uuid
         unique (genome_uuid),

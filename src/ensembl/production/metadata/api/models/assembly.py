@@ -15,10 +15,10 @@ from sqlalchemy import Column, Integer, String, DateTime, Index, ForeignKey, Enu
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
-from ensembl.production.metadata.api.models.base import Base
+from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 
-class Assembly(Base):
+class Assembly(LoadAble, Base):
     __tablename__ = 'assembly'
 
     assembly_id = Column(Integer, primary_key=True)
@@ -49,7 +49,7 @@ class Assembly(Base):
         return False
 
 
-class AssemblySequence(Base):
+class AssemblySequence(LoadAble, Base):
     __tablename__ = 'assembly_sequence'
     __table_args__ = (
         Index('assembly_sequence_assembly_id_accession_5f3e5119_uniq', 'assembly_id', 'accession', unique=True),
@@ -73,9 +73,9 @@ class AssemblySequence(Base):
 
     # backward compatibility with old column name sha512t2u
     @property
-    def sha512t2u(self):
+    def sha512t4u(self):
         return self.sha512t24u
 
-    @sha512t2u.setter
-    def sha512t2u(self, checksum):
+    @sha512t4u.setter
+    def sha512t4u(self, checksum):
         self.sha512t24u = checksum

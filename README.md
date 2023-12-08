@@ -64,14 +64,7 @@ pip install -r requirements-dev.txt
 Run test suite:
 ```
 cd ensembl-metadata-api
-pytest
-```
-
-To run tests, calculate and display testing coverage stats:
-```
-cd ensembl-metadata-api
-coverage run -m pytest
-coverage report -m
+coverage run -m pytest --server mysql://ensembl@localhost:3306/?local_infile=1
 ```
 
 ### Automatic Formatting
