@@ -1,0 +1,23 @@
+12	1	assembly.accession	GCA_000002985.3
+14	1	assembly.default	jaber01
+13	1	assembly.name	jaber01
+11	1	assembly.ucsc_alias	SCARY
+15	1	gencode.version	999
+16	1	genebuild.last_geneset_update	01
+3	1	species.common_name	Caenorhabditis elegans (PRJNA13758)
+7	1	species.division	Ensembl_TEST
+6	1	species.production_name	Caenorhabditis_elegans
+4	1	species.scientific_name	Caenorhabditis elegans
+1	1	species.species_taxonomy_id	6239
+8	1	species.strain	N2
+9	1	species.strain_group	testing
+2	1	species.taxonomy_id	6239
+10	1	species.type	monsters
+5	1	species.url	Jabbe
+17	1	genebuild.version	1
+18	1	sample.gene_param	ENSAMXG00005000318
+19	1	sample.location_param   KB871578.1:9766653-9817473
+20	1	strain.type	test
+21	1	assembly.test_value	test3
+22	1	genebuild.test_value	test3
+23	1	genome.genome_uuid	a733550b-93e7-11ec-a39d-005056b38ce3

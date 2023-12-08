@@ -11,7 +11,7 @@
 11	ce23b201-653e-42f0-b9e0-56198b9421da	1	assembly	\N	2023-05-12 13:32:46	6	GCA_000146045.2	Submitted
 12	96088e8c-a69c-4335-a407-92d6d7a84d15	2	genebuild	\N	2023-05-12 13:32:46	6	2018-10	Submitted
 13	5f73aa4e-9551-4ddf-a10a-2a07065cc5ce	1	assembly	\N	2023-05-12 13:32:52	7	GCA_000002985.3	Submitted
-14	feaa37ea-4217-4d9d-afca-576bdae11b36	2	genebuild	\N	2023-05-12 13:32:52	7	2014-10	Submitted
+14	feaa37ea-4217-4d9d-afca-576bdae11b36	2	genebuild	\N	2023-05-12 13:32:52	7	GCA_000002985.3_1	Submitted
 15	7b698c4f-7db9-4fc6-945c-fffed512ea88	3	variation	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
 16	a9a2fdb2-e11b-491a-82e6-2b9bc372f22f	4	evidence	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
 17	b76475c4-84c4-470d-86c8-4700f259fd99	5	regulation_build	\N	2023-06-02 13:32:52	12	Manual Add	Submitted
@@ -28,7 +28,4 @@
 36	1068ba70-0088-4927-98bd-8fabcfb9a384	4	evidence	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
 38	47d54c33-80d6-4174-8620-52b6c8506db2	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
 42	ea044d8e-33f1-4c9f-9b9f-8c0bd1dcf642	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
-44	feaa37ea-4217-4d9d-afca-599bdae11b36	2	genebuild	\N	2023-09-12 13:32:52.00	7	2023-05	Submitted
-45	feaa37ea-4217-4d9d-afca-600bdae11b36	1	asssembly	\N	2023-09-12 13:32:52.00	7	2023-05	Submitted
 46	385f1ec2-bd06-40ce-873a-98e199f10505	1	asssembly	\N	2023-08-18 12:22:34	13	GCA_000001735.1	Submitted
-

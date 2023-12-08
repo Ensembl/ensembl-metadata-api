@@ -42,6 +42,12 @@ class Assembly(Base):
     # assembly_id within genome
     genomes = relationship("Genome", back_populates="assembly", cascade="all, delete, delete-orphan")
 
+    def is_released(self):
+        for genome in self.genomes:
+            if any(gr.release_id is not None for gr in genome.genome_releases):
+                return True
+        return False
+
 
 class AssemblySequence(Base):
     __tablename__ = 'assembly_sequence'
