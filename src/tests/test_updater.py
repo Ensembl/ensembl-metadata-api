@@ -19,6 +19,7 @@ from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence, DatasetAttribute, \
     DatasetSource, DatasetType, Attribute
 from ensembl.core.models import Meta
+
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
 
@@ -31,7 +32,7 @@ db_directory = db_directory.resolve()
                                         {'src': db_directory / 'core_9'}
                                         ]],
 
-indirect=True)
+                         indirect=True)
 class TestUpdater:
     dbc = None  # type: UnitTestDB
 
@@ -40,7 +41,7 @@ class TestUpdater:
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
 
-        #Check for insertion of genome_uuid
+        # Check for insertion of genome_uuid
         core_1_db = DBConnection(multi_dbs['core_1'].dbc.url)
         with core_1_db.session_scope() as session:
             species_id = "1"
@@ -67,12 +68,12 @@ class TestUpdater:
             assert re.match(".*_core_1", dataset.dataset_source.name)
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
-            #Testing assembly sequence is circular
+            # Testing assembly sequence is circular
             sequence = session.query(AssemblySequence).where(
                 (AssemblySequence.is_circular == 1) & (AssemblySequence.name == 'TEST1_seqA')
             ).first()
             assert sequence is not None
-            assert sequence.type == "primary_assembly"      #Testing assembly_sequence.type
+            assert sequence.type == "primary_assembly"  # Testing assembly_sequence.type
             sequence2 = session.query(AssemblySequence).where(
                 (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'TEST2_seqB')
             ).first()
@@ -86,10 +87,11 @@ class TestUpdater:
     def test_fail_existing_genome_uuid_no_data(self, multi_dbs):
         test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(Exception) as exif:
             test.process_core()
-        assert ("Database containes a Genome.genome_uuid, but the corresponding data is not inthe meta table. Please remove it from the meta key and resubmit" in str(excinfo.value))
-
+            assert ("Database contains a Genome.genome_uuid, "
+                    "but the corresponding data is not in the meta table. "
+                    "Please remove it from the meta key and resubmit" in str(exif.value))
 
     def test_update_assembly(self, multi_dbs):
         test = meta_factory(multi_dbs['core_3'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
@@ -128,9 +130,10 @@ class TestUpdater:
     def test_fail_existing_genome_uuid_data_not_match(self, multi_dbs):
         test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(Exception) as exif:
             test.process_core()
-        assert ("Core database containes a genome.genome_uuid which matches an entry in the meta table. The force flag was not specified so the core was not updated." in str(excinfo.value))
+            assert ("Core database contains a genome.genome_uuid which matches an entry in the meta table. "
+                    "The force flag was not specified so the core was not updated." in str(exif.value))
 
     def test_update_unreleased_no_force(self, multi_dbs):
         test = meta_factory(multi_dbs['core_7'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
@@ -138,20 +141,20 @@ class TestUpdater:
         test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            #Test that assembly seqs have been updated
+            # Test that assembly seqs have been updated
             new_seq = session.query(AssemblySequence).where(
-            (AssemblySequence.name == 'TEST1_seq_update')).first()
+                (AssemblySequence.name == 'TEST1_seq_update')).first()
             assert new_seq is not None
             old_seq = session.query(AssemblySequence).where(
-            (AssemblySequence.name == 'TEST1_seqA')).first()
+                (AssemblySequence.name == 'TEST1_seqA')).first()
             assert old_seq is None
             datasets = session.query(Dataset)
-            #Check that the old datasets have been removed
+            # Check that the old datasets have been removed
             count = session.query(Dataset).join(DatasetSource).filter(
                 DatasetSource.name.like('%core_1'),
             ).count()
             assert count == 0
-            #Check that the old attributes are gone
+            # Check that the old attributes are gone
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'assembly.test_value',
                 DatasetAttribute.value == 'test'
@@ -163,7 +166,7 @@ class TestUpdater:
             ).count()
             assert count == 0
 
-            #Check that the new dataset are present and not duplicated
+            # Check that the new dataset are present and not duplicated
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
                 DatasetSource.name.like('%core_7'),
                 DatasetType.name == 'assembly'
@@ -174,7 +177,7 @@ class TestUpdater:
                 DatasetType.name == 'genebuild'
             ).count()
             assert count == 1
-            #Check that the new attribute values are present
+            # Check that the new attribute values are present
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'assembly.test_value',
                 DatasetAttribute.value == 'test2'
@@ -190,9 +193,12 @@ class TestUpdater:
     def test_update_released_no_force(self, multi_dbs):
         test = meta_factory(multi_dbs['core_8'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(Exception) as exif:
             test.process_core()
-        assert ("Existing Organism, Assembly, and Datasets within a release. To update released data set force=True. This will force assembly and genebuilddataset updates and assembly sequences." in str(excinfo.value))
+            assert ("Existing Organism, Assembly, and Datasets within a release. "
+                    "To update released data set force=True. "
+                    "This will force assembly and genebuilddataset updates and assembly sequences." in str(
+                exif.value))
 
     def test_update_released_force(self, multi_dbs):
         test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,

@@ -8,10 +8,12 @@
 #   distributed under the License is distributed on an "AS IS" BASIS,
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
-#   limitations under the License.
+#   limitations under the License.`
 import re
 from collections import defaultdict
 import sqlalchemy as db
+import sqlalchemy.exc
+
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
     SeqRegionSynonym, AttribType
 from sqlalchemy import select, and_, create_engine
@@ -24,8 +26,8 @@ from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
-# from ensembl.production.core.utils import send_email
 import logging
+from ensembl.production.metadata.api.exceptions import *
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
@@ -103,23 +105,25 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 # Logic for existing key in database.
                 if old_genome is not None:
                     if force is False:
-                        raise Exception(
-                            "Core database containes a genome.genome_uuid which matches an entry in the meta table. "
+                        raise MetadataUpdateException(
+                            "Core database contains a genome.genome_uuid which matches an entry in the meta table. "
                             "The force flag was not specified so the core was not updated.")
                     elif self.is_object_new(organism) or self.is_object_new(assembly):
-                        raise Exception(
-                            "Core database containes a genome.genome_uuid which matches an entry in the meta table"
+                        raise MetadataUpdateException(
+                            "Core database contains a genome.genome_uuid which matches an entry in the meta table"
                             "The assembly data or organism data is new and requires the creation a new uuid. Delete "
                             "the old uuid from the core to continue")
                 else:
-                    raise Exception("Database containes a Genome.genome_uuid, but the corresponding data is not in"
-                                    "the meta table. Please remove it from the meta key and resubmit")
+                    raise MetadataUpdateException(
+                        "Database contains a Genome.genome_uuid, but the corresponding data is not in"
+                        "the meta table. Please remove it from the meta key and resubmit")
 
             if self.is_object_new(organism):
                 logging.info('New organism')
                 # ###############################Checks that dataset is new ##################
                 if not self.is_object_new(genebuild_dataset):
-                    raise Exception("New organism, but existing assembly accession and/or genebuild version")
+                    raise MetadataUpdateException(
+                        "New organism, but existing assembly accession and/or genebuild version")
                 ###############################################
                 # Create genome and populate the database with organism, assembly and dataset
                 new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
@@ -135,7 +139,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
                 # ###############################Checks that dataset and update are new ##################
                 if not self.is_object_new(genebuild_dataset):
-                    raise Exception("New assembly, but existing genebuild version")
+                    raise MetadataUpdateException("New assembly, but existing genebuild version")
                 ###############################################
 
                 new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
@@ -161,9 +165,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
             else:
                 # Check if the data has been released:
                 if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid) and not force:
-                    raise Exception("Existing Organism, Assembly, and Datasets within a release. "
-                                    "To update released data set force=True. This will force assembly and genebuild"
-                                    "dataset updates and assembly sequences.")
+                    raise WrongReleaseException("Existing Organism, Assembly, and Datasets within a release. "
+                                                "To update released data set force=True. This will force assembly "
+                                                "and genebuild"
+                                                "dataset updates and assembly sequences.")
                 else:
                     logging.info('Rewrite of existing datasets. Only assembly dataset attributes, genebuild '
                                  'dataset, dataset attributes, and assembly sequences are modified.')
@@ -171,15 +176,15 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     # Update genebuild_dataset
                     meta_session.query(DatasetAttribute).filter(
                         DatasetAttribute.dataset_id == genebuild_dataset.dataset_id).delete()
-                    genebuild_dataset, genebuild_dataset_attributes = self.get_or_new_genebuild(species_id,
-                                                                                                meta_session,
-                                                                                                source=dataset_source,
-                                                                                                existing=genebuild_dataset)
+                    self.get_or_new_genebuild(species_id,
+                                              meta_session,
+                                              source=dataset_source,
+                                              existing=genebuild_dataset)
 
                     # #Update assembly_dataset
                     meta_session.query(DatasetAttribute).filter(
                         DatasetAttribute.dataset_id == assembly_dataset.dataset_id).delete()
-                    assembly, assembly_dataset, new_assembly_dataset_attributes, new_assembly_sequences, dataset_source = self.get_or_new_assembly(
+                    self.get_or_new_assembly(
                         species_id, meta_session, source=dataset_source, existing=assembly_dataset)
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
@@ -204,12 +209,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 )
                 session.add(new_row)
                 session.commit()
-            except Exception as e:
-                to_address = "ensembl-production@ebi.ac.uk"
-                subject = "Metadata-api failed to insert genome uuid in core db."
-                body = (f"Metadata-api failed to insert {genome_uuid} into {self.db_uri} but it succesfully updated"
-                        f"the metadata. Please insert {genome_uuid} for the species {species_id}")
-                # send_email(to_address=to_address, subject=subject, body=body)
+            except sqlalchemy.exc.DatabaseError as e:
+                raise UpdateBackCoreException(f"Metadata-api failed to insert {genome_uuid} into {self.db_uri} "
+                                              f"but it successfully updated the metadata. ")
 
     def new_genome(self, meta_session, species_id, organism, assembly, assembly_dataset, genebuild_dataset):
         production_name = self.get_meta_single_meta_key(species_id, "species.production_name")
@@ -290,7 +292,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 try:
                     Taxonomy.fetch_node_by_id(session, new_organism.taxonomy_id)
                 except NoResultFound:
-                    raise RuntimeError(
+                    raise TaxonNotFoundException(
                         f"taxon id {new_organism.taxonomy_id} not found in taxonomy database for scientific name")
 
             # Check if an Assembly with the same accession already exists in the metadata database.
@@ -301,7 +303,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
             # Fetch the division name of the new organism from metadata.
             if division_name is None:
-                Exception("No species.division found in meta table")
+                MissingMetaException("No species.division found in meta table")
 
             # Query the metadata database to find if an OrganismGroup with the same division name already exists.
             if division is None:
@@ -358,8 +360,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
             accession_info = defaultdict(
                 # The None's here are improper, but they break far too much for this update if they are changed.
                 # When accession is decided I will fix them.
-                lambda: {"names": set(), "accession": None, "length": None, "location": None, "chromosomal": None,
-                         "karyotype_rank": None})
+                lambda: {
+                    "names": set(), "accession": None, "length": None, "location": None, "chromosomal": None,
+                    "karyotype_rank": None
+                })
 
             for seq_region_name, seq_region_length, coord_system_name, synonym, is_circular in results:
                 accession_info[seq_region_name]["names"].add(seq_region_name)
@@ -491,6 +495,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                         description=attribute,
                         type="string",
                     )
+                    # TODO re-add after 2500
                     # raise Exception(f"{attribute} does not exist. Add it to the database and reload.")
                 dataset_attribute = DatasetAttribute(
                     value=value,
@@ -525,7 +530,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
         if genebuild_version is None:
-            raise Exception("genebuild.version is required in the core database")
+            raise MissingMetaException("genebuild.version is required in the core database")
 
         # The genebuild accession is formed by combining the assembly accession and the genebuild version
         genebuild_accession = assembly_accession + "_" + genebuild_version
