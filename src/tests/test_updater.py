@@ -148,7 +148,7 @@ class TestUpdater:
             datasets = session.query(Dataset)
             #Check that the old datasets have been removed
             count = session.query(Dataset).join(DatasetSource).filter(
-                DatasetSource.name == 'danielp_core_1'
+                DatasetSource.name.like('%core_1'),
             ).count()
             assert count == 0
             #Check that the old attributes are gone
@@ -165,12 +165,12 @@ class TestUpdater:
 
             #Check that the new dataset are present and not duplicated
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name == 'danielp_core_7',
+                DatasetSource.name.like('%core_7'),
                 DatasetType.name == 'assembly'
             ).count()
             assert count == 1
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name == 'danielp_core_7',
+                DatasetSource.name.like('%core_7'),
                 DatasetType.name == 'genebuild'
             ).count()
             assert count == 1
@@ -231,12 +231,12 @@ class TestUpdater:
 
             # Check that the new dataset are present and not duplicated
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name == 'danielp_core_9',
+                DatasetSource.name.like('%core_9'),
                 DatasetType.name == 'assembly'
             ).count()
             assert count == 1
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name == 'danielp_core_9',
+                DatasetSource.name.like('%core_9'),
                 DatasetType.name == 'genebuild'
             ).count()
             assert count == 1
