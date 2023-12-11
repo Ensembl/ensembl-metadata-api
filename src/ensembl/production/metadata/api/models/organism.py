@@ -28,7 +28,7 @@ class Organism(LoadAble, Base):
     common_name = Column(String(128), nullable=False)
     strain = Column(String(128))
     scientific_name = Column(String(128))
-    ensembl_name = Column(String(128), nullable=False, unique=True)
+    biosample_id = Column(String(128), nullable=False, unique=True)
     scientific_parlance_name = Column(String(255))
     # One to many relationships
     # Organism_id to organism_group_member and genome

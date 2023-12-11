@@ -3,7 +3,7 @@ select
   'dna_alignments' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'alignment_isoseq' as name,
   'Iso-seq alignments' as label,
   max(date(analysis.created)) as version
@@ -27,7 +27,7 @@ select
   'dna_alignments' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   analysis.logic_name as name,
   analysis_description.display_label as label,
   ifnull(analysis.db_version, date(analysis.created)) as version
@@ -52,7 +52,7 @@ select
   'protein_alignments' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   analysis.logic_name as name,
   analysis_description.display_label as label,
   ifnull(analysis.db_version, date(analysis.created)) as version
@@ -76,7 +76,7 @@ select
   'geneset' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'gene_isoseq' as name,
   'Iso-seq gene models' as label,
   max(date(analysis.created)) as version
@@ -100,7 +100,7 @@ select
   'geneset' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   analysis.logic_name as name,
   analysis_description.display_label as label,
   ifnull(analysis.db_version, date(analysis.created)) as version

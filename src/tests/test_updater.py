@@ -62,7 +62,7 @@ class TestUpdater:
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         # Test the species
         with metadata_db.session_scope() as session:
-            organism = session.query(Organism).where(Organism.ensembl_name == 'Jabberwocky').first()
+            organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
             assembly = session.query(Assembly).where(Assembly.name == 'jaber01').first()
             assert organism.scientific_name == 'carol_jabberwocky'
             # Test the Assembly
@@ -106,7 +106,7 @@ class TestUpdater:
         test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            organism = session.query(Organism).where(Organism.ensembl_name == 'Jabberwocky').first()
+            organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
             assert organism.scientific_name == 'carol_jabberwocky'
             assert organism.genomes[1].assembly.accession == 'weird02'
 
@@ -131,7 +131,7 @@ class TestUpdater:
         test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            organism = session.query(Organism).where(Organism.ensembl_name == 'Hominoide').first()
+            organism = session.query(Organism).where(Organism.biosample_id == 'Hominoide').first()
             assert organism.common_name == 'apes'
 
     def test_fail_existing_genome_uuid_data_not_match(self, multi_dbs):

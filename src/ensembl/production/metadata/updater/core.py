@@ -242,11 +242,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
         """
         Get an existing Organism instance or create a new one, depending on the information from the metadata database.
         """
-        # Fetch the Ensembl name of the organism from metadata using either 'species.ensembl_name'
+        # Fetch the Ensembl name of the organism from metadata using either 'species.biosample_id'
         # or 'species.production_name' as the key.
-        ensembl_name = self.get_meta_single_meta_key(species_id, "organism.ensembl_name")
-        if ensembl_name is None:
-            ensembl_name = self.get_meta_single_meta_key(species_id, "species.production_name")
+        biosample_id = self.get_meta_single_meta_key(species_id, "organism.biosample_id")
+        if biosample_id is None:
+            biosample_id = self.get_meta_single_meta_key(species_id, "species.production_name")
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
         common_name = self.get_meta_single_meta_key(species_id, "species.common_name")
@@ -265,7 +265,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             taxonomy_id=self.get_meta_single_meta_key(species_id, "species.taxonomy_id"),
             common_name=common_name,
             scientific_name=self.get_meta_single_meta_key(species_id, "species.scientific_name"),
-            ensembl_name=ensembl_name,
+            biosample_id=biosample_id,
             strain=self.get_meta_single_meta_key(species_id, "species.strain"),
             strain_type=self.get_meta_single_meta_key(species_id, "strain.type"),
             scientific_parlance_name=self.get_meta_single_meta_key(species_id, "species.parlance_name")
@@ -273,7 +273,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Query the metadata database to find if an Organism with the same Ensembl name already exists.
         old_organism = meta_session.query(Organism).filter(
-            Organism.ensembl_name == new_organism.ensembl_name).one_or_none()
+            Organism.biosample_id == new_organism.biosample_id).one_or_none()
         division_name = self.get_meta_single_meta_key(species_id, "species.division")
         division = meta_session.query(OrganismGroup).filter(OrganismGroup.name == division_name).one_or_none()
 

@@ -1,7 +1,7 @@
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'count' as type,
@@ -26,7 +26,7 @@ group by m1.meta_value, m2.meta_value, biotype_group
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'length_bp' as type,
@@ -51,7 +51,7 @@ group by m1.meta_value, m2.meta_value, biotype_group
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'max_bp' as type,
@@ -76,7 +76,7 @@ group by m1.meta_value, m2.meta_value, biotype_group
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'min_bp' as type,
@@ -101,7 +101,7 @@ group by m1.meta_value, m2.meta_value, biotype_group
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'count' as type,
@@ -126,7 +126,7 @@ group by m1.meta_value, m2.meta_value, biotype_group
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'length_bp' as type,
@@ -151,7 +151,7 @@ group by m1.meta_value, m2.meta_value, biotype_group
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'length_bp' as type,
@@ -178,7 +178,7 @@ group by m1.meta_value, m2.meta_value, biotype_group
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'count' as type,
@@ -204,7 +204,7 @@ group by m1.meta_value, m2.meta_value, biotype_group
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'example' as type,
@@ -224,7 +224,7 @@ where
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_core' as dataset_name,
   'example' as type,

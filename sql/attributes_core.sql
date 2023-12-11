@@ -2,7 +2,7 @@
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'assembly' as dataset_type,
   'assembly' as dataset_name,
   'length_bp' as type,
@@ -23,7 +23,7 @@ where
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'protein_features' as dataset_type,
   lower(analysis.program) as dataset_name,
   'count' as type,
@@ -50,7 +50,7 @@ group by m1.meta_value, m2.meta_value, analysis.program, analysis.logic_name
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'go_terms' as dataset_type,
   analysis.logic_name as dataset_name,
   'count' as type,
@@ -78,7 +78,7 @@ group by m1.meta_value, m2.meta_value, analysis.logic_name
 select
   cast(database() as char(255)) as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'checksum_xrefs' as dataset_type,
   analysis.logic_name as dataset_name,
   'count' as type,
@@ -108,7 +108,7 @@ union
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'checksum_xrefs' as dataset_type,
   analysis.logic_name as dataset_name,
   'count' as type,
@@ -139,7 +139,7 @@ union
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'checksum_xrefs' as dataset_type,
   concat(lower(external_db.db_name), '_checksum') as dataset_name,
   'count' as type,
@@ -169,7 +169,7 @@ union
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'checksum_xrefs' as dataset_type,
   concat(lower(external_db.db_name), '_checksum') as dataset_name,
   'count' as type,
@@ -200,7 +200,7 @@ group by m1.meta_value, m2.meta_value, external_db.db_name
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'repeat_features' as dataset_type,
   analysis.logic_name as dataset_name,
   'count' as type,
@@ -230,7 +230,7 @@ group by m1.meta_value, m2.meta_value, analysis.logic_name
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'dna_alignments' as dataset_type,
   analysis.logic_name as dataset_name,
   'count' as type,

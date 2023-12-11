@@ -2,7 +2,7 @@
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'dna_alignments' as dataset_type,
   'alignment_isoseq' as dataset_name,
   'count' as type,
@@ -28,7 +28,7 @@ group by m1.meta_value, m2.meta_value, logic_name, display_label
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'dna_alignments' as dataset_type,
   logic_name as dataset_name,
   'count' as type,
@@ -55,7 +55,7 @@ group by m1.meta_value, m2.meta_value, logic_name, display_label
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'protein_alignments' as dataset_type,
   logic_name as dataset_name,
   'count' as type,
@@ -81,7 +81,7 @@ group by m1.meta_value, m2.meta_value, logic_name
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   'gene_isoseq' as dataset_name,
   'count' as type,
@@ -106,7 +106,7 @@ group by m1.meta_value, m2.meta_value
 select
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'geneset' as dataset_type,
   logic_name as dataset_name,
   'count' as type,

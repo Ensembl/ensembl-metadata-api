@@ -47,7 +47,7 @@ from ensembl_metadata.assembly;
 update assembly set ucsc_name = NULL where ucsc_name = '';
 
 insert into organism
-  (display_name, ensembl_name, scientific_name, species_taxonomy_id, strain, taxonomy_id, url_name)
+  (display_name, biosample_id, scientific_name, species_taxonomy_id, strain, taxonomy_id, url_name)
 select o1.display_name, o1.name, o1.scientific_name, o1.species_taxonomy_id, o1.strain, o1.taxonomy_id, o1.url_name
 from ensembl_metadata.organism o1
 group by o1.display_name, o1.name, o1.scientific_name, o1.species_taxonomy_id, o1.strain, o1.taxonomy_id, o1.url_name;
@@ -66,7 +66,7 @@ from ensembl_metadata.genome g1 inner join
   ensembl_metadata.assembly a1 on g1.assembly_id = a1.assembly_id inner join
   ensembl_metadata.genome_event ge1 on g1.genome_id = ge1.genome_id inner join
   assembly a2 on a1.assembly_accession = a2.accession inner join
-  organism o2 on o1.name = o2.ensembl_name
+  organism o2 on o1.name = o2.biosample_id
 group by a2.assembly_id, o2.organism_id, a1.assembly_accession, g1.genebuild;
 
 insert into dataset_source
@@ -255,7 +255,7 @@ from
   organism o on g.organism_id = o.organism_id
 where
   ds.name = ta.dbname and
-  o.ensembl_name = ta.ensembl_name and
+  o.biosample_id = ta.biosample_id and
   dt.name = ta.dataset_type
 group by
   ta.type, ta.value, a.attribute_id, d.dataset_id

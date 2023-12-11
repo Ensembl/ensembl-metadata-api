@@ -5,7 +5,7 @@ select
   'protein_features' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   lower(program) as name,
   program as label,
   max(program_version) as version
@@ -29,7 +29,7 @@ select
   'go_terms' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   logic_name as name,
   display_label as label,
   ifnull(db_version, date(created)) as version
@@ -55,7 +55,7 @@ select
   'checksum_xrefs' as type,
   cast(database() as char(255)) as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   logic_name as name,
   display_label as label,
   ifnull(db_version, date(created)) as version
@@ -81,7 +81,7 @@ select
   'checksum_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   logic_name as name,
   display_label as label,
   ifnull(db_version, date(created)) as version
@@ -108,7 +108,7 @@ select
   'checksum_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   concat(lower(db_name), '_checksum') as name,
   db_display_name as label,
   ifnull(db_release, date(created)) as version
@@ -135,7 +135,7 @@ select
   'checksum_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   concat(lower(db_name), '_checksum') as name,
   db_display_name as label,
   ifnull(db_release, date(created)) as version
@@ -163,7 +163,7 @@ select
   'alignment_xrefs' as type,
   cast(database() as char(255)) as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_alignment' as name,
   'Alignment-based cross-references' as label,
   max(date(created)) as version
@@ -188,7 +188,7 @@ select
   'alignment_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_alignment' as name,
   'Alignment-based cross-references' as label,
   max(date(created)) as version
@@ -213,7 +213,7 @@ select
   'alignment_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_alignment' as name,
   'Alignment-based cross-references' as label,
   max(date(created)) as version
@@ -239,7 +239,7 @@ select
   'dependent_xrefs' as type,
   cast(database() as char(255)) as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_dependent' as name,
   'Dependent cross-references' as label,
   max(date(created)) as version
@@ -265,7 +265,7 @@ select
   'dependent_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_dependent' as name,
   'Dependent cross-references' as label,
   max(date(created)) as version
@@ -291,7 +291,7 @@ select
   'dependent_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_dependent' as name,
   'Dependent cross-references' as label,
   max(date(created)) as version
@@ -318,7 +318,7 @@ select
   'direct_xrefs' as type,
   cast(database() as char(255)) as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_direct' as name,
   'Direct cross-references' as label,
   max(date(created)) as version
@@ -345,7 +345,7 @@ select
   'direct_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_direct' as name,
   'Direct cross-references' as label,
   max(date(created)) as version
@@ -372,7 +372,7 @@ select
   'direct_xrefs' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   'xref_direct' as name,
   'Direct cross-references' as label,
   max(date(created)) as version
@@ -400,7 +400,7 @@ select
   'repeat_features' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   logic_name as name,
   display_label as label,
   ifnull(program_version, date(created)) as version
@@ -424,7 +424,7 @@ select
   'dna_alignments' as type,
   database() as dbname,
   m1.meta_value as ensembl_release,
-  m2.meta_value as ensembl_name,
+  m2.meta_value as biosample_id,
   logic_name as name,
   display_label as label,
   ifnull(db_version, date(created)) as version
