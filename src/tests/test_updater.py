@@ -10,15 +10,22 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from pathlib import Path
+from unittest import mock
+from unittest.mock import Mock, patch
 
 import pytest
 import re
 
+import sqlalchemy
 from ensembl.database import UnitTestDB, DBConnection
+
+from ensembl.production.metadata.api.exceptions import UpdateBackCoreException
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence, DatasetAttribute, \
-    DatasetSource, DatasetType, Attribute
+    DatasetSource, DatasetType, Attribute, Genome
 from ensembl.core.models import Meta
+
+from ensembl.production.metadata.updater.core import CoreMetaUpdater
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -258,3 +265,26 @@ class TestUpdater:
                 DatasetAttribute.value == 'test3'
             ).count()
             assert count > 0
+
+    def test_get_public_path_genebuild(self, multi_dbs):
+        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        with metadata_db.session_scope() as session:
+            genome = session.query(Genome).filter(Genome.genome_uuid == 'a733574a-93e7-11ec-a39d-005056b38ce3').first()
+            paths = genome.get_public_path(type='all', base_path="test")
+            assert len(paths) == 5
+            # assert all("/genebuild/" in path for path in paths)
+            path = genome.get_public_path(type='genebuild', base_path="test")
+            assert path[
+                       0] == 'test/Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/genebuild/test_version'
+            path = genome.get_public_path(type='assembly', base_path="test")
+            assert path[
+                       0] == 'test/Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/genome'
+            path = genome.get_public_path(type='variation', base_path="test")
+            assert path[
+                       0] == 'test/Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/variation'
+            path = genome.get_public_path(type='homology', base_path="test")
+            assert path[
+                       0] == 'test/Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/homology'
+            path = genome.get_public_path(type='regulation', base_path="test")
+            assert path[
+                       0] == 'test/Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/regulation'

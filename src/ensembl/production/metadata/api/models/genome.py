@@ -38,6 +38,38 @@ class Genome(LoadAble, Base):
     # organism_id to organism
     organism = relationship("Organism", back_populates="genomes")
 
+    def get_public_path(self, base_path, type='all', release=None, genebuild_version=None):
+        paths = []
+        genebuild_dataset = next((gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
+                                 None)
+        if genebuild_dataset is None:
+            raise ValueError("Genebuild dataset not found for the genome")
+
+        genebuild_source_name = genebuild_dataset.dataset.dataset_source.name
+        common_path = f"{base_path}/{self.organism.scientific_name}/{self.assembly.accession}/{genebuild_source_name}"
+
+        if type in ['genebuild', 'assembly', 'homology', 'regulation', 'variation', 'all']:
+            if type == 'genebuild':
+                if genebuild_version:
+                    # Specific genebuild version
+                    paths.append(f"{common_path}/genebuild/{genebuild_version}")
+                else:
+                    # Use the version from the genebuild dataset
+                    paths.append(f"{common_path}/genebuild/{genebuild_dataset.dataset.version}")
+
+            elif type == 'assembly':
+                paths.append(f"{common_path}/genome")
+
+            elif type in ['homology', 'regulation', 'variation']:
+                paths.append(f"{common_path}/{type}")
+
+            elif type == 'all':
+                # Add paths for all types
+                for t in ['genebuild', 'assembly', 'homology', 'regulation', 'variation']:
+                    paths.extend(self.get_public_path(type=t, base_path=base_path))
+
+        return paths
+
 
 class GenomeDataset(LoadAble, Base):
     __tablename__ = "genome_dataset"
@@ -73,4 +105,3 @@ class GenomeRelease(LoadAble, Base):
     genome = relationship("Genome", back_populates="genome_releases")
     # release_id to ensembl release
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_releases")
-

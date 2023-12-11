@@ -9,8 +9,8 @@
 9	b4ff55e3-d06a-4772-bb13-81c3207669e3	1	assembly	\N	2023-05-12 13:32:36	5	GCA_900519105.1	Submitted
 10	0dc05c6e-2910-4dbd-879a-719ba97d5824	2	genebuild	\N	2023-05-12 13:32:36	5	2018-04-IWGSC	Submitted
 11	ce23b201-653e-42f0-b9e0-56198b9421da	1	assembly	\N	2023-05-12 13:32:46	6	GCA_000146045.2	Submitted
-12	96088e8c-a69c-4335-a407-92d6d7a84d15	2	genebuild	\N	2023-05-12 13:32:46	6	2018-10	Submitted
-13	5f73aa4e-9551-4ddf-a10a-2a07065cc5ce	1	assembly	\N	2023-05-12 13:32:52	7	GCA_000002985.3	Submitted
+12	96088e8c-a69c-4335-a407-92d6d7a84d15	2	genebuild	test_version	2023-05-12 13:32:46	6	2018-10	Submitted
+13	5f73aa4e-9551-4ddf-a10a-2a07065cc5ce	1	assembly	test_version	2023-05-12 13:32:52	7	GCA_000002985.3	Submitted
 14	feaa37ea-4217-4d9d-afca-576bdae11b36	2	genebuild	\N	2023-05-12 13:32:52	7	GCA_000002985.3_1	Submitted
 15	7b698c4f-7db9-4fc6-945c-fffed512ea88	3	variation	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
 16	a9a2fdb2-e11b-491a-82e6-2b9bc372f22f	4	evidence	\N	2023-06-02 13:32:52	10	Manual Add	Submitted
