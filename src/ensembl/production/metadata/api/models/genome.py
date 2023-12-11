@@ -38,7 +38,7 @@ class Genome(LoadAble, Base):
     # organism_id to organism
     organism = relationship("Organism", back_populates="genomes")
 
-    def get_public_path(self, base_path, type='all', release=None, genebuild_version=None):
+    def get_public_path(self, type='all', release=None, genebuild_version=None):
         paths = []
         genebuild_dataset = next((gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
                                  None)
@@ -46,7 +46,7 @@ class Genome(LoadAble, Base):
             raise ValueError("Genebuild dataset not found for the genome")
 
         genebuild_source_name = genebuild_dataset.dataset.dataset_source.name
-        common_path = f"{base_path}/{self.organism.scientific_name}/{self.assembly.accession}/{genebuild_source_name}"
+        common_path = f"{self.organism.scientific_name}/{self.assembly.accession}/{genebuild_source_name}"
 
         if type in ['genebuild', 'assembly', 'homology', 'regulation', 'variation', 'all']:
             if type == 'genebuild':
@@ -66,7 +66,7 @@ class Genome(LoadAble, Base):
             elif type == 'all':
                 # Add paths for all types
                 for t in ['genebuild', 'assembly', 'homology', 'regulation', 'variation']:
-                    paths.extend(self.get_public_path(type=t, base_path=base_path))
+                    paths.extend(self.get_public_path(type=t))
 
         return paths
 

@@ -13,7 +13,7 @@ import uuid
 
 from sqlalchemy import Column, Integer, String, Index, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, synonym
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
@@ -37,7 +37,15 @@ class Organism(LoadAble, Base):
     strain_type = Column(String(128), nullable=True, unique=False)
     # many to one relationships
     # organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
+    @property
+    def ensembl_name(self):
+        return self.biosample_id
 
+    @ensembl_name.setter
+    def ensembl_name(self, value):
+        self.biosample_id = value
+
+    ensembl_name = synonym('biosample_id', descriptor=ensembl_name)
 
 class OrganismGroup(LoadAble, Base):
     __tablename__ = "organism_group"
