@@ -131,9 +131,9 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, re
         allow_unreleased=cfg.allow_unreleased
     )
     for genome in genome_results:
-        yield create_genome_with_attributes_and_count(
-            db_conn=db_conn, genome=genome, release_version=release_version
-        )
+        yield msg_factory.create_genome(data=genome)
+
+    return msg_factory.create_genome()
 
 def get_species_information(db_conn, genome_uuid):
     if genome_uuid is None:
@@ -251,9 +251,7 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
             most_recent_genomes.append(most_recent_genome)
 
         for genome_row in most_recent_genomes:
-            yield create_genome_with_attributes_and_count(
-                db_conn=db_conn, genome=genome_row, release_version=release_version
-            )
+            yield msg_factory.create_genome(data=genome_row)
 
         return msg_factory.create_genome()
 
