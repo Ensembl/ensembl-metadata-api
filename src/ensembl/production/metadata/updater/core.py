@@ -31,8 +31,8 @@ from ensembl.production.metadata.api.exceptions import *
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
-    def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None):
-        super().__init__(db_uri, metadata_uri, taxonomy_uri, release)
+    def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None, force=None):
+        super().__init__(db_uri, metadata_uri, taxonomy_uri, release, force)
         self.db_type = 'core'
         logging.basicConfig(level=logging.INFO)
         # Single query to get all of the metadata information.
@@ -63,7 +63,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         result_dict = {k: v for k, v in species_meta.items() if k.startswith(prefix)}
         return result_dict
 
-    def process_core(self, force=False, **kwargs):
+    def process_core(self, **kwargs):
         # Special case for loading a single species from a collection database. Can be removed in a future release
         sel_species = kwargs.get('species', None)
         if sel_species:
@@ -82,9 +82,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
         multi_species = [multi_species for multi_species, in multi_species]
 
         for species in multi_species:
-            self.process_species(species, force)
+            self.process_species(species)
 
-    def process_species(self, species_id, force=False):
+    def process_species(self, species_id):
         """
         Process an individual species from a core database to update the metadata db.
         This method contains the logic for updating the metadata
@@ -104,7 +104,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     Genome.genome_uuid == old_genome_uuid).one_or_none()
                 # Logic for existing key in database.
                 if old_genome is not None:
-                    if force is False:
+                    if self.force is False:
                         raise MetadataUpdateException(
                             "Core database contains a genome.genome_uuid which matches an entry in the meta table. "
                             "The force flag was not specified so the core was not updated.")
@@ -164,7 +164,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
             else:
                 # Check if the data has been released:
-                if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid) and not force:
+                if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid) and not self.force:
                     raise WrongReleaseException("Existing Organism, Assembly, and Datasets within a release. "
                                                 "To update released data set force=True. This will force assembly "
                                                 "and genebuild"

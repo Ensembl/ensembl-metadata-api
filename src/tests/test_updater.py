@@ -209,8 +209,8 @@ class TestUpdater:
 
     def test_update_released_force(self, multi_dbs):
         test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
-                            multi_dbs['ncbi_taxonomy'].dbc.url)
-        test.process_core(force=True)
+                            multi_dbs['ncbi_taxonomy'].dbc.url,force=True)
+        test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # Test that assembly seqs have not been updated
