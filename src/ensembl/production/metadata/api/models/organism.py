@@ -37,8 +37,8 @@ class Organism(LoadAble, Base):
     genomes = relationship("Genome", back_populates="organism", cascade="all, delete, delete-orphan")
     organism_group_members = relationship("OrganismGroupMember", back_populates="organism")
     strain_type = Column(String(128), nullable=True, unique=False)
-    # many to one relationships
-    # organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
+
+    #This is the code for ensembl_name. It should be considered temporary and be removed well before 2025
     @hybrid_property
     def ensembl_name(self):
         warnings.warn(
