@@ -13,7 +13,9 @@ import uuid
 
 from sqlalchemy import Column, Integer, String, Index, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
+from sqlalchemy.testing.plugin.plugin_base import warnings
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
@@ -28,16 +30,32 @@ class Organism(LoadAble, Base):
     common_name = Column(String(128), nullable=False)
     strain = Column(String(128))
     scientific_name = Column(String(128))
-    ensembl_name = Column(String(128), nullable=False, unique=True)
+    biosample_id = Column(String(128), nullable=False, unique=True)
     scientific_parlance_name = Column(String(255))
     # One to many relationships
     # Organism_id to organism_group_member and genome
     genomes = relationship("Genome", back_populates="organism", cascade="all, delete, delete-orphan")
     organism_group_members = relationship("OrganismGroupMember", back_populates="organism")
     strain_type = Column(String(128), nullable=True, unique=False)
-    # many to one relationships
-    # organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
 
+    #This is the code for ensembl_name. It should be considered temporary and be removed well before 2025
+    @hybrid_property
+    def ensembl_name(self):
+        warnings.warn(
+            "ensembl_name is deprecated and will be removed in future versions. "
+            "Use biosample_id instead.",
+            DeprecationWarning
+        )
+        return self.biosample_id
+
+    @ensembl_name.setter
+    def ensembl_name(self, value):
+        warnings.warn(
+            "ensembl_name is deprecated and will be removed in future versions. "
+            "Use biosample_id instead.",
+            DeprecationWarning
+        )
+        self.biosample_id = value
 
 class OrganismGroup(LoadAble, Base):
     __tablename__ = "organism_group"

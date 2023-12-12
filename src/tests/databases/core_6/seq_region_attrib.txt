@@ -1,0 +1,6 @@
+1	6	1
+2	6	1
+3	6	1
+1	547	nuclear_chromosome
+2	547	nuclear_chromosome
+3	547	mitochondrial_chromosome

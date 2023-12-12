@@ -18,5 +18,5 @@
 18	1	sample.gene_param	ENSAMXG00005000318
 19	1	sample.location_param   KB871578.1:9766653-9817473
 20	1	strain.type	test
-21	1	assembly.test_value	test
-22	1	genebuild.test_value	test
+21	1	assembly.test_value	test2
+22	1	genebuild.test_value	test2

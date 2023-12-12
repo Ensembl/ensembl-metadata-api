@@ -163,13 +163,13 @@ CREATE TABLE organism
     common_name              varchar(128) not null,
     strain                   varchar(128) null,
     scientific_name          varchar(128) null,
-    ensembl_name             varchar(128) not null,
+    biosample_id             varchar(128) not null,
     scientific_parlance_name varchar(255) null,
     strain_type              varchar(255) null,
     constraint organism_uuid
         unique (organism_uuid),
-    constraint ensembl_name
-        unique (ensembl_name)
+    constraint biosample_id
+        unique (biosample_id)
 );
 
 CREATE TABLE genome
