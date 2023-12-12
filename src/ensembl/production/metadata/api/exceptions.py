@@ -13,11 +13,6 @@ import sqlalchemy as db
 from sqlalchemy import inspect
 from sqlalchemy.engine import make_url
 
-from ensembl.core.models import Meta
-from ensembl.production.metadata.api.models import DatasetSource
-from ensembl.database import DBConnection
-from ensembl.production.metadata.api.models import EnsemblRelease
-
 
 class MetaException(Exception):
     """Base Metadata API Exception class"""

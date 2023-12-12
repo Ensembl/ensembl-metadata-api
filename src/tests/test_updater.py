@@ -275,16 +275,16 @@ class TestUpdater:
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(type='genebuild')
             assert path[
-                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/genebuild/test_version'
+                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/test_anno_source/genebuild/test_version'
             path = genome.get_public_path(type='assembly')
             assert path[
-                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/genome'
+                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/test_anno_source/genome'
             path = genome.get_public_path(type='variation')
             assert path[
-                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/variation'
+                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/test_anno_source/variation'
             path = genome.get_public_path(type='homology')
             assert path[
-                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/homology'
+                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/test_anno_source/homology'
             path = genome.get_public_path(type='regulation')
             assert path[
-                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/saccharomyces_cerevisiae_core_55_108_4/regulation'
+                       0] == 'Saccharomyces cerevisiae S288c/GCA_000146045.2/test_anno_source/regulation'

@@ -13,7 +13,9 @@ import uuid
 
 from sqlalchemy import Column, Integer, String, Index, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import relationship, synonym
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import relationship
+from sqlalchemy.testing.plugin.plugin_base import warnings
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
@@ -37,15 +39,23 @@ class Organism(LoadAble, Base):
     strain_type = Column(String(128), nullable=True, unique=False)
     # many to one relationships
     # organim_id and taxonomy_id to taxonomy_node #DIFFERENT DATABASE
-    @property
+    @hybrid_property
     def ensembl_name(self):
+        warnings.warn(
+            "ensembl_name is deprecated and will be removed in future versions. "
+            "Use biosample_id instead.",
+            DeprecationWarning
+        )
         return self.biosample_id
 
     @ensembl_name.setter
     def ensembl_name(self, value):
+        warnings.warn(
+            "ensembl_name is deprecated and will be removed in future versions. "
+            "Use biosample_id instead.",
+            DeprecationWarning
+        )
         self.biosample_id = value
-
-    ensembl_name = synonym('biosample_id', descriptor=ensembl_name)
 
 class OrganismGroup(LoadAble, Base):
     __tablename__ = "organism_group"
