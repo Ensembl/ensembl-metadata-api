@@ -974,7 +974,6 @@ class TestUtils:
 				}
 			}
 		]
-		print(output)
 		assert output == expected_output
 
 	def test_get_genomes_by_keyword_null(self, genome_db_conn):
