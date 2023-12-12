@@ -104,7 +104,6 @@ class TestUtils:
 					"speciesTaxonomyId": 562,
 					"taxonomyId": 511145
 				},
-				"relatedAssembliesCount": 1,
 				"release": {
 					"isCurrent": True,
 					"releaseDate": "2023-05-15",
@@ -115,12 +114,6 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": [
-						"Escherichia coli MG1655",
-						"Escherichia coli str. K12 substr. MG1655",
-						"Escherichia coli str. MG1655",
-						"Escherichia coli strain MG1655",
-					],
 					"scientificName": "Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)",
 					"taxonomyId": 511145
 				}
@@ -837,10 +830,7 @@ class TestUtils:
 					"ucscName": "hg38",
 					"urlName": "GRCh38"
 				},
-				"attributesInfo": {
-					"assemblyDate": "2013-12",
-					"assemblyLevel": "chromosome"
-				},
+				"attributesInfo": {},
 				"created": "2023-05-12 13:30:58",
 				"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
 				"organism": {
@@ -862,11 +852,9 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
-				"relatedAssembliesCount": 3,
 			},
 			{
 				"assembly": {
@@ -890,7 +878,6 @@ class TestUtils:
 					"taxonomyId": 9606,
 					"scientificParlanceName": "homo_sapiens"
 				},
-				"relatedAssembliesCount": 3,
 				"release": {
 					"isCurrent": True,
 					"releaseDate": "2023-05-15",
@@ -901,7 +888,6 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
@@ -925,10 +911,7 @@ class TestUtils:
 					"ucscName": "hg38",
 					"urlName": "GRCh38"
 				},
-				"attributesInfo": {
-					"assemblyDate": "2013-12",
-					"assemblyLevel": "chromosome"
-				},
+				"attributesInfo": {},
 				"created": "2023-05-12 13:30:58",
 				"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
 				"organism": {
@@ -950,11 +933,9 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				},
-				"relatedAssembliesCount": 3,
 			},
 			{
 				"assembly": {
@@ -978,7 +959,6 @@ class TestUtils:
 					"taxonomyId": 9606,
 					"scientificParlanceName": "homo_sapiens"
 				},
-				"relatedAssembliesCount": 3,
 				"release": {
 					"isCurrent": True,
 					"releaseDate": "2023-05-15",
@@ -989,12 +969,12 @@ class TestUtils:
 					"siteUri": "https://beta.ensembl.org"
 				},
 				"taxon": {
-					"alternativeNames": ["human"],
 					"scientificName": "Homo sapiens",
 					"taxonomyId": 9606
 				}
 			}
 		]
+		print(output)
 		assert output == expected_output
 
 	def test_get_genomes_by_keyword_null(self, genome_db_conn):
