@@ -257,13 +257,13 @@ class TestMetadataDB:
 		"genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
 		[
 			# nothing specified + allow_unreleased -> fetches everything
-			(None, None, True, False, "6e82999b-7a8c-429c-a2af-8d77a59a2e81", 33),
+			(None, None, True, False, "6e82999b-7a8c-429c-a2af-8d77a59a2e81", 31),
 			# specifying genome_uuid
 			("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "0dc05c6e-2910-4dbd-879a-719ba97d5824", 5),
 			# specifying dataset_uuid
 			(None, "0dc05c6e-2910-4dbd-879a-719ba97d5824", False, False, "0dc05c6e-2910-4dbd-879a-719ba97d5824", 1),
 			# fetch unreleased datasets only
-			(None, None, False, True, "385f1ec2-bd06-40ce-873a-98e199f10505", 3),
+			(None, None, False, True, "385f1ec2-bd06-40ce-873a-98e199f10505", 1),
 		]
 	)
 	def test_fetch_genome_dataset_all(
