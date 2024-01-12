@@ -53,7 +53,7 @@ class Genome(LoadAble, Base):
             raise ValueError("Genebuild annotation source attribute not found for the dataset")
 
         genebuild_source_name = genebuild_annotation_source_attribute.value
-        common_path = f"{self.organism.scientific_name}/{self.assembly.accession}/{genebuild_source_name}"
+        common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
 
         if type in ['genebuild', 'assembly', 'homology', 'regulation', 'variation', 'all']:
             if type == 'genebuild':
