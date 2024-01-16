@@ -19,3 +19,5 @@
 19	1	sample.location_param   KB871578.1:9766653-9817473
 20	1	strain.type	test
 21	1	genome.genome_uuid	test
+23	1	genebuild.provider_name	test
+24	1	genebuild.start_date	test

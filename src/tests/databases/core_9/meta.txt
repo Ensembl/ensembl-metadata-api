@@ -21,3 +21,5 @@
 21	1	assembly.test_value	test3
 22	1	genebuild.test_value	test3
 23	1	genome.genome_uuid	a733550b-93e7-11ec-a39d-005056b38ce3
+24	1	genebuild.provider_name	test
+24	1	genebuild.start_date	test

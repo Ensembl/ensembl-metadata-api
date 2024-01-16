@@ -20,3 +20,5 @@
 20	1	strain.type	test
 21	1	assembly.test_value	test
 22	1	genebuild.test_value	test
+23	1	genebuild.provider_name	test
+24	1	genebuild.start_date	test
