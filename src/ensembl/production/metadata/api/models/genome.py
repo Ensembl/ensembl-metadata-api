@@ -14,7 +14,7 @@ import uuid
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship
-
+from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 
@@ -56,16 +56,14 @@ class Genome(LoadAble, Base):
         common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
 
-        standard_types = {'genebuild', 'assembly', 'homologies', 'regulation_build', 'regulatory_features', 'variation'}
-        types_available = unique_dataset_types.intersection(standard_types)
-        if 'regulatory_features' in types_available or 'regulation_build' in types_available:
-            types_available.discard('regulatory_features')
-            types_available.discard('regulation_build')
-            types_available.add('regulation')
+        if 'regulatory_features' in unique_dataset_types or 'regulation_build' in unique_dataset_types:
+            unique_dataset_types.discard('regulatory_features')
+            unique_dataset_types.discard('regulation_build')
+            unique_dataset_types.add('regulation')
         if 'regulatory_features' == type or 'regulation_build' == type:
             type = 'regulation'
 
-        if type in types_available or type == 'all':
+        if type in unique_dataset_types or type == 'all':
             if type == 'genebuild':
                 paths.append(f"{common_path}/genebuild/{genebuild_dataset.dataset.version}")
             elif type == 'assembly':
@@ -76,10 +74,8 @@ class Genome(LoadAble, Base):
                 paths.append(f"{common_path}/regulation")
             elif type == 'variation':
                 paths.append(f"{common_path}/variation")
-
-
-            if type == 'all':
-                for t in types_available:
+            elif type == 'all':
+                for t in unique_dataset_types:
                     if t == 'genebuild':
                         paths.append(f"{common_path}/genebuild/{genebuild_dataset.dataset.version}")
                     elif t == 'assembly':
@@ -88,9 +84,11 @@ class Genome(LoadAble, Base):
                         paths.append(f"{common_path}/homology")
                     elif t in ['regulation', 'variation']:
                         paths.append(f"{common_path}/{t}")
-
-        return paths
-
+            else:
+                raise TypeNotFoundException(f"Dataset Type : {type}  has no associated path. ")
+            return paths
+        else:
+            raise TypeNotFoundException(f"Dataset Type : {type}  not found in metadata. ")
 
 
 class GenomeDataset(LoadAble, Base):

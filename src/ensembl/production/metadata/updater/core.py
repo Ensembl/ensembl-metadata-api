@@ -461,7 +461,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
                     tol_id=tol_id,
                     created=func.now(),
-             #       ensembl_name=self.get_meta_single_meta_key(species_id, "assembly.name"),
                     assembly_uuid=str(uuid.uuid4()),
                     url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
                     is_reference=is_reference

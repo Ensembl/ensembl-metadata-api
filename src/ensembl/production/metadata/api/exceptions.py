@@ -44,3 +44,7 @@ class MissingMetaException(MetaException, RuntimeError):
 class UpdateBackCoreException(UpdaterException, RuntimeError):
     """An error occurred while updating back the core database"""
     pass
+
+class TypeNotFoundException(UpdaterException, RuntimeError):
+    """Dataset Type not found"""
+    pass
