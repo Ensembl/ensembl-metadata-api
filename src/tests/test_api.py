@@ -48,9 +48,9 @@ class TestApi:
             assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome'
             path = genome.get_public_path(type='variation')
             assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation'
-            path = genome.get_public_path(type='homology')
+            path = genome.get_public_path(type='homologies')
             assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology'
-            path = genome.get_public_path(type='regulation')
+            path = genome.get_public_path(type='regulatory_features')
             assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation'
 
     def test_organism_ensembl_name_compat(self, multi_dbs):

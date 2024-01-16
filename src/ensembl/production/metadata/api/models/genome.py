@@ -54,18 +54,41 @@ class Genome(LoadAble, Base):
 
         genebuild_source_name = genebuild_annotation_source_attribute.value
         common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
+        unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
 
-        if type in ['genebuild', 'assembly', 'homology', 'regulation', 'variation', 'all']:
+        standard_types = {'genebuild', 'assembly', 'homologies', 'regulation_build', 'regulatory_features', 'variation'}
+        types_available = unique_dataset_types.intersection(standard_types)
+        if 'regulatory_features' in types_available or 'regulation_build' in types_available:
+            types_available.discard('regulatory_features')
+            types_available.discard('regulation_build')
+            types_available.add('regulation')
+        if 'regulatory_features' == type or 'regulation_build' == type:
+            type = 'regulation'
+
+        if type in types_available or type == 'all':
             if type == 'genebuild':
                 paths.append(f"{common_path}/genebuild/{genebuild_dataset.dataset.version}")
             elif type == 'assembly':
                 paths.append(f"{common_path}/genome")
-            elif type in ['homology', 'regulation', 'variation']:
-                paths.append(f"{common_path}/{type}")
-            elif type == 'all':
-                # Add paths for all types
-                for t in ['genebuild', 'assembly', 'homology', 'regulation', 'variation']:
-                    paths.extend(self.get_public_path(type=t))
+            elif type == 'homologies':
+                paths.append(f"{common_path}/homology")
+            elif type == 'regulation':
+                paths.append(f"{common_path}/regulation")
+            elif type == 'variation':
+                paths.append(f"{common_path}/variation")
+
+
+            if type == 'all':
+                for t in types_available:
+                    if t == 'genebuild':
+                        paths.append(f"{common_path}/genebuild/{genebuild_dataset.dataset.version}")
+                    elif t == 'assembly':
+                        paths.append(f"{common_path}/genome")
+                    elif t == 'homologies':
+                        paths.append(f"{common_path}/homology")
+                    elif t in ['regulation', 'variation']:
+                        paths.append(f"{common_path}/{t}")
+
         return paths
 
 
