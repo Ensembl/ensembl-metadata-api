@@ -60,7 +60,7 @@ def generate_delete_patch(core_host, core_port, core_user, core_password, meta_h
     mismatches = [db_name for db_name, status in mismatches if status == 'mismatch']
 
     try:
-        with open(patch_file, 'w') as file:
+        with open(patch_file, 'a') as file:
             for db_name in mismatches:
             # Write SQL commands to the patch file to delete mismatched entries
                 file.write(f"USE {db_name};\n")
