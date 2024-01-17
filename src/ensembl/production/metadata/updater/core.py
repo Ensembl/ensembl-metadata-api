@@ -461,7 +461,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
                     tol_id=tol_id,
                     created=func.now(),
-                    ensembl_name=self.get_meta_single_meta_key(species_id, "assembly.name"),
                     assembly_uuid=str(uuid.uuid4()),
                     url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
                     is_reference=is_reference
@@ -540,7 +539,31 @@ class CoreMetaUpdater(BaseMetaUpdater):
             dataset_source = source
 
         dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
+
+        genebuild_start_date = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
+        genebuild_provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
+
         test_status = meta_session.query(Dataset).filter(Dataset.label == genebuild_accession).one_or_none()
+        if test_status:
+            # Check for genebuild.provider_name
+            provider_name_check = meta_session.query(DatasetAttribute).join(Attribute).filter(
+                DatasetAttribute.dataset_id == test_status.dataset_id,
+                Attribute.name == "genebuild.provider_name",
+                DatasetAttribute.value == genebuild_provider_name
+            ).one_or_none()
+
+            if provider_name_check:
+                # Check for genebuild.start_date
+                start_date_check = meta_session.query(DatasetAttribute).join(Attribute).filter(
+                    DatasetAttribute.dataset_id == test_status.dataset_id,
+                    Attribute.name == "genebuild.start_date",
+                    DatasetAttribute.value == genebuild_start_date
+                ).one_or_none()
+
+                if start_date_check is None:
+                    test_status = None
+
+
         if test_status is not None and existing is False:
             genebuild_dataset = test_status
             genebuild_dataset_attributes = genebuild_dataset.dataset_attributes

@@ -10,6 +10,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+
 class MetaException(Exception):
     """Base Metadata API Exception class"""
     pass
@@ -42,4 +43,8 @@ class MissingMetaException(MetaException, RuntimeError):
 
 class UpdateBackCoreException(UpdaterException, RuntimeError):
     """An error occurred while updating back the core database"""
+    pass
+
+class TypeNotFoundException(UpdaterException, RuntimeError):
+    """Dataset Type not found"""
     pass

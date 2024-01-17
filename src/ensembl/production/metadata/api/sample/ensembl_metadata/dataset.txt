@@ -29,3 +29,4 @@
 38	47d54c33-80d6-4174-8620-52b6c8506db2	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
 42	ea044d8e-33f1-4c9f-9b9f-8c0bd1dcf642	6	homologies	\N	2023-06-02 13:32:52	11	Manual Add	Submitted
 46	385f1ec2-bd06-40ce-873a-98e199f10505	1	asssembly	\N	2023-08-18 12:22:34	13	GCA_000001735.1	Submitted
+47	385f1ec2-bd06-40ce-873a-98e199f10534	5	regulation_build	\N	2023-08-18 12:22:34	13	GCA_000001735.1	Submitted
