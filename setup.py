@@ -27,7 +27,7 @@ def import_requirements():
 
 
 setup(
-    name='ensembl_metadata_api',
+    name='ensembl-metadata-api',
     version=os.getenv('CI_COMMIT_TAG', version),
     description='Ensembl Metadata API',
     long_description=readme,
@@ -40,13 +40,7 @@ setup(
     package_dir={'': 'src'},
     include_package_data=True,
     python_requires='>=3.8.9',
-    install_requires=[
-        'grpcio',
-        'protobuf==3.20.2'
-    ],
-    extras_require={
-        'service': import_requirements(),
-    },
+    install_requires=[import_requirements()],
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
