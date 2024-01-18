@@ -1,4 +1,5 @@
+-r requirements.txt
 pytest
 pylint
 mypy
-coverage
+coverage[toml]

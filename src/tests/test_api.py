@@ -9,23 +9,17 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+"""
+Unit tests for api module
+"""
+
 from pathlib import Path
-from unittest import mock
-from unittest.mock import Mock, patch
 
 import pytest
-import re
 
-import sqlalchemy
-from ensembl.database import UnitTestDB, DBConnection
-
-from ensembl.production.metadata.api.exceptions import UpdateBackCoreException
-from ensembl.production.metadata.api.factory import meta_factory
-from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence, DatasetAttribute, \
-    DatasetSource, DatasetType, Attribute, Genome
-from ensembl.core.models import Meta
-
-from ensembl.production.metadata.updater.core import CoreMetaUpdater
+from ensembl.database import DBConnection
+from ensembl.database import UnitTestDB
+from ensembl.production.metadata.api.models import Organism, Genome
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -62,3 +56,4 @@ class TestApi:
             ensembl_name = session.query(Organism).filter(Organism.ensembl_name == 'homo_sapiens').first()
             biosample_id = session.query(Organism).filter(Organism.biosample_id == 'homo_sapiens').first()
             assert ensembl_name.organism_uuid == biosample_id.organism_uuid
+

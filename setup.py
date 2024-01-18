@@ -31,16 +31,22 @@ setup(
     version=os.getenv('CI_COMMIT_TAG', version),
     description='Ensembl Metadata API',
     long_description=readme,
-    author='Daniel Poppleton,Marc Chakiachvili,Vinay Kaikala',
-    author_email='danielp@ebi.ac.uk,mchakiachvili@ebi.ac.uk,vinay@ebi.ac.uk',
+    author='Alisha Aneja,Bilal El Houdaigui,Daniel Poppleton,Marc Chakiachvili,Sanjay boddu,Vinay Kaikala',
+    author_email='aaneja@ebi.ac.uk,bilal@ebi.ac.uk, danielp@ebi.ac.uk,mchakiachvili@ebi.ac.uk,sboddu@ebi.ac.uk,vinay@ebi.ac.uk',
     url='https://www.ensembl.org',
     download_url='https://github.com/Ensembl/ensembl-metadata-api',
     license='Apache License 2.0',
     packages=find_namespace_packages(where='src', include=['ensembl.*']),
     package_dir={'': 'src'},
     include_package_data=True,
-    python_requires='>=3.8',
-    install_requires=import_requirements(),
+    python_requires='>=3.8.9',
+    install_requires=[
+        'grpcio',
+        'protobuf==3.20.2'
+    ],
+    extras_require={
+        'service': import_requirements(),
+    },
     classifiers=[
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
