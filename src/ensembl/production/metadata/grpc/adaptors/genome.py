@@ -623,7 +623,6 @@ class GenomeAdaptor(BaseAdaptor):
             # Get latest released organisms
             query = db.select(
                 o_species.species_taxonomy_id,
-                o_species.ensembl_name,
                 o_species.common_name,
                 o_species.scientific_name,
                 OrganismGroupMember.order.label('order'),
@@ -640,7 +639,6 @@ class GenomeAdaptor(BaseAdaptor):
 
             query = query.group_by(
                 o_species.species_taxonomy_id,
-                o_species.ensembl_name,
                 o_species.common_name,
                 o_species.scientific_name,
                 OrganismGroupMember.order
