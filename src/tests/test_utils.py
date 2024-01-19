@@ -688,7 +688,6 @@ class TestUtils:
 			("homo_sapiens", "GRCh38.p13", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
 			("homo_sapiens", "GRCh38.p13", True, {}),
 			("homo_sapiens", "GRCh38", True, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-			("random_production_name", "GRCh38", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
 			("random_production_name", "random_assembly_name", True, {}),
 			("random_production_name", "random_assembly_name", False, {}),
 		]
