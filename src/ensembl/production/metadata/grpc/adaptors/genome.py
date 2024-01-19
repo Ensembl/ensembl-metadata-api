@@ -80,8 +80,8 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None, assembly_uuid=None,
                       assembly_accession=None, assembly_name=None, use_default_assembly=False, ensembl_name=None,
-                      taxonomy_id=None, group=None, group_type=None, allow_unreleased=False, unreleased_only=False,
-                      site_name=None, release_type=None, release_version=None, current_only=True):
+                      production_name=None, taxonomy_id=None, group=None, group_type=None, allow_unreleased=False,
+                      unreleased_only=False, site_name=None, release_type=None, release_version=None, current_only=True):
         """
         Fetches genome information based on the specified parameters.
 
@@ -95,6 +95,7 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_name (Union[str, List[str]]): The name(s) of the assembly(s) to fetch.
             use_default_assembly (bool): Whether to use default assembly name or not.
             ensembl_name (Union[str, List[str]]): The Ensembl name(s) of the organism(s) to fetch.
+            production_name (Union[str, List[str]]): The production name(s) of the organism(s) to fetch.
             taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
             group_type (Union[str, List[str]]): The type(s) of the organism group(s) to filter by.
@@ -132,6 +133,7 @@ class GenomeAdaptor(BaseAdaptor):
         assembly_accession = check_parameter(assembly_accession)
         assembly_name = check_parameter(assembly_name)
         ensembl_name = check_parameter(ensembl_name)
+        production_name = check_parameter(production_name)
         taxonomy_id = check_parameter(taxonomy_id)
         group = check_parameter(group)
         group_type = check_parameter(group_type)
@@ -193,6 +195,9 @@ class GenomeAdaptor(BaseAdaptor):
 
         if ensembl_name is not None:
             genome_select = genome_select.filter(Organism.ensembl_name.in_(ensembl_name))
+
+        if production_name is not None:
+            genome_select = genome_select.filter(Genome.production_name.in_(production_name))
 
         if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))

@@ -39,7 +39,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return utils.get_top_level_statistics_by_uuid(self.db, request.genome_uuid)
 
     def GetGenomeUUID(self, request, context):
-        return utils.get_genome_uuid(self.db, request.ensembl_name, request.assembly_name, request.use_default)
+        return utils.get_genome_uuid(self.db, request.production_name, request.assembly_name, request.use_default)
 
     def GetGenomeByUUID(self, request, context):
         return utils.get_genome_by_uuid(self.db, request.genome_uuid, request.release_version)
