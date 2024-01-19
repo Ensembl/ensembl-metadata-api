@@ -1117,7 +1117,7 @@ class TestUtils:
 		}
 		# make sure it returns 6 organisms
 		json_output = json.loads(output)
-		assert len(json_output['organismsGroupCount']) == 5
+		assert len(json_output['organismsGroupCount']) == 6
 		# and pick up the first element to check if it matches the expected output
 		# I picked up only the first element for the sake of shortening the code
 		assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]

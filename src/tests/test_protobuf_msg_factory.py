@@ -243,7 +243,6 @@ class TestClass:
 			"organismsGroupCount": [
 				{
 					"speciesTaxonomyId": 9606,
-					"ensemblName": "Homo_sapiens",
 					"commonName": "Human",
 					"scientificName": "Homo sapiens",
 					"order": 1,
