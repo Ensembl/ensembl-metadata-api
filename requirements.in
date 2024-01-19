@@ -1,1 +1,5 @@
 ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.2.2
+grpcio
+grpcio-tools
+sqlalchemy
+types-pymysql
