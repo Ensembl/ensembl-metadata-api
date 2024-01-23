@@ -27,7 +27,8 @@ from ensembl_metadata_pb2 import (
     OrganismsGroupRequest,
     AssemblyRegionRequest,
     GenomeAssemblySequenceRegionRequest,
-    GenomeTagRequest
+    GenomeTagRequest,
+    FTPLinksRequest
 )
 
 import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
@@ -317,6 +318,11 @@ def get_genome_uuid_by_tag(stub):
     print("**** Genome Tag: foo ****")
     print(genome_uuid4)
 
+def get_ftp_links(stub):
+    request1 = FTPLinksRequest(genome_uuid="b997075a-292d-4e15-bfe5-23dca5a57b26", dataset_type="all")
+    links = stub.GetFTPLinks(request1)
+    print("**** FTP Links ****")
+    print(links)
 
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -357,6 +363,8 @@ def run():
         get_organisms_group_count(stub)
         print("-------------- Get Genome UUID By Tag --------------")
         get_genome_uuid_by_tag(stub)
+        print("-------------- Get FTP Links by Genome UUID and dataset --------------")
+        get_ftp_links(stub)
 
 
 if __name__ == "__main__":
