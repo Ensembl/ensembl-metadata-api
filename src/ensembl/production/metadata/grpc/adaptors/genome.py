@@ -562,7 +562,7 @@ class GenomeAdaptor(BaseAdaptor):
             group=None,
             group_type=None,
             allow_unreleased_datasets=False,
-            dataset_name=None,
+            dataset_type_name=None,
             dataset_source=None,
             dataset_attributes=True,
 
@@ -573,7 +573,7 @@ class GenomeAdaptor(BaseAdaptor):
             ensembl_name = check_parameter(ensembl_name)
             group = check_parameter(group)
             group_type = check_parameter(group_type)
-            dataset_name = check_parameter(dataset_name)
+            dataset_type_name = check_parameter(dataset_type_name)
             dataset_source = check_parameter(dataset_source)
 
             if group is None:
@@ -597,7 +597,7 @@ class GenomeAdaptor(BaseAdaptor):
                 dataset = self.fetch_genome_datasets(
                     genome_uuid=genome[0].genome_uuid,
                     allow_unreleased=allow_unreleased_datasets,
-                    dataset_name=dataset_name,
+                    dataset_type_name=dataset_type_name,
                     dataset_source=dataset_source,
                     dataset_attributes=dataset_attributes
                 )

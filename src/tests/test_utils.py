@@ -1140,3 +1140,32 @@ class TestUtils:
 				genome_tag=genome_tag,
 			))
 		assert json.loads(output) == expected_output
+
+	@pytest.mark.parametrize(
+		"genome_uuid, dataset_type, release_version, expected_output",
+		[
+			# genome_uuid only
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			# wrong genome_uuid
+			("some-random-genome-uuid-000000000000", None, None, 110.1),
+			# genome_uuid and data_type_name
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			# genome_uuid and release_version
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			# genome_uuid, data_type_name and release_version
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			# no genome_uuid
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			# empty params
+			(None, None, None, 110.1),
+		]
+	)
+	def test_get_release_version_by_uuid(self, genome_db_conn, genome_uuid, dataset_type, release_version, expected_output):
+		output = json_format.MessageToJson(
+			utils.get_release_version_by_uuid(
+				db_conn=genome_db_conn,
+				genome_uuid=genome_uuid,
+				dataset_type=dataset_type,
+				release_version=release_version
+			))
+		assert json.loads(output) == expected_output
