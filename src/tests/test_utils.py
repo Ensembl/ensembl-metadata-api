@@ -1145,19 +1145,19 @@ class TestUtils:
 		"genome_uuid, dataset_type, release_version, expected_output",
 		[
 			# genome_uuid only
-			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, {"releaseVersion": 108.0}),
 			# wrong genome_uuid
-			("some-random-genome-uuid-000000000000", None, None, 110.1),
+			("some-random-genome-uuid-000000000000", None, None, {}),
 			# genome_uuid and data_type_name
-			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", None, {"releaseVersion": 108.0}),
 			# genome_uuid and release_version
-			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
 			# genome_uuid, data_type_name and release_version
-			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
 			# no genome_uuid
-			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, 110.1),
+			(None, "genebuild", 111.1, {}),
 			# empty params
-			(None, None, None, 110.1),
+			(None, None, None, {}),
 		]
 	)
 	def test_get_release_version_by_uuid(self, genome_db_conn, genome_uuid, dataset_type, release_version, expected_output):
