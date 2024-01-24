@@ -1153,8 +1153,11 @@ class TestUtils:
 		)
 		expected_output = {
 			"Links": [
-				"Anthocharis_cardamines/GCA_905404305.1/ensembl/genome",
-				"Anthocharis_cardamines/GCA_905404305.1/ensembl/genebuild/ENS01"
+				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome",
+				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation",
+				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation",
+				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology",
+				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version"
 			]
 		}
 
