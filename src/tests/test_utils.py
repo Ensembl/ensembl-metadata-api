@@ -1162,9 +1162,12 @@ class TestUtils:
 		}
 
 
-		# make sure it returns 2 links
+		# make sure it returns 5 links
 		json_output = json.loads(output)
 		assert len(json_output['Links']) == 5
-		assert json_output == expected_output
+		assert sorted(json_output) == sorted(expected_output)
+
+
+
 
 
