@@ -1147,7 +1147,8 @@ class TestUtils:
 			utils.get_ftp_links(
 				db_conn=genome_db_conn,
 				genome_uuid='b997075a-292d-4e15-bfe5-23dca5a57b26',
-				dataset_type='all'
+				dataset_type='all',
+				release_version='101'
 			)
 		)
 		expected_output = {
