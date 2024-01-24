@@ -278,8 +278,8 @@ class TestMetadataDB:
             dataset_uuid=dataset_uuid,
             unreleased_only=unreleased_only,
             allow_unreleased=allow_unreleased,
-            # fetch all datasets (default: dataset_name="assembly")
-            dataset_name="all"
+            # fetch all datasets (default: dataset_type_name="assembly")
+            dataset_type_name="all"
         )
         assert test[0].Dataset.dataset_uuid == expected_dataset_uuid
         assert len(test) == expected_count
@@ -300,8 +300,8 @@ class TestMetadataDB:
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genome_datasets(
             organism_uuid=organism_uuid,
-            # fetch all datasets (default: dataset_name="assembly")
-            dataset_name="all"
+            # fetch all datasets (default: dataset_type_name="assembly")
+            dataset_type_name="all"
         )
         assert len(test) == expected_count
 

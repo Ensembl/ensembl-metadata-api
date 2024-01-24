@@ -94,3 +94,8 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetGenomeUUIDByTag(self, request, context):
         return utils.get_genome_uuid_by_tag(self.db, request.genome_tag)
+
+    def GetReleaseVersionByUUID(self, request, context):
+        return utils.get_release_version_by_uuid(
+            self.db, request.genome_uuid, request.dataset_type, request.release_version
+        )

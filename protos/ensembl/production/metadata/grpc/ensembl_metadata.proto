@@ -75,6 +75,9 @@ service EnsemblMetadata {
   // Retrieve genome UUID by genome_tag.
   // genome_tag value will be either in assembly.url_name or tol_id column
   rpc GetGenomeUUIDByTag(GenomeTagRequest) returns (GenomeUUID) {}
+
+  // Get release version for a given genome_uuid
+   rpc GetReleaseVersionByUUID(ReleaseVersionRequest) returns (ReleaseVersion) {}
 }
 
 /*
@@ -301,6 +304,10 @@ message OrganismsGroupCount {
   double release_version = 2;
 }
 
+message ReleaseVersion {
+  double release_version = 1;
+}
+
 
 /*
 The messages below are used to request data - required-ness is not enforced
@@ -429,4 +436,13 @@ Genome Tag request
  */
 message GenomeTagRequest {
   string genome_tag = 1; // Mandatory
+}
+
+/*
+Release version request
+ */
+message ReleaseVersionRequest {
+  string genome_uuid = 1;     // Mandatory
+  string dataset_type = 2;    // Optional
+  double release_version = 3; // Optional
 }

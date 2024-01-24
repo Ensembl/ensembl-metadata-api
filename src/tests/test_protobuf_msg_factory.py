@@ -139,7 +139,7 @@ class TestClass:
 		input_data = genome_db_conn.fetch_genome_datasets(
 			organism_uuid=organism_uuid,
 			dataset_attributes=True,
-			dataset_name="all"
+			dataset_type_name="all"
 		)
 
 		first_expected_stat = {
@@ -159,7 +159,7 @@ class TestClass:
 		input_data = genome_db_conn.fetch_genome_datasets(
 			organism_uuid=organism_uuid,
 			dataset_attributes=True,
-			dataset_name="all"
+			dataset_type_name="all"
 		)
 
 		first_expected_stat = {
