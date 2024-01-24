@@ -240,7 +240,7 @@ class GenomeAdaptor(BaseAdaptor):
                 if release_type is not None:
                     genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
 
-        # print(f"genome_select query ====> {str(genome_select)}")
+        logger.debug(genome_select)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("ensembl_name")).all()
@@ -544,7 +544,6 @@ class GenomeAdaptor(BaseAdaptor):
                     if release_version:
                         genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
-            # print(f"fetch_genome_datasets query ====> {str(genome_select)}")
             logger.debug(genome_select)
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
@@ -664,6 +663,6 @@ class GenomeAdaptor(BaseAdaptor):
             raise NotImplementedError('Not implemented yet')
             pass
 
-        # print(f"query ---> {query}")
+        logger.debug(query)
         with self.metadata_db.session_scope() as session:
             return session.execute(query).scalar()
