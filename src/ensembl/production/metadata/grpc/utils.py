@@ -179,12 +179,12 @@ def get_sub_species_info(db_conn, organism_uuid, group):
     return msg_factory.create_sub_species()
 
 
-def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
-    if ensembl_name is None or assembly_name is None:
+def get_genome_uuid(db_conn, production_name, assembly_name, use_default=False):
+    if production_name is None or assembly_name is None:
         return msg_factory.create_genome_uuid()
 
     genome_uuid_result = db_conn.fetch_genomes(
-        ensembl_name=ensembl_name,
+        production_name=production_name,
         assembly_name=assembly_name,
         use_default_assembly=use_default,
         allow_unreleased=cfg.allow_unreleased
@@ -194,18 +194,6 @@ def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
         return msg_factory.create_genome_uuid(
             {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
         )
-    # PATCH: This is a special case, see EA-1112 for more details
-    elif len(genome_uuid_result) == 0:
-        # Try looking using only assembly_default (no ensembl_name is needed)
-        using_default_assembly_only_result = db_conn.fetch_genomes(
-            assembly_name=assembly_name,
-            use_default_assembly=True,
-            allow_unreleased=cfg.allow_unreleased
-        )
-        if len(using_default_assembly_only_result) == 1:
-            return msg_factory.create_genome_uuid(
-                {"genome_uuid": using_default_assembly_only_result[0].Genome.genome_uuid}
-            )
 
     return msg_factory.create_genome_uuid()
 
