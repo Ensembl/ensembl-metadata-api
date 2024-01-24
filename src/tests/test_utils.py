@@ -1140,3 +1140,24 @@ class TestUtils:
 				genome_tag=genome_tag,
 			))
 		assert json.loads(output) == expected_output
+
+
+	def test_ftp_links(self, genome_db_conn):
+		output = json_format.MessageToJson(
+			utils.get_ftp_links(
+				db_conn=genome_db_conn,
+				genome_uuid='b997075a-292d-4e15-bfe5-23dca5a57b26',
+				dataset_type='all'
+			)
+		)
+		expected_output = {
+			"Links": [
+				"Anthocharis_cardamines/GCA_905404305.1/ensembl/genome",
+				"Anthocharis_cardamines/GCA_905404305.1/ensembl/genebuild/ENS01"
+			]
+		}
+		# make sure it returns 2 links
+		json_output = json.loads(output)
+		assert json_output == expected_output
+
+
