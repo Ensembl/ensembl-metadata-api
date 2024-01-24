@@ -78,6 +78,9 @@ service EnsemblMetadata {
 
  // Get FTP links associated with a Genome UUID and Dataset
   rpc GetFTPLinks(FTPLinksRequest) returns (FTPLinks) {}
+
+  // Get release version for a given genome_uuid
+   rpc GetReleaseVersionByUUID(ReleaseVersionRequest) returns (ReleaseVersion) {}
 }
 
 /*
@@ -309,6 +312,10 @@ message FTPLinks {
   repeated string Links = 1;
 }
 
+message ReleaseVersion {
+  double release_version = 1;
+}
+
 
 /*
 The messages below are used to request data - required-ness is not enforced
@@ -446,4 +453,13 @@ message FTPLinksRequest {
   string genome_uuid = 1;     // Mandatory
   string dataset_type = 2;    // Optional
   string release_version = 3;  // Optional
+}
+
+/*
+Release version request
+ */
+message ReleaseVersionRequest {
+  string genome_uuid = 1;     // Mandatory
+  string dataset_type = 2;    // Optional
+  double release_version = 3; // Optional
 }

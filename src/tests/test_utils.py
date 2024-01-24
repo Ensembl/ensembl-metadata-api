@@ -1168,6 +1168,31 @@ class TestUtils:
 		assert sorted(json_output) == sorted(expected_output)
 
 
-
-
-
+	@pytest.mark.parametrize(
+		"genome_uuid, dataset_type, release_version, expected_output",
+		[
+			# genome_uuid only
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, {"releaseVersion": 108.0}),
+			# wrong genome_uuid
+			("some-random-genome-uuid-000000000000", None, None, {}),
+			# genome_uuid and data_type_name
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", None, {"releaseVersion": 108.0}),
+			# genome_uuid and release_version
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
+			# genome_uuid, data_type_name and release_version
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
+			# no genome_uuid
+			(None, "genebuild", 111.1, {}),
+			# empty params
+			(None, None, None, {}),
+		]
+	)
+	def test_get_release_version_by_uuid(self, genome_db_conn, genome_uuid, dataset_type, release_version, expected_output):
+		output = json_format.MessageToJson(
+			utils.get_release_version_by_uuid(
+				db_conn=genome_db_conn,
+				genome_uuid=genome_uuid,
+				dataset_type=dataset_type,
+				release_version=release_version
+			))
+		assert json.loads(output) == expected_output

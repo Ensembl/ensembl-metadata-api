@@ -48,7 +48,7 @@ def get_top_level_statistics(db_conn, organism_uuid, group):
 
     stats_results = db_conn.fetch_genome_datasets(
         organism_uuid=organism_uuid,
-        dataset_name="all",
+        dataset_type_name="all",
         dataset_attributes=True
     )
 
@@ -68,7 +68,7 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
 
     stats_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
-        dataset_name="all",
+        dataset_type_name="all",
         dataset_attributes=True
     )
 
@@ -106,7 +106,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     attrib_data_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome.Genome.genome_uuid,
         release_version=release_version,
-        dataset_name="all",
+        dataset_type_name="all",
         dataset_attributes=True
     )
     # fetch related assemblies count
@@ -283,7 +283,7 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
     datasets_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
         # fetch all datasets, default is 'assembly' only
-        dataset_name="all",
+        dataset_type_name="all",
         release_version=release_version,
         allow_unreleased=cfg.allow_unreleased,
         dataset_attributes=True
@@ -392,7 +392,7 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
 
     dataset_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
-        dataset_type=requested_dataset_type,
+        dataset_type_name=requested_dataset_type,
         dataset_attributes=True
     )
     return msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
@@ -446,3 +446,20 @@ def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
         return msg_factory.create_paths(data=links)
 
     return msg_factory.create_paths()
+
+
+def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_version):
+
+    if genome_uuid is None:
+        return msg_factory.create_release_version()
+
+    release_version_result = db_conn.fetch_genome_datasets(
+        genome_uuid=genome_uuid,
+        dataset_type_name=dataset_type,
+        release_version=release_version
+    )
+
+    if len(release_version_result) == 1:
+        return msg_factory.create_release_version(release_version_result[0])
+
+    return msg_factory.create_release_version()

@@ -97,3 +97,8 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetFTPLinks(self, request, context):
         return utils.get_ftp_links(self.db, request.genome_uuid, request.dataset_type, request.release_version)
+
+    def GetReleaseVersionByUUID(self, request, context):
+        return utils.get_release_version_by_uuid(
+            self.db, request.genome_uuid, request.dataset_type, request.release_version
+        )
