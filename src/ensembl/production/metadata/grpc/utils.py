@@ -10,11 +10,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import itertools
+import logging
+
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
+
+logger = logging.getLogger(__name__)
 
 
 def connect_to_db():
@@ -135,6 +139,7 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, re
 
     return msg_factory.create_genome()
 
+
 def get_species_information(db_conn, genome_uuid):
     if genome_uuid is None:
         return msg_factory.create_species()
@@ -211,10 +216,10 @@ def get_genome_uuid(db_conn, ensembl_name, assembly_name, use_default=False):
 
 
 def get_genome_by_uuid(db_conn, genome_uuid, release_version):
-    if genome_uuid is None:
+    if genome_uuid is None or not genome_uuid:
+        logger.debug("Missing or Empty Genome UUID field.")
         return msg_factory.create_genome()
 
-    # We first get the genome info
     genome_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
         release_version=release_version,
@@ -222,10 +227,16 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     )
 
     if len(genome_results) == 1:
-        return create_genome_with_attributes_and_count(
+        response_data = create_genome_with_attributes_and_count(
             db_conn=db_conn, genome=genome_results[0], release_version=release_version
         )
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    elif len(genome_results) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("Genome not found.")
     return msg_factory.create_genome()
 
 
