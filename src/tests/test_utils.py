@@ -1146,7 +1146,7 @@ class TestUtils:
 		output = json_format.MessageToJson(
 			utils.get_ftp_links(
 				db_conn=genome_db_conn,
-				genome_uuid='b997075a-292d-4e15-bfe5-23dca5a57b26',
+				genome_uuid='a733574a-93e7-11ec-a39d-005056b38ce3',
 				dataset_type='all',
 				release_version='101'
 			)
@@ -1157,8 +1157,11 @@ class TestUtils:
 				"Anthocharis_cardamines/GCA_905404305.1/ensembl/genebuild/ENS01"
 			]
 		}
+
+
 		# make sure it returns 2 links
 		json_output = json.loads(output)
+		assert len(json_output['Links']) == 5
 		assert json_output == expected_output
 
 
