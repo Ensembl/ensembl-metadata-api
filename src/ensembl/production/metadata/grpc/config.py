@@ -54,3 +54,4 @@ class MetadataConfig:
     max_overflow = os.environ.get("MAX_OVERFLOW", 0)
     pool_recycle = os.environ.get("POOL_RECYCLE", 50)
     allow_unreleased = parse_boolean_var(os.environ.get("ALLOW_UNRELEASED", False))
+    debug_mode = parse_boolean_var(os.environ.get("DEBUG", False))

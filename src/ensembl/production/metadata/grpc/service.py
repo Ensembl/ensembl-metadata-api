@@ -13,12 +13,17 @@ from concurrent import futures
 import grpc
 import logging
 
+from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc
 from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
 
 logger = logging.getLogger(__name__)
+
+# Determine the logging level based on the value of cfg.debug_mode
+log_level = logging.DEBUG if cfg.debug_mode else logging.INFO
+
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
@@ -40,4 +45,5 @@ def serve():
 
 if __name__ == "__main__":
     logger.info("gRPC server starting on port 50051...")
+    logger.info(f"DEBUG: {cfg.debug_mode}")
     serve()
