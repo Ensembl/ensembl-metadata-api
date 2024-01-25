@@ -319,11 +319,35 @@ def get_genome_uuid_by_tag(stub):
     print("**** Genome Tag: foo ****")
     print(genome_uuid4)
 
+
 def get_ftp_links(stub):
+
+    # valid genome uuid and no dataset should return all the datasets links of that genome uuid
     request1 = FTPLinksRequest(genome_uuid="b997075a-292d-4e15-bfe5-23dca5a57b26", dataset_type="all")
-    links = stub.GetFTPLinks(request1)
-    print("**** FTP Links ****")
-    print(links)
+
+    # valid genome uuid and a valid dataset should return corresponding dataset link
+    request2 = FTPLinksRequest(genome_uuid="b997075a-292d-4e15-bfe5-23dca5a57b26", dataset_type="assembly")
+
+    # invalid genome uuid should return no dataset links
+    request3 = FTPLinksRequest(genome_uuid="b997075a-292d-4e15-bfe5-", dataset_type="all")
+
+    # valid genome uuid and invalid dataset should return no dataset links
+    request4 = FTPLinksRequest(genome_uuid="b997075a-292d-4e15-bfe5-23dca5a57b26", dataset_type="test")
+
+    # no genome uuid should return no dataset links
+    request5 = FTPLinksRequest(dataset_type="all")
+
+    print("**** FTP Links - valid genome uuid and no dataset - return all the datasets links ****")
+    print(stub.GetFTPLinks(request1))
+    print("**** FTP Links - valid genome uuid and a valid dataset - return corresponding dataset link ****")
+    print(stub.GetFTPLinks(request2))
+    print("**** FTP Links - invalid genome uuid - returns no dataset links ****")
+    print(stub.GetFTPLinks(request3))
+    print("**** FTP Links - valid genome uuid and invalid dataset - return no dataset links ****")
+    print(stub.GetFTPLinks(request4))
+    print("**** FTP Links - no genome uuid - return no dataset links ****")
+    print(stub.GetFTPLinks(request5))
+
 
 def get_release_version_by_genome_uuid(stub):
     request1 = ReleaseVersionRequest(

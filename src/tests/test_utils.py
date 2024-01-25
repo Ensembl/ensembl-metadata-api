@@ -1142,30 +1142,54 @@ class TestUtils:
 		assert json.loads(output) == expected_output
 
 
-	def test_ftp_links(self, genome_db_conn):
+	@pytest.mark.parametrize(
+		"genome_uuid, dataset_type, release_version, expected_output",
+		[
+			# valid genome uuid and no dataset should return all the datasets links of that genome uuid
+			("a733574a-93e7-11ec-a39d-005056b38ce3", 'all', None, {
+				"Links": [
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome",
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation",
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation",
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology",
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version"
+				]
+			}),
+
+			# valid genome uuid and a valid dataset should return corresponding dataset link
+			("a733574a-93e7-11ec-a39d-005056b38ce3", 'assembly', None, {
+				"Links": [
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome",
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version"
+				]
+			}),
+
+			# invalid genome uuid should return no dataset links
+			("a73351f7-93e7-11ec-a39d-", "assembly", None, {
+				"Links": []
+			}),
+
+			# valid genome uuid and invalid dataset should return no dataset links
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "test_dataset", None, {
+				"Links": []
+			}),
+
+			# no genome uuid should return no dataset links
+			(None, "test_dataset", None, {
+				"Links": []
+			})
+		]
+	)
+	def test_ftp_links(self, genome_db_conn, genome_uuid, dataset_type, release_version, expected_output):
 		output = json_format.MessageToJson(
 			utils.get_ftp_links(
 				db_conn=genome_db_conn,
-				genome_uuid='a733574a-93e7-11ec-a39d-005056b38ce3',
-				dataset_type='all',
-				release_version='101'
+				genome_uuid=genome_uuid,
+				dataset_type=dataset_type,
+				release_version=release_version
 			)
 		)
-		expected_output = {
-			"Links": [
-				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome",
-				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation",
-				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation",
-				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology",
-				"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version"
-			]
-		}
-
-
-		# make sure it returns 5 links
-		json_output = json.loads(output)
-		assert len(json_output['Links']) == 5
-		assert sorted(json_output) == sorted(expected_output)
+		assert sorted(json.loads(output)) == sorted(expected_output)
 
 
 	@pytest.mark.parametrize(
