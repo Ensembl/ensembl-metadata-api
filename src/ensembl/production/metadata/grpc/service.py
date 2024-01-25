@@ -20,7 +20,7 @@ from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
 logger = logging.getLogger(__name__)
 
 # Determine the logging level based on the value of cfg.debug_mode
-log_level = logging.DEBUG if cfg.debug_mode else logging.INFO
+log_level = logging.DEBUG if cfg.debug_mode else logging.WARNING
 
 logging.basicConfig(
     level=log_level,
