@@ -113,6 +113,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeTagRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
                 )
+        self.GetFTPLinks = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetFTPLinks',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.FTPLinksRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.FTPLinks.FromString,
+                )
         self.GetReleaseVersionByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetReleaseVersionByUUID',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseVersionRequest.SerializeToString,
@@ -261,6 +266,13 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetFTPLinks(self, request, context):
+        """Get FTP links associated with a Genome UUID and Dataset
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def GetReleaseVersionByUUID(self, request, context):
         """Get release version for a given genome_uuid
         """
@@ -365,6 +377,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetGenomeUUIDByTag,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeTagRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.SerializeToString,
+            ),
+            'GetFTPLinks': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetFTPLinks,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.FTPLinksRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.FTPLinks.SerializeToString,
             ),
             'GetReleaseVersionByUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetReleaseVersionByUUID,
@@ -705,6 +722,23 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetGenomeUUIDByTag',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeTagRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUID.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetFTPLinks(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetFTPLinks',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.FTPLinksRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.FTPLinks.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
