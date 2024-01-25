@@ -278,8 +278,8 @@ class TestMetadataDB:
             dataset_uuid=dataset_uuid,
             unreleased_only=unreleased_only,
             allow_unreleased=allow_unreleased,
-            # fetch all datasets (default: dataset_name="assembly")
-            dataset_name="all"
+            # fetch all datasets (default: dataset_type_name="assembly")
+            dataset_type_name="all"
         )
         assert test[0].Dataset.dataset_uuid == expected_dataset_uuid
         assert len(test) == expected_count
@@ -300,8 +300,8 @@ class TestMetadataDB:
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genome_datasets(
             organism_uuid=organism_uuid,
-            # fetch all datasets (default: dataset_name="assembly")
-            dataset_name="all"
+            # fetch all datasets (default: dataset_type_name="assembly")
+            dataset_type_name="all"
         )
         assert len(test) == expected_count
 
@@ -376,13 +376,13 @@ class TestMetadataDB:
         test = conn.fetch_organisms_group_counts()
         # When fetching everything:
         # First result should be Human
-        assert test[0][2] == expected_organism
+        assert test[0][1] == expected_organism
         # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
-        assert test[0][5] == expected_assemblies_count
+        assert test[0][4] == expected_assemblies_count
 
         for data in test[1:]:
             # All others have only one genome in test DB
-            assert data[5] == 1
+            assert data[4] == 1
 
     @pytest.mark.parametrize(
         "organism_uuid, expected_assemblies_count",

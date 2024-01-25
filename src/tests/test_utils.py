@@ -683,21 +683,20 @@ class TestUtils:
 		assert output == {}
 
 	@pytest.mark.parametrize(
-		"ensembl_name, assembly_name, use_default, expected_output",
+		"production_name, assembly_name, use_default, expected_output",
 		[
 			("homo_sapiens", "GRCh38.p13", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
 			("homo_sapiens", "GRCh38.p13", True, {}),
 			("homo_sapiens", "GRCh38", True, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-			("random_ensembl_name", "GRCh38", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-			("random_ensembl_name", "random_assembly_name", True, {}),
-			("random_ensembl_name", "random_assembly_name", False, {}),
+			("random_production_name", "random_assembly_name", True, {}),
+			("random_production_name", "random_assembly_name", False, {}),
 		]
 	)
-	def test_get_genome_uuid(self, genome_db_conn, ensembl_name, assembly_name, use_default, expected_output):
+	def test_get_genome_uuid(self, genome_db_conn, production_name, assembly_name, use_default, expected_output):
 		output = json_format.MessageToJson(
 			utils.get_genome_uuid(
 				db_conn=genome_db_conn,
-				ensembl_name=ensembl_name,
+				production_name=production_name,
 				assembly_name=assembly_name,
 				use_default=use_default
 			))
@@ -1109,7 +1108,6 @@ class TestUtils:
 			"organismsGroupCount": [
 				{
 					"speciesTaxonomyId": 9606,
-					"ensemblName": "Homo_sapiens",
 					"commonName": "Human",
 					"scientificName": "Homo sapiens",
 					"order": 1,
@@ -1138,5 +1136,34 @@ class TestUtils:
 			utils.get_genome_uuid_by_tag(
 				db_conn=genome_db_conn,
 				genome_tag=genome_tag,
+			))
+		assert json.loads(output) == expected_output
+
+	@pytest.mark.parametrize(
+		"genome_uuid, dataset_type, release_version, expected_output",
+		[
+			# genome_uuid only
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, {"releaseVersion": 108.0}),
+			# wrong genome_uuid
+			("some-random-genome-uuid-000000000000", None, None, {}),
+			# genome_uuid and data_type_name
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", None, {"releaseVersion": 108.0}),
+			# genome_uuid and release_version
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
+			# genome_uuid, data_type_name and release_version
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
+			# no genome_uuid
+			(None, "genebuild", 111.1, {}),
+			# empty params
+			(None, None, None, {}),
+		]
+	)
+	def test_get_release_version_by_uuid(self, genome_db_conn, genome_uuid, dataset_type, release_version, expected_output):
+		output = json_format.MessageToJson(
+			utils.get_release_version_by_uuid(
+				db_conn=genome_db_conn,
+				genome_uuid=genome_uuid,
+				dataset_type=dataset_type,
+				release_version=release_version
 			))
 		assert json.loads(output) == expected_output

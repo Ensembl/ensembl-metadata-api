@@ -80,8 +80,8 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None, assembly_uuid=None,
                       assembly_accession=None, assembly_name=None, use_default_assembly=False, ensembl_name=None,
-                      taxonomy_id=None, group=None, group_type=None, allow_unreleased=False, unreleased_only=False,
-                      site_name=None, release_type=None, release_version=None, current_only=True):
+                      production_name=None, taxonomy_id=None, group=None, group_type=None, allow_unreleased=False,
+                      unreleased_only=False, site_name=None, release_type=None, release_version=None, current_only=True):
         """
         Fetches genome information based on the specified parameters.
 
@@ -95,6 +95,7 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_name (Union[str, List[str]]): The name(s) of the assembly(s) to fetch.
             use_default_assembly (bool): Whether to use default assembly name or not.
             ensembl_name (Union[str, List[str]]): The Ensembl name(s) of the organism(s) to fetch.
+            production_name (Union[str, List[str]]): The production name(s) of the organism(s) to fetch.
             taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
             group_type (Union[str, List[str]]): The type(s) of the organism group(s) to filter by.
@@ -132,6 +133,7 @@ class GenomeAdaptor(BaseAdaptor):
         assembly_accession = check_parameter(assembly_accession)
         assembly_name = check_parameter(assembly_name)
         ensembl_name = check_parameter(ensembl_name)
+        production_name = check_parameter(production_name)
         taxonomy_id = check_parameter(taxonomy_id)
         group = check_parameter(group)
         group_type = check_parameter(group_type)
@@ -193,6 +195,9 @@ class GenomeAdaptor(BaseAdaptor):
 
         if ensembl_name is not None:
             genome_select = genome_select.filter(Organism.ensembl_name.in_(ensembl_name))
+
+        if production_name is not None:
+            genome_select = genome_select.filter(Genome.production_name.in_(production_name))
 
         if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
@@ -425,8 +430,8 @@ class GenomeAdaptor(BaseAdaptor):
         )
 
     def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, allow_unreleased=False,
-                              unreleased_only=False, dataset_uuid=None, dataset_name=None, dataset_source=None,
-                              dataset_type=None, release_version=None, dataset_attributes=None):
+                              unreleased_only=False, dataset_uuid=None, dataset_source=None, dataset_type_name=None,
+                              release_version=None, dataset_attributes=None):
         """
         Fetches genome datasets based on the provided parameters.
 
@@ -439,9 +444,8 @@ class GenomeAdaptor(BaseAdaptor):
                                      to fetch both released and unreleased datasets, while unreleased_only
                                      is used in production pipelines (fetches only unreleased datasets)
             dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
-            dataset_name (str or None): Dataset name to filter by, default is 'assembly'.
             dataset_source (str or None): Dataset source to filter by.
-            dataset_type (str or None): Dataset type to filter by.
+            dataset_type_name (str or None): Dataset type name to filter by.
             release_version (float or None): EnsemblRelease version to filter by.
             dataset_attributes (bool): Flag to include dataset attributes
 
@@ -480,16 +484,15 @@ class GenomeAdaptor(BaseAdaptor):
                 Genome.genome_uuid, Dataset.dataset_uuid)
 
             # set default group topic as 'assembly' to fetch unique datasource
-            if not dataset_name:
-                dataset_name = "assembly"
+            if not dataset_type_name:
+                dataset_type_name = "assembly"
 
             genome_id = check_parameter(genome_id)
             genome_uuid = check_parameter(genome_uuid)
             organism_uuid = check_parameter(organism_uuid)
             dataset_uuid = check_parameter(dataset_uuid)
-            dataset_name = check_parameter(dataset_name)
+            dataset_type_name = check_parameter(dataset_type_name)
             dataset_source = check_parameter(dataset_source)
-            dataset_type = check_parameter(dataset_type)
 
             if genome_id is not None:
                 genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
@@ -504,7 +507,7 @@ class GenomeAdaptor(BaseAdaptor):
             if dataset_uuid is not None:
                 genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
 
-            if "all" in dataset_name:
+            if "all" in dataset_type_name:
                 # TODO: fetch the list dynamically from the DB
                 # TODO: you can as well simply remove the filter, if you want them all.
                 dataset_type_names = [
@@ -513,13 +516,10 @@ class GenomeAdaptor(BaseAdaptor):
                 ]
                 genome_select = genome_select.filter(DatasetType.name.in_(dataset_type_names))
             else:
-                genome_select = genome_select.filter(DatasetType.name.in_(dataset_name))
+                genome_select = genome_select.filter(DatasetType.name.in_(dataset_type_name))
 
             if dataset_source is not None:
                 genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
-
-            if dataset_type is not None:
-                genome_select = genome_select.filter(DatasetType.name.in_(dataset_type))
 
             if dataset_attributes:
                 genome_select = genome_select.add_columns(DatasetAttribute, Attribute) \
@@ -572,7 +572,7 @@ class GenomeAdaptor(BaseAdaptor):
             group=None,
             group_type=None,
             allow_unreleased_datasets=False,
-            dataset_name=None,
+            dataset_type_name=None,
             dataset_source=None,
             dataset_attributes=True,
 
@@ -583,7 +583,7 @@ class GenomeAdaptor(BaseAdaptor):
             ensembl_name = check_parameter(ensembl_name)
             group = check_parameter(group)
             group_type = check_parameter(group_type)
-            dataset_name = check_parameter(dataset_name)
+            dataset_type_name = check_parameter(dataset_type_name)
             dataset_source = check_parameter(dataset_source)
 
             if group is None:
@@ -607,7 +607,7 @@ class GenomeAdaptor(BaseAdaptor):
                 dataset = self.fetch_genome_datasets(
                     genome_uuid=genome[0].genome_uuid,
                     allow_unreleased=allow_unreleased_datasets,
-                    dataset_name=dataset_name,
+                    dataset_type_name=dataset_type_name,
                     dataset_source=dataset_source,
                     dataset_attributes=dataset_attributes
                 )
@@ -623,7 +623,6 @@ class GenomeAdaptor(BaseAdaptor):
             # Get latest released organisms
             query = db.select(
                 o_species.species_taxonomy_id,
-                o_species.ensembl_name,
                 o_species.common_name,
                 o_species.scientific_name,
                 OrganismGroupMember.order.label('order'),
@@ -640,7 +639,6 @@ class GenomeAdaptor(BaseAdaptor):
 
             query = query.group_by(
                 o_species.species_taxonomy_id,
-                o_species.ensembl_name,
                 o_species.common_name,
                 o_species.scientific_name,
                 OrganismGroupMember.order

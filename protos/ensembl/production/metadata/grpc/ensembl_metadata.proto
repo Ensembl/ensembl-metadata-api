@@ -75,6 +75,9 @@ service EnsemblMetadata {
   // Retrieve genome UUID by genome_tag.
   // genome_tag value will be either in assembly.url_name or tol_id column
   rpc GetGenomeUUIDByTag(GenomeTagRequest) returns (GenomeUUID) {}
+
+  // Get release version for a given genome_uuid
+   rpc GetReleaseVersionByUUID(ReleaseVersionRequest) returns (ReleaseVersion) {}
 }
 
 /*
@@ -290,16 +293,19 @@ message GenomeUUID {
 
 message OrganismsGroup {
   uint32 species_taxonomy_id = 1;
-  string ensembl_name = 2;
-  string common_name = 3;
-  string scientific_name = 4;
-  uint32 order = 5;
-  uint32 count = 6;
+  string common_name = 2;
+  string scientific_name = 3;
+  uint32 order = 4;
+  uint32 count = 5;
 }
 
 message OrganismsGroupCount {
   repeated OrganismsGroup organisms_group_count = 1;
   double release_version = 2;
+}
+
+message ReleaseVersion {
+  double release_version = 1;
 }
 
 
@@ -413,7 +419,7 @@ message GenomeDatatypeRequest {
 Genome info filter used by Compara (EA-1090)
  */
 message GenomeInfoRequest {
-  string ensembl_name = 1;     // Mandatory
+  string production_name = 1;     // Mandatory
   string assembly_name = 2;    // Mandatory
   bool use_default = 3;        // Optional
 }
@@ -430,4 +436,13 @@ Genome Tag request
  */
 message GenomeTagRequest {
   string genome_tag = 1; // Mandatory
+}
+
+/*
+Release version request
+ */
+message ReleaseVersionRequest {
+  string genome_uuid = 1;     // Mandatory
+  string dataset_type = 2;    // Optional
+  double release_version = 3; // Optional
 }

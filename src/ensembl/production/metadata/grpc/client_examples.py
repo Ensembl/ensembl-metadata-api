@@ -27,7 +27,8 @@ from ensembl_metadata_pb2 import (
     OrganismsGroupRequest,
     AssemblyRegionRequest,
     GenomeAssemblySequenceRegionRequest,
-    GenomeTagRequest
+    GenomeTagRequest,
+    ReleaseVersionRequest
 )
 
 import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
@@ -272,15 +273,15 @@ def get_dataset_infos_by_dataset_type(stub):
 
 def get_genome_uuid(stub):
     request1 = GenomeInfoRequest(
-        ensembl_name="homo_sapiens_37", assembly_name="GRCh37.p13"
+        production_name="homo_sapiens_37", assembly_name="GRCh37.p13"
     )
     genome_uuid1 = stub.GetGenomeUUID(request1)
     request2 = GenomeInfoRequest(
-        ensembl_name="homo_sapiens_37", assembly_name="GRCh37", use_default=True
+        production_name="homo_sapiens_37", assembly_name="GRCh37", use_default=True
     )
     genome_uuid2 = stub.GetGenomeUUID(request2)
     request3 = GenomeInfoRequest(
-        ensembl_name="homo_sapiens_37", assembly_name="GRCh37.p13", use_default=True
+        production_name="homo_sapiens_37", assembly_name="GRCh37.p13", use_default=True
     )
     genome_uuid3 = stub.GetGenomeUUID(request3)
 
@@ -317,6 +318,46 @@ def get_genome_uuid_by_tag(stub):
     print("**** Genome Tag: foo ****")
     print(genome_uuid4)
 
+
+def get_release_version_by_genome_uuid(stub):
+    request1 = ReleaseVersionRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3"
+    )
+    genome_uuid1 = stub.GetReleaseVersionByUUID(request1)
+    request2 = ReleaseVersionRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="genebuild"
+    )
+    genome_uuid2 = stub.GetReleaseVersionByUUID(request2)
+    request3 = ReleaseVersionRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="genebuild",
+        release_version=110.1
+    )
+    genome_uuid3 = stub.GetReleaseVersionByUUID(request3)
+    request4 = ReleaseVersionRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="genebuild",
+        release_version=115
+    )
+    genome_uuid4 = stub.GetReleaseVersionByUUID(request4)
+    request5 = ReleaseVersionRequest(
+        dataset_type="genebuild",
+        release_version=110.1
+    )
+    genome_uuid5 = stub.GetReleaseVersionByUUID(request5)
+
+
+    print("**** Release Version: By genome_uuid ****")
+    print(genome_uuid1)
+    print("**** Release Version: By genome_uuid and dataset_type ****")
+    print(genome_uuid2)
+    print("**** Release Version: By genome_uuid, dataset_type and release ****")
+    print(genome_uuid3)
+    print("**** Release Version: With higher release version (e.g. 115) ****")
+    print(genome_uuid4)
+    print("**** Release Version: No genome_uuid provided (no results) ****")
+    print(genome_uuid5)
 
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -357,6 +398,8 @@ def run():
         get_organisms_group_count(stub)
         print("-------------- Get Genome UUID By Tag --------------")
         get_genome_uuid_by_tag(stub)
+        print("-------------- Get Release Version By Genome UUID --------------")
+        get_release_version_by_genome_uuid(stub)
 
 
 if __name__ == "__main__":

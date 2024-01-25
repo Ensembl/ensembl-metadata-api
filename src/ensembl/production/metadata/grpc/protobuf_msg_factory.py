@@ -314,6 +314,33 @@ def create_release(data=None):
     return release
 
 
+def create_release_version(data=None):
+    """
+    This function is used by Thoas to determine the MongoDB instance containing
+    the data for a specified genome_uuid. It either constructs a ReleaseVersion
+    instance with the release version obtained from the provided data or returns
+    a default ReleaseVersion instance when data is None or lacks the necessary attributes.
+
+    Args:
+        data (Optional[sqlalchemy.engine.row.Row]): The input data from which the release
+            version is extracted. It's expected to have an attribute 'EnsemblRelease'
+            with a nested attribute 'version'. If None or the 'EnsemblRelease' attribute
+            is absent, a default ReleaseVersion instance is returned.
+
+    Returns:
+        ensembl_metadata_pb2.ReleaseVersion: An instance of the ReleaseVersion message.
+            It contains the release version extracted from the input data if the relevant
+            attributes are present; otherwise, it's a default instance of ReleaseVersion.
+    """
+    if data is None:
+        return ensembl_metadata_pb2.ReleaseVersion()
+
+    release = ensembl_metadata_pb2.ReleaseVersion(
+        release_version=data.EnsemblRelease.version if hasattr(data, 'EnsemblRelease') else None,
+    )
+    return release
+
+
 def create_datasets(data=None):
     if data is None:
         return ensembl_metadata_pb2.Datasets()
@@ -369,11 +396,10 @@ def create_organisms_group_count(data, release_version):
     for organism in data:
         created_organism_group = ensembl_metadata_pb2.OrganismsGroup(
             species_taxonomy_id=organism[0],
-            ensembl_name=organism[1],
-            common_name=organism[2],
-            scientific_name=organism[3],
-            order=organism[4],
-            count=organism[5],
+            common_name=organism[1],
+            scientific_name=organism[2],
+            order=organism[3],
+            count=organism[4],
         )
         organisms_list.append(created_organism_group)
 
