@@ -683,21 +683,20 @@ class TestUtils:
 		assert output == {}
 
 	@pytest.mark.parametrize(
-		"ensembl_name, assembly_name, use_default, expected_output",
+		"production_name, assembly_name, use_default, expected_output",
 		[
 			("homo_sapiens", "GRCh38.p13", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
 			("homo_sapiens", "GRCh38.p13", True, {}),
 			("homo_sapiens", "GRCh38", True, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-			("random_ensembl_name", "GRCh38", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-			("random_ensembl_name", "random_assembly_name", True, {}),
-			("random_ensembl_name", "random_assembly_name", False, {}),
+			("random_production_name", "random_assembly_name", True, {}),
+			("random_production_name", "random_assembly_name", False, {}),
 		]
 	)
-	def test_get_genome_uuid(self, genome_db_conn, ensembl_name, assembly_name, use_default, expected_output):
+	def test_get_genome_uuid(self, genome_db_conn, production_name, assembly_name, use_default, expected_output):
 		output = json_format.MessageToJson(
 			utils.get_genome_uuid(
 				db_conn=genome_db_conn,
-				ensembl_name=ensembl_name,
+				production_name=production_name,
 				assembly_name=assembly_name,
 				use_default=use_default
 			))
@@ -1109,7 +1108,6 @@ class TestUtils:
 			"organismsGroupCount": [
 				{
 					"speciesTaxonomyId": 9606,
-					"ensemblName": "Homo_sapiens",
 					"commonName": "Human",
 					"scientificName": "Homo sapiens",
 					"order": 1,

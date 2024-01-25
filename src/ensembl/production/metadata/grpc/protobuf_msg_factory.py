@@ -396,11 +396,10 @@ def create_organisms_group_count(data, release_version):
     for organism in data:
         created_organism_group = ensembl_metadata_pb2.OrganismsGroup(
             species_taxonomy_id=organism[0],
-            ensembl_name=organism[1],
-            common_name=organism[2],
-            scientific_name=organism[3],
-            order=organism[4],
-            count=organism[5],
+            common_name=organism[1],
+            scientific_name=organism[2],
+            order=organism[3],
+            count=organism[4],
         )
         organisms_list.append(created_organism_group)
 

@@ -274,15 +274,15 @@ def get_dataset_infos_by_dataset_type(stub):
 
 def get_genome_uuid(stub):
     request1 = GenomeInfoRequest(
-        ensembl_name="homo_sapiens_37", assembly_name="GRCh37.p13"
+        production_name="homo_sapiens_37", assembly_name="GRCh37.p13"
     )
     genome_uuid1 = stub.GetGenomeUUID(request1)
     request2 = GenomeInfoRequest(
-        ensembl_name="homo_sapiens_37", assembly_name="GRCh37", use_default=True
+        production_name="homo_sapiens_37", assembly_name="GRCh37", use_default=True
     )
     genome_uuid2 = stub.GetGenomeUUID(request2)
     request3 = GenomeInfoRequest(
-        ensembl_name="homo_sapiens_37", assembly_name="GRCh37.p13", use_default=True
+        production_name="homo_sapiens_37", assembly_name="GRCh37.p13", use_default=True
     )
     genome_uuid3 = stub.GetGenomeUUID(request3)
 
