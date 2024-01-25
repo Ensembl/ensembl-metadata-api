@@ -1165,19 +1165,13 @@ class TestUtils:
 			}),
 
 			# invalid genome uuid should return no dataset links
-			("a73351f7-93e7-11ec-a39d-", "assembly", None, {
-				"Links": []
-			}),
+			("a73351f7-93e7-11ec-a39d-", "assembly", None, {}),
 
 			# valid genome uuid and invalid dataset should return no dataset links
-			("a73351f7-93e7-11ec-a39d-005056b38ce3", "test_dataset", None, {
-				"Links": []
-			}),
+			("a73351f7-93e7-11ec-a39d-005056b38ce3", "test_dataset", None, {}),
 
 			# no genome uuid should return no dataset links
-			(None, "test_dataset", None, {
-				"Links": []
-			})
+			(None, "test_dataset", None, {})
 		]
 	)
 	def test_ftp_links(self, genome_db_conn, genome_uuid, dataset_type, release_version, expected_output):
