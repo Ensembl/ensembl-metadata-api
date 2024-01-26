@@ -407,3 +407,13 @@ def create_organisms_group_count(data, release_version):
         organisms_group_count=organisms_list,
         release_version=release_version
     )
+
+def create_paths(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.FTPLinks(
+           Links=[]
+        )
+    return ensembl_metadata_pb2.FTPLinks(
+           Links=data
+        )
+

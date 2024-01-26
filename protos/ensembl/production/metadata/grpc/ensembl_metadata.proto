@@ -76,6 +76,9 @@ service EnsemblMetadata {
   // genome_tag value will be either in assembly.url_name or tol_id column
   rpc GetGenomeUUIDByTag(GenomeTagRequest) returns (GenomeUUID) {}
 
+ // Get FTP links associated with a Genome UUID and Dataset
+  rpc GetFTPLinks(FTPLinksRequest) returns (FTPLinks) {}
+
   // Get release version for a given genome_uuid
    rpc GetReleaseVersionByUUID(ReleaseVersionRequest) returns (ReleaseVersion) {}
 }
@@ -304,6 +307,10 @@ message OrganismsGroupCount {
   double release_version = 2;
 }
 
+message FTPLinks {
+  repeated string Links = 1;
+}
+
 message ReleaseVersion {
   double release_version = 1;
 }
@@ -436,6 +443,15 @@ Genome Tag request
  */
 message GenomeTagRequest {
   string genome_tag = 1; // Mandatory
+}
+
+/*
+FTP Links request
+ */
+message FTPLinksRequest {
+  string genome_uuid = 1;     // Mandatory
+  string dataset_type = 2;    // Optional
+  string release_version = 3;  // Optional
 }
 
 /*

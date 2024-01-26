@@ -12,6 +12,7 @@
 import itertools
 import logging
 
+from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
@@ -495,6 +496,45 @@ def get_genome_uuid_by_tag(db_conn, genome_tag):
     else:
         logger.debug("No Genome UUID found.")
     return msg_factory.create_genome_uuid()
+
+
+def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
+
+    # Request is sending an empty string '' instead of None when
+    # an input parameter is not supplied by the user
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
+        return msg_factory.create_paths()
+    if not dataset_type:
+        dataset_type = 'all'
+    if not release_version:
+        release_version = None
+
+    # Find the Genome
+    with db_conn.metadata_db.session_scope() as session:
+        genome = session.query(Genome).filter(Genome.genome_uuid == genome_uuid).first()
+
+        # Return empty links if Genome is not found
+        if genome is None:
+            logger.debug("No Genome found.")
+            return msg_factory.create_paths()
+
+        # Find the links for the given dataset.
+        # Note: release_version filtration is not implemented in the API yet
+        try:
+            links = genome.get_public_path(type=dataset_type, release=release_version)
+        except (ValueError, RuntimeError) as error:
+            # log the errors to error log and return empty list of links
+            logging.error(f"Error fetching links: {error}")
+            return msg_factory.create_paths()
+
+    if len(links) > 0:
+        response_data = msg_factory.create_paths(data=links)
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
+
+    logger.debug("No Genome found.")
+    return msg_factory.create_paths()
 
 
 def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_version):
