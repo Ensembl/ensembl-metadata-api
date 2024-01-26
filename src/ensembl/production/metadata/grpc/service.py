@@ -13,8 +13,19 @@ from concurrent import futures
 import grpc
 import logging
 
+from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc
 from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
+
+logger = logging.getLogger(__name__)
+
+# Determine the logging level based on the value of cfg.debug_mode
+log_level = logging.DEBUG if cfg.debug_mode else logging.WARNING
+
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 
 def serve():
@@ -24,9 +35,15 @@ def serve():
     )
     server.add_insecure_port("[::]:50051")
     server.start()
-    server.wait_for_termination()
+    try:
+        server.wait_for_termination()
+    except KeyboardInterrupt:
+        logger.info("KeyboardInterrupt caught, stopping the server...")
+        server.stop(grace=0)  # Immediately stop the server
+        logger.info("gRPC server has shut down gracefully")
 
 
 if __name__ == "__main__":
-    logging.basicConfig()
+    logger.info("gRPC server starting on port 50051...")
+    logger.info(f"DEBUG: {cfg.debug_mode}")
     serve()

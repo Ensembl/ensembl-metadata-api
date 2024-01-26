@@ -10,6 +10,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import itertools
+import logging
 
 from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
@@ -17,6 +18,8 @@ from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
+
+logger = logging.getLogger(__name__)
 
 
 def connect_to_db():
@@ -39,11 +42,14 @@ def get_alternative_names(db_conn, taxon_id):
     # remove duplicates
     unique_alternative_names = list(set(alternative_names))
     # sort before returning (otherwise the test breaks)
-    return sorted(unique_alternative_names)
+    sorted_unique_alternative_names = sorted(unique_alternative_names)
+    logger.debug(sorted_unique_alternative_names)
+    return sorted_unique_alternative_names
 
 
 def get_top_level_statistics(db_conn, organism_uuid, group):
-    if organism_uuid is None:
+    if not organism_uuid:
+        logger.warning("Missing or Empty Organism UUID field.")
         return msg_factory.create_top_level_statistics()
 
     stats_results = db_conn.fetch_genome_datasets(
@@ -54,16 +60,20 @@ def get_top_level_statistics(db_conn, organism_uuid, group):
 
     if len(stats_results) > 0:
         stats_by_genome_uuid = msg_factory.create_stats_by_genome_uuid(stats_results)
-        return msg_factory.create_top_level_statistics({
+        response_data = msg_factory.create_top_level_statistics({
             'organism_uuid': organism_uuid,
             'stats_by_genome_uuid': stats_by_genome_uuid
         })
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    logger.debug("No top level stats found.")
     return msg_factory.create_top_level_statistics()
 
 
 def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
-    if genome_uuid is None:
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_top_level_statistics_by_uuid()
 
     stats_results = db_conn.fetch_genome_datasets(
@@ -81,26 +91,34 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
                 'statistic_type': result.Attribute.type,
                 'statistic_value': result.DatasetAttribute.value
             })
-        return msg_factory.create_top_level_statistics_by_uuid(
+
+        response_data = msg_factory.create_top_level_statistics_by_uuid(
             ({"genome_uuid": genome_uuid, "statistics": statistics})
         )
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    logger.debug("No top level stats found.")
     return msg_factory.create_top_level_statistics_by_uuid()
 
 
 def get_assembly_information(db_conn, assembly_uuid):
-    if assembly_uuid is None:
+    if not assembly_uuid:
+        logger.warning("Missing or Empty Assembly UUID field.")
         return msg_factory.create_assembly_info()
 
     assembly_results = db_conn.fetch_sequences(
         assembly_uuid=assembly_uuid
     )
     if len(assembly_results) > 0:
-        return msg_factory.create_assembly_info(assembly_results[0])
+        response_data = msg_factory.create_assembly_info(assembly_results[0])
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    logger.debug("No assembly information was found.")
     return msg_factory.create_assembly_info()
 
-
+# TODO: move this function to protobuf_msg_factory.py file
 def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     # we fetch attributes related to that genome
     attrib_data_results = db_conn.fetch_genome_datasets(
@@ -125,20 +143,30 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
 
 
 def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, release_version):
-    if assembly_accession is None:
+    if not assembly_accession:
+        logging.warning("Missing or Empty Assembly accession field.")
         return msg_factory.create_genome()
 
-    genome_results = db_conn.fetch_genomes(
-        assembly_accession=assembly_accession,
-        allow_unreleased=cfg.allow_unreleased
-    )
+    # TODO: Add try except to the other functions as well
+    try:
+        genome_results = db_conn.fetch_genomes(
+            assembly_accession=assembly_accession,
+            allow_unreleased=cfg.allow_unreleased
+        )
+    except Exception as e:
+        logging.error(f"Error fetching genomes: {e}")
+        raise
+
     for genome in genome_results:
+        logging.debug(f"Processing genome: {genome.Genome.genome_uuid}")
         yield msg_factory.create_genome(data=genome)
 
     return msg_factory.create_genome()
 
+
 def get_species_information(db_conn, genome_uuid):
-    if genome_uuid is None:
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_species()
 
     species_results = db_conn.fetch_genomes(
@@ -148,13 +176,20 @@ def get_species_information(db_conn, genome_uuid):
     if len(species_results) == 1:
         tax_id = species_results[0].Organism.taxonomy_id
         taxo_results = db_conn.fetch_taxonomy_names(tax_id)
-        return msg_factory.create_species(species_results[0], taxo_results[tax_id])
+        response_data = msg_factory.create_species(species_results[0], taxo_results[tax_id])
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    elif len(species_results) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("Genome not found.")
     return msg_factory.create_species()
 
 
 def get_sub_species_info(db_conn, organism_uuid, group):
-    if organism_uuid is None:
+    if not organism_uuid:
+        logger.warning("Missing or Empty Organism UUID field.")
         return msg_factory.create_sub_species()
 
     sub_species_results = db_conn.fetch_genomes(
@@ -172,17 +207,21 @@ def get_sub_species_info(db_conn, organism_uuid, group):
             if result.OrganismGroup.name not in species_name:
                 species_name.append(result.OrganismGroup.name)
 
-        return msg_factory.create_sub_species({
+        response_data = msg_factory.create_sub_species({
             'organism_uuid': organism_uuid,
             'species_type': species_type,
             'species_name': species_name
         })
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    logger.debug("No sub-species information was found.")
     return msg_factory.create_sub_species()
 
 
 def get_genome_uuid(db_conn, production_name, assembly_name, use_default=False):
-    if production_name is None or assembly_name is None:
+    if not production_name or not assembly_name:
+        logger.warning("Missing or Empty production_name or assembly_name field.")
         return msg_factory.create_genome_uuid()
 
     genome_uuid_result = db_conn.fetch_genomes(
@@ -193,18 +232,24 @@ def get_genome_uuid(db_conn, production_name, assembly_name, use_default=False):
     )
 
     if len(genome_uuid_result) == 1:
-        return msg_factory.create_genome_uuid(
+        response_data = msg_factory.create_genome_uuid(
             {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
         )
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    elif len(genome_uuid_result) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("No Genome found.")
     return msg_factory.create_genome_uuid()
 
 
 def get_genome_by_uuid(db_conn, genome_uuid, release_version):
-    if genome_uuid is None:
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_genome()
 
-    # We first get the genome info
     genome_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
         release_version=release_version,
@@ -212,15 +257,22 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     )
 
     if len(genome_results) == 1:
-        return create_genome_with_attributes_and_count(
+        response_data = create_genome_with_attributes_and_count(
             db_conn=db_conn, genome=genome_results[0], release_version=release_version
         )
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    elif len(genome_results) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("No Genome found.")
     return msg_factory.create_genome()
 
 
 def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
     if not keyword:
+        logger.warning("Missing or Empty Keyword field.")
         return msg_factory.create_genome()
 
     genome_results = db_conn.fetch_genome_by_keyword(
@@ -241,13 +293,16 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
             most_recent_genomes.append(most_recent_genome)
 
         for genome_row in most_recent_genomes:
+            logging.debug(f"Processing genome: {genome_row.Genome.genome_uuid}")
             yield msg_factory.create_genome(data=genome_row)
 
-        return msg_factory.create_genome()
+    logger.debug("No genomes were found.")
+    return msg_factory.create_genome()
 
 
 def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
-    if ensembl_name is None and site_name is None:
+    if not ensembl_name and not site_name:
+        logger.warning("Missing or Empty ensembl_name and site_name field.")
         return msg_factory.create_genome()
 
     genome_results = db_conn.fetch_genomes(
@@ -257,15 +312,22 @@ def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
         allow_unreleased=cfg.allow_unreleased
     )
     if len(genome_results) == 1:
-        return create_genome_with_attributes_and_count(
+        response_data = create_genome_with_attributes_and_count(
             db_conn=db_conn, genome=genome_results[0], release_version=release_version
         )
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    elif len(genome_results) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("Genome not found.")
     return msg_factory.create_genome()
 
 
 def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
-    if genome_uuid is None:
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_datasets()
 
     datasets_results = db_conn.fetch_genome_datasets(
@@ -298,16 +360,20 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
                 dataset_infos=ds_obj_dict[dataset_type_key]
             )
 
-        return msg_factory.create_datasets({
+        response_data = msg_factory.create_datasets({
             'genome_uuid': genome_uuid,
             'datasets': dataset_object_dict
         })
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    logger.debug("No datasets found.")
     return msg_factory.create_datasets()
 
 
 def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
-    if genome_uuid is None:
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return
 
     assembly_sequence_results = db_conn.fetch_sequences(
@@ -315,11 +381,13 @@ def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
+        logging.debug(f"Processing assembly: {result.AssemblySequence.name}")
         yield msg_factory.create_genome_sequence(result)
 
 
 def assembly_region_iterator(db_conn, genome_uuid, chromosomal_only):
-    if genome_uuid is None:
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return
 
     assembly_sequence_results = db_conn.fetch_sequences(
@@ -327,11 +395,13 @@ def assembly_region_iterator(db_conn, genome_uuid, chromosomal_only):
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
+        logging.debug(f"Processing assembly: {result.AssemblySequence.name}")
         yield msg_factory.create_assembly_region(result)
 
 
 def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name):
-    if genome_uuid is None or sequence_region_name is None:
+    if not genome_uuid or not sequence_region_name:
+        logger.warning("Missing or Empty Genome UUID or Sequence region name field.")
         return msg_factory.create_genome_assembly_sequence_region()
 
     assembly_sequence_results = db_conn.fetch_sequences(
@@ -339,8 +409,14 @@ def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name):
         assembly_sequence_name=sequence_region_name
     )
     if len(assembly_sequence_results) == 1:
-        return msg_factory.create_genome_assembly_sequence_region(assembly_sequence_results[0])
+        response_data = msg_factory.create_genome_assembly_sequence_region(assembly_sequence_results[0])
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    elif len(assembly_sequence_results) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("Assembly sequence not found.")
     return msg_factory.create_genome_assembly_sequence_region()
 
 
@@ -358,11 +434,12 @@ def release_iterator(metadata_db, site_name, release_version, current_only):
     )
 
     for result in release_results:
+        logging.debug(f"Processing release: {result.EnsemblRelease.version if hasattr(result, 'EnsemblRelease') else None}")
         yield msg_factory.create_release(result)
 
 
 def release_by_uuid_iterator(metadata_db, genome_uuid):
-    if genome_uuid is None:
+    if not genome_uuid:
         return
 
     conn = ReleaseAdaptor(metadata_uri=cfg.metadata_uri)
@@ -371,11 +448,13 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
     )
 
     for result in release_results:
+        logging.debug(f"Processing release: {result.EnsemblRelease.version if hasattr(result, 'EnsemblRelease') else None}")
         yield msg_factory.create_release(result)
 
 
 def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_dataset_type):
-    if genome_uuid is None:
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_dataset_infos()
 
     dataset_results = db_conn.fetch_genome_datasets(
@@ -383,16 +462,21 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
         dataset_type_name=requested_dataset_type,
         dataset_attributes=True
     )
-    return msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
+    response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
+    logger.debug(f"Response data: \n{response_data}")
+    return response_data
 
 
 def get_organisms_group_count(db_conn, release_version):
     count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
-    return msg_factory.create_organisms_group_count(count_result, release_version)
+    response_data = msg_factory.create_organisms_group_count(count_result, release_version)
+    logger.debug(f"Response data: \n{response_data}")
+    return response_data
 
 
 def get_genome_uuid_by_tag(db_conn, genome_tag):
-    if genome_tag is None:
+    if not genome_tag:
+        logger.warning("Missing or Empty Genome tag field.")
         return msg_factory.create_genome_uuid()
 
     genome_uuid_result = db_conn.fetch_genomes(
@@ -401,9 +485,16 @@ def get_genome_uuid_by_tag(db_conn, genome_tag):
     )
 
     if len(genome_uuid_result) == 1:
-        return msg_factory.create_genome_uuid(
+        response_data = msg_factory.create_genome_uuid(
             {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
         )
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
+
+    elif len(genome_uuid_result) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("No Genome UUID found.")
     return msg_factory.create_genome_uuid()
 
 
@@ -412,6 +503,7 @@ def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
     # Request is sending an empty string '' instead of None when
     # an input parameter is not supplied by the user
     if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_paths()
     if not dataset_type:
         dataset_type = 'all'
@@ -424,6 +516,7 @@ def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
 
         # Return empty links if Genome is not found
         if genome is None:
+            logger.debug("No Genome found.")
             return msg_factory.create_paths()
 
         # Find the links for the given dataset.
@@ -432,18 +525,21 @@ def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
             links = genome.get_public_path(type=dataset_type, release=release_version)
         except (ValueError, RuntimeError) as error:
             # log the errors to error log and return empty list of links
-            # logging.error(f"Error fetching links: {error}")
+            logging.error(f"Error fetching links: {error}")
             return msg_factory.create_paths()
 
     if len(links) > 0:
-        return msg_factory.create_paths(data=links)
+        response_data = msg_factory.create_paths(data=links)
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    logger.debug("No Genome found.")
     return msg_factory.create_paths()
 
 
 def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_version):
-
-    if genome_uuid is None:
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_release_version()
 
     release_version_result = db_conn.fetch_genome_datasets(
@@ -453,6 +549,12 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
     )
 
     if len(release_version_result) == 1:
-        return msg_factory.create_release_version(release_version_result[0])
+        response_data = msg_factory.create_release_version(release_version_result[0])
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
 
+    elif len(release_version_result) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("No Release Version found.")
     return msg_factory.create_release_version()

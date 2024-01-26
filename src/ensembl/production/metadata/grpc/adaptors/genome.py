@@ -204,14 +204,15 @@ class GenomeAdaptor(BaseAdaptor):
 
         if allow_unreleased:
             # fetch everything (released + unreleased)
-            pass
+            logger.info("ALLOW_UNRELEASED is set to True...")
         elif unreleased_only:
             # fetch unreleased only
             # this filter will get all Genome entries where there's no associated GenomeRelease
             # the tilde (~) symbol is used for negation.
             genome_select = genome_select.filter(~Genome.genome_releases.any())
+            logger.info("Fetching only unreleased data...")
         else:
-            # fetch released only
+            logger.info("Fetching released data only...")
             # Check if genome is released
             # TODO: why did I add this check?! -> removing this breaks the test_update tests
             with self.metadata_db.session_scope() as session:
@@ -225,6 +226,7 @@ class GenomeAdaptor(BaseAdaptor):
                 is_genome_released = session.execute(prep_query).first()
 
             if is_genome_released:
+                logger.info(f"Genome UUID '{genome_uuid}' is released")
                 # Include release related info if released_only is True
                 genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
                     .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
@@ -244,6 +246,10 @@ class GenomeAdaptor(BaseAdaptor):
 
                 if release_type is not None:
                     genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
+
+            else:
+                logger.info(f"Genome UUID '{genome_uuid}' doesn't exist or it's not released yet.")
+                return []
 
         logger.debug(genome_select)
         with self.metadata_db.session_scope() as session:
