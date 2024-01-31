@@ -69,6 +69,9 @@ class Genome(LoadAble, Base):
             unique_dataset_types.discard('regulatory_features')
             unique_dataset_types.discard('regulation_build')
             unique_dataset_types.add('regulation')
+        if 'evidence' in unique_dataset_types:
+            unique_dataset_types.discard('evidence')
+            unique_dataset_types.add('variation')
         if 'regulatory_features' == dataset_type or 'regulation_build' == dataset_type:
             dataset_type = 'regulation'
 
