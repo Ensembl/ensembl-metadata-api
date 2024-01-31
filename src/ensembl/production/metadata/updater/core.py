@@ -584,6 +584,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genebuild_dataset = existing
             genebuild_dataset.label = genebuild_accession
             genebuild_dataset.dataset_source = dataset_source
+            genebuild_dataset.version = genebuild_version
 
         attributes = self.get_meta_list_from_prefix_meta_key(species_id, "genebuild.")
 
