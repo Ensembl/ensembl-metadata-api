@@ -22,13 +22,10 @@ from google.protobuf import json_format
 
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
 
-distribution = pkg_resources.get_distribution("ensembl-metadata-api")
-sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
+db_directory = Path(__file__).parent / 'databases'
+db_directory = db_directory.resolve()
 
-
-@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_metadata"},
-										{"src": sample_path / "ncbi_taxonomy"}]],
-						 indirect=True)
+@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'}]], indirect=True)
 class TestUtils:
 	dbc = None  # type: UnitTestDB
 
@@ -1148,8 +1145,8 @@ class TestUtils:
 				"Links": [
 					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome",
 					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation",
-					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation",
-					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology",
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation/test_version",
+					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology/test_version",
 					"Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version"
 				]
 			}),

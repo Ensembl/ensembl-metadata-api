@@ -104,7 +104,7 @@ class GenomeAdaptor(BaseAdaptor):
                                      to fetch both released and unreleased genomes, while unreleased_only
                                      is used in production pipelines (fetches only unreleased genomes)
             site_name (str): The name of the Ensembl site to filter by.
-            release_type (str): The type of the Ensembl release to filter by.
+            release_type (str): The dataset_type of the Ensembl release to filter by.
             release_version (int): The maximum version of the Ensembl release to filter by.
             current_only (bool): Whether to fetch only current genomes.
 

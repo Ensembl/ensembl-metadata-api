@@ -9,6 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import re
 import uuid
 
 from sqlalchemy import Column, Integer, String, ForeignKey
@@ -16,7 +17,9 @@ from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models.base import Base, LoadAble
+import logging
 
+logger = logging.getLogger(__name__)
 
 class Genome(LoadAble, Base):
     __tablename__ = "genome"
@@ -38,21 +41,27 @@ class Genome(LoadAble, Base):
     # organism_id to organism
     organism = relationship("Organism", back_populates="genomes")
 
-    def get_public_path(self, type='all', release=None):
+    def get_public_path(self, dataset_type='all', release=None):
+        # TODO manage the Release parameter to fetch datasets attached to release anterior to the one specified.
         paths = []
-        genebuild_dataset = next((gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
+        genome_genebuild_dataset = next((gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
                                  None)
-        if genebuild_dataset is None:
+        if genome_genebuild_dataset is None:
             raise ValueError("Genebuild dataset not found for the genome")
-        genebuild_annotation_source_attribute = next(
-            (da for da in genebuild_dataset.dataset.dataset_attributes if
+        genebuild_dataset = genome_genebuild_dataset.dataset
+        genebuild_source_name = next(
+            (da.value for da in genebuild_dataset.dataset_attributes if
              da.attribute.name == "genebuild.annotation_source"),
-            None)
-
-        if genebuild_annotation_source_attribute is None:
-            raise ValueError("Genebuild annotation source attribute not found for the dataset")
-
-        genebuild_source_name = genebuild_annotation_source_attribute.value
+            'ensembl')
+        # Genebuild version is either the laste_geneset_update or the start_date if not specified.
+        genebuild_version = next(
+            (da.value for da in genebuild_dataset.dataset_attributes if
+             da.attribute.name == "genebuild.version"), genebuild_dataset.version)
+        try:
+            genebuild_version = re.sub(r"[^\w\s]", '', re.sub(r"\s+", '_', genebuild_version))
+        except TypeError as e:
+            logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
+            raise RuntimeError(e)
         common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
 
@@ -60,35 +69,37 @@ class Genome(LoadAble, Base):
             unique_dataset_types.discard('regulatory_features')
             unique_dataset_types.discard('regulation_build')
             unique_dataset_types.add('regulation')
-        if 'regulatory_features' == type or 'regulation_build' == type:
-            type = 'regulation'
+        if 'regulatory_features' == dataset_type or 'regulation_build' == dataset_type:
+            dataset_type = 'regulation'
 
-        if type in unique_dataset_types or type == 'all':
-            if type == 'genebuild':
-                paths.append(f"{common_path}/genebuild/{genebuild_dataset.dataset.version}")
-            elif type == 'assembly':
+        if dataset_type in unique_dataset_types or dataset_type == 'all':
+            if dataset_type == 'genebuild':
+                paths.append(f"{common_path}/genebuild/{genebuild_version}")
+            elif dataset_type == 'assembly':
                 paths.append(f"{common_path}/genome")
-            elif type == 'homologies':
-                paths.append(f"{common_path}/homology")
-            elif type == 'regulation':
+            elif dataset_type == 'homologies':
+                paths.append(f"{common_path}/homology/{genebuild_version}")
+            elif dataset_type == 'regulation':
                 paths.append(f"{common_path}/regulation")
-            elif type == 'variation':
-                paths.append(f"{common_path}/variation")
-            elif type == 'all':
+            elif dataset_type == 'variation':
+                paths.append(f"{common_path}/variation/{genebuild_version}")
+            elif dataset_type == 'all':
                 for t in unique_dataset_types:
                     if t == 'genebuild':
-                        paths.append(f"{common_path}/genebuild/{genebuild_dataset.dataset.version}")
+                        paths.append(f"{common_path}/genebuild/{genebuild_version}")
                     elif t == 'assembly':
                         paths.append(f"{common_path}/genome")
                     elif t == 'homologies':
-                        paths.append(f"{common_path}/homology")
-                    elif t in ['regulation', 'variation']:
-                        paths.append(f"{common_path}/{t}")
+                        paths.append(f"{common_path}/homology/{genebuild_version}")
+                    elif t == 'regulation':
+                        paths.append(f"{common_path}/regulation/")
+                    elif t == 'variation':
+                        paths.append(f"{common_path}/variation/{genebuild_version}")
             else:
-                raise TypeNotFoundException(f"Dataset Type : {type}  has no associated path. ")
+                raise TypeNotFoundException(f"Dataset Type : {dataset_type}  has no associated path. ")
             return paths
         else:
-            raise TypeNotFoundException(f"Dataset Type : {type}  not found in metadata. ")
+            raise TypeNotFoundException(f"Dataset Type : {dataset_type}  not found in metadata. ")
 
 
 class GenomeDataset(LoadAble, Base):
@@ -109,7 +120,6 @@ class GenomeDataset(LoadAble, Base):
     genome = relationship("Genome", back_populates="genome_datasets")
     # release_id to release
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_datasets")
-
 
 class GenomeRelease(LoadAble, Base):
     __tablename__ = "genome_release"
