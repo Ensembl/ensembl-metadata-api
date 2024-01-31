@@ -637,14 +637,4 @@ class CoreMetaUpdater(BaseMetaUpdater):
         )
         genebuild_dataset_attributes.append(sample_location_param)
 
-        # Add the production name:
-        production_name_attribute = meta_session.query(Attribute).filter(
-            Attribute.name == "production.production_name").one()
-        production_name = DatasetAttribute(
-            value=self.get_meta_single_meta_key(species_id, "species.production_name"),
-            dataset=genebuild_dataset,
-            attribute=production_name_attribute,
-        )
-        genebuild_dataset_attributes.append(production_name)
-
         return genebuild_dataset, genebuild_dataset_attributes
