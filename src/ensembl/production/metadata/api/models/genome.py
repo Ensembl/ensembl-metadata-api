@@ -17,7 +17,9 @@ from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models.base import Base, LoadAble
+import logging
 
+logger = logging.getLogger(__name__)
 
 class Genome(LoadAble, Base):
     __tablename__ = "genome"
@@ -55,7 +57,11 @@ class Genome(LoadAble, Base):
         genebuild_version = next(
             (da.value for da in genebuild_dataset.dataset_attributes if
              da.attribute.name == "genebuild.version"), genebuild_dataset.version)
-        genebuild_version = re.sub(r"[^\w\s]", '', re.sub(r"\s+", '_', genebuild_version))
+        try:
+            genebuild_version = re.sub(r"[^\w\s]", '', re.sub(r"\s+", '_', genebuild_version))
+        except TypeError as e:
+            logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
+            raise RuntimeError(e)
         common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
 
