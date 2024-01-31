@@ -413,7 +413,16 @@ def create_paths(data=None):
         return ensembl_metadata_pb2.FTPLinks(
            Links=[]
         )
+
+    ftp_links_list = []
+    for ftp_link in data:
+        created_ftp_link = ensembl_metadata_pb2.FTPLink(
+            dataset_type=ftp_link["dataset_type"],
+            path=ftp_link["path"]
+        )
+        ftp_links_list.append(created_ftp_link)
+
     return ensembl_metadata_pb2.FTPLinks(
-           Links=data
+           Links=ftp_links_list
         )
 
