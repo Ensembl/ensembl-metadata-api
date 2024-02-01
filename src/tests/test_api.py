@@ -38,13 +38,13 @@ class TestApi:
             assert len(paths) == 5
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/2023_01_17'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version'
             path = genome.get_public_path(dataset_type='assembly')
             assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome'
             path = genome.get_public_path(dataset_type='variation')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation/2023_01_17'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation/test_version'
             path = genome.get_public_path(dataset_type='homologies')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology/2023_01_17'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology/test_version'
             path = genome.get_public_path(dataset_type='regulatory_features')
             assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation'
 
@@ -56,11 +56,11 @@ class TestApi:
             assert len(paths) == 4
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
-            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/genebuild/2022_09_12'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/genebuild/GENCODE_19'
             path = genome.get_public_path(dataset_type='assembly')
             assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/genome'
             path = genome.get_public_path(dataset_type='variation')
-            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/variation/2022_09_12'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/variation/GENCODE_19'
             with pytest.raises(TypeNotFoundException):
                 genome.get_public_path(dataset_type='homologies')
             path = genome.get_public_path(dataset_type='regulatory_features')
