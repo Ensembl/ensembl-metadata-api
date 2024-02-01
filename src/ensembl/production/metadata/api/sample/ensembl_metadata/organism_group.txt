@@ -1,7 +1,7 @@
-1	Division	EnsemblVertebrates	vertebrates
-2	Division	EnsemblBacteria	bacteria
-3	Division	EnsemblProtists	protists
-4	Division	EnsemblPlants	plants
-5	Division	EnsemblFungi	fungi
-6	Division	EnsemblMetazoa	metazoa
-7	Internal	Popular Species	popular
+1	Division	EnsemblBacteria
+2	Division	EnsemblVertebrates
+3	Division	EnsemblPlants
+5	Division	EnsemblProtists
+9	Division	EnsemblMetazoa
+12	Division	EnsemblFungi
+13	Internal	Populars	popular

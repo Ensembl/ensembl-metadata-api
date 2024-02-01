@@ -512,8 +512,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
         assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
         genebuild_start_date = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
-        if genebuild_version is None:
-            raise MissingMetaException("genebuild.version is required in the core database")
+        if None in (genebuild_version, genebuild_start_date, assembly_accession):
+            raise MissingMetaException("genebuild.version/genebuild.start_date/assembly.accession are all "
+                                       "required in the core database")
 
         # The genebuild accession is formed by combining the assembly accession and the genebuild version
         genebuild_accession = assembly_accession + "_" + genebuild_version
@@ -526,16 +527,19 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         last_geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
         genebuild_provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
-        logger.error(f"Initial meta value {last_geneset_update}")
-        logger.error(f"Initial start date {genebuild_start_date}")
-        dataset_version = last_geneset_update if last_geneset_update else genebuild_start_date
-        dataset_version = re.sub(r"[a-zA-Z]", '', dataset_version).rstrip("-")
         try:
-            datetime.strptime(dataset_version, '%Y-%m-%d')
+            logger.error(f"Initial start date {genebuild_start_date}")
+            genebuild_start_date = re.sub(r"[a-zA-Z]", '', genebuild_start_date).rstrip("-")
+            datetime.strptime(genebuild_start_date, '%Y-%m-%d')
+            logger.info(f"Retrieved start_date {genebuild_start_date}")
+            if last_geneset_update is not None:
+                logger.error(f"Initial last_geneset_update {last_geneset_update}")
+                last_geneset_update = re.sub(r"[a-zA-Z]", '', last_geneset_update).rstrip("-")
+                logger.info(f"Retrieved last_geneset_update {last_geneset_update}")
+                datetime.strptime(last_geneset_update, '%Y-%m-%d')
         except ValueError as e:
-            logger.fatal(f"Unable to parse meta value {dataset_version}")
+            logger.fatal(f"Unable to parse meta value for {last_geneset_update} and/or {genebuild_start_date}")
             raise MetadataUpdateException(e)
-        logger.info(f"Retrieved dataset_version {dataset_version}")
         test_status = meta_session.query(Dataset).filter(Dataset.label == genebuild_accession).one_or_none()
         if test_status:
             # Check for genebuild.provider_name
@@ -566,7 +570,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 dataset_uuid=str(uuid.uuid4()),
                 dataset_type=dataset_type,
                 name="genebuild",
-                version=dataset_version,
+                version=genebuild_version,
                 label=genebuild_accession,
                 created=func.now(),
                 dataset_source=dataset_source,
@@ -576,7 +580,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genebuild_dataset = existing
             genebuild_dataset.label = genebuild_accession
             genebuild_dataset.dataset_source = dataset_source
-            genebuild_dataset.version = dataset_version
+            genebuild_dataset.version = genebuild_version
 
         attributes = self.get_meta_list_from_prefix_meta_key(species_id, "genebuild.")
 

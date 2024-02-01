@@ -1,75 +1,105 @@
-1	contig_n50	Contig N50	Median size of contigs in a genome assembly	bp
-2	total_genome_length	Total genome length	Total length of all genomic sequences	bp
-3	total_coding_sequence_length	Total coding sequence length	Total length of all coding sequences	bp
-4	total_gap_length	Total gap length	Total length of all gaps in a genome assembly	bp
-5	spanned_gaps	Spanned gaps	Number of gaps covered by sequencing reads	integer
-6	chromosomes	Chromosomes or plasmids	Number of structures in cells containing DNA	integer
-7	toplevel_sequences	Top level sequences	Primary sequences in a genome assembly	integer
-8	component_sequences	Component sequences	Part of the primary sequences in assembly	integer
-9	gc_percentage	Average GC content	Percentage of nucleotides in DNA that are G or C	percent
-10	coding_genes	Coding genes	Genes that code for proteins	integer
-11	average_genomic_span	Average coding genomic span	Average length of all genomic regions	bp
-12	average_sequence_length	Average coding sequence length	Average length of sequences in genome	bp
-13	average_cds_length	Average CDS length	Average length of coding sequences	bp
-14	shortest_gene_length	Shortest coding gene	Length of shortest gene	bp
-15	longest_gene_length	Longest coding gene	Length of longest gene	bp
-16	total_transcripts	Transcripts in coding genes	Total number of RNA transcripts	integer
-17	coding_transcripts	Coding transcripts	Transcripts that code for proteins	integer
-18	transcripts_per_gene	Average transcripts per coding gene	Average number of transcripts per gene	float
-19	coding_transcripts_per_gene	Average coding transcripts per gene	Average coding transcripts per gene	float
-20	total_exons	Exons in coding genes	Total number of exons	integer
-21	total_coding_exons	Exons in coding genes	Total number of coding exons	integer
-22	average_exon_length	Average exon length	Average length of exons	bp
-23	average_coding_exon_length	Average exon length per coding gene	Average length of coding exons	bp
-24	average_exons_per_transcript	Average exons per coding transcript	Average exons per transcript	float
-25	average_coding_exons_per_coding_transcript	Average coding exons per transcript	Average coding exons per coding transcript	float
-26	total_introns	Introns in coding genes	Total number of introns	integer
-27	average_intron_length	Average intron length	Average intron length per coding gene	bp
-28	nc_non_coding_genes	Non-coding genes	Genes that don't code for proteins	integer
-29	nc_small_non_coding_genes	Small non-coding genes	Small genes not coding for proteins	integer
-30	nc_long_non_coding_genes	Long non-coding genes	Long genes not coding for proteins	integer
-31	nc_misc_non_coding_genes	Misc. non-coding genes	Miscellaneous non-coding genes	integer
-32	nc_average_genomic_span	Average non-coding genomic span	Mean length of all genomic regions	bp
-33	nc_average_sequence_length	Average non-coding sequence length	Mean length of all sequences	bp
-34	nc_shortest_gene_length	Shortest non-coding gene	Length of shortest gene	bp
-35	nc_longest_gene_length	Longest non-coding gene	Length of longest gene	bp
-36	nc_total_transcripts	Non-coding transcripts	Total RNA transcript count	integer
-37	nc_transcripts_per_gene	Average transcripts per non-coding gene	Mean transcripts count per gene	float
-38	nc_total_exons	Exons in non-coding genes	Total exon count	integer
-39	nc_average_exon_length	Average exon length per non-coding transcript	Mean exon length	bp
-40	nc_average_exons_per_transcript	Average exons per non-coding transcript	Mean exon count per transcript	float
-41	nc_total_introns	Introns in non-coding genes	Total intron count	integer
-42	nc_average_intron_length	Average intron length per non-coding transcript	Mean intron length	bp
-43	ps_pseudogenes	Pseudogenes	Genes which don't code functional protiens	integer
-44	ps_average_genomic_span	Average pseudogene genomic span	Mean length of pseudogene regions	bp
-45	ps_average_sequence_length	Average pseudogene sequence length	Mean length of pseudogene sequences	bp
-46	ps_shortest_gene_length	Shortest pseudogene	Length of shortest pseudogene	bp
-47	ps_longest_gene_length	Longest pseudogene	Length of longest pseudogene	bp
-48	ps_total_transcripts	Transcripts in pseudogenes	Total pseudogene RNA transcript count	integer
-49	ps_transcripts_per_gene	Average transcripts per pseudogene	Mean pseudogene transcripts count per pseudogene	float
-50	ps_total_exons	Exons in pseudogenes	Total exon count in pseudogenes	integer
-51	ps_average_exon_length	Average exon length per pseudogene	Mean pseudogene exon length	bp
-52	ps_average_exons_per_transcript	Average intron length per pseudogene	Mean exon count per pseudogene transcript	float
-53	ps_total_introns	Introns in pseudogenes	Total intron count in pseudogenes	integer
-54	ps_average_intron_length	Average intron length per pseudogene	Mean pseudogene intron length	bp
-55	genes_with_orthologs	Genes with orthologs	Genes with orthologs in other species	integer
-56	homology_coverage	Coverage	Percent of genome which is homologous to another species	percent
-57	short_variants	Short variants	Small-scale genetic variations	integer
-58	structural_variants	Structural variants	Large-scale genetic variations	integer
-59	short_variants_with_phenotype_assertions	"Short variants With phenotype assertions"	Short variants with phenotypic evidence	integer
-60	short_variants_with_publications	"Short variants With publications"	Short variants published in literature	integer
-61	short_variants_frequency_studies	"Short variants Frequency studies"	Short variants studied for frequency	integer
-62	structural_variants_with_phenotype_assertions	"Structural variants With phenotype assertions"	Structural variants with phenotypic evidence	integer
-63	enhancers	Enhancers	DNA sequences that increase gene expression	integer
-64	promoters	Promoters	DNA sequences initiating transcription	integer
-65	assembly.accession	accession	accession	string
-66	assembly.default	default	default	string
-67	assembly.name	name	name	string
-68	assembly.ucsc_alias	ucsc_alias	ucsc_alias	string
-69	genebuild.last_geneset_update	last_geneset_update	last_geneset_update	string
-70	genebuild.version	version	version	string
-71	sample.gene_param	sample.gene_param	sample.gene_param	string
-72	sample.location_param	sample.location_param	sample.location_param	string
-73	assembly.date	assembly.date	assembly.date	string
-74	assembly.level	assembly.level	assembly.level	string
-76	genebuild.annotation_source	genebuild.annotation_source	genebuild.annotation_source	string
+1	assembly.accession	assembly.accession	assembly.accession	string
+2	assembly.chromosomes	assembly.chromosomes	assembly.chromosomes	string
+3	assembly.component_sequences	assembly.component_sequences	assembly.component_sequences	string
+4	assembly.contig_n50	assembly.contig_n50	assembly.contig_n50	string
+5	assembly.date	assembly.date	assembly.date	string
+6	assembly.default	assembly.default	assembly.default	string
+7	assembly.gc_percentage	assembly.gc_percentage	assembly.gc_percentage	string
+8	assembly.is_reference	assembly.is_reference	assembly.is_reference	string
+9	assembly.level	assembly.level	assembly.level	string
+10	assembly.mapping	assembly.mapping	assembly.mapping	string
+11	assembly.name	assembly.name	assembly.name	string
+12	assembly.provider_name	assembly.provider_name	assembly.provider_name	string
+13	assembly.provider_url	assembly.provider_url	assembly.provider_url	string
+14	assembly.spanned_gaps	assembly.spanned_gaps	assembly.spanned_gaps	string
+15	assembly.tolid	assembly.tolid	assembly.tolid	string
+16	assembly.toplevel_sequences	assembly.toplevel_sequences	assembly.toplevel_sequences	string
+17	assembly.total_coding_sequence_length	assembly.total_coding_sequence_length	assembly.total_coding_sequence_length	string
+18	assembly.total_gap_length	assembly.total_gap_length	assembly.total_gap_length	string
+19	assembly.total_genome_length	assembly.total_genome_length	assembly.total_genome_length	string
+20	assembly.ucsc_alias	assembly.ucsc_alias	assembly.ucsc_alias	string
+21	genebuild.average_cds_length	genebuild.average_cds_length	genebuild.average_cds_length	string
+22	genebuild.average_coding_exons_per_codin	genebuild.average_coding_exons_per_codin	genebuild.average_coding_exons_per_codin	string
+23	genebuild.average_coding_exons_per_trans	genebuild.average_coding_exons_per_trans	genebuild.average_coding_exons_per_trans	string
+24	genebuild.average_coding_exon_length	genebuild.average_coding_exon_length	genebuild.average_coding_exon_length	string
+25	genebuild.average_exon_length	genebuild.average_exon_length	genebuild.average_exon_length	string
+26	genebuild.average_genomic_span	genebuild.average_genomic_span	genebuild.average_genomic_span	string
+27	genebuild.average_intron_length	genebuild.average_intron_length	genebuild.average_intron_length	string
+28	genebuild.average_sequence_legth	genebuild.average_sequence_legth	genebuild.average_sequence_legth	string
+29	genebuild.coding_genes	genebuild.coding_genes	genebuild.coding_genes	string
+30	genebuild.coding_transcripts	genebuild.coding_transcripts	genebuild.coding_transcripts	string
+31	genebuild.coding_transcripts_per_gene	genebuild.coding_transcripts_per_gene	genebuild.coding_transcripts_per_gene	string
+32	genebuild.hash	genebuild.hash	genebuild.hash	string
+33	genebuild.initial_release_date	genebuild.initial_release_date	genebuild.initial_release_date	string
+34	genebuild.last_geneset_update	genebuild.last_geneset_update	genebuild.last_geneset_update	string
+35	genebuild.level	genebuild.level	genebuild.level	string
+36	genebuild.longest_gene_length	genebuild.longest_gene_length	genebuild.longest_gene_length	string
+37	genebuild.method	genebuild.method	genebuild.method	string
+38	genebuild.method_display	genebuild.method_display	genebuild.method_display	string
+39	genebuild.nc_average_exons_per_transcrip	genebuild.nc_average_exons_per_transcrip	genebuild.nc_average_exons_per_transcrip	string
+40	genebuild.nc_average_exon_length	genebuild.nc_average_exon_length	genebuild.nc_average_exon_length	string
+41	genebuild.nc_average_genomic_span	genebuild.nc_average_genomic_span	genebuild.nc_average_genomic_span	string
+42	genebuild.nc_average_sequence_length	genebuild.nc_average_sequence_length	genebuild.nc_average_sequence_length	string
+43	genebuild.nc_longest_gene_length	genebuild.nc_longest_gene_length	genebuild.nc_longest_gene_length	string
+44	genebuild.nc_long_non_coding_genes	genebuild.nc_long_non_coding_genes	genebuild.nc_long_non_coding_genes	string
+45	genebuild.nc_misc_non_coding_genes	genebuild.nc_misc_non_coding_genes	genebuild.nc_misc_non_coding_genes	string
+46	genebuild.nc_non_coding_genes	genebuild.nc_non_coding_genes	genebuild.nc_non_coding_genes	string
+47	genebuild.nc_shortest_gene_length	genebuild.nc_shortest_gene_length	genebuild.nc_shortest_gene_length	string
+48	genebuild.nc_small_non_coding_genes	genebuild.nc_small_non_coding_genes	genebuild.nc_small_non_coding_genes	string
+49	genebuild.nc_total_introns	genebuild.nc_total_introns	genebuild.nc_total_introns	string
+50	genebuild.nc_total_transcripts	genebuild.nc_total_transcripts	genebuild.nc_total_transcripts	string
+51	genebuild.nc_transcripts_per_gene	genebuild.nc_transcripts_per_gene	genebuild.nc_transcripts_per_gene	string
+52	genebuild.ps_average_exons_per_transcrip	genebuild.ps_average_exons_per_transcrip	genebuild.ps_average_exons_per_transcrip	string
+53	genebuild.ps_average_exon_length	genebuild.ps_average_exon_length	genebuild.ps_average_exon_length	string
+54	genebuild.ps_average_genomic_span	genebuild.ps_average_genomic_span	genebuild.ps_average_genomic_span	string
+55	genebuild.ps_average_intron_length	genebuild.ps_average_intron_length	genebuild.ps_average_intron_length	string
+56	genebuild.ps_average_sequence_length	genebuild.ps_average_sequence_length	genebuild.ps_average_sequence_length	string
+57	genebuild.ps_longest_gene_length	genebuild.ps_longest_gene_length	genebuild.ps_longest_gene_length	string
+58	genebuild.ps_pseudogenes	genebuild.ps_pseudogenes	genebuild.ps_pseudogenes	string
+59	genebuild.ps_shortest_gene_length	genebuild.ps_shortest_gene_length	genebuild.ps_shortest_gene_length	string
+60	genebuild.ps_total_exons	genebuild.ps_total_exons	genebuild.ps_total_exons	string
+61	genebuild.ps_total_introns	genebuild.ps_total_introns	genebuild.ps_total_introns	string
+62	genebuild.ps_total_transcripts	genebuild.ps_total_transcripts	genebuild.ps_total_transcripts	string
+63	genebuild.ps_transcripts_per_gene	genebuild.ps_transcripts_per_gene	genebuild.ps_transcripts_per_gene	string
+64	genebuild.shortest_gene_length	genebuild.shortest_gene_length	genebuild.shortest_gene_length	string
+65	genebuild.start_date	genebuild.start_date	genebuild.start_date	string
+66	genebuild.total_coding_exons	genebuild.total_coding_exons	genebuild.total_coding_exons	string
+67	genebuild.total_exons	genebuild.total_exons	genebuild.total_exons	string
+68	genebuild.total_introns	genebuild.total_introns	genebuild.total_introns	string
+69	genebuild.total_transcripts	genebuild.total_transcripts	genebuild.total_transcripts	string
+70	genebuild.transcripts_per_gene	genebuild.transcripts_per_gene	genebuild.transcripts_per_gene	string
+71	genebuild.version	genebuild.version	genebuild.version	string
+72	genebuild.sample_gene	genebuild.sample_gene	Sample Gene Data	string
+73	genebuild.sample_location	genebuild.sample_location	Sample Location Data	string
+74	assembly.coverage_depth	assembly.coverage_depth	assembly.coverage_depth	string
+75	assembly.web_accession_source	assembly.web_accession_source	assembly.web_accession_source	string
+76	assembly.web_accession_type	assembly.web_accession_type	assembly.web_accession_type	string
+77	genebuild.id	genebuild.id	genebuild.id	string
+78	genebuild.nc_average_intron_length	genebuild.nc_average_intron_length	genebuild.nc_average_intron_length	string
+79	genebuild.projection_source_db	genebuild.projection_source_db	genebuild.projection_source_db	string
+80	assembly.long_name	assembly.long_name	assembly.long_name	string
+81	assembly.url_name	assembly.url_name	assembly.url_name	string
+82	genebuild.havana_datafreeze_date	genebuild.havana_datafreeze_date	genebuild.havana_datafreeze_date	string
+83	assembly.version	assembly.version	assembly.version	string
+84	genebuild.provider_name	genebuild.provider_name	genebuild.provider_name	string
+85	genebuild.provider_url	genebuild.provider_url	genebuild.provider_url	string
+118	production.production_name	Internal Production Name	Backward compatibility for registry production Name	string
+119	variation.short_variants	variation.short_variants	variation.short_variants	integer
+120	variation.sample_variant	variation.sample_variant	variation.sample_variant	string
+123	variation.short_variants_with_phenotype_assertions	variation.short_variants_with_phenotype_assertions	variation.short_variants_with_phenotype_assertions	string
+124	variation.short_variants_frequency_studies	variation.short_variants_frequency_studies	variation.short_variants_frequency_studies	string
+161	compara.homology_coverage	compara.homology_coverage 	compara.homology_coverage 	float
+162	compara.homology_reference_species	compara.homology_reference_species 	compara.homology_reference_species 	string
+163	regulation.open_chromatin_count	regulation.open_chromatin_count	Number of open chromatin regions	integer
+164	regulation.promoter_count	regulation.promoter_count	Number of promoters	integer
+165	regulation.enhancer_count	regulation.enhancer_count	Number of enhancers	integer
+166	regulation.ctcf_count	regulation.ctcf_count	Number of CTCF binding sites	integer
+167	regulation.tfbs_count	regulation.tfbs_count	Number of regions enriched for transcription factor binding	integer
+168	assembly.tol_id	assembly.tol_id	assembly.tol_id	string
+169	genebuild.annotation_source	genebuild.annotation_source	genebuild.annotation_source	string
+170	genebuild.nc_total_exons	genebuild.nc_total_exons	genebuild.nc_total_exons	string
+171	sample.gene_param	sample.gene_param	Sample Gene Data	string
+172	sample.location_param	sample.location_param	Sample Location Data	string
+179	assembly.description	assembly.description	assembly.description	string
+180	assembly.master_accession	assembly.master_accession	assembly.master_accession	string
+181	assembly.alt_accession	assembly.alt_accession	assembly.alt_accession	string
