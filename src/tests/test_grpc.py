@@ -112,7 +112,7 @@ class TestMetadataDB:
         conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
         test = conn.fetch_releases_for_dataset('3d653b2d-aa8d-4f7e-8f92-55f57c7cac3a')
         assert test[0].EnsemblSite.name == 'Ensembl'
-        assert test[0].EnsemblRelease.name == 'MVP Ensembl'
+        assert test[0].EnsemblRelease.label == 'MVP Ensembl'
 
     def test_fetch_taxonomy_names(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -164,8 +164,8 @@ class TestMetadataDB:
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_sequences(
             genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3',
-            assembly_accession='GCA_000001405.28',
-            assembly_sequence_accession='CM000686.2'
+            assembly_accession='GCA_000001405.29',
+            assembly_sequence_accession='HG2280_PATCH'
         )
         assert test[0].AssemblySequence.name == 'Y'
 
@@ -174,36 +174,36 @@ class TestMetadataDB:
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_sequences(
             genome_uuid='s0m3-r4nd0m-g3n3-uu1d-v4lu3',
-            assembly_accession='GCA_000001405.28',
-            assembly_sequence_accession='CM000686.2'
+            assembly_accession='GCA_000001405.14',
+            assembly_sequence_accession='11'
         )
         assert len(test) == 0
 
     def test_fetch_genomes_by_ensembl_name(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_ensembl_name('SAMN04256190')
-        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+        test = conn.fetch_genomes_by_ensembl_name('SAMN04489826')
+        assert test[0].Organism.scientific_name == 'Mus musculus'
 
     def test_fetch_genomes_by_taxonomy_id(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_taxonomy_id(6239)
-        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+        test = conn.fetch_genomes_by_taxonomy_id(10090)
+        assert test[0].Organism.scientific_name == 'Mus musculus'
 
     def test_fetch_genomes_by_scientific_name(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes_by_scientific_name(
-            scientific_name='Caenorhabditis elegans',
+            scientific_name='Oryza sativa aromatic subgroup',
             site_name='Ensembl'
         )
-        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+        assert test[0].Organism.common_name == 'Aromatic rice'
 
     def test_fetch_sequences(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_sequences(assembly_uuid='eeaaa2bf-151c-4848-8b85-a05a9993101e')
+        test = conn.fetch_sequences(assembly_uuid='9d6b239c-46dd-4c79-bc29-1089f348d31d')
         # this test is going to drive me nuts
         # Locally and on GitLab CI/CD: AssemblySequence.accession == 'CHR_HG107_PATCH'
         # in Travis, its: AssemblySequence.accession == 'KI270757.1'
@@ -214,9 +214,9 @@ class TestMetadataDB:
         "genome_uuid, assembly_accession, chromosomal_only, expected_output",
         [
             # Chromosomal and non-chromosomal
-            ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.28", False, 0),
+            ("3704ceb1-948d-11ec-a39d-005056b38ce3", "GCA_000001405.14", False, 0),
             # Chromosomal only
-            ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.28", True, 1),
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.29", True, 10),
         ]
     )
     def test_fetch_sequences_chromosomal(self, multi_dbs, genome_uuid, assembly_accession, chromosomal_only,
@@ -257,13 +257,13 @@ class TestMetadataDB:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "6e82999b-7a8c-429c-a2af-8d77a59a2e81", 32),
+            (None, None, True, False, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 32),
             # specifying genome_uuid
-            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "0dc05c6e-2910-4dbd-879a-719ba97d5824", 5),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
             # specifying dataset_uuid
-            (None, "0dc05c6e-2910-4dbd-879a-719ba97d5824", False, False, "0dc05c6e-2910-4dbd-879a-719ba97d5824", 1),
+            (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "385f1ec2-bd06-40ce-873a-98e199f10505", 1),
+            (None, None, False, True, "8a6bce3f-d160-421c-b529-c4d3ccea953b", 1),
         ]
     )
     def test_fetch_genome_dataset_all(
@@ -287,10 +287,10 @@ class TestMetadataDB:
     @pytest.mark.parametrize(
         "organism_uuid, expected_count",
         [
-            # homo_sapien
-            ("db2a5f09-2db8-429b-a407-c15a4ca2876d", 11),
+            # homo_sapiens 37
+            ("3704ceb1-948d-11ec-a39d-005056b38ce3", 11),
             # e-coli
-            ("21279e3e-e651-43e1-a6fc-79e390b9e8a8", 3),
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", 3),
             # non-existing organism
             ("organism-yet-to-be-discovered", 0),
         ]
@@ -366,7 +366,7 @@ class TestMetadataDB:
         "species_taxonomy_id, expected_organism, expected_assemblies_count",
         [
             # fetch everything
-            (None, "human", 3)
+            (None, "human", 99)
         ]
     )
     def test_fetch_organisms_group_counts(self, multi_dbs, species_taxonomy_id, expected_organism,
@@ -388,7 +388,7 @@ class TestMetadataDB:
         "organism_uuid, expected_assemblies_count",
         [
             # Human
-            ('1d336185-affe-4a91-85bb-04ebd73cbb56', 3),
+            ('1d336185-affe-4a91-85bb-04ebd73cbb56', 99),
             # Triticum aestivum
             ('8dbb0666-8a06-46a7-80eb-e63055ae93d2', 1),
         ]
