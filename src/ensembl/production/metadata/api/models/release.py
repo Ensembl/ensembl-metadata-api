@@ -15,6 +15,8 @@ from sqlalchemy.orm import relationship
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
+__all__ = ['EnsemblSite', 'EnsemblRelease']
+
 
 class EnsemblSite(LoadAble, Base):
     __tablename__ = 'ensembl_site'
@@ -50,4 +52,3 @@ class EnsemblRelease(LoadAble, Base):
     # many to one relationships
     # site_id to ensembl_site
     ensembl_site = relationship('EnsemblSite', back_populates='ensembl_releases')
-

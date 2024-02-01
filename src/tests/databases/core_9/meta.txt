@@ -3,7 +3,7 @@
 13	1	assembly.name	jaber01
 11	1	assembly.ucsc_alias	SCARY
 15	1	gencode.version	999
-16	1	genebuild.last_geneset_update	01
+16	1	genebuild.last_geneset_update	2024-02-17
 3	1	species.common_name	Caenorhabditis elegans (PRJNA13758)
 7	1	species.division	Ensembl_TEST
 6	1	species.production_name	Caenorhabditis_elegans
@@ -22,4 +22,4 @@
 22	1	genebuild.test_value	test3
 23	1	genome.genome_uuid	a733550b-93e7-11ec-a39d-005056b38ce3
 24	1	genebuild.provider_name	test
-24	1	genebuild.start_date	test
+24	1	genebuild.start_date	2024-01-31-Ensembl

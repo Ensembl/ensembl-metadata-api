@@ -69,7 +69,7 @@ class TestUpdater:
             assert assembly.accession == 'weird01'
             # select * from genebuild where version = 999 and name = 'genebuild and label =01
             dataset = session.query(Dataset).where(
-                (Dataset.version == 1) & (Dataset.name == 'genebuild')
+                (Dataset.version == "2024-02-17") & (Dataset.name == 'genebuild')
             ).first()
             assert dataset is not None
             assert re.match(".*_core_1", dataset.dataset_source.name)
@@ -118,7 +118,7 @@ class TestUpdater:
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).where(
-                (Dataset.version == 2) & (Dataset.name == 'genebuild')
+                (Dataset.version == "2024-01-31") & (Dataset.name == 'genebuild')
             ).first()
             assert dataset is not None
             assert re.match(".*_core_4", dataset.dataset_source.name)

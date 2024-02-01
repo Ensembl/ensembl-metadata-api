@@ -9,6 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import logging
 from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
@@ -18,6 +19,8 @@ import uuid
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
+__all__ = ['Dataset', 'Attribute', 'DatasetAttribute', 'DatasetType', 'DatasetSource']
+logger = logging.getLogger(__name__)
 
 class Attribute(LoadAble, Base):
     __tablename__ = 'attribute'
@@ -32,6 +35,7 @@ class Attribute(LoadAble, Base):
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
     # many to one relationships
     # none
+
 
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
@@ -48,13 +52,27 @@ class Dataset(LoadAble, Base):
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
-    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset', cascade="all, delete, delete-orphan")
+    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset',
+                                      cascade="all, delete, delete-orphan")
     genome_datasets = relationship("GenomeDataset", back_populates='dataset', cascade="all, delete, delete-orphan")
     # many to one relationships
     # dataset_type_id to dataset_type
     dataset_type = relationship('DatasetType', back_populates="datasets")
     # dataset_source_id to dataset source
     dataset_source = relationship('DatasetSource', back_populates="datasets")
+
+    @property
+    def genebuild_version(self):
+        logger.debug(f"dataset type {self.dataset_type.name} {self.version}")
+        if self.dataset_type.name == 'genebuild':
+            # Return version
+            return self.version
+        else:
+            # return Related genebuild version
+            logger.debug(F"Related datasets! : {self.genome_datasets.datasets}")
+            genebuild_ds = next(
+                dataset for dataset in self.genome_datasets.datasets if dataset.dataset_type.name == 'genebuild')
+            return genebuild_ds.version
 
 
 class DatasetAttribute(LoadAble, Base):
@@ -104,4 +122,3 @@ class DatasetType(LoadAble, Base):
     datasets = relationship('Dataset', back_populates='dataset_type')
     # many to one relationships
     # none
-

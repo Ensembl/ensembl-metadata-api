@@ -12,11 +12,14 @@
 import sqlalchemy as db
 from sqlalchemy import inspect
 from sqlalchemy.engine import make_url
+from typing import List
 
 from ensembl.core.models import Meta
-from ensembl.production.metadata.api.models import DatasetSource
+from ensembl.production.metadata.api.models import DatasetSource, Attribute, DatasetAttribute, Dataset
 from ensembl.database import DBConnection
 from ensembl.production.metadata.api.models import EnsemblRelease
+
+
 
 
 class BaseMetaUpdater:
@@ -54,3 +57,24 @@ class BaseMetaUpdater:
             )
             meta_session.add(dataset_source)  # Only add a new DatasetSource to the session if it doesn't exist
         return dataset_source
+
+    def update_attributes(self, dataset, attributes, session):
+        genebuild_dataset_attributes = []
+        for attribute, value in attributes.items():
+            meta_attribute = session.query(Attribute).filter(Attribute.name == attribute).one_or_none()
+            if meta_attribute is None:
+                # TODO: This will be removed after the 2000 species are loaded.
+                meta_attribute = Attribute(
+                    name=attribute,
+                    label=attribute,
+                    description=attribute,
+                    type="string",
+                )
+            # raise Exception(f"{attribute} does not exist. Add it to the database and reload.")
+            dataset_attribute = DatasetAttribute(
+                value=value,
+                dataset=dataset,
+                attribute=meta_attribute,
+            )
+            genebuild_dataset_attributes.append(dataset_attribute)
+        return genebuild_dataset_attributes
