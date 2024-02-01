@@ -1,6 +1,6 @@
 1	511145	562	Escherichia coli K-12	K-12 substr. MG1655	Escherichia coli str. K-12 substr. MG1655 str. K12	SAMN02604091	E coli K 12	1e579f8d-3880-424e-9b4f-190eb69280d9	strain	0
 2	10090	10090	mouse	CBA/J	Mus musculus	SAMN04489823	Mouse	26d004c3-4e02-4027-9a8c-4b2622eb898b	strain	0
-3	8030	8030	Atlantic salmon	European origin	Salmo salar	SAMEA13013359		2fe78695-dc61-4c83-b3b8-f61a761c5685	strain	0
+3	8030	8030	Atlantic salmon	European origin	Salmo salar	SAMEA13013359	\N	2fe78695-dc61-4c83-b3b8-f61a761c5685	strain	0
 4	9606	9606	human	Gambian in Western Division	Homo sapiens	SAMN17861670	Human	18bd7042-d861-4a10-b5d0-68c8bccfc87e	population	0
 5	9606	9606	human	Esan in Nigeria	Homo sapiens	SAMN17861241	Human	a3352834-cea1-40aa-9dad-98581620c36b	population	0
 6	9606	9606	human	Gambian in Western Division	Homo sapiens	SAMN17861664	Human	87fb40f8-563b-4095-9fce-2bafa77ffba1	population	0
@@ -10,10 +10,10 @@
 10	4565	4565	bread wheat	Landmark	Triticum aestivum	SAMEA7089058	Wheat	6f56c6d1-d06e-44d3-b766-ab5f6509f255	cultivar	0
 12	9606	9606	human	Peruvian in Lima	Homo sapiens	SAMN17861663	Human	1780aee6-af9f-4f65-a62a-b4837dbc9217	population	0
 13	9606	9606	human	Mende in Sierra Leone	Homo sapiens	SAMN17861668	Human	14cca9ad-5ba1-42ab-91e3-61035223843d	population	0
-14	36329	5833	malaria parasite		Plasmodium falciparum 3D7	SAMN00102897		c867d142-85c4-4a5d-8361-b3f7f5fa3544		0
+14	36329	5833	malaria parasite	\N	Plasmodium falciparum 3D7	SAMN00102897	\N	c867d142-85c4-4a5d-8361-b3f7f5fa3544	\N	0
 16	9606	9606	human	Peruvian in Lima	Homo sapiens	SAMN17861662	Human	72d7d221-6d5e-42d3-9930-828efa27b109	population	0
 17	9606	9606	human	Han Chinese South	Homo sapiens	SAMN17861653	Human	19bbcee9-3973-4482-8a5d-95bc8862bbe0	population	0
-18	8090	8090	Japanese medaka	MIKK_7-1	Oryzias latipes	SAMEA111479015		f5a808ce-bfc5-4b49-8a5f-9c79ff7b571a	strain	0
+18	8090	8090	Japanese medaka	MIKK_7-1	Oryzias latipes	SAMEA111479015	\N	f5a808ce-bfc5-4b49-8a5f-9c79ff7b571a	strain	0
 20	9606	9606	human	Mende in Sierra Leone	Homo sapiens	SAMN17861671	Human	88a3a0f5-d927-487a-9528-4f91ca4805bc	population	0
 21	9606	9606	human	Mende in Sierra Leone	Homo sapiens	SAMN08723473	Human	d4572e75-d5de-4d71-b0df-0b5bd3455753	population	0
 22	9606	9606	human	Gambian in Western Division	Homo sapiens	SAMN05603745	Human	6026fd75-e2f8-4d85-9b50-fec8f2e4fe51	population	0
@@ -21,170 +21,170 @@
 24	9606	9606	human	African Caribbean in Barbados	Homo sapiens	SAMN17861236	Human	a4ed82bb-9a99-4d08-bd81-87c6dba34e0e	population	0
 25	9606	9606	human	Han Chinese South	Homo sapiens	SAMN17861654	Human	33f3421c-5600-4c47-9cd2-07e367188b8d	population	0
 27	10090	10090	mouse	LP/J	Mus musculus	SAMN04489826	Mouse	252bfa6f-3c9b-4e55-95ff-53f40f724989	strain	0
-28	8090	8090	Japanese medaka	MIKK_7-2	Oryzias latipes	SAMEA111479016		cd675cde-94d8-4806-b135-70c0a34ad082	strain	0
+28	8090	8090	Japanese medaka	MIKK_7-2	Oryzias latipes	SAMEA111479016	\N	cd675cde-94d8-4806-b135-70c0a34ad082	strain	0
 29	10090	10090	mouse	BALB/cJ	Mus musculus	SAMN04489816	Mouse	20cf99ca-376a-4d3a-abe3-3013047f4cb1	strain	0
-30	9615	9612	dog	Great Dane	Canis lupus familiaris	SAMN04851098		d6d06b32-e87c-4365-99fb-a57764f501bd	breed	0
+30	9615	9612	dog	Great Dane	Canis lupus familiaris	SAMN04851098	\N	d6d06b32-e87c-4365-99fb-a57764f501bd	breed	0
 31	9606	9606	human	Vietnamese Kinh in Ho Chi Minh	Homo sapiens	SAMN13957942	Human	a0867491-c77b-4344-876f-c0b9d8522ecd	population	0
 33	10090	10090	mouse	AKR/J	Mus musculus	SAMN04489815	Mouse	aad129ae-f778-4c90-8b8b-99aa9ddcedb2	strain	0
-34	9598	9598	chimpanzee		Pan troglodytes	SAMN02981217		13db8c77-7284-4e4d-a9fc-d59a917e4c88		0
-35	9823	9823	pig	Tibetan	Sus scrofa	SAMN01894235		52897339-9c79-40a2-8265-84899fec2c70	breed	0
-36	9823	9823	pig	Berkshire	Sus scrofa	SAMN04440475		3097afd9-eb5f-4d4b-892d-83ebb7ac8c37	breed	0
-37	10116	10116	Norway rat	SHR/Utx RGD	Rattus norvegicus	SAMN27519281		ae4d9b32-8beb-4baa-bf65-61fcd9640467	strain	0
+34	9598	9598	chimpanzee	\N	Pan troglodytes	SAMN02981217	\N	13db8c77-7284-4e4d-a9fc-d59a917e4c88	\N	0
+35	9823	9823	pig	Tibetan	Sus scrofa	SAMN01894235	\N	52897339-9c79-40a2-8265-84899fec2c70	breed	0
+36	9823	9823	pig	Berkshire	Sus scrofa	SAMN04440475	\N	3097afd9-eb5f-4d4b-892d-83ebb7ac8c37	breed	0
+37	10116	10116	Norway rat	SHR/Utx RGD	Rattus norvegicus	SAMN27519281	\N	ae4d9b32-8beb-4baa-bf65-61fcd9640467	strain	0
 39	9606	9606	human	Puerto Rican in Puerto Rico	Homo sapiens	SAMN12162846	Human	2366080a-d1d7-483f-bc9d-def4129d0b24	population	0
-40	8090	8090	Japanese medaka	MIKK_4-1	Oryzias latipes	SAMEA111479012		289226fa-25e1-4010-a280-fedf7b9faaea	strain	0
-41	10096	10096	algerian mouse	SPRET/EiJ	Mus spretus	SAMN04489830		5104594f-d64e-4d5f-afa7-4187091f5987	strain	0
+40	8090	8090	Japanese medaka	MIKK_4-1	Oryzias latipes	SAMEA111479012	\N	289226fa-25e1-4010-a280-fedf7b9faaea	strain	0
+41	10096	10096	algerian mouse	SPRET/EiJ	Mus spretus	SAMN04489830	\N	5104594f-d64e-4d5f-afa7-4187091f5987	strain	0
 42	10090	10090	mouse	A/J	Mus musculus	SAMN04489813	Mouse	cf0427a3-6525-4c50-a5ee-2a376c1668f6	strain	0
-43	10116	10116	Norway rat	WKY/Bbb RGD	Rattus norvegicus	SAMN27518707		cfb8e974-deb5-4ffe-8566-0dfed4d1f267	strain	0
+43	10116	10116	Norway rat	WKY/Bbb RGD	Rattus norvegicus	SAMN27518707	\N	cfb8e974-deb5-4ffe-8566-0dfed4d1f267	strain	0
 44	39946	4530	Indica rice	Zhenshan 97	Oryza sativa Indica Group	SAMN03380734	Rice	2a3cb4d8-541c-46de-90f8-4c3eb90f6e34	cultivar	0
 45	1736659	4530	Aus rice	Natel Boro	Oryza sativa aus subgroup	SAMN12748600	Rice	fefd9920-91c4-40cc-9dc6-5a9c54730533	cultivar	0
-46	7994	7994	Mexican tetra		Astyanax mexicanus	SAMN11404277		d5c5363f-25f0-4bef-88fc-4334d1b6f05b		0
+46	7994	7994	Mexican tetra	\N	Astyanax mexicanus	SAMN11404277	\N	d5c5363f-25f0-4bef-88fc-4334d1b6f05b	\N	0
 47	9606	9606	human	Puerto Rican in Puerto Rico	Homo sapiens	SAMN17861658	Human	2fcb59ee-266e-49bd-ac12-7b034d57084f	population	0
 48	9606	9606	human	Asian	Homo sapiens	SAMN03283350	Human	3c543a2a-3efe-41b5-8258-bd545164da84	population	0
 49	9606	9606	human	Yoruban in Nigeria	Homo sapiens	SAMN03838746	Human	14a967b2-6d62-49f8-b0b7-c3836a87cffa	population	0
 50	9606	9606	human	African Caribbean in Barbados	Homo sapiens	SAMN17861238	Human	f6ee88f3-7f5b-4a7a-ae67-498e3bcb744b	population	0
 51	9606	9606	human	Puerto Rican in Puerto Rico	Homo sapiens	SAMN17861659	Human	c42b4765-5bb8-4a9a-9563-b29586f0f1f5	population	0
-52	8090	8090	Japanese medaka	MIKK_11-1	Oryzias latipes	SAMEA111479007		5408c989-5f1c-4305-a738-003b4343f9cd	strain	0
+52	8090	8090	Japanese medaka	MIKK_11-1	Oryzias latipes	SAMEA111479007	\N	5408c989-5f1c-4305-a738-003b4343f9cd	strain	0
 53	39442	10090	mouse	PWK/PhJ	Mus musculus musculus	SAMN04489829	Mouse	d7447c8e-0485-4af0-9d98-587688760f9d	strain	0
 54	9606	9606	human	African Caribbean in Barbados	Homo sapiens	SAMN17861237	Human	5cc969c0-6be7-4377-bc8e-2bda479d3e3d	population	0
 55	4565	4565	bread wheat	Jagger	Triticum aestivum	SAMEA7089055	Wheat	54106793-a39b-4878-8129-09263fc1a94d	cultivar	0
-56	9925	9925	Goat	San Clemente	Capra hircus	SAMN03863711		d2b7f301-23ca-47dd-8d0c-58775c6f69b2	breed	0
-57	9823	9823	pig	Hampshire	Sus scrofa	SAMN04440474		eb7e6ff4-24a7-4b60-8831-176df83af6e6	breed	0
+56	9925	9925	Goat	San Clemente	Capra hircus	SAMN03863711	\N	d2b7f301-23ca-47dd-8d0c-58775c6f69b2	breed	0
+57	9823	9823	pig	Hampshire	Sus scrofa	SAMN04440474	\N	eb7e6ff4-24a7-4b60-8831-176df83af6e6	breed	0
 58	10090	10090	mouse	DBA/2J	Mus musculus	SAMN04489824	Mouse	e7beea79-a434-483c-ab43-57c1514b7eb9	strain	0
-59	8090	8090	Japanese medaka	MIKK_131-1	Oryzias latipes	SAMEA111479009		8fb9033a-54e0-4ac5-b334-2e7fa0cc3df9	strain	0
+59	8090	8090	Japanese medaka	MIKK_131-1	Oryzias latipes	SAMEA111479009	\N	8fb9033a-54e0-4ac5-b334-2e7fa0cc3df9	strain	0
 60	112509	4513	domesticated barley	Morex	Hordeum vulgare subsp. vulgare	SAMEA7384724	Barley	2652972c-277c-4e8d-8e2c-38d6a91d4124	cultivar	0
 61	200361	37682	Tausch's goatgrass	AL8/78	Aegilops tauschii subsp. strangulata	SAMN05426520	Goatgrass	b73b58bc-e387-4624-a8b1-096112c063f4	cultivar	0
 62	9606	9606	human	African ancestry from Barbados	Homo sapiens	SAMN13961514	Human	b75f96f6-c05d-4889-a4b6-e32917d0c78b	population	0
 63	9606	9606	human	African-Caribbean	Homo sapiens	SAMN12162856	Human	5dc9e503-f3d3-4b4d-ada9-8815077fac5b	population	0
-64	9031	9031	chicken	Red Jungle Fowl	Gallus gallus	SAMN02981218		0e3cfbb8-9149-47d9-b02e-696598c6e92a	breed	0
-65	9940	9940	sheep	Texel	Ovis aries	SAMN00116405		350b7a49-6a4d-4bb6-891c-d96155722d62	breed	0
+64	9031	9031	chicken	Red Jungle Fowl	Gallus gallus	SAMN02981218	\N	0e3cfbb8-9149-47d9-b02e-696598c6e92a	breed	0
+65	9940	9940	sheep	Texel	Ovis aries	SAMN00116405	\N	350b7a49-6a4d-4bb6-891c-d96155722d62	breed	0
 66	9606	9606	human	Maasai	Homo sapiens	SAMN11308573	Human	8fb702d1-7276-458d-9a1e-14b3e5938873	population	0
 67	39946	4530	Indica rice	Lima	Oryza sativa Indica Group	SAMN12715984	Rice	30aa9b4d-ba23-40f4-bf52-4ee02fd3693e	cultivar	0
-68	7227	7227	Fruit fly		Drosophila melanogaster	SAMN02803731		9c351d89-a029-43f4-aea6-80a82217d292		0
+68	7227	7227	Fruit fly	\N	Drosophila melanogaster	SAMN02803731	\N	9c351d89-a029-43f4-aea6-80a82217d292	\N	0
 69	4565	4565	bread wheat	Kariega	Triticum aestivum	SAMEA8923046	Wheat	7fa82547-c60c-458e-b95d-2acc2641ee56	cultivar	0
 70	10090	10090	mouse	C57BL/6NJ	Mus musculus	SAMN04489821	Mouse	5af55a11-9b87-4901-abb0-1b08c75a75d9	strain	0
 71	9606	9606	human	Colombian in Medellin	Homo sapiens	SAMN17861232	Human	c9bd9d75-c746-4515-ad37-40d054eeaa91	population	0
 72	4565	4565	bread wheat	Chinese Spring	Triticum aestivum	SAMEA4791365	Wheat	86dd50f1-421e-4829-aca5-13ccc9a459f6	cultivar	0
-73	8090	8090	Japanese medaka	MIKK_4-2	Oryzias latipes	SAMEA111479013		17a86d33-a9ca-4252-9c73-adaa78f8da9b	strain	0
+73	8090	8090	Japanese medaka	MIKK_4-2	Oryzias latipes	SAMEA111479013	\N	17a86d33-a9ca-4252-9c73-adaa78f8da9b	strain	0
 74	9606	9606	human	Puerto Rican in Puerto Rico	Homo sapiens	SAMN00006581	Human	07314e4e-9ac5-4ed7-b2ae-b8e257e1e6d7	population	0
-75	8090	8090	Japanese medaka	MIKK_117-2	Oryzias latipes	SAMEA111479008		de5fbc1a-4603-4402-9407-2e1c3ff27728	strain	0
+75	8090	8090	Japanese medaka	MIKK_117-2	Oryzias latipes	SAMEA111479008	\N	de5fbc1a-4603-4402-9407-2e1c3ff27728	strain	0
 76	9606	9606	human	Gambian in Western Division	Homo sapiens	SAMN17861240	Human	cc542082-0d6b-4e04-882a-def3f3bf9294	population	0
 77	9606	9606	human	Punjabi in Lahore	Homo sapiens	SAMN13958363	Human	36bdbf04-67c2-4f6e-8559-4bfedf0bbbf9	population	0
-78	9615	9612	dog	German Shepherd	Canis lupus familiaris	SAMN13230619		dcb8aeb7-590f-422e-befa-e6ef65cca219	breed	0
+78	9615	9612	dog	German Shepherd	Canis lupus familiaris	SAMN13230619	\N	dcb8aeb7-590f-422e-befa-e6ef65cca219	breed	0
 79	9606	9606	human	MENDE IN SIERRA LEONE	Homo sapiens	SAMN13957944	Human	df529ae2-84d9-4ddb-897f-370dfc8d7756	population	0
 80	4081	4081	tomato	Heinz 1706	Solanum lycopersicum	SAMN02981290	Tomato	78a52d2b-6cc5-4644-a039-0cb359948e5c	cultivar	0
 81	4577	4577	maize	B73	Zea mays	SAMEA5569141	Maize	3ec2d8f4-ac75-40f9-806e-1e82a4c25323	cultivar	0
 82	4565	4565	bread wheat	LongReach Lancer	Triticum aestivum	SAMEA7089057	Wheat	92ca929d-e93a-4cd7-bf29-a85a0d567493	cultivar	0
-83	9606	9606	human		Homo sapiens	SAMN12121739	Human	1d336185-affe-4a91-85bb-04ebd73cbb56		999
-84	10029	10029	Chinese hamster		Cricetulus griseus	SAMN02981352		4271cd57-1931-4440-acb0-67e5803703bf	strain	0
-85	9823	9823	pig	LargeWhite	Sus scrofa	SAMN04440478		30854c9b-b6f7-40f5-b399-16bd84243e4e	breed	0
+83	9606	9606	human	\N	Homo sapiens	SAMN12121739	Human	1d336185-affe-4a91-85bb-04ebd73cbb56	\N	9
+84	10029	10029	Chinese hamster	\N	Cricetulus griseus	SAMN02981352	\N	4271cd57-1931-4440-acb0-67e5803703bf	strain	0
+85	9823	9823	pig	LargeWhite	Sus scrofa	SAMN04440478	\N	30854c9b-b6f7-40f5-b399-16bd84243e4e	breed	0
 86	39946	4530	Indica rice	PR106	Oryza sativa Indica Group	SAMN12672924	Rice	1f2207dd-378e-4f67-92e5-790057e9a0a2	cultivar	0
 87	9606	9606	human	Puerto Rican in Puerto Rico	Homo sapiens	SAMN17861657	Human	a7fc3764-935c-4fa8-9f7f-11bec1d327b2	population	0
-88	7994	7994	Mexican tetra	Tinaja cave	Astyanax mexicanus	SAMN26927012		426d0354-186a-4ba2-86c3-660441ec652a	ecotype	0
+88	7994	7994	Mexican tetra	Tinaja cave	Astyanax mexicanus	SAMN26927012	\N	426d0354-186a-4ba2-86c3-660441ec652a	ecotype	0
 89	39946	4530	Indica rice	Liu Xu	Oryza sativa Indica Group	SAMN13021815	Rice	c55e4a5d-de9d-4f6c-810a-771e2ea05eea	cultivar	0
 90	9606	9606	human	Colombian in Medellin	Homo sapiens	SAMN17861234	Human	d4154da4-19f2-4e2d-bc74-41fa15cf8b15	population	0
-91	9031	9031	chicken	White leghorn	Gallus gallus	SAMN15960293		4e9a4b90-9309-4abb-babd-398f0e52ae33	breed	0
-93	8364	8364	tropical clawed frog	Nigerian	Xenopus tropicalis	SAMN13041969		cbd0fe56-94af-4336-b7dc-86491bdd3767	strain	0
-94	9615	9612	dog	Basenji	Canis lupus familiaris	SAMN10749847		9fbc2d55-7fae-47a5-ae9c-6e52b3d2aee2	breed	0
+91	9031	9031	chicken	White leghorn	Gallus gallus	SAMN15960293	\N	4e9a4b90-9309-4abb-babd-398f0e52ae33	breed	0
+93	8364	8364	tropical clawed frog	Nigerian	Xenopus tropicalis	SAMN13041969	\N	cbd0fe56-94af-4336-b7dc-86491bdd3767	strain	0
+94	9615	9612	dog	Basenji	Canis lupus familiaris	SAMN10749847	\N	9fbc2d55-7fae-47a5-ae9c-6e52b3d2aee2	breed	0
 95	3711	3711	field mustard	Chiifu-401-42	Brassica rapa	SAMN02981293	Field mustard	cb011c3f-bb3e-427c-80bc-c21a36bd08b3	cultivar	0
 96	4565	4565	bread wheat	Chinese spring	Triticum aestivum	SAMN16451473	Wheat	87972723-321a-4e16-a6e1-1ce07d36d6f7	cultivar	0
 97	9606	9606	human	Gambian in Western Division	Homo sapiens	SAMN13958364	Human	ba523d2b-f8cc-427e-ae3c-2feedf73e52f	population	0
 98	10090	10090	mouse	C3H/HeJ	Mus musculus	SAMN04489818	Mouse	5b08b499-a512-42a5-98f5-684c19994687	strain	0
-99	9823	9823	pig	Jinhua	Sus scrofa	SAMN04440480		df172944-2d65-43be-ab2c-bfc7c7896b28	breed	0
+99	9823	9823	pig	Jinhua	Sus scrofa	SAMN04440480	\N	df172944-2d65-43be-ab2c-bfc7c7896b28	breed	0
 100	9606	9606	human	Puerto Rican in Puerto Rico	Homo sapiens	SAMN17861655	Human	1b61c803-108a-4ddf-97c7-2cf6b1400e97	population	0
-101	9823	9823	pig	Wuzhishan	Sus scrofa	SAMN02953814		0ff4ff8a-0197-48ef-b728-3d79c3ba6c0a	breed	0
-102	9796	9796	horse	thoroughbred	Equus caballus	SAMN02953672		97032d78-98d7-4e41-94d4-46c81fd0a9c0	breed	0
+101	9823	9823	pig	Wuzhishan	Sus scrofa	SAMN02953814	\N	0ff4ff8a-0197-48ef-b728-3d79c3ba6c0a	breed	0
+102	9796	9796	horse	thoroughbred	Equus caballus	SAMN02953672	\N	97032d78-98d7-4e41-94d4-46c81fd0a9c0	breed	0
 103	9685	9685	domestic cat	Abyssinian	Felis catus	SAMN02953640	Cat	5b5dc307-c816-4af4-be44-d1abca333e8b	breed	0
 104	39946	4530	Indica rice	Gobol Sail Balam	Oryza sativa Indica Group	SAMN12721963	Rice	34f10262-7aa4-40cc-8518-761c5e93260c	cultivar	0
 105	29760	29760	wine grape	PN40024	Vitis vinifera	SAMEA8898608	Grape	65bad0f4-6eb0-4dd5-bdad-cb99ce704ea4	cultivar	0
-106	8090	8090	Japanese medaka	MIKK_79-2	Oryzias latipes	SAMEA111479017		5d8a2d2a-6364-4124-a246-98327305913c	strain	0
-107	8090	8090	Japanese medaka	Hd-rR	Oryzias latipes	SAMN06689957		49b78543-8760-42a9-b074-8ff6fca5a66a	strain	0
-108	7994	7994	Mexican tetra		Astyanax mexicanus	SAMN25965548		6ed8c4bd-f0a0-4da0-b544-d89973e41c33	ecotype	0
+106	8090	8090	Japanese medaka	MIKK_79-2	Oryzias latipes	SAMEA111479017	\N	5d8a2d2a-6364-4124-a246-98327305913c	strain	0
+107	8090	8090	Japanese medaka	Hd-rR	Oryzias latipes	SAMN06689957	\N	49b78543-8760-42a9-b074-8ff6fca5a66a	strain	0
+108	7994	7994	Mexican tetra	\N	Astyanax mexicanus	SAMN25965548	\N	6ed8c4bd-f0a0-4da0-b544-d89973e41c33	ecotype	0
 109	109376	3712	wild cabbage	TO1000	Brassica oleracea var. oleracea	SAMN02584321	Cabbage	76676e7c-1ff1-4992-adbe-edcfb59cee9e	cultivar	0
 110	9606	9606	human	Puerto Rican in Puerto Rico	Homo sapiens	SAMN13957917	Human	4bb920fb-6012-4d40-8c92-468eb3ac44b4	population	0
-111	8030	8030	Atlantic salmon	North American	Salmo salar	SAMN21173715		311be967-1a6d-4c34-8a44-14f83be44b40	strain	0
+111	8030	8030	Atlantic salmon	North American	Salmo salar	SAMN21173715	\N	311be967-1a6d-4c34-8a44-14f83be44b40	strain	0
 112	39946	4530	Indica rice	Larha Mugad	Oryza sativa Indica Group	SAMN12748589	Rice	18ad682c-2bf0-423a-a490-3e97bd35c5da	cultivar	0
 113	9606	9606	human	Puerto Rican in Puerto Rico	Homo sapiens	SAMN17861656	Human	03ac5700-d42d-4d64-b604-71d8014b3244	population	0
 114	9606	9606	human	Yoruban in Nigeria	Homo sapiens	SAMN13957875	Human	e81bf202-268d-4b48-b2e1-8d30fdda29d8	population	0
 115	9606	9606	human	Gambian in Western Division	Homo sapiens	SAMN17861666	Human	6cc21092-a241-49fd-b994-240ccf18ad64	population	0
 116	9606	9606	human	Colombian in Medellin	Homo sapiens	SAMN17861233	Human	204b5f39-35a7-46d7-b1ad-c3815fbe18a0	population	0
-117	7994	7994	Mexican tetra	Pachon cave	Astyanax mexicanus	SAMN18310656		712f190b-a21b-46cb-8add-4edaa4b74cf2	ecotype	0
+117	7994	7994	Mexican tetra	Pachon cave	Astyanax mexicanus	SAMN18310656	\N	712f190b-a21b-46cb-8add-4edaa4b74cf2	ecotype	0
 118	9606	9606	human	Gambian in Western Division	Homo sapiens	SAMN17861667	Human	16360fc9-6450-47ec-ab88-ff23a1f4b375	population	0
-119	7994	7994	Mexican tetra		Astyanax mexicanus	SAMN02981523		7ee2c7d7-01b7-4992-88fa-8e93899d4270	ecotype	0
-120	9940	9940	sheep	Rambouillet	Ovis aries	SAMEA104496890		00497116-fb46-461b-a8d0-ec03699dc352	breed	0
-121	9823	9823	pig	Cross-bred	Sus scrofa	SAMN07325927		9759ba5f-4e04-4614-aa97-cfe1cae7fdb0	breed	0
+119	7994	7994	Mexican tetra	\N	Astyanax mexicanus	SAMN02981523	\N	7ee2c7d7-01b7-4992-88fa-8e93899d4270	ecotype	0
+120	9940	9940	sheep	Rambouillet	Ovis aries	SAMEA104496890	\N	00497116-fb46-461b-a8d0-ec03699dc352	breed	0
+121	9823	9823	pig	Cross-bred	Sus scrofa	SAMN07325927	\N	9759ba5f-4e04-4614-aa97-cfe1cae7fdb0	breed	0
 122	4565	4565	bread wheat	Norin61	Triticum aestivum	SAMEA7202579	Wheat	d7216dab-9461-45bb-91e2-f88406b3257d	cultivar	0
 123	1736656	4530	Japonica rice	Chao Meo	Oryza sativa tropical japonica subgroup	SAMN12748601	Rice	473df8ee-07ae-4edd-b65c-8954b2eadcf0	cultivar	0
-124	10116	10116	Norway rat	SHRSP/BbbUtx	Rattus norvegicus	SAMN24538170		b50e7380-6273-4995-88f3-2bd8c7e89668	strain	0
-125	7994	7994	Mexican tetra	Molino cave	Astyanax mexicanus	SAMN26927110		bf213fec-055b-4b0c-bbdc-f5f52ad26515	ecotype	0
-126	10029	10029	Chinese hamster		Cricetulus griseus	SAMEA104116709		89d4e874-6ec4-4603-b0e7-54d5d6086add	strain	0
+124	10116	10116	Norway rat	SHRSP/BbbUtx	Rattus norvegicus	SAMN24538170	\N	b50e7380-6273-4995-88f3-2bd8c7e89668	strain	0
+125	7994	7994	Mexican tetra	Molino cave	Astyanax mexicanus	SAMN26927110	\N	bf213fec-055b-4b0c-bbdc-f5f52ad26515	ecotype	0
+126	10029	10029	Chinese hamster	\N	Cricetulus griseus	SAMEA104116709	\N	89d4e874-6ec4-4603-b0e7-54d5d6086add	strain	0
 127	3708	3708	oilseed rape	Darmor-bzh	Brassica napus	SAMEA3139102	Canola	9d693d91-9b5d-43ca-b8e6-8b80d13ba9e8	cultivar	0
-128	9615	9612	dog	Labrador retriever	Canis lupus familiaris	SAMN14478636		c0f32ca4-f47f-4a9e-98d1-a81b6c2643af	breed	0
+128	9615	9612	dog	Labrador retriever	Canis lupus familiaris	SAMN14478636	\N	c0f32ca4-f47f-4a9e-98d1-a81b6c2643af	breed	0
 129	9606	9606	human	Colombian in Medellin	Homo sapiens	SAMN17861235	Human	8a5b546a-a70c-4152-ba58-9a5ff321b241	population	0
 130	9606	9606	human	Peruvian in Lima	Homo sapiens	SAMN17861661	Human	9975e213-59e6-462b-b089-630fabf77f86	population	0
 132	39947	4530	Japanese rice	Nipponbare	Oryza sativa Japonica Group	SAMD00000397	Rice	40b29d54-5d1a-4d22-bff1-b1ad39297867	cultivar	0
-133	9544	9544	Macaque		Macaca mulatta	SAMN09435472		12b606e6-d0ea-4742-bd64-946c4de4ebfd		0
-134	10029	10029	Chinese hamster	17A/GY	Cricetulus griseus	SAMN07140313		78e1e7e8-c5b1-487c-a08c-f8650b2b3224	strain	0
+133	9544	9544	Macaque	\N	Macaca mulatta	SAMN09435472	\N	12b606e6-d0ea-4742-bd64-946c4de4ebfd	\N	0
+134	10029	10029	Chinese hamster	17A/GY	Cricetulus griseus	SAMN07140313	\N	78e1e7e8-c5b1-487c-a08c-f8650b2b3224	strain	0
 135	9606	9606	human	Peruvian in Lima	Homo sapiens	SAMN17861660	Human	c0ce970e-a1ab-492e-8838-684854ed22fb	population	0
-136	8090	8090	Japanese medaka	MIKK_69-1	Oryzias latipes	SAMEA111479014		c6a41de6-1d57-4449-9152-7823a669fcc1	strain	0
-137	8090	8090	Japanese medaka	MIKK_80-1	Oryzias latipes	SAMEA111479018		1aa13765-7dff-4626-ad0e-367995e01b85	strain	0
+136	8090	8090	Japanese medaka	MIKK_69-1	Oryzias latipes	SAMEA111479014	\N	c6a41de6-1d57-4449-9152-7823a669fcc1	strain	0
+137	8090	8090	Japanese medaka	MIKK_80-1	Oryzias latipes	SAMEA111479018	\N	1aa13765-7dff-4626-ad0e-367995e01b85	strain	0
 138	9606	9606	human	Gambian in Western Division	Homo sapiens	SAMN17861665	Human	ae6910d4-3760-4a2a-a7ba-335ff6bd8a77	population	0
 139	10090	10090	mouse	129S1/SvImJ	Mus musculus	SAMN04489811	Mouse	f70a9358-7e00-4fc1-b498-59c1584d39c6	strain	0
 140	9913	9913	cattle	Hereford	Bos taurus	SAMN03145444	Cow	4736fef8-f3f1-41bb-8470-e1c8e59e8938	breed	0
-142	8090	8090	Japanese medaka	HNI	Oryzias latipes	SAMN06689975		0cb5db71-8f86-414f-a90a-e3bed2927b4b	strain	0
+142	8090	8090	Japanese medaka	HNI	Oryzias latipes	SAMN06689975	\N	0cb5db71-8f86-414f-a90a-e3bed2927b4b	strain	0
 143	9606	9606	human	African Caribbean in Barbados	Homo sapiens	SAMN17861239	Human	6e58d9b1-bd69-4666-84c5-a4b4ea83d617	population	0
 144	10090	10090	mouse	C57BL/6J	Mus musculus	SAMN26853311	Mouse	1929d892-bf85-48b4-99b1-434aacf46325	strain	0
 145	4565	4565	bread wheat	Julius	Triticum aestivum	SAMEA7089056	Wheat	6aa74c95-f917-490b-9c82-81b88d8e19e6	cultivar	0
 146	1736658	4530	Aromatic rice	ARC 10497	Oryza sativa aromatic subgroup	SAMN12748569	Rice	af1c4ed7-4262-46c9-bfee-50dae7bad72b	cultivar	0
-147	9823	9823	pig	Duroc	Sus scrofa	SAMN02953785		91a1a852-930b-4761-b732-b9015f3ee800	breed	0
-148	9925	9925	goat	Black bengal	Capra hircus	SAMN10460883		149706d1-b8e9-495d-b54d-6e13130f96b6	breed	0
-149	9606	9606	human		Homo sapiens	SAMN03255769	Human	9df68864-e9fe-4c02-ab8c-8190baad16c6		998
+147	9823	9823	pig	Duroc	Sus scrofa	SAMN02953785	\N	91a1a852-930b-4761-b732-b9015f3ee800	breed	0
+148	9925	9925	goat	Black bengal	Capra hircus	SAMN10460883	\N	149706d1-b8e9-495d-b54d-6e13130f96b6	breed	0
+149	9606	9606	human	\N	Homo sapiens	SAMN03255769	Human	9df68864-e9fe-4c02-ab8c-8190baad16c6	\N	9
 150	10091	10090	mouse	CAST/EiJ	Mus musculus castaneus	SAMN04489822	Mouse	d5fa3ffc-7129-48cb-91cf-cce3ab234bd3	strain	0
-151	9823	9823	pig	Meishan	Sus scrofa	SAMN04440481		ff790378-a6f0-4184-ab0d-6fec0de67c3f	breed	0
+151	9823	9823	pig	Meishan	Sus scrofa	SAMN04440481	\N	ff790378-a6f0-4184-ab0d-6fec0de67c3f	breed	0
 152	39946	4530	Indica rice	IR64	Oryza sativa Indica Group	SAMN10564385	Rice	e690f70c-4b38-4b0c-b5a7-2cc9c2899aaa	cultivar	0
 153	10092	10090	mouse	WSB/EiJ	Mus musculus domesticus	SAMN04489831	Mouse	61aeff11-cc26-45ae-89fc-867fc8edfdd5	strain	0
 154	4565	4565	bread wheat	Arinalrfor	Triticum aestivum	SAMEA7089054	Wheat	82b63165-d2b9-4440-b456-9c5c3ca6ac18	cultivar	0
 155	4558	4558	sorghum	BTx623	Sorghum bicolor	SAMN02953738	Great Millet	0a7a1427-47c4-42d7-8985-14a40d1384ab	cultivar	0
-156	4567	4571	durum wheat	svevo	Triticum turgidum subsp. durum	SAMEA104312462		8dbb0666-8a06-46a7-80eb-e63055ae93d2	cultivar	0
+156	4567	4571	durum wheat	svevo	Triticum turgidum subsp. durum	SAMEA104312462	\N	8dbb0666-8a06-46a7-80eb-e63055ae93d2	cultivar	0
 157	3702	3702	thale-cress	Columbia	Arabidopsis thaliana	SAMN03081427	Thale cress	6b675f24-2c8f-4477-a271-81902e79ad71	ecotype	0
-158	8030	8030	Atlantic salmon		Salmo salar	SAMEA8062739		70c2bb61-9b54-4001-86a6-4edbe2fa39df		0
+158	8030	8030	Atlantic salmon	\N	Salmo salar	SAMEA8062739	\N	70c2bb61-9b54-4001-86a6-4edbe2fa39df	\N	0
 159	9606	9606	human	Southwest USA	Homo sapiens	SAMN13207712	Human	728b04f9-5ec4-4656-8380-b6dd39dcea8c	population	0
 160	112509	4513	domesticated barley	Golden Promise	Hordeum vulgare subsp. vulgare	SAMEA5987389	Barley	0050f3de-0c3f-4c15-bf76-77bde272ee4f	cultivar	0
 161	1736656	4530	Japonica rice	Azucena	Oryza sativa tropical japonica subgroup	SAMN08217222	Rice	37b06da7-630d-447f-a385-7519f450c615	cultivar	0
 162	39946	4530	Indica rice	Minghui 63	Oryza sativa Indica Group	SAMN03380733	Rice	ca4881e5-2a17-478b-a437-844dff3bc0fd	cultivar	0
 163	10090	10090	mouse	FVB/NJ	Mus musculus	SAMN04489825	Mouse	d9e505cb-0637-468c-ac44-191c101aa944	strain	0
 164	4565	4565	bread wheat	Renan	Triticum aestivum	SAMEA9446191	Wheat	fe788db2-c6cc-4385-99e3-7b3bebd7be4f	cultivar	0
-165	8090	8090	Japanese medaka	MIKK_134-2	Oryzias latipes	SAMEA111479011		f295f031-944a-4b27-a63f-a96a5cab52cb	strain	0
+165	8090	8090	Japanese medaka	MIKK_134-2	Oryzias latipes	SAMEA111479011	\N	f295f031-944a-4b27-a63f-a96a5cab52cb	strain	0
 166	39946	4530	Indica rice	Khao Yai Guang	Oryza sativa Indica Group	SAMN12748590	Rice	358dd4be-24e2-4e90-9570-b808c1103706	cultivar	0
-167	9986	9986	rabbit	Thorbecke inbred	Oryctolagus cuniculus	SAMN02953624		2900caa7-43e6-44b8-bfb4-32cd4a7dca67	breed	0
-168	8090	8090	Japanese medaka	HSOK	Oryzias latipes	SAMN06690114		e514cb9e-433f-4c02-9317-734cac0da7df	strain	0
-169	8090	8090	Japanese medaka	MIKK_134-1	Oryzias latipes	SAMEA111479010		e328286d-0e3c-4212-87ea-91b019a01e1f	strain	0
+167	9986	9986	rabbit	Thorbecke inbred	Oryctolagus cuniculus	SAMN02953624	\N	2900caa7-43e6-44b8-bfb4-32cd4a7dca67	breed	0
+168	8090	8090	Japanese medaka	HSOK	Oryzias latipes	SAMN06690114	\N	e514cb9e-433f-4c02-9317-734cac0da7df	strain	0
+169	8090	8090	Japanese medaka	MIKK_134-1	Oryzias latipes	SAMEA111479010	\N	e328286d-0e3c-4212-87ea-91b019a01e1f	strain	0
 170	4565	4565	bread wheat	Mace	Triticum aestivum	SAMEA7089059	Wheat	38014297-6f1e-49ba-8d37-a8a2384a8137	cultivar	0
-171	9597	9597	bonobo		Pan paniscus	SAMEA1029457		ac856111-b16e-483a-92ad-165b3352d351		0
+171	9597	9597	bonobo	\N	Pan paniscus	SAMEA1029457	\N	ac856111-b16e-483a-92ad-165b3352d351	\N	0
 172	559292	4932	baker's yeast	S288C	Saccharomyces cerevisiae S288c	SAMEA3184125	Bakers yeast	ae962453-0287-4201-83b8-3847c7d8027d	strain	0
-173	9823	9823	pig	Rongchang	Sus scrofa	SAMN04440482		11e4ba85-ba06-4dbe-a32d-fdedeeb4c5bf	breed	0
-174	10089	10089	Ryukyu mouse		Mus caroli	SAMEA3367631		c6c067e6-f72a-4b57-b663-3da20f88f9a2	strain	0
+173	9823	9823	pig	Rongchang	Sus scrofa	SAMN04440482	\N	11e4ba85-ba06-4dbe-a32d-fdedeeb4c5bf	breed	0
+174	10089	10089	Ryukyu mouse	\N	Mus caroli	SAMEA3367631	\N	c6c067e6-f72a-4b57-b663-3da20f88f9a2	strain	0
 175	6239	6239	Roundworm	N2	Caenorhabditis elegans	SAMN04256190	Roundworm	b181947a-a725-4866-ada4-5433e5dfdcac	strain	0
 176	10090	10090	mouse	NZO/HiLtJ	Mus musculus	SAMN04489828	Mouse	f4ec61b6-7582-4d81-bdab-55a590e38eeb	strain	0
 177	3847	3847	soybeans	Williams 82	Glycine max	SAMN00002965	Soybean	9442d78a-e8e4-44c1-b1a6-f6c730e44bf9	cultivar	0
-178	8128	8128	Nile tilapia		Oreochromis niloticus	SAMN05859795		4b5f7066-0ab5-4f57-98f9-dc5f14b9efde		0
-180	10116	10116	Norway rat	BN/NHsdMcwi	Rattus norvegicus	SAMN16261960		dbf04ed0-e083-46c5-9731-cbc2710bcb9d	strain	0
-181	10093	10093	Shrew mouse		Mus pahari	SAMEA3367645		0e3a218f-84b4-4fb1-b97c-17322ea91e3e	strain	0
+178	8128	8128	Nile tilapia	\N	Oreochromis niloticus	SAMN05859795	\N	4b5f7066-0ab5-4f57-98f9-dc5f14b9efde	\N	0
+180	10116	10116	Norway rat	BN/NHsdMcwi	Rattus norvegicus	SAMN16261960	\N	dbf04ed0-e083-46c5-9731-cbc2710bcb9d	strain	0
+181	10093	10093	Shrew mouse	\N	Mus pahari	SAMEA3367645	\N	0e3a218f-84b4-4fb1-b97c-17322ea91e3e	strain	0
 182	1736656	4530	Japonica rice	Ketan Nangka	Oryza sativa tropical japonica subgroup	SAMN12718029	Rice	e5043a22-5b04-4bcf-968d-81c958fed4f1	cultivar	0
-183	13616	13616	gray short-tailed opossum		Monodelphis domestica	SAMN02953611		a30521f8-173e-465a-b48f-791295dc1c46	strain	0
-184	7955	7955	zebrafish	Tuebingen	Danio rerio	SAMN06930106		7fb9c051-f1a4-458b-8ff2-cbd59d02782a	strain	0
-185	9823	9823	pig	Pietrain	Sus scrofa	SAMN04440477		d04a1bbb-b384-4f1e-91a9-55d8159e39e8	breed	0
-186	9823	9823	pig	Landrace	Sus scrofa	SAMN04440476		9995da72-dd13-496a-9e93-d7bc622439ac	breed	0
-187	9823	9823	pig	Bamei	Sus scrofa	SAMN04440479		94581fb9-3b68-4f21-85e1-4a9eda64c1ec	breed	0
+183	13616	13616	gray short-tailed opossum	\N	Monodelphis domestica	SAMN02953611	\N	a30521f8-173e-465a-b48f-791295dc1c46	strain	0
+184	7955	7955	zebrafish	Tuebingen	Danio rerio	SAMN06930106	\N	7fb9c051-f1a4-458b-8ff2-cbd59d02782a	strain	0
+185	9823	9823	pig	Pietrain	Sus scrofa	SAMN04440477	\N	d04a1bbb-b384-4f1e-91a9-55d8159e39e8	breed	0
+186	9823	9823	pig	Landrace	Sus scrofa	SAMN04440476	\N	9995da72-dd13-496a-9e93-d7bc622439ac	breed	0
+187	9823	9823	pig	Bamei	Sus scrofa	SAMN04440479	\N	94581fb9-3b68-4f21-85e1-4a9eda64c1ec	breed	0
 188	4565	4565	bread wheat	Stanley	Triticum aestivum	SAMEA7089062	Wheat	b75d9350-f18f-498b-bbf5-e0b1678111f8	cultivar	0
 189	4565	4565	bread wheat	Cadenza	Triticum aestivum	SAMEA6374022	Wheat	3f6ff7df-8a79-4d93-8308-a949a536d3ae	cultivar	0
 190	4565	4565	bread wheat	Mattis	Triticum aestivum	SAMEA7089060	Wheat	54e2d9bd-d6cb-4276-b7bd-969888a40390	cultivar	0
-191	9413	9413	Indian false vampire		Megaderma lyra	SAMN07678029		ed287bfd-f92c-43d1-a7ba-3576ba8059bb	strain	0
+191	9413	9413	Indian false vampire	\N	Megaderma lyra	SAMN07678029	\N	ed287bfd-f92c-43d1-a7ba-3576ba8059bb	strain	0
 192	4565	4565	bread wheat	Robigus	Triticum aestivum	SAMEA6374021	Wheat	1f90f451-c37f-48f9-b123-6e85c792e00b	cultivar	0
 193	4565	4565	bread wheat	Paragon	Triticum aestivum	SAMEA6374023	Wheat	054fd8b7-c433-4608-8c0e-1295c8c395db	cultivar	0
 194	4565	4565	bread wheat	Weebil	Triticum aestivum	SAMEA6374024	Wheat	27aa3ed0-255f-45a1-a7ba-306590bda44b	cultivar	0
-195	8030	8030	Atlantic salmon		Salmo salar	SAMEA11973779		0d2adfc9-7dc0-459c-a2a5-bb251d2ac3ac	strain	0
-196	9615	9612	dog	boxer	Canis lupus familiaris	SAMN02953603		5f3a919b-5899-404c-9f7c-e47075699289	breed	0
+195	8030	8030	Atlantic salmon	\N	Salmo salar	SAMEA11973779	\N	0d2adfc9-7dc0-459c-a2a5-bb251d2ac3ac	strain	0
+196	9615	9612	dog	boxer	Canis lupus familiaris	SAMN02953603	\N	5f3a919b-5899-404c-9f7c-e47075699289	breed	0
 197	4113	4113	potato	DM 1-3 516 R44	Solanum tuberosum	SAMN02981305	Potato	b45f712b-def5-4cb7-a7b0-86358547530a	cultivar	0
-198	3880	3880	barrel medic	A17	Medicago truncatula	SAMN02299339		3e5645a9-467e-4e37-adb1-051e1e2dcce0	strain	0
+198	3880	3880	barrel medic	A17	Medicago truncatula	SAMN02299339	\N	3e5645a9-467e-4e37-adb1-051e1e2dcce0	strain	0
 199	1736659	4530	Aus rice	N22	Oryza sativa aus subgroup	SAMN04568482	Rice	b0d536d3-c8cf-43e3-bb7c-b62a68e51475	cultivar	0
 200	4565	4565	bread wheat	Claire	Triticum aestivum	SAMEA6374020	Wheat	29611eae-04c4-41f7-93e3-45fb76b16e6a	cultivar	0

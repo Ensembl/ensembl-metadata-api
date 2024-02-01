@@ -20,11 +20,10 @@ from pathlib import Path
 from ensembl.database import UnitTestDB
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
+import logging
+sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
-distribution = pkg_resources.get_distribution("ensembl-metadata-api")
-sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
-
-
+logger = logging.getLogger(__name__)
 @pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_metadata"},
                                         {"src": sample_path / "ncbi_taxonomy"}]],
                          indirect=True)
@@ -38,14 +37,14 @@ class TestMetadataDB:
     @pytest.mark.parametrize(
         "allow_unreleased, unreleased_only, current_only, output_count",
         [
-            # fetches everything (7 released + 2 unreleased)
-            (True, False, True, 9),
+            # fetches everything (141 released + 100 unreleased)
+            (True, False, True, 241),
             # fetches all released genomes (with current_only=0)
-            (False, False, False, 7),
+            (False, False, False, 100),
             # fetches released genomes with current_only=1 (default)
-            (False, False, True, 6),
+            (False, False, True, 100),
             # fetches all unreleased genomes
-            (False, True, True, 2),
+            (False, True, True, 141),
         ]
     )
     def test_fetch_all_genomes(self, multi_dbs, allow_unreleased, unreleased_only, current_only, output_count):
@@ -99,20 +98,21 @@ class TestMetadataDB:
         test = conn.fetch_releases(release_id=2)
         # test the one to many connection
         assert test[0].EnsemblSite.name == 'Ensembl'
-        assert test[0].EnsemblSite.label == 'Ensembl Genome Browser'
+        assert test[0].EnsemblSite.label == 'MVP Ensembl'
         # test the direct access.
         assert test[0].EnsemblRelease.label == 'Scaling Phase 1'
 
     # currently only have one release, so the testing is not comprehensive
     def test_fetch_releases_for_genome(self, multi_dbs):
         conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
-        test = conn.fetch_releases_for_genome('a73351f7-93e7-11ec-a39d-005056b38ce3')
+        test = conn.fetch_releases_for_genome('ae794660-8751-41cc-8883-b2fcdc7a74e8')
         assert test[0].EnsemblSite.name == 'Ensembl'
 
     def test_fetch_releases_for_dataset(self, multi_dbs):
         conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
-        test = conn.fetch_releases_for_dataset('3316fe1a-83e7-46da-8a56-cf2b693d8060')
+        test = conn.fetch_releases_for_dataset('3d653b2d-aa8d-4f7e-8f92-55f57c7cac3a')
         assert test[0].EnsemblSite.name == 'Ensembl'
+        assert test[0].EnsemblRelease.name == 'MVP Ensembl'
 
     def test_fetch_taxonomy_names(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -144,20 +144,20 @@ class TestMetadataDB:
     def test_fetch_genomes_by_genome_uuid(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_genome_uuid('a733550b-93e7-11ec-a39d-005056b38ce3')
-        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+        test = conn.fetch_genomes_by_genome_uuid('b00f5b0a-b434-4949-9c05-140826c96cd4') #a733550b-93e7-11ec-a39d-005056b38ce3')
+        assert test[0].Organism.scientific_name == 'Oryzias latipes'
 
     def test_fetch_genome_by_ensembl_and_assembly_name(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(assembly_name='WBcel235', ensembl_name='caenorhabditis_elegans')
+        test = conn.fetch_genomes(assembly_name='WBcel235', ensembl_name='SAMN04256190')
         assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
 
     def test_fetch_genomes_by_assembly_accession(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes_by_assembly_accession('GCA_000005845.2')
-        assert test[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)'
+        assert test[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12'
 
     def test_fetch_genomes_by_assembly_sequence_accession(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -182,7 +182,7 @@ class TestMetadataDB:
     def test_fetch_genomes_by_ensembl_name(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_ensembl_name('caenorhabditis_elegans')
+        test = conn.fetch_genomes_by_ensembl_name('SAMN04256190')
         assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
 
     def test_fetch_genomes_by_taxonomy_id(self, multi_dbs):
@@ -328,8 +328,8 @@ class TestMetadataDB:
     @pytest.mark.parametrize(
         "ensembl_name, assembly_name, use_default_assembly, expected_output",
         [
-            ("homo_sapiens", "GRCh38.p13", False, "a7335667-93e7-11ec-a39d-005056b38ce3"),
-            ("homo_sapiens", "GRCh38", True, "a7335667-93e7-11ec-a39d-005056b38ce3"),
+            ("homo_sapiens", "GRCh38.p14", False, "fd7fea38-981a-4d73-a879-6f9daef86f08"),
+            ("homo_sapiens", "GRCh38", True, "fd7fea38-981a-4d73-a879-6f9daef86f08"),
         ]
     )
     def test_fetch_genome_uuid_is_current(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly,
@@ -366,7 +366,7 @@ class TestMetadataDB:
         "species_taxonomy_id, expected_organism, expected_assemblies_count",
         [
             # fetch everything
-            (None, "Human", 3)
+            (None, "human", 3)
         ]
     )
     def test_fetch_organisms_group_counts(self, multi_dbs, species_taxonomy_id, expected_organism,
@@ -388,9 +388,9 @@ class TestMetadataDB:
         "organism_uuid, expected_assemblies_count",
         [
             # Human
-            ('db2a5f09-2db8-429b-a407-c15a4ca2876d', 3),
+            ('1d336185-affe-4a91-85bb-04ebd73cbb56', 3),
             # Triticum aestivum
-            ('d64c34ca-b37a-476b-83b5-f21d07a3ae67', 1),
+            ('8dbb0666-8a06-46a7-80eb-e63055ae93d2', 1),
         ]
     )
     def test_fetch_related_assemblies_count(self, multi_dbs, organism_uuid, expected_assemblies_count):
@@ -407,12 +407,14 @@ class TestMetadataDB:
         "allow_unreleased, output_count, expected_genome_uuid",
         [
             # fetches everything
-            (True, 9, "a73356e1-93e7-11ec-a39d-005056b38ce3"),
+            (True, 283, "a73356e1-93e7-11ec-a39d-005056b38ce3"),
             # fetches released datasets and genomes with current_only=1 (default)
-            (False, 6, "a73356e1-93e7-11ec-a39d-005056b38ce3"),
+            (False, 114, "a73356e1-93e7-11ec-a39d-005056b38ce3"),
         ]
     )
     def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):
+        # FIXME This test takes ages, and generate a lot of unitary queries. SqlAlchemy results needs review before
+        #  moving to 2000
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes_info(

@@ -69,7 +69,7 @@ class TestUpdater:
             assert assembly.accession == 'weird01'
             # select * from genebuild where version = 999 and name = 'genebuild and label =01
             dataset = session.query(Dataset).where(
-                (Dataset.version == "2024-02-17") & (Dataset.name == 'genebuild')
+                (Dataset.version == 'ENS01') & (Dataset.name == 'genebuild')
             ).first()
             assert dataset is not None
             assert re.match(".*_core_1", dataset.dataset_source.name)
@@ -118,7 +118,7 @@ class TestUpdater:
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).where(
-                (Dataset.version == "2024-01-31") & (Dataset.name == 'genebuild')
+                (Dataset.version == "ENS02") & (Dataset.name == 'genebuild')
             ).first()
             assert dataset is not None
             assert re.match(".*_core_4", dataset.dataset_source.name)
@@ -163,12 +163,12 @@ class TestUpdater:
             assert count == 0
             # Check that the old attributes are gone
             count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'assembly.test_value',
-                DatasetAttribute.value == 'test'
+                Attribute.name == 'assembly.default',
+                DatasetAttribute.value == 'jaber01'
             ).count()
             assert count == 0
             count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'genebuild.test_value',
+                Attribute.name == 'genebuild.provider_name',
                 DatasetAttribute.value == 'test'
             ).count()
             assert count == 0
@@ -186,8 +186,8 @@ class TestUpdater:
             assert count == 1
             # Check that the new attribute values are present
             count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'assembly.test_value',
-                DatasetAttribute.value == 'test2'
+                Attribute.name == 'assembly.ucsc_alias',
+                DatasetAttribute.value == 'SCARY'
             ).count()
             assert count > 0
 
@@ -209,7 +209,7 @@ class TestUpdater:
 
     def test_update_released_force(self, multi_dbs):
         test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
-                            multi_dbs['ncbi_taxonomy'].dbc.url,force=True)
+                            multi_dbs['ncbi_taxonomy'].dbc.url, force=True)
         test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
@@ -265,5 +265,3 @@ class TestUpdater:
                 DatasetAttribute.value == 'test3'
             ).count()
             assert count > 0
-
-
