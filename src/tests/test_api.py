@@ -38,15 +38,15 @@ class TestApi:
             assert len(paths) == 5
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
-            assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version'
             path = genome.get_public_path(dataset_type='assembly')
-            assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome'
             path = genome.get_public_path(dataset_type='variation')
-            assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation/test_version'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation/test_version'
             path = genome.get_public_path(dataset_type='homologies')
-            assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology/test_version'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology/test_version'
             path = genome.get_public_path(dataset_type='regulatory_features')
-            assert path[0] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation'
 
     def test_default_public_path(self, multi_dbs):
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
@@ -56,15 +56,15 @@ class TestApi:
             assert len(paths) == 4
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
-            assert path[0] == 'Homo_sapiens/GCA_000001405.14/ensembl/genebuild/GENCODE_19'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/genebuild/GENCODE_19'
             path = genome.get_public_path(dataset_type='assembly')
-            assert path[0] == 'Homo_sapiens/GCA_000001405.14/ensembl/genome'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/genome'
             path = genome.get_public_path(dataset_type='variation')
-            assert path[0] == 'Homo_sapiens/GCA_000001405.14/ensembl/variation/GENCODE_19'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/variation/GENCODE_19'
             with pytest.raises(TypeNotFoundException):
                 genome.get_public_path(dataset_type='homologies')
             path = genome.get_public_path(dataset_type='regulatory_features')
-            assert path[0] == 'Homo_sapiens/GCA_000001405.14/ensembl/regulation'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.14/ensembl/regulation'
 
     def test_organism_ensembl_name_compat(self, multi_dbs):
         """ Validate that we can still yse ensembl_name in queries from SQLAlchemy

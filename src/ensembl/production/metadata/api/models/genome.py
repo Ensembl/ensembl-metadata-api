@@ -69,37 +69,43 @@ class Genome(LoadAble, Base):
             unique_dataset_types.discard('regulatory_features')
             unique_dataset_types.discard('regulation_build')
             unique_dataset_types.add('regulation')
+        if 'evidence' in unique_dataset_types:
+            unique_dataset_types.discard('evidence')
+            unique_dataset_types.add('variation')
         if 'regulatory_features' == dataset_type or 'regulation_build' == dataset_type:
             dataset_type = 'regulation'
 
-        if dataset_type in unique_dataset_types or dataset_type == 'all':
-            if dataset_type == 'genebuild':
-                paths.append(f"{common_path}/genebuild/{genebuild_version}")
-            elif dataset_type == 'assembly':
-                paths.append(f"{common_path}/genome")
-            elif dataset_type == 'homologies':
-                paths.append(f"{common_path}/homology/{genebuild_version}")
-            elif dataset_type == 'regulation':
-                paths.append(f"{common_path}/regulation")
-            elif dataset_type == 'variation':
-                paths.append(f"{common_path}/variation/{genebuild_version}")
-            elif dataset_type == 'all':
-                for t in unique_dataset_types:
-                    if t == 'genebuild':
-                        paths.append(f"{common_path}/genebuild/{genebuild_version}")
-                    elif t == 'assembly':
-                        paths.append(f"{common_path}/genome")
-                    elif t == 'homologies':
-                        paths.append(f"{common_path}/homology/{genebuild_version}")
-                    elif t == 'regulation':
-                        paths.append(f"{common_path}/regulation/")
-                    elif t == 'variation':
-                        paths.append(f"{common_path}/variation/{genebuild_version}")
-            else:
-                raise TypeNotFoundException(f"Dataset Type : {dataset_type}  has no associated path. ")
-            return paths
+        # Defining path templates
+        path_templates = {
+            'genebuild': f"{common_path}/genebuild/{genebuild_version}",
+            'assembly': f"{common_path}/genome",
+            'homologies': f"{common_path}/homology/{genebuild_version}",
+            'regulation': f"{common_path}/regulation",
+            'variation': f"{common_path}/variation/{genebuild_version}"
+        }
+
+        # Check for invalid dataset type early
+        if dataset_type not in unique_dataset_types and dataset_type != 'all':
+            raise TypeNotFoundException(f"Dataset Type : {dataset_type} not found in metadata.")
+
+        # If 'all', add paths for all unique dataset types
+        if dataset_type == 'all':
+            for t in unique_dataset_types:
+                paths.append({
+                    "dataset_type": t,
+                    "path": path_templates[t]
+                })
+        elif dataset_type in path_templates:
+            # Add path for the specific dataset type
+            paths.append({
+                "dataset_type": dataset_type,
+                "path": path_templates[dataset_type]
+            })
         else:
-            raise TypeNotFoundException(f"Dataset Type : {dataset_type}  not found in metadata. ")
+            # If the code reaches here, it means there is a logic error
+            raise TypeNotFoundException(f"Dataset Type : {dataset_type} has no associated path.")
+
+        return paths
 
 
 class GenomeDataset(LoadAble, Base):
