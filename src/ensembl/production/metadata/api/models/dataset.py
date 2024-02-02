@@ -9,7 +9,6 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import logging
 from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
@@ -20,8 +19,6 @@ import uuid
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
-__all__ = ['Dataset', 'Attribute', 'DatasetAttribute', 'DatasetType', 'DatasetSource']
-logger = logging.getLogger(__name__)
 
 
 class Attribute(LoadAble, Base):
@@ -38,7 +35,6 @@ class Attribute(LoadAble, Base):
     # many to one relationships
     # none
 
-
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
 
@@ -54,8 +50,7 @@ class Dataset(LoadAble, Base):
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
-    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset',
-                                      cascade="all, delete, delete-orphan")
+    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset', cascade="all, delete, delete-orphan")
     genome_datasets = relationship("GenomeDataset", back_populates='dataset', cascade="all, delete, delete-orphan")
     # many to one relationships
     # dataset_type_id to dataset_type
@@ -130,3 +125,4 @@ class DatasetType(LoadAble, Base):
     datasets = relationship('Dataset', back_populates='dataset_type')
     # many to one relationships
     # none
+

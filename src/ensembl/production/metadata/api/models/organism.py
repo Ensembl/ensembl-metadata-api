@@ -19,8 +19,6 @@ from sqlalchemy.orm import relationship, synonym
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
-__all__ = ['Organism', 'OrganismGroup', 'OrganismGroupMember']
-
 
 class Organism(LoadAble, Base):
     __tablename__ = "organism"
@@ -40,8 +38,7 @@ class Organism(LoadAble, Base):
     organism_group_members = relationship("OrganismGroupMember", back_populates="organism")
     strain_type = Column(String(128), nullable=True, unique=False)
     ensembl_name = synonym("biosample_id")
-
-    # This is the code for ensembl_name. It should be considered temporary and be removed well before 2025
+    #This is the code for ensembl_name. It should be considered temporary and be removed well before 2025
     @hybrid_property
     def ensembl_name(self):
         warnings.warn(
@@ -59,7 +56,6 @@ class Organism(LoadAble, Base):
             DeprecationWarning
         )
         self.biosample_id = value
-
 
 class OrganismGroup(LoadAble, Base):
     __tablename__ = "organism_group"
@@ -98,3 +94,4 @@ class OrganismGroupMember(LoadAble, Base):
     # organism_id to organism
     organism_group = relationship("OrganismGroup", back_populates="organism_group_members")
     organism = relationship("Organism", back_populates="organism_group_members")
+

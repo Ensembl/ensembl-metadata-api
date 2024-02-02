@@ -887,3 +887,4 @@
 2518	679d6452-799c-4a2f-8906-0db6c639e498	regulatory_features	1.0	2023-11-15 15:07:12.410801	Regulatory Annotation	670	7	Submitted
 2519	bee4dca6-894e-4017-8376-0b13675de93a	regulatory_features	1.0	2023-11-15 15:07:13.156918	Regulatory Annotation	671	7	Submitted
 2520	fc5d3e13-340c-4e2a-9f49-256fc319331e	regulatory_features	1.0	2023-11-15 15:07:13.825117	Regulatory Annotation	672	7	Submitted
+

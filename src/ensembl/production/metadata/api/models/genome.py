@@ -21,9 +21,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['Genome', 'GenomeDataset', 'GenomeRelease']
-
-
 class Genome(LoadAble, Base):
     __tablename__ = "genome"
 
@@ -47,9 +44,8 @@ class Genome(LoadAble, Base):
     def get_public_path(self, dataset_type='all', release=None):
         # TODO manage the Release parameter to fetch datasets attached to release anterior to the one specified.
         paths = []
-        genome_genebuild_dataset = next(
-            (gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
-            None)
+        genome_genebuild_dataset = next((gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
+                                 None)
         if genome_genebuild_dataset is None:
             raise ValueError("Genebuild dataset not found for the genome")
         genebuild_dataset = genome_genebuild_dataset.dataset
@@ -57,10 +53,15 @@ class Genome(LoadAble, Base):
             (da.value for da in genebuild_dataset.dataset_attributes if
              da.attribute.name == "genebuild.annotation_source"),
             'ensembl')
+        # Genebuild version is either the laste_geneset_update or the start_date if not specified.
+        genebuild_version = next(
+            (da.value for da in genebuild_dataset.dataset_attributes if
+             da.attribute.name == "genebuild.version"), genebuild_dataset.version)
         try:
-            genebuild_version = genebuild_dataset.genebuild_version.replace('-', '_')
-        except AttributeError as e:
-            raise ValueError(f"Dataset {genebuild_dataset.dataset_uuid}: Genebuild version is wrong {genebuild_dataset.genebuild_version} ({e})")
+            genebuild_version = re.sub(r"[^\w\s]", '', re.sub(r"\s+", '_', genebuild_version))
+        except TypeError as e:
+            logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
+            raise RuntimeError(e)
         common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
 
@@ -125,7 +126,6 @@ class GenomeDataset(LoadAble, Base):
     genome = relationship("Genome", back_populates="genome_datasets")
     # release_id to release
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_datasets")
-
 
 class GenomeRelease(LoadAble, Base):
     __tablename__ = "genome_release"
