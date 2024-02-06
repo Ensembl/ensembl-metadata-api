@@ -174,7 +174,7 @@ class TestUtils:
         )
         output = json.loads(output)
         first_genome_stats = output["statsByGenomeUuid"][0]["statistics"]
-        assert len(first_genome_stats) == 80
+        assert len(first_genome_stats) == 76
         assert first_genome_stats[0] == {
             'label': 'Average CDS length',
             'name': 'average_cds_length',
@@ -210,10 +210,10 @@ class TestUtils:
             'statisticValue': '1332.42'
         }
         assert output["statistics"][2] == {
-            'label': 'Average exon length per coding gene',
-            'name': 'average_coding_exon_length',
-            'statisticType': 'bp',
-            'statisticValue': '249.47'
+            'label': 'genebuild.average_coding_exons_per_trans',
+            'name': 'genebuild.average_coding_exons_per_trans',
+            'statisticType': 'string',
+            'statisticValue': '5.60'
         }
 
     # assert output["statistics"][2] == {
@@ -1070,7 +1070,8 @@ class TestUtils:
                 "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
                 "isReference": True,
                 "level": "chromosome",
-                "name": "IWGSC"
+                "name": "IWGSC",
+                "urlName": "iwgsc"
             },
             "attributesInfo": {
                 "assemblyDate": "2018-07",
@@ -1099,7 +1100,7 @@ class TestUtils:
                 "strain": "Chinese Spring",
                 "strainType": "cultivar"
             },
-            "relatedAssembliesCount": 10,
+            "relatedAssembliesCount": 18,
             "release": {
                 "isCurrent": True,
                 "releaseDate": "2023-10-18",
@@ -1139,7 +1140,8 @@ class TestUtils:
                 "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
                 "isReference": True,
                 "level": "chromosome",
-                "name": "IWGSC"
+                "name": "IWGSC",
+                "urlName": "iwgsc"
             },
             "attributesInfo": {
                 "assemblyDate": "2018-07",
@@ -1168,7 +1170,7 @@ class TestUtils:
                 "strain": "Chinese Spring",
                 "strainType": "cultivar"
             },
-            "relatedAssembliesCount": 10,
+            "relatedAssembliesCount": 18,
             "release": {
                 "isCurrent": True,
                 "releaseDate": "2023-10-18",
@@ -1381,41 +1383,40 @@ class TestUtils:
         ))
         expected_output = {
             "assembly": {
-                "accession": "GCA_900519105.1",
-                "ensemblName": "IWGSC",
+                "accession": "GCA_903995565.1",
+                "ensemblName": "PGSBv2.0_Landmark",
                 "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
-                "isReference": True,
                 "level": "chromosome",
-                "name": "IWGSC"
+                "name": "10wheat_Landmark1"
             },
             "attributesInfo": {
-                "assemblyDate": "2018-07",
+                "assemblyDate": "2019-17",
                 "assemblyLevel": "chromosome",
-                "assemblyProviderName": "International Wheat Genome Sequencing Consortium",
-                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1",
-                "genebuildMethod": "import",
+                "assemblyProviderName": "10+ consortium",
+                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_902810665",
+                "genebuildMethod": "external_annotation_import",
                 "genebuildMethodDisplay": "Import",
-                "genebuildProviderName": "IWGSC",
-                "genebuildProviderUrl": "https://wheatgenome.org",
-                "genebuildSampleGene": "TraesCS3D02G273600",
-                "genebuildSampleLocation": "3D:2585940-2634711",
+                "genebuildProviderName": "PGSB",
+                "genebuildProviderUrl": "https://www.helmholtz-munich.de/en/pgsb",
+                "genebuildSampleGene": "TraesLDM6B03G03587910",
+                "genebuildSampleLocation": "6B:570561430-570563408",
                 "genebuildVersion": "EXT01",
-                "variationSampleVariant": "1A:58609:1A_58609"
+                # "variationSampleVariant": "1A:58609:1A_58609"
             },
-            "created": "2023-09-22 15:04:29",
-            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
+            "created": "2023-09-22 15:03:01",
+            "genomeUuid": "ae794660-8751-41cc-8883-b2fcdc7a74e8",
             "organism": {
                 "commonName": "bread wheat",
-                "ensemblName": "SAMEA4791365",
-                "organismUuid": "86dd50f1-421e-4829-aca5-13ccc9a459f6",
+                "ensemblName": "SAMEA7089058",
+                "organismUuid": "6f56c6d1-d06e-44d3-b766-ab5f6509f255",
                 "scientificName": "Triticum aestivum",
                 "scientificParlanceName": "Wheat",
                 "speciesTaxonomyId": 4565,
                 "taxonomyId": 4565,
-                "strain": "Chinese Spring",
+                "strain": "Landmark",
                 "strainType": "cultivar"
             },
-            "relatedAssembliesCount": 10,
+            "relatedAssembliesCount": 18,
             "release": {
                 "isCurrent": True,
                 "releaseDate": "2023-10-18",
@@ -1435,7 +1436,7 @@ class TestUtils:
                     "wheat"
                 ],
                 "scientificName": "Triticum aestivum",
-                "strain": "Chinese Spring",
+                "strain": "Landmark",
                 "taxonomyId": 4565
             }
         }
@@ -1453,41 +1454,40 @@ class TestUtils:
         ))
         expected_output = {
             "assembly": {
-                "accession": "GCA_900519105.1",
-                "ensemblName": "IWGSC",
+                "accession": "GCA_903995565.1",
+                "ensemblName": "PGSBv2.0_Landmark",
                 "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
-                "isReference": True,
                 "level": "chromosome",
-                "name": "IWGSC"
+                "name": "10wheat_Landmark1"
             },
             "attributesInfo": {
-                "assemblyDate": "2018-07",
+                "assemblyDate": "2019-17",
                 "assemblyLevel": "chromosome",
-                "assemblyProviderName": "International Wheat Genome Sequencing Consortium",
-                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1",
-                "genebuildMethod": "import",
+                "assemblyProviderName": "10+ consortium",
+                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_902810665",
+                "genebuildMethod": "external_annotation_import",
                 "genebuildMethodDisplay": "Import",
-                "genebuildProviderName": "IWGSC",
-                "genebuildProviderUrl": "https://wheatgenome.org",
-                "genebuildSampleGene": "TraesCS3D02G273600",
-                "genebuildSampleLocation": "3D:2585940-2634711",
+                "genebuildProviderName": "PGSB",
+                "genebuildProviderUrl": "https://www.helmholtz-munich.de/en/pgsb",
+                "genebuildSampleGene": "TraesLDM6B03G03587910",
+                "genebuildSampleLocation": "6B:570561430-570563408",
                 "genebuildVersion": "EXT01",
-                "variationSampleVariant": "1A:58609:1A_58609"
+                # "variationSampleVariant": "1A:58609:1A_58609"
             },
-            "created": "2023-09-22 15:04:29",
-            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
+            "created": "2023-09-22 15:03:01",
+            "genomeUuid": "ae794660-8751-41cc-8883-b2fcdc7a74e8",
             "organism": {
                 "commonName": "bread wheat",
-                "ensemblName": "SAMEA4791365",
-                "organismUuid": "86dd50f1-421e-4829-aca5-13ccc9a459f6",
+                "ensemblName": "SAMEA7089058",
+                "organismUuid": "6f56c6d1-d06e-44d3-b766-ab5f6509f255",
                 "scientificName": "Triticum aestivum",
                 "scientificParlanceName": "Wheat",
                 "speciesTaxonomyId": 4565,
                 "taxonomyId": 4565,
-                "strain": "Chinese Spring",
+                "strain": "Landmark",
                 "strainType": "cultivar"
             },
-            "relatedAssembliesCount": 10,
+            "relatedAssembliesCount": 18,
             "release": {
                 "isCurrent": True,
                 "releaseDate": "2023-10-18",
@@ -1507,7 +1507,7 @@ class TestUtils:
                     "wheat"
                 ],
                 "scientificName": "Triticum aestivum",
-                "strain": "Chinese Spring",
+                "strain": "Landmark",
                 "taxonomyId": 4565
             }
         }
@@ -1524,7 +1524,7 @@ class TestUtils:
             "organismsGroupCount": [
                 {
                     "speciesTaxonomyId": 9606,
-                    "commonName": "Human",
+                    "commonName": "human",
                     "scientificName": "Homo sapiens",
                     "order": 1,
                     "count": 99

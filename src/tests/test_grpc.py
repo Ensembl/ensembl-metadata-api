@@ -261,9 +261,9 @@ class TestMetadataDB:
             # specifying genome_uuid
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
             # specifying dataset_uuid
-            (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 522),
+            (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 1),
+            (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 522),
         ]
     )
     def test_fetch_genome_dataset_all(
@@ -306,17 +306,17 @@ class TestMetadataDB:
         assert len(test) == expected_count
 
     @pytest.mark.parametrize(
-        "ensembl_name, assembly_name, use_default_assembly, expected_output",
+        "production_name, assembly_name, use_default_assembly, expected_output",
         [
             ("homo_sapiens_37", "GRCh37.p13", False, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
             ("homo_sapiens_37", "GRCh37", True, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
         ]
     )
-    def test_fetch_genome_uuid(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly, expected_output):
+    def test_fetch_genome_uuid(self, multi_dbs, production_name, assembly_name, use_default_assembly, expected_output):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes(
-            ensembl_name=ensembl_name,
+            production_name=production_name,
             assembly_name=assembly_name,
             use_default_assembly=use_default_assembly,
             allow_unreleased=True,
@@ -326,18 +326,18 @@ class TestMetadataDB:
         assert test[0].Genome.genome_uuid == expected_output
 
     @pytest.mark.parametrize(
-        "ensembl_name, assembly_name, use_default_assembly, expected_output",
+        "production_name, assembly_name, use_default_assembly, expected_output",
         [
             ("homo_sapiens", "GRCh38.p14", False, "a7335667-93e7-11ec-a39d-005056b38ce3"),
             ("homo_sapiens", "GRCh38", True, "a7335667-93e7-11ec-a39d-005056b38ce3"),
         ]
     )
-    def test_fetch_genome_uuid_is_current(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly,
+    def test_fetch_genome_uuid_is_current(self, multi_dbs, production_name, assembly_name, use_default_assembly,
                                           expected_output):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes(
-            ensembl_name=ensembl_name,
+            production_name=production_name,
             assembly_name=assembly_name,
             use_default_assembly=use_default_assembly,
             allow_unreleased=True
@@ -346,17 +346,17 @@ class TestMetadataDB:
         assert test[0].Genome.genome_uuid == expected_output
 
     @pytest.mark.parametrize(
-        "ensembl_name, assembly_name, use_default_assembly",
+        "production_name, assembly_name, use_default_assembly",
         [
             ("homo_sapiens", "GRCh37", False),
             ("homo_sapiens", "GRCh37.p13", True),
         ]
     )
-    def test_fetch_genome_uuid_empty(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly):
+    def test_fetch_genome_uuid_empty(self, multi_dbs, production_name, assembly_name, use_default_assembly):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes(
-            ensembl_name=ensembl_name,
+            production_name=production_name,
             assembly_name=assembly_name,
             use_default_assembly=use_default_assembly
         )

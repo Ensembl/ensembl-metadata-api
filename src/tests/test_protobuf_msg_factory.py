@@ -85,7 +85,7 @@ class TestClass:
                 "speciesTaxonomyId": 9606,
                 "taxonomyId": 9606
             },
-            "relatedAssembliesCount": 9,
+            "relatedAssembliesCount": 99,
             "release": {
                 "releaseVersion": 110.1,
                 "releaseDate": "2023-10-18",
@@ -110,9 +110,9 @@ class TestClass:
         input_data = genome_db_conn.fetch_sequences(assembly_uuid="fd7fea38-981a-4d73-a879-6f9daef86f08")
         expected_output = {
             "accession": "GCA_000001405.29",
-            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-            # "chromosomal": 1,
-            "length": "71251",
+            "assemblyUuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
+            "chromosomal": 1,
+            "length": "135086622",
             "level": "chromosome",
             "name": "GRCh38.p14",
             "sequenceLocation": "SO:0000738"
@@ -146,10 +146,10 @@ class TestClass:
         )
 
         first_expected_stat = {
-            'label': 'Average CDS length',
-            'name': 'average_cds_length',
-            'statisticType': 'bp',
-            'statisticValue': '938.55'
+            'label': 'assembly.accession',
+            'name': 'assembly.accession',
+            'statisticType': 'string',
+            'statisticValue': 'GCA_000005845.2'
         }
         output = json_format.MessageToJson(msg_factory.create_stats_by_genome_uuid(input_data)[0])
         assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
@@ -167,10 +167,10 @@ class TestClass:
         )
 
         first_expected_stat = {
-            'label': 'Average CDS length',
-            'name': 'average_cds_length',
-            'statisticType': 'bp',
-            'statisticValue': '938.55'
+            'label': 'assembly.accession',
+            'name': 'assembly.accession',
+            'statisticType': 'string',
+            'statisticValue': 'GCA_000005845.2'
         }
         stats_by_genome_uuid = msg_factory.create_stats_by_genome_uuid(input_data)
 
@@ -218,7 +218,8 @@ class TestClass:
         expected_output = {
             "name": "Y",
             "length": "57227415",
-            "chromosomal": True
+            "chromosomal": True,
+            "rank": 24
         }
         output = json_format.MessageToJson(msg_factory.create_assembly_region(input_data[0]))
         assert json.loads(output) == expected_output
