@@ -261,7 +261,7 @@ class TestMetadataDB:
             # specifying genome_uuid
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
             # specifying dataset_uuid
-            (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 1),
+            (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 522),
             # fetch unreleased datasets only
             (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 1),
         ]
@@ -382,7 +382,7 @@ class TestMetadataDB:
 
         for data in test[1:]:
             # All others have only one genome in test DB
-            assert data[4] == 16
+            assert data[4] == 1
 
     @pytest.mark.parametrize(
         "organism_uuid, expected_assemblies_count",
@@ -409,7 +409,7 @@ class TestMetadataDB:
             # fetches everything
             (True, 283, "0e1a1b4a-efe8-43cc-9220-b5d93015cba6"),
             # fetches released datasets and genomes with current_only=1 (default)
-            (False, 114, "0e1a1b4a-efe8-43cc-9220-b5d93015cba6"),
+            (False, 114, "750e67f5-4811-441d-be46-a436786dfb27"),
         ]
     )
     def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):

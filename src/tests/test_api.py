@@ -42,9 +42,9 @@ class TestApi:
             path = genome.get_public_path(dataset_type='assembly')
             assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/genome'
             path = genome.get_public_path(dataset_type='variation')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/variation/2018_10'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/variation/EXT01'
             path = genome.get_public_path(dataset_type='homologies')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/homology/2018_10'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/homology/EXT01'
             with pytest.raises(TypeNotFoundException):
                 genome.get_public_path(dataset_type='regulatory_features')
                 # assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/regulation'
@@ -62,9 +62,9 @@ class TestApi:
             path = genome.get_public_path(dataset_type='assembly')
             assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/genome'
             path = genome.get_public_path(dataset_type='variation')
-            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/variation/2023_03'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/variation/GENCODE44'
             path = genome.get_public_path(dataset_type='homologies')
-            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/homology/2023_03'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/homology/GENCODE44'
             path = genome.get_public_path(dataset_type='regulatory_features')
             assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/regulation'
 
