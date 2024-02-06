@@ -38,7 +38,7 @@ class TestApi:
             assert len(paths) == 4
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/genebuild/2018_10'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/genebuild/EXT01'
             path = genome.get_public_path(dataset_type='assembly')
             assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/genome'
             path = genome.get_public_path(dataset_type='variation')
@@ -58,7 +58,7 @@ class TestApi:
             assert len(paths) == 5
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
-            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/genebuild/2023_03'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/genebuild/GENCODE44'
             path = genome.get_public_path(dataset_type='assembly')
             assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/genome'
             path = genome.get_public_path(dataset_type='variation')

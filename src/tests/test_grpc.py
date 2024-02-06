@@ -112,7 +112,7 @@ class TestMetadataDB:
         conn = ReleaseAdaptor(multi_dbs['ensembl_metadata'].dbc.url)
         test = conn.fetch_releases_for_dataset('3d653b2d-aa8d-4f7e-8f92-55f57c7cac3a')
         assert test[0].EnsemblSite.name == 'Ensembl'
-        assert test[0].EnsemblRelease.label == 'MVP Ensembl'
+        assert test[0].EnsemblRelease.label == 'beta-1'
 
     def test_fetch_taxonomy_names(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -167,7 +167,7 @@ class TestMetadataDB:
             assembly_accession='GCA_000001405.29',
             assembly_sequence_accession='HG2280_PATCH'
         )
-        assert test[0].AssemblySequence.name == 'Y'
+        assert test[0].AssemblySequence.name == 'HG2280_PATCH'
 
     def test_fetch_genomes_by_assembly_sequence_accession_empty(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -216,7 +216,7 @@ class TestMetadataDB:
             # Chromosomal and non-chromosomal
             ("3704ceb1-948d-11ec-a39d-005056b38ce3", "GCA_000001405.14", False, 0),
             # Chromosomal only
-            ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.29", True, 10),
+            ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.29", True, 1),
         ]
     )
     def test_fetch_sequences_chromosomal(self, multi_dbs, genome_uuid, assembly_accession, chromosomal_only,
@@ -257,13 +257,13 @@ class TestMetadataDB:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 32),
+            (None, None, True, False, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 889),
             # specifying genome_uuid
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
             # specifying dataset_uuid
             (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "8a6bce3f-d160-421c-b529-c4d3ccea953b", 1),
+            (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 1),
         ]
     )
     def test_fetch_genome_dataset_all(
@@ -382,7 +382,7 @@ class TestMetadataDB:
 
         for data in test[1:]:
             # All others have only one genome in test DB
-            assert data[4] == 1
+            assert data[4] == 16
 
     @pytest.mark.parametrize(
         "organism_uuid, expected_assemblies_count",
@@ -407,9 +407,9 @@ class TestMetadataDB:
         "allow_unreleased, output_count, expected_genome_uuid",
         [
             # fetches everything
-            (True, 283, "a73356e1-93e7-11ec-a39d-005056b38ce3"),
+            (True, 283, "0e1a1b4a-efe8-43cc-9220-b5d93015cba6"),
             # fetches released datasets and genomes with current_only=1 (default)
-            (False, 114, "a73356e1-93e7-11ec-a39d-005056b38ce3"),
+            (False, 114, "0e1a1b4a-efe8-43cc-9220-b5d93015cba6"),
         ]
     )
     def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):
