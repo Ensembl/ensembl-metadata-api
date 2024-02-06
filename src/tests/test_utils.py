@@ -65,10 +65,10 @@ class TestUtils:
         expected_output = {
             "accession": "GCA_000001405.29",
             "assemblyUuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
-            # "chromosomal": 1,
-            "length": "71251",
+            "chromosomal": 1,
+            "length": "135086622",
             "level": "chromosome",
-            "name": "GRCh38.p13",
+            "name": "GRCh38.p14",
             "sequenceLocation": "SO:0000738"
         }
         assert json.loads(output) == expected_output
@@ -169,7 +169,7 @@ class TestUtils:
             utils.get_top_level_statistics(
                 db_conn=genome_db_conn,
                 group="EnsemblPlants",
-                organism_uuid="d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+                organism_uuid="6f56c6d1-d06e-44d3-b766-ab5f6509f255",
             )
         )
         output = json.loads(output)
@@ -204,9 +204,9 @@ class TestUtils:
         output = json.loads(output)
         assert len(output["statistics"]) == 80
         assert output["statistics"][0] == {
-            'label': 'Average CDS length',
-            'name': 'average_cds_length',
-            'statisticType': 'bp',
+            'label': 'genebuild.average_cds_length',
+            'name': 'genebuild.average_cds_length',
+            'statisticType': 'string',
             'statisticValue': '1332.42'
         }
         assert output["statistics"][2] == {
@@ -1039,8 +1039,8 @@ class TestUtils:
     @pytest.mark.parametrize(
         "production_name, assembly_name, use_default, expected_output",
         [
-            ("homo_sapiens", "GRCh38.p13", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-            ("homo_sapiens", "GRCh38.p13", True, {}),
+            ("homo_sapiens", "GRCh38.p14", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            ("homo_sapiens", "GRCh38.p14", True, {}),
             ("homo_sapiens", "GRCh38", True, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
             ("random_production_name", "random_assembly_name", True, {}),
             ("random_production_name", "random_assembly_name", False, {}),
@@ -1067,30 +1067,45 @@ class TestUtils:
             "assembly": {
                 "accession": "GCA_900519105.1",
                 "ensemblName": "IWGSC",
-                "assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
+                "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
+                "isReference": True,
                 "level": "chromosome",
                 "name": "IWGSC"
             },
-            "attributesInfo": {},
-            "created": "2023-05-12 13:32:36",
+            "attributesInfo": {
+                "assemblyDate": "2018-07",
+                "assemblyLevel": "chromosome",
+                "assemblyProviderName": "International Wheat Genome Sequencing Consortium",
+                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1",
+                "genebuildMethod": "import",
+                "genebuildMethodDisplay": "Import",
+                "genebuildProviderName": "IWGSC",
+                "genebuildProviderUrl": "https://wheatgenome.org",
+                "genebuildSampleGene": "TraesCS3D02G273600",
+                "genebuildSampleLocation": "3D:2585940-2634711",
+                "genebuildVersion": "EXT01",
+                "variationSampleVariant": "1A:58609:1A_58609"
+            },
+            "created": "2023-09-22 15:04:29",
             "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
             "organism": {
-                "commonName": "Triticum aestivum",
-                "ensemblName": "Triticum_aestivum",
-                "organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+                "commonName": "bread wheat",
+                "ensemblName": "SAMEA4791365",
+                "organismUuid": "86dd50f1-421e-4829-aca5-13ccc9a459f6",
                 "scientificName": "Triticum aestivum",
-                "scientificParlanceName": "triticum_aestivum",
+                "scientificParlanceName": "Wheat",
                 "speciesTaxonomyId": 4565,
                 "taxonomyId": 4565,
-                "strain": "reference (Chinese spring)"
+                "strain": "Chinese Spring",
+                "strainType": "cultivar"
             },
-            "relatedAssembliesCount": 1,
+            "relatedAssembliesCount": 10,
             "release": {
                 "isCurrent": True,
-                "releaseDate": "2023-05-15",
-                "releaseLabel": "Beta Release 1",
+                "releaseDate": "2023-10-18",
+                "releaseLabel": "beta-1",
                 "releaseVersion": 110.1,
-                "siteLabel": "Ensembl Genome Browser",
+                "siteLabel": "MVP Ensembl",
                 "siteName": "Ensembl",
                 "siteUri": "https://beta.ensembl.org"
             },
@@ -1104,7 +1119,7 @@ class TestUtils:
                     "wheat"
                 ],
                 "scientificName": "Triticum aestivum",
-                "strain": "reference (Chinese spring)",
+                "strain": "Chinese Spring",
                 "taxonomyId": 4565
             }
         }
@@ -1121,30 +1136,45 @@ class TestUtils:
             "assembly": {
                 "accession": "GCA_900519105.1",
                 "ensemblName": "IWGSC",
-                "assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
+                "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
+                "isReference": True,
                 "level": "chromosome",
                 "name": "IWGSC"
             },
-            "attributesInfo": {},
-            "created": "2023-05-12 13:32:36",
+            "attributesInfo": {
+                "assemblyDate": "2018-07",
+                "assemblyLevel": "chromosome",
+                "assemblyProviderName": "International Wheat Genome Sequencing Consortium",
+                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1",
+                "genebuildMethod": "import",
+                "genebuildMethodDisplay": "Import",
+                "genebuildProviderName": "IWGSC",
+                "genebuildProviderUrl": "https://wheatgenome.org",
+                "genebuildSampleGene": "TraesCS3D02G273600",
+                "genebuildSampleLocation": "3D:2585940-2634711",
+                "genebuildVersion": "EXT01",
+                "variationSampleVariant": "1A:58609:1A_58609"
+            },
+            "created": "2023-09-22 15:04:29",
             "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
             "organism": {
-                "commonName": "Triticum aestivum",
-                "ensemblName": "Triticum_aestivum",
-                "organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+                "commonName": "bread wheat",
+                "ensemblName": "SAMEA4791365",
+                "organismUuid": "86dd50f1-421e-4829-aca5-13ccc9a459f6",
                 "scientificName": "Triticum aestivum",
-                "scientificParlanceName": "triticum_aestivum",
+                "scientificParlanceName": "Wheat",
                 "speciesTaxonomyId": 4565,
                 "taxonomyId": 4565,
-                "strain": "reference (Chinese spring)"
+                "strain": "Chinese Spring",
+                "strainType": "cultivar"
             },
-            "relatedAssembliesCount": 1,
+            "relatedAssembliesCount": 10,
             "release": {
                 "isCurrent": True,
-                "releaseDate": "2023-05-15",
-                "releaseLabel": "Beta Release 1",
+                "releaseDate": "2023-10-18",
+                "releaseLabel": "beta-1",
                 "releaseVersion": 110.1,
-                "siteLabel": "Ensembl Genome Browser",
+                "siteLabel": "MVP Ensembl",
                 "siteName": "Ensembl",
                 "siteUri": "https://beta.ensembl.org"
             },
@@ -1158,7 +1188,7 @@ class TestUtils:
                     "wheat"
                 ],
                 "scientificName": "Triticum aestivum",
-                "strain": "reference (Chinese spring)",
+                "strain": "Chinese Spring",
                 "taxonomyId": 4565
             }
         }
@@ -1169,86 +1199,88 @@ class TestUtils:
         assert output == ensembl_metadata_pb2.Genome()
 
     def test_get_genomes_by_keyword(self, genome_db_conn):
+        # these tests' expected output are way too long... TODO: find a shorter case
         output = [json.loads(json_format.MessageToJson(response)) for response in
                   utils.get_genomes_by_keyword_iterator(genome_db_conn, "Human", 110.1)]
         expected_output = [
             {
                 "assembly": {
-                    "accession": "GCA_000001405.28",
-                    "ensemblName": "GRCh38.p13",
-                    "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-                    "level": "chromosome",
-                    "isReference": True,
-                    "name": "GRCh38.p13",
-                    "ucscName": "hg38",
-                    "urlName": "GRCh38"
+                    "accession": "GCA_018473315.1",
+                    "ensemblName": "HG03540.alt.pat.f1_v2",
+                    "assemblyUuid": "9d2dc346-358a-4c70-8fd8-3ff194246a76",
+                    "level": "primary_assembly",
+                    "name": "HG03540.alt.pat.f1_v2",
                 },
                 "attributesInfo": {},
-                "created": "2023-05-12 13:30:58",
-                "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+                "created": "2023-09-22 15:02:00",
+                "genomeUuid": "9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1",
                 "organism": {
-                    "commonName": "Human",
-                    "ensemblName": "Homo_sapiens",
-                    "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
+                    "commonName": "human",
+                    "ensemblName": "SAMN17861670",
+                    "organismUuid": "18bd7042-d861-4a10-b5d0-68c8bccfc87e",
                     "scientificName": "Homo sapiens",
                     "speciesTaxonomyId": 9606,
                     "taxonomyId": 9606,
-                    "scientificParlanceName": "homo_sapiens"
+                    "scientificParlanceName": "Human",
+                    "strain": "Gambian in Western Division",
+                    "strainType": "population"
                 },
                 "release": {
                     "isCurrent": True,
-                    "releaseDate": "2023-05-15",
-                    "releaseLabel": "Beta Release 1",
+                    "releaseDate": "2023-10-18",
+                    "releaseLabel": "beta-1",
                     "releaseVersion": 110.1,
-                    "siteLabel": "Ensembl Genome Browser",
+                    "siteLabel": "MVP Ensembl",
                     "siteName": "Ensembl",
                     "siteUri": "https://beta.ensembl.org"
                 },
                 "taxon": {
                     "scientificName": "Homo sapiens",
+                    "strain": "Gambian in Western Division",
                     "taxonomyId": 9606
                 },
             },
             {
                 "assembly": {
-                    "accession": "GCA_000001405.14",
-                    "ensemblName": "GRCh37.p13",
-                    "assemblyUuid": "633034c3-2268-40a2-866a-9f492cac84bf",
-                    "level": "chromosome",
-                    "name": "GRCh37.p13",
-                    "ucscName": "hg19",
-                    "urlName": "GRCh37"
+                    "accession": "GCA_018469415.1",
+                    "ensemblName": "HG03516.alt.pat.f1_v2",
+                    "assemblyUuid": "1551e511-bde7-40cf-95cd-de4059678c6f",
+                    "level": "primary_assembly",
+                    "name": "HG03516.alt.pat.f1_v2"
                 },
                 "attributesInfo": {},
-                "created": "2023-05-12 13:32:06",
-                "genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3",
+                "created": "2023-09-22 15:02:01",
+                "genomeUuid": "2020e8d5-4d87-47af-be78-0b15e48970a7",
                 "organism": {
-                    "commonName": "Human",
-                    "ensemblName": "Homo_sapiens",
-                    "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
+                    "commonName": "human",
+                    "ensemblName": "SAMN17861241",
+                    "organismUuid": "a3352834-cea1-40aa-9dad-98581620c36b",
                     "scientificName": "Homo sapiens",
                     "speciesTaxonomyId": 9606,
                     "taxonomyId": 9606,
-                    "scientificParlanceName": "homo_sapiens"
+                    "strain": "Esan in Nigeria",
+                    "strainType": "population"
                 },
                 "release": {
                     "isCurrent": True,
-                    "releaseDate": "2023-05-15",
-                    "releaseLabel": "Beta Release 1",
+                    "releaseDate": "2023-10-18",
+                    "releaseLabel": "beta-1",
                     "releaseVersion": 110.1,
-                    "siteLabel": "Ensembl Genome Browser",
+                    "siteLabel": "MVP Ensembl",
                     "siteName": "Ensembl",
                     "siteUri": "https://beta.ensembl.org"
                 },
                 "taxon": {
                     "scientificName": "Homo sapiens",
+                    "strain": "Esan in Nigeria",
                     "taxonomyId": 9606
                 }
             }
-        ]
+        ] # ...
         assert output == expected_output
 
     def test_get_genomes_by_keyword_release_unspecified(self, genome_db_conn):
+        # these tests' expected output are way too long... TODO: find a shorter case
         output = [json.loads(json_format.MessageToJson(response)) for response in
                   utils.get_genomes_by_keyword_iterator(genome_db_conn, "Homo Sapiens", 0.0)]
         # TODO: DRY the expected_output
@@ -1326,7 +1358,7 @@ class TestUtils:
                     "taxonomyId": 9606
                 }
             }
-        ]
+        ] #...
         assert output == expected_output
 
     def test_get_genomes_by_keyword_null(self, genome_db_conn):
@@ -1344,37 +1376,52 @@ class TestUtils:
         output = json_format.MessageToJson(utils.get_genome_by_name(
             db_conn=genome_db_conn,
             site_name="Ensembl",
-            ensembl_name="Triticum_aestivum",
+            ensembl_name="SAMEA7089058",
             release_version=110.1
         ))
         expected_output = {
             "assembly": {
                 "accession": "GCA_900519105.1",
                 "ensemblName": "IWGSC",
-                "assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
+                "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
+                "isReference": True,
                 "level": "chromosome",
                 "name": "IWGSC"
             },
-            "attributesInfo": {},
-            "created": "2023-05-12 13:32:36",
+            "attributesInfo": {
+                "assemblyDate": "2018-07",
+                "assemblyLevel": "chromosome",
+                "assemblyProviderName": "International Wheat Genome Sequencing Consortium",
+                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1",
+                "genebuildMethod": "import",
+                "genebuildMethodDisplay": "Import",
+                "genebuildProviderName": "IWGSC",
+                "genebuildProviderUrl": "https://wheatgenome.org",
+                "genebuildSampleGene": "TraesCS3D02G273600",
+                "genebuildSampleLocation": "3D:2585940-2634711",
+                "genebuildVersion": "EXT01",
+                "variationSampleVariant": "1A:58609:1A_58609"
+            },
+            "created": "2023-09-22 15:04:29",
             "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
             "organism": {
-                "commonName": "Triticum aestivum",
-                "ensemblName": "Triticum_aestivum",
-                "organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+                "commonName": "bread wheat",
+                "ensemblName": "SAMEA4791365",
+                "organismUuid": "86dd50f1-421e-4829-aca5-13ccc9a459f6",
                 "scientificName": "Triticum aestivum",
-                "scientificParlanceName": "triticum_aestivum",
+                "scientificParlanceName": "Wheat",
                 "speciesTaxonomyId": 4565,
                 "taxonomyId": 4565,
-                "strain": "reference (Chinese spring)"
+                "strain": "Chinese Spring",
+                "strainType": "cultivar"
             },
-            "relatedAssembliesCount": 1,
+            "relatedAssembliesCount": 10,
             "release": {
                 "isCurrent": True,
-                "releaseDate": "2023-05-15",
-                "releaseLabel": "Beta Release 1",
+                "releaseDate": "2023-10-18",
+                "releaseLabel": "beta-1",
                 "releaseVersion": 110.1,
-                "siteLabel": "Ensembl Genome Browser",
+                "siteLabel": "MVP Ensembl",
                 "siteName": "Ensembl",
                 "siteUri": "https://beta.ensembl.org"
             },
@@ -1388,7 +1435,7 @@ class TestUtils:
                     "wheat"
                 ],
                 "scientificName": "Triticum aestivum",
-                "strain": "reference (Chinese spring)",
+                "strain": "Chinese Spring",
                 "taxonomyId": 4565
             }
         }
@@ -1401,37 +1448,52 @@ class TestUtils:
         output = json_format.MessageToJson(utils.get_genome_by_name(
             db_conn=genome_db_conn,
             site_name="Ensembl",
-            ensembl_name="Triticum_aestivum",
+            ensembl_name="SAMEA7089058",
             release_version=None
         ))
         expected_output = {
             "assembly": {
                 "accession": "GCA_900519105.1",
                 "ensemblName": "IWGSC",
-                "assemblyUuid": "ec1c4b53-c2ef-431c-ad0e-b2aef19b44f1",
+                "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
+                "isReference": True,
                 "level": "chromosome",
                 "name": "IWGSC"
             },
-            "attributesInfo": {},
-            "created": "2023-05-12 13:32:36",
+            "attributesInfo": {
+                "assemblyDate": "2018-07",
+                "assemblyLevel": "chromosome",
+                "assemblyProviderName": "International Wheat Genome Sequencing Consortium",
+                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1",
+                "genebuildMethod": "import",
+                "genebuildMethodDisplay": "Import",
+                "genebuildProviderName": "IWGSC",
+                "genebuildProviderUrl": "https://wheatgenome.org",
+                "genebuildSampleGene": "TraesCS3D02G273600",
+                "genebuildSampleLocation": "3D:2585940-2634711",
+                "genebuildVersion": "EXT01",
+                "variationSampleVariant": "1A:58609:1A_58609"
+            },
+            "created": "2023-09-22 15:04:29",
             "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
             "organism": {
-                "commonName": "Triticum aestivum",
-                "ensemblName": "Triticum_aestivum",
-                "organismUuid": "d64c34ca-b37a-476b-83b5-f21d07a3ae67",
+                "commonName": "bread wheat",
+                "ensemblName": "SAMEA4791365",
+                "organismUuid": "86dd50f1-421e-4829-aca5-13ccc9a459f6",
                 "scientificName": "Triticum aestivum",
-                "scientificParlanceName": "triticum_aestivum",
+                "scientificParlanceName": "Wheat",
                 "speciesTaxonomyId": 4565,
                 "taxonomyId": 4565,
-                "strain": "reference (Chinese spring)"
+                "strain": "Chinese Spring",
+                "strainType": "cultivar"
             },
-            "relatedAssembliesCount": 1,
+            "relatedAssembliesCount": 10,
             "release": {
                 "isCurrent": True,
-                "releaseDate": "2023-05-15",
-                "releaseLabel": "Beta Release 1",
+                "releaseDate": "2023-10-18",
+                "releaseLabel": "beta-1",
                 "releaseVersion": 110.1,
-                "siteLabel": "Ensembl Genome Browser",
+                "siteLabel": "MVP Ensembl",
                 "siteName": "Ensembl",
                 "siteUri": "https://beta.ensembl.org"
             },
@@ -1445,7 +1507,7 @@ class TestUtils:
                     "wheat"
                 ],
                 "scientificName": "Triticum aestivum",
-                "strain": "reference (Chinese spring)",
+                "strain": "Chinese Spring",
                 "taxonomyId": 4565
             }
         }
@@ -1465,13 +1527,13 @@ class TestUtils:
                     "commonName": "Human",
                     "scientificName": "Homo sapiens",
                     "order": 1,
-                    "count": 3
+                    "count": 99
                 }
             ]
         }
-        # make sure it returns 6 organisms
+        # make sure it returns 41 organisms
         json_output = json.loads(output)
-        assert len(json_output['organismsGroupCount']) == 6
+        assert len(json_output['organismsGroupCount']) == 41
         # and pick up the first element to check if it matches the expected output
         # I picked up only the first element for the sake of shortening the code
         assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
