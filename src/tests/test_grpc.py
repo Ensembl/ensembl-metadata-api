@@ -287,10 +287,10 @@ class TestMetadataDB:
     @pytest.mark.parametrize(
         "organism_uuid, expected_count",
         [
-            # homo_sapiens 37
-            ("3704ceb1-948d-11ec-a39d-005056b38ce3", 11),
+            # homo_sapiens_37
+            ("1d336185-affe-4a91-85bb-04ebd73cbb56", 11),
             # e-coli
-            ("a73351f7-93e7-11ec-a39d-005056b38ce3", 3),
+            ("1e579f8d-3880-424e-9b4f-190eb69280d9", 3),
             # non-existing organism
             ("organism-yet-to-be-discovered", 0),
         ]
@@ -308,8 +308,8 @@ class TestMetadataDB:
     @pytest.mark.parametrize(
         "ensembl_name, assembly_name, use_default_assembly, expected_output",
         [
-            ("homo_sapiens", "GRCh37.p13", False, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
-            ("homo_sapiens", "GRCh37", True, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
+            ("homo_sapiens_37", "GRCh37.p13", False, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
+            ("homo_sapiens_37", "GRCh37", True, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
         ]
     )
     def test_fetch_genome_uuid(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly, expected_output):
@@ -328,8 +328,8 @@ class TestMetadataDB:
     @pytest.mark.parametrize(
         "ensembl_name, assembly_name, use_default_assembly, expected_output",
         [
-            ("homo_sapiens", "GRCh38.p14", False, "fd7fea38-981a-4d73-a879-6f9daef86f08"),
-            ("homo_sapiens", "GRCh38", True, "fd7fea38-981a-4d73-a879-6f9daef86f08"),
+            ("homo_sapiens", "GRCh38.p14", False, "a7335667-93e7-11ec-a39d-005056b38ce3"),
+            ("homo_sapiens", "GRCh38", True, "a7335667-93e7-11ec-a39d-005056b38ce3"),
         ]
     )
     def test_fetch_genome_uuid_is_current(self, multi_dbs, ensembl_name, assembly_name, use_default_assembly,
