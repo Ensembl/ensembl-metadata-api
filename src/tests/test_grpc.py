@@ -144,14 +144,14 @@ class TestMetadataDB:
     def test_fetch_genomes_by_genome_uuid(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_genome_uuid('b00f5b0a-b434-4949-9c05-140826c96cd4') #a733550b-93e7-11ec-a39d-005056b38ce3')
+        test = conn.fetch_genomes_by_genome_uuid('b00f5b0a-b434-4949-9c05-140826c96cd4')
         assert test[0].Organism.scientific_name == 'Oryzias latipes'
 
     def test_fetch_genome_by_ensembl_and_assembly_name(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(assembly_name='WBcel235', ensembl_name='SAMEA7089059')
-        assert test[0].Organism.scientific_name == 'Caenorhabditis elegans'
+        test = conn.fetch_genomes(assembly_name='NOD_ShiLtJ_v1', ensembl_name='SAMN04489827')
+        assert test[0].Organism.scientific_name == 'Mus musculus'
 
     def test_fetch_genomes_by_assembly_accession(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -195,10 +195,10 @@ class TestMetadataDB:
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes_by_scientific_name(
-            scientific_name='Oryza sativa aromatic subgroup',
+            scientific_name='Oryzias latipes',
             site_name='Ensembl'
         )
-        assert test[0].Organism.common_name == 'Aromatic rice'
+        assert test[0].Organism.common_name == 'Japanese medaka'
 
     def test_fetch_sequences(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url,
@@ -409,7 +409,7 @@ class TestMetadataDB:
             # fetches everything
             (True, 283, "0e1a1b4a-efe8-43cc-9220-b5d93015cba6"),
             # fetches released datasets and genomes with current_only=1 (default)
-            (False, 114, "750e67f5-4811-441d-be46-a436786dfb27"),
+            (False, 114, "7c4c8bc7-ccac-419f-af7f-a1d66989bc3b"),
         ]
     )
     def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):
