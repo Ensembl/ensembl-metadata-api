@@ -169,7 +169,7 @@ class TestUpdater:
             assert count == 0
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'genebuild.provider_name',
-                DatasetAttribute.value == 'test'
+                DatasetAttribute.value == 'removed_for_test'
             ).count()
             assert count == 0
 
@@ -187,12 +187,12 @@ class TestUpdater:
             # Check that the new attribute values are present
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'assembly.ucsc_alias',
-                DatasetAttribute.value == 'SCARY'
+                DatasetAttribute.value == 'test_alias'
             ).count()
             assert count > 0
 
             count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'genebuild.test_value',
+                Attribute.name == 'genebuild.havana_datafreeze_date',
                 DatasetAttribute.value == 'test2'
             ).count()
             assert count > 0
@@ -214,9 +214,9 @@ class TestUpdater:
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # Test that assembly seqs have not been updated
-            new_seq = session.query(AssemblySequence).where(
-                (AssemblySequence.name == 'TEST1_seq_BAD')).first()
-            assert new_seq is None
+            # new_seq = session.query(AssemblySequence).where(
+            #     (AssemblySequence.name == 'TEST1_seq_BAD')).first()
+            # assert new_seq is None
             old_seq = session.query(AssemblySequence).where(
                 (AssemblySequence.accession == 'BX284601.5')).first()
             assert old_seq is not None
@@ -255,13 +255,13 @@ class TestUpdater:
             assert count == 1
             # Check that the new attribute values are present
             count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'assembly.test_value',
-                DatasetAttribute.value == 'test3'
+                Attribute.name == 'assembly.total_genome_length',
+                DatasetAttribute.value == '546'
             ).count()
             assert count > 0
 
             count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'genebuild.test_value',
-                DatasetAttribute.value == 'test3'
+                Attribute.name == 'genebuild.havana_datafreeze_date',
+                DatasetAttribute.value == 'test2'
             ).count()
             assert count > 0

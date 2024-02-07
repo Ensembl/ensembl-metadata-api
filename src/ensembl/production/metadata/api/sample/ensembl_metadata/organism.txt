@@ -163,7 +163,7 @@
 172	559292	4932	baker's yeast	S288C	Saccharomyces cerevisiae S288c	SAMEA3184125	Bakers yeast	ae962453-0287-4201-83b8-3847c7d8027d	strain	0
 173	9823	9823	pig	Rongchang	Sus scrofa	SAMN04440482	\N	11e4ba85-ba06-4dbe-a32d-fdedeeb4c5bf	breed	0
 174	10089	10089	Ryukyu mouse	\N	Mus caroli	SAMEA3367631	\N	c6c067e6-f72a-4b57-b663-3da20f88f9a2	strain	0
-175	6239	6239	Roundworm	N2	Caenorhabditis elegans	SAMN04256190	Roundworm	b181947a-a725-4866-ada4-5433e5dfdcac	strain	0
+175	6239	6239	Roundworm	N2	Caenorhabditis elegans	Caenorhabditis_elegans	Roundworm	b181947a-a725-4866-ada4-5433e5dfdcac	strain	0
 176	10090	10090	mouse	NZO/HiLtJ	Mus musculus	SAMN04489828	Mouse	f4ec61b6-7582-4d81-bdab-55a590e38eeb	strain	0
 177	3847	3847	soybeans	Williams 82	Glycine max	SAMN00002965	Soybean	9442d78a-e8e4-44c1-b1a6-f6c730e44bf9	cultivar	0
 178	8128	8128	Nile tilapia	\N	Oreochromis niloticus	SAMN05859795	\N	4b5f7066-0ab5-4f57-98f9-dc5f14b9efde	\N	0
