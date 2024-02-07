@@ -182,9 +182,9 @@ class TestUtils:
             'statisticValue': 'GCA_903995565.1'
         }
         assert first_genome_stats[1] == {
-            'label': 'assembly.chromosomes',
+            'label': 'Chromosomes or plasmids',
             'name': 'assembly.chromosomes',
-            'statisticType': 'string',
+            'statisticType': 'integer',
             'statisticValue': '21'
         }
 
@@ -210,10 +210,10 @@ class TestUtils:
             'statisticValue': '1332.42'
         }
         assert output["statistics"][2] == {
-            'label': 'genebuild.average_coding_exons_per_coding_gene',
-            'name': 'genebuild.average_coding_exons_per_coding_gene',
-            'statisticType': 'string',
-            'statisticValue': '5.34'
+            'label': 'Average coding exons per transcript',
+            'name': 'genebuild.average_coding_exons_per_transcript',
+            'statisticType': 'float',
+            'statisticValue': '5.60'
         }
 
     # assert output["statistics"][2] == {
@@ -815,7 +815,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.chromosomes',
-                    'type': 'string',
+                    'type': 'integer',
                     'value': '25',
                     'version': 110.0
                 },
@@ -824,7 +824,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.component_sequences',
-                    'type': 'string',
+                    'type': 'integer',
                     'value': '36829',
                     'version': 110.0
                 },
@@ -833,7 +833,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.contig_n50',
-                    'type': 'string',
+                    'type': 'bp',
                     'value': '54806562',
                     'version': 110.0
                 },
@@ -869,7 +869,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.gc_percentage',
-                    'type': 'string',
+                    'type': 'percent',
                     'value': '38.88',
                     'version': 110.0
                 },
@@ -941,7 +941,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.spanned_gaps',
-                    'type': 'string',
+                    'type': 'integer',
                     'value': '663',
                     'version': 110.0
                 },
@@ -958,7 +958,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.toplevel_sequences',
-                    'type': 'string',
+                    'type': 'integer',
                     'value': '709',
                     'version': 110.0
                 },
@@ -967,7 +967,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.total_coding_sequence_length',
-                    'type': 'string',
+                    'type': 'bp',
                     'value': '34493611',
                     'version': 110.0
                 },
@@ -976,7 +976,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.total_gap_length',
-                    'type': 'string',
+                    'type': 'bp',
                     'value': '161611139',
                     'version': 110.0
                 },
@@ -985,7 +985,7 @@ class TestUtils:
                     'datasetName': 'assembly',
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.total_genome_length',
-                    'type': 'string',
+                    'type': 'bp',
                     'value': '3298912062',
                     'version': 110.0
                 },

@@ -409,7 +409,7 @@ class TestMetadataDB:
             # fetches everything
             (True, 283, "0e1a1b4a-efe8-43cc-9220-b5d93015cba6"),
             # fetches released datasets and genomes with current_only=1 (default)
-            (False, 114, "7c4c8bc7-ccac-419f-af7f-a1d66989bc3b"),
+            (False, 114, "750e67f5-4811-441d-be46-a436786dfb27"),
         ]
     )
     def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):
