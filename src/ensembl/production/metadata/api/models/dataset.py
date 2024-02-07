@@ -9,7 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index, JSON
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -99,6 +99,9 @@ class DatasetType(LoadAble, Base):
     topic = Column(String(32), nullable=False)
     description = Column(String(255))
     details_uri = Column(String(255))
+    parent = Column(String(128), default=None)
+    depends_on = Column(String(128), default=None)
+    filter_on = Column(JSON, default=None)
     # One to many relationships
     # dataset_type_id to dataset
     datasets = relationship('Dataset', back_populates='dataset_type')
