@@ -10,7 +10,7 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: testdb
+          MYSQL_DATABASE: runner_ensembl_metadata
           MYSQL_USER: testuser
           MYSQL_PASSWORD: password
         ports:
