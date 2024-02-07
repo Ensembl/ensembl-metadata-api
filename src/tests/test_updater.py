@@ -131,8 +131,8 @@ class TestUpdater:
         test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            organism = session.query(Organism).where(Organism.biosample_id == 'Hominoide').first()
-            assert organism.common_name == 'apes'
+            organism = session.query(Organism).where(Organism.biosample_id == 'test_case_5').first()
+            assert organism.common_name == 'sheep'
 
     def test_fail_existing_genome_uuid_data_not_match(self, multi_dbs):
         test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
