@@ -56,41 +56,43 @@ class TestClass:
         expected_output = {
             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
             "assembly": {
-                "accession": "GCA_000001405.28",
-                "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-                "name": "GRCh38.p13",
+                "accession": "GCA_000001405.29",
+                "assemblyUuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
+                "name": "GRCh38.p14",
                 "ucscName": "hg38",
                 "level": "chromosome",
-                "ensemblName": "GRCh38.p13",
+                "ensemblName": "GRCh38.p14",
                 "isReference": True,
-                "urlName": "GRCh38"
+                "urlName": "grch38"
             },
             "taxon": {
                 "taxonomyId": 9606,
                 "scientificName": "Homo sapiens"
             },
-            "created": "2023-05-12 13:30:58",
+            "created": "2023-09-22 15:04:45",
             "attributesInfo": {
                 "assemblyLevel": "chromosome",
-                "assemblyDate": "2013-12"
+                "assemblyDate": "2013-12",
+                "assemblyProviderName": "Genome Reference Consortium",
+                "assemblyProviderUrl": "https://www.ncbi.nlm.nih.gov/grc"
             },
             "organism": {
-                "commonName": "Human",
-                "ensemblName": "Homo_sapiens",
-                "organismUuid": "db2a5f09-2db8-429b-a407-c15a4ca2876d",
+                "commonName": "human",
+                "ensemblName": "SAMN12121739",
+                "organismUuid": "1d336185-affe-4a91-85bb-04ebd73cbb56",
                 "scientificName": "Homo sapiens",
-                "scientificParlanceName": "homo_sapiens",
+                "scientificParlanceName": "Human",
                 "speciesTaxonomyId": 9606,
                 "taxonomyId": 9606
             },
-            "relatedAssembliesCount": 3,
+            "relatedAssembliesCount": 99,
             "release": {
-                "releaseVersion": 108.0,
-                "releaseDate": "2023-05-15",
-                "releaseLabel": "Beta Release 1",
+                "releaseVersion": 110.1,
+                "releaseDate": "2023-10-18",
+                "releaseLabel": "beta-1",
                 "isCurrent": True,
                 "siteName": "Ensembl",
-                "siteLabel": "Ensembl Genome Browser",
+                "siteLabel": "MVP Ensembl",
                 "siteUri": "https://beta.ensembl.org"
             }
         }
@@ -105,14 +107,14 @@ class TestClass:
         assert json.loads(output) == expected_output
 
     def test_create_assembly_info(self, multi_dbs, genome_db_conn):
-        input_data = genome_db_conn.fetch_sequences(assembly_uuid="eeaaa2bf-151c-4848-8b85-a05a9993101e")
+        input_data = genome_db_conn.fetch_sequences(assembly_uuid="fd7fea38-981a-4d73-a879-6f9daef86f08")
         expected_output = {
-            "accession": "GCA_000001405.28",
-            "assemblyUuid": "eeaaa2bf-151c-4848-8b85-a05a9993101e",
-            # "chromosomal": 1,
-            "length": "71251",
+            "accession": "GCA_000001405.29",
+            "assemblyUuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
+            "chromosomal": 1,
+            "length": "135086622",
             "level": "chromosome",
-            "name": "GRCh38.p13",
+            "name": "GRCh38.p14",
             "sequenceLocation": "SO:0000738"
         }
 
@@ -127,7 +129,7 @@ class TestClass:
             "genbankCommonName": "human",
             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
             "scientificName": "Homo sapiens",
-            "scientificParlanceName": "human",
+            "scientificParlanceName": "Human",
             "taxonId": 9606
         }
 
@@ -135,7 +137,8 @@ class TestClass:
         assert json.loads(output) == expected_output
 
     def test_create_stats_by_organism_uuid(self, genome_db_conn):
-        organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
+        # ecoli
+        organism_uuid = "1e579f8d-3880-424e-9b4f-190eb69280d9"
         input_data = genome_db_conn.fetch_genome_datasets(
             organism_uuid=organism_uuid,
             dataset_attributes=True,
@@ -143,10 +146,10 @@ class TestClass:
         )
 
         first_expected_stat = {
-            'label': 'Average CDS length',
-            'name': 'average_cds_length',
-            'statisticType': 'bp',
-            'statisticValue': '938.55'
+            'label': 'assembly.accession',
+            'name': 'assembly.accession',
+            'statisticType': 'string',
+            'statisticValue': 'GCA_000005845.2'
         }
         output = json_format.MessageToJson(msg_factory.create_stats_by_genome_uuid(input_data)[0])
         assert json.loads(output)['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
@@ -155,7 +158,8 @@ class TestClass:
         assert json.loads(output)['statistics'][0] == first_expected_stat
 
     def test_create_top_level_statistics(self, multi_dbs, genome_db_conn):
-        organism_uuid = "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
+        # ecoli
+        organism_uuid = "1e579f8d-3880-424e-9b4f-190eb69280d9"
         input_data = genome_db_conn.fetch_genome_datasets(
             organism_uuid=organism_uuid,
             dataset_attributes=True,
@@ -163,10 +167,10 @@ class TestClass:
         )
 
         first_expected_stat = {
-            'label': 'Average CDS length',
-            'name': 'average_cds_length',
-            'statisticType': 'bp',
-            'statisticValue': '938.55'
+            'label': 'assembly.accession',
+            'name': 'assembly.accession',
+            'statisticType': 'string',
+            'statisticValue': 'GCA_000005845.2'
         }
         stats_by_genome_uuid = msg_factory.create_stats_by_genome_uuid(input_data)
 
@@ -180,7 +184,7 @@ class TestClass:
         assert 'organismUuid' in output_dict.keys() and 'statsByGenomeUuid' in output_dict.keys()
         # These tests are pain in the back
         # TODO: find a way to improve this spaghetti
-        assert output_dict["organismUuid"] == "21279e3e-e651-43e1-a6fc-79e390b9e8a8"
+        assert output_dict["organismUuid"] == "1e579f8d-3880-424e-9b4f-190eb69280d9"
         assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
         assert output_dict['statsByGenomeUuid'][0]['statistics'][0] == first_expected_stat
 
@@ -208,26 +212,27 @@ class TestClass:
     def test_create_genome_assembly_sequence_region(self, multi_dbs, genome_db_conn):
         input_data = genome_db_conn.fetch_sequences(
             genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
-            assembly_accession="GCA_000001405.28",
-            assembly_sequence_accession="CM000686.2"
+            assembly_accession="GCA_000001405.29",
+            assembly_sequence_accession="Y"
         )
         expected_output = {
             "name": "Y",
             "length": "57227415",
-            "chromosomal": True
+            "chromosomal": True,
+            "rank": 24
         }
         output = json_format.MessageToJson(msg_factory.create_assembly_region(input_data[0]))
         assert json.loads(output) == expected_output
 
     def test_create_release(self, multi_dbs, release_db_conn):
-        input_data = release_db_conn.fetch_releases(release_version=108)
+        input_data = release_db_conn.fetch_releases(release_version=110.1)
         expected_output = {
-            "releaseVersion": 108.0,
-            "releaseDate": "2023-05-15",
-            "releaseLabel": "Beta Release 1",
+            "releaseVersion": 110.1,
+            "releaseDate": "2023-10-18",
+            "releaseLabel": "beta-1",
             "isCurrent": True,
             "siteName": "Ensembl",
-            "siteLabel": "Ensembl Genome Browser",
+            "siteLabel": "MVP Ensembl",
             "siteUri": "https://beta.ensembl.org"
         }
         output = json_format.MessageToJson(msg_factory.create_release(input_data[0]))
@@ -239,10 +244,10 @@ class TestClass:
             "organismsGroupCount": [
                 {
                     "speciesTaxonomyId": 9606,
-                    "commonName": "Human",
+                    "commonName": "human",
                     "scientificName": "Homo sapiens",
                     "order": 1,
-                    "count": 3
+                    "count": 99
                 }
             ]
         }
