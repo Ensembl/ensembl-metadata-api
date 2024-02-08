@@ -19,14 +19,15 @@ class DatasetFactory():
     get_child_datasets()
     """
     def __init__(self,session=None,metadata_uri=None):
-        if session is None:
+        if session:
+            self.session = session
+            self.owns_session = False
+        else:
             if metadata_uri is None:
                 raise DatasetFactoryException("session or metadata_uri are required")
-            self.session = DBConnection(metadata_uri).session_scope()
-            self.session_source = "new"
-        else:
-            self.session = session
-            self.session_source = "import"
+            self.owns_session = True
+            self.metadata_db = DBConnection(metadata_uri)
+
     #     #TODO: Determine how to implement genome_uuid when we can have multiples of each dataset type per genome
     def get_child_datasets(self, dataset_uuid=None):
         #Function to get all of the possible children datasets that are not constrained
@@ -43,8 +44,9 @@ class DatasetFactory():
     def create_dataset(self,genome_uuid, datasource, dataset_type, dataset_attributes):
         dataset_uuid = ''
         return dataset_uuid
-    def update_dataset_status(self,dataset_uuid,status=None):
-        dataset=self.get_dataset(dataset_uuid)
+
+    def _update_status(self, dataset, status=None):
+        valid_statuses = ['Submitted', 'Processing', 'Processed', 'Released']
         if status is None:
             old_status = dataset.status
             if old_status == 'Released':
@@ -55,14 +57,30 @@ class DatasetFactory():
                 status = 'Processed'
             elif old_status == 'Processed':
                 status = 'Released'
+        if status not in valid_statuses:
+            raise DatasetFactoryException(f"Unable to change status to {status} as this is not valid. Please use "
+                                          f"one of :{valid_statuses}")
         dataset.status = status
-        #TODO: Check if I have to close the session here.
-        return dataset_uuid,status
+        return status
+
+    def update_dataset_status(self, dataset_uuid, status=None):
+        if self.owns_session:
+            with self.metadata_db.session_scope() as session:
+                dataset = self.get_dataset(session, dataset_uuid)
+                updated_status = self._update_status(dataset, status)
+        else:
+            dataset = self.get_dataset(self.session, dataset_uuid)
+            updated_status = self._update_status(dataset, status)
+
+        return dataset_uuid, updated_status
 
     def update_dataset_attributes(self,dataset_uuid, dataset_attributes):
         datset_attribute_indicies = []
         return dataset_uuid,datset_attribute_indicies
 
-    def get_dataset(self, dataset_uuid):
-        dataset = self.session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
-        return dataset
+    def get_dataset(self, session, dataset_uuid):
+        return session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+
+    def close_session(self):
+        if self.owns_session and self.session:
+            self.session.close()

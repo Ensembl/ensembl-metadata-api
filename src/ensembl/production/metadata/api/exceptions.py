@@ -49,6 +49,6 @@ class TypeNotFoundException(UpdaterException, RuntimeError):
     """Dataset Type not found"""
     pass
 
-class DatasetFactoryException(Exception, RuntimeError):
+class DatasetFactoryException(Exception):
     """An error occured while using dataset factory"""
     pass
