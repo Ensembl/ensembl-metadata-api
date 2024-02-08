@@ -1,7 +1,7 @@
 from ensembl.database import DBConnection
 
 from ensembl.production.metadata.api.exceptions import *
-from ensembl.production.metadata.api.models import Dataset
+from ensembl.production.metadata.api.models import Dataset, Attribute, DatasetAttribute
 
 
 class DatasetFactory():
@@ -41,9 +41,10 @@ class DatasetFactory():
         child_datasets = self.get_child_datasets()
         return child_datasets
 
-    def create_dataset(self,genome_uuid, datasource, dataset_type, dataset_attributes):
-        dataset_uuid = ''
-        return dataset_uuid
+    #TODO:
+    # def create_dataset(self,genome_uuid, datasource, dataset_type, dataset_attributes):
+    #     dataset_uuid = ''
+    #     return dataset_uuid
 
     def _update_status(self, dataset, status=None):
         valid_statuses = ['Submitted', 'Processing', 'Processed', 'Released']
@@ -74,13 +75,33 @@ class DatasetFactory():
 
         return dataset_uuid, updated_status
 
-    def update_dataset_attributes(self,dataset_uuid, dataset_attributes):
-        datset_attribute_indicies = []
-        return dataset_uuid,datset_attribute_indicies
+    def update_dataset_attributes(self, dataset_uuid, attribut_dict):
+        if not isinstance(attribut_dict, dict):
+            raise TypeError("attribut_dict must be a dictionary")
+        if self.owns_session:
+            with self.metadata_db.session_scope() as session:
+                dataset = self.get_dataset(session, dataset_uuid)
+                dataset_attributes = update_attributes(dataset, attribut_dict, session)
+                return dataset_attributes
+        else:
+            dataset = self.get_dataset(self.session, dataset_uuid)
+            dataset_attributes = update_attributes(dataset, attribut_dict, self.session)
+            return dataset_attributes
 
     def get_dataset(self, session, dataset_uuid):
         return session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
 
-    def close_session(self):
-        if self.owns_session and self.session:
-            self.session.close()
+
+#This is a direct copy of Marc's code in the core updater in an unmerged branch. I am not sure where we should keep it.
+def update_attributes(dataset, attributes, session):
+    dataset_attributes = []
+    for attribute, value in attributes.items():
+        meta_attribute = session.query(Attribute).filter(Attribute.name == attribute).one_or_none()
+        if meta_attribute is None:
+            raise UpdaterException(f"{attribute} does not exist. Add it to the database and reload.")
+        dataset_attributes.append(DatasetAttribute(
+            value=value,
+            dataset=dataset,
+            attribute=meta_attribute,
+        ))
+    return dataset_attributes

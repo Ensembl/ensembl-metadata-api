@@ -84,7 +84,10 @@ CREATE TABLE dataset_type
     label           varchar(128) not null,
     topic           varchar(32)  not null,
     description     varchar(255) null,
-    details_uri     varchar(255) null
+    details_uri     varchar(255) null,
+    parent          varchar(255) null,
+    depends_on      varchar(255) null,
+    filter_on       JSON null
 );
 
 CREATE TABLE dataset
