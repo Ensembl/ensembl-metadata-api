@@ -1,3 +1,5 @@
+from ensembl.database import DBConnection
+
 from ensembl.production.metadata.api.exceptions import *
 
 class DatasetFactory():
@@ -14,7 +16,15 @@ class DatasetFactory():
     -------
     get_child_datasets()
     """
-    # def __init__(self):
+    def __init__(self,session=None,metadata_uri=None):
+        if session is None:
+            if metadata_uri is None:
+                raise DatasetFactoryException("session or metadata_uri are required")
+            self.session = DBConnection(metadata_uri).session_scope()
+            self.session_source = "new"
+        else:
+            self.session=session
+            self.session_source = "import"
     #     #TODO: Determine how to implement genome_uuid when we can have multiples of each dataset type per genome
     def get_child_datasets(self, dataset_uuid=None):
         #Function to get all of the possible children datasets that are not constrained
