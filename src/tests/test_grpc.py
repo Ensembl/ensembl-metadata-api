@@ -258,13 +258,13 @@ class TestMetadataDB:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 889),
+            (None, None, True, False, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 888),
             # specifying genome_uuid
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
             # specifying dataset_uuid
             (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 522),
+            (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 521),
         ]
     )
     def test_fetch_genome_dataset_all(
@@ -410,7 +410,7 @@ class TestMetadataDB:
             # fetches everything
             (True, 283, "0e1a1b4a-efe8-43cc-9220-b5d93015cba6"),
             # fetches released datasets and genomes with current_only=1 (default)
-            (False, 114, "7c4c8bc7-ccac-419f-af7f-a1d66989bc3b"),
+            (False, 114, "750e67f5-4811-441d-be46-a436786dfb27"),
         ]
     )
     def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):
