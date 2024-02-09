@@ -189,7 +189,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
         # Currently impossible with myisam without two phase commit (requires full refactor)
-        # This is a workaround and should be sufficent.
+        # This is a workaround and should be sufficient.
         with self.db.session_scope() as session:
             meta_session.commit()
             try:
@@ -460,6 +460,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     accession_body=self.get_meta_single_meta_key(species_id, "assembly.provider"),
                     assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
                     tol_id=tol_id,
+                    alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
                     created=func.now(),
                     assembly_uuid=str(uuid.uuid4()),
                     url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),

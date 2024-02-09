@@ -21,6 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Genome(LoadAble, Base):
     __tablename__ = "genome"
 
@@ -44,8 +45,9 @@ class Genome(LoadAble, Base):
     def get_public_path(self, dataset_type='all', release=None):
         # TODO manage the Release parameter to fetch datasets attached to release anterior to the one specified.
         paths = []
-        genome_genebuild_dataset = next((gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
-                                 None)
+        genome_genebuild_dataset = next(
+            (gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
+            None)
         if genome_genebuild_dataset is None:
             raise ValueError("Genebuild dataset not found for the genome")
         genebuild_dataset = genome_genebuild_dataset.dataset
@@ -120,6 +122,7 @@ class GenomeDataset(LoadAble, Base):
     genome = relationship("Genome", back_populates="genome_datasets")
     # release_id to release
     ensembl_release = relationship("EnsemblRelease", back_populates="genome_datasets")
+
 
 class GenomeRelease(LoadAble, Base):
     __tablename__ = "genome_release"
