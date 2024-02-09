@@ -204,24 +204,17 @@ class TestUtils:
         output = json.loads(output)
         assert len(output["statistics"]) == 80
         assert output["statistics"][0] == {
-            'label': 'Average CDS length',
-            'name': 'genebuild.average_cds_length',
-            'statisticType': 'float',
-            'statisticValue': '1332.42'
+            'label': 'assembly.accession',
+            'name': 'assembly.accession',
+            'statisticType': 'string',
+            'statisticValue': 'GCA_900519105.1'
         }
         assert output["statistics"][2] == {
-            'label': 'Average coding exons per transcript',
-            'name': 'genebuild.average_coding_exons_per_transcript',
-            'statisticType': 'float',
-            'statisticValue': '5.60'
+            'label': 'Component sequences',
+            'name': 'assembly.component_sequences',
+            'statisticType': 'integer',
+            'statisticValue': '22'
         }
-
-    # assert output["statistics"][2] == {
-    #	'label': 'Average coding exons per transcript',
-    #	'name': 'average_coding_exons_per_coding_transcript',
-    #	'statisticType': 'float',
-    #	'statisticValue': '5.34'
-    # }
 
     def test_get_datasets_list_by_uuid(self, genome_db_conn):
         # the expected_output is too long and duplicated

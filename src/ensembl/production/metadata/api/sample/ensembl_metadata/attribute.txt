@@ -19,7 +19,7 @@
 19	assembly.total_genome_length	Total genome length	Total length of all genomic sequences	bp
 20	assembly.ucsc_alias	assembly.ucsc_alias	assembly.ucsc_alias	string
 21	genebuild.average_cds_length	Average CDS length	Average length of coding sequences	float
-22	genebuild.average_coding_exons_per_coding_gene	genebuild.average_coding_exons_per_coding_gene	genebuild.average_coding_exons_per_coding_gene	string
+22	genebuild.average_coding_exons_per_coding_gene	Average coding exons per coding gene	Average coding exons per coding gene	string
 23	genebuild.average_coding_exons_per_transcript	Average coding exons per transcript	Average coding exons per coding transcript	float
 24	genebuild.average_coding_exon_length	Average exon length per coding gene	Average length of coding exons	bp
 25	genebuild.average_exon_length	Average exon length	Average length of exons	bp
