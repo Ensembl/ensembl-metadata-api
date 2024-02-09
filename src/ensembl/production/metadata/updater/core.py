@@ -172,8 +172,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 else:
                     logging.info('Rewrite of existing datasets. Only assembly dataset attributes, genebuild '
                                  'dataset, dataset attributes, and assembly sequences are modified.')
-                    # In this case, we want to rewrite the existing datasets with new data, but keep the dataset_uuid
-                    # Update genebuild_dataset
+                    # TODO: We need to review this process, because if some Variation / Regulation / Compara datasets
+                    #  exists we'll expect either to refuse the updates - imagine this was a fix in sequences! OR we
+                    #  decide to delete the other datasets to force their recompute. In this case, we want to rewrite
+                    #  the existing datasets with new data, but keep the dataset_uuid Update genebuild_dataset
                     meta_session.query(DatasetAttribute).filter(
                         DatasetAttribute.dataset_id == genebuild_dataset.dataset_id).delete()
                     self.get_or_new_genebuild(species_id,
@@ -189,7 +191,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
         # Currently impossible with myisam without two phase commit (requires full refactor)
-        # This is a workaround and should be sufficent.
+        # This is a workaround and should be sufficient.
         with self.db.session_scope() as session:
             meta_session.commit()
             try:
@@ -460,6 +462,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     accession_body=self.get_meta_single_meta_key(species_id, "assembly.provider"),
                     assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
                     tol_id=tol_id,
+                    alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
                     created=func.now(),
                     assembly_uuid=str(uuid.uuid4()),
                     url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
