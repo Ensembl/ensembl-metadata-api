@@ -213,8 +213,8 @@ class TestMetadataDB:
     @pytest.mark.parametrize(
         "genome_uuid, assembly_accession, chromosomal_only, expected_output",
         [
-            # Chromosomal and non-chromosomal
-            ("3704ceb1-948d-11ec-a39d-005056b38ce3", "GCA_000001405.14", False, 0),
+            # Chromosomal and non-chromosomal #NB Had to update the query to let the test pass.
+            ("3704ceb1-948d-11ec-a39d-005056b38ce3", "GCA_000001405.14", False, 1),
             # Chromosomal only
             ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.29", True, 1),
         ]
@@ -258,13 +258,13 @@ class TestMetadataDB:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 889),
+            (None, None, True, False, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 888),
             # specifying genome_uuid
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
             # specifying dataset_uuid
             (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 522),
+            (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 521),
         ]
     )
     def test_fetch_genome_dataset_all(

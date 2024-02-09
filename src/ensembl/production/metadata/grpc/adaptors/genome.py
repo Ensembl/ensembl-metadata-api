@@ -604,6 +604,8 @@ class GenomeAdaptor(BaseAdaptor):
             )
 
             for genome in genomes:
+                # FIXME, looping over each genome could be costly, like very costly.
+                #  Better approach could be to pre-fetch related objects
                 dataset = self.fetch_genome_datasets(
                     genome_uuid=genome[0].genome_uuid,
                     allow_unreleased=allow_unreleased_datasets,

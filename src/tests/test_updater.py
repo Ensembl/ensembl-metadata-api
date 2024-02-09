@@ -66,7 +66,8 @@ class TestUpdater:
             assembly = session.query(Assembly).where(Assembly.name == 'jaber01').first()
             assert organism.scientific_name == 'carol_jabberwocky'
             # Test the Assembly
-            assert assembly.accession == 'weird01'
+            assert assembly.accession == 'GCF_1111111123.3'
+            assert assembly.alt_accession == 'GCA_0000012345.3'
             # select * from genebuild where version = 999 and name = 'genebuild and label =01
             dataset = session.query(Dataset).where(
                 (Dataset.version == 'ENS01') & (Dataset.name == 'genebuild')
