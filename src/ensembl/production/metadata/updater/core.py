@@ -172,8 +172,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 else:
                     logging.info('Rewrite of existing datasets. Only assembly dataset attributes, genebuild '
                                  'dataset, dataset attributes, and assembly sequences are modified.')
-                    # In this case, we want to rewrite the existing datasets with new data, but keep the dataset_uuid
-                    # Update genebuild_dataset
+                    # TODO: We need to review this process, because if some Variation / Regulation / Compara datasets
+                    #  exists we'll expect either to refuse the updates - imagine this was a fix in sequences! OR we
+                    #  decide to delete the other datasets to force their recompute. In this case, we want to rewrite
+                    #  the existing datasets with new data, but keep the dataset_uuid Update genebuild_dataset
                     meta_session.query(DatasetAttribute).filter(
                         DatasetAttribute.dataset_id == genebuild_dataset.dataset_id).delete()
                     self.get_or_new_genebuild(species_id,
