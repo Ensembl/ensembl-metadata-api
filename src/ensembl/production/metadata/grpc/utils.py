@@ -92,6 +92,7 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
                 'statistic_value': result.DatasetAttribute.value
             })
 
+        statistics.sort(key=lambda x: x['name'])
         response_data = msg_factory.create_top_level_statistics_by_uuid(
             ({"genome_uuid": genome_uuid, "statistics": statistics})
         )

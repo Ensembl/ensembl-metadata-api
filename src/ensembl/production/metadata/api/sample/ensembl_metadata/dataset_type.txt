@@ -1,7 +1,7 @@
-1	assembly	Genomic assembly	Core Annotation	Compilation of sequences for a genome	\N	\N
-2	genebuild	Genomic Build	Core Annotation	Genomic annotations for an assembly	\N	\N
-3	variation	Variations	Variation Annotation	\N	\N
+1	assembly	Genomic assembly	Core Annotation	Compilation of sequences for a genome	\N
+2	genebuild	Genomic Build	Core Annotation	Genomic annotations for an assembly	\N
+3	variation	mRatBN7.2	Variation Annotation	Short variant data for rattus_norvegicus	\N
 4	evidence	Variation Evidence	Variation Annotation	\N	\N
 5	regulation_build	Regulations	Regulatory Annotation	\N	\N
 6	homologies	Comparative homologies	Comparative Annotation	\N	\N
-7	regulatory_features	Regulations	Regulatory Annotation	\N	\N
+7	regulatory_features	Regulatory Annotation	Regulatory Annotation	Regulatory annotation for an assembly	\N

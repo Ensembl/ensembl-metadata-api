@@ -16,7 +16,9 @@ from sqlalchemy.sql import func
 import datetime
 import uuid
 
+from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
+
 
 
 class Attribute(LoadAble, Base):
@@ -55,6 +57,25 @@ class Dataset(LoadAble, Base):
     dataset_type = relationship('DatasetType', back_populates="datasets")
     # dataset_source_id to dataset source
     dataset_source = relationship('DatasetSource', back_populates="datasets")
+
+    @property
+    def genebuild_version(self):
+        logger.debug(f"dataset type {self.dataset_type.name} {self.version}")
+        if self.dataset_type.name == 'genebuild':
+            # Return version
+
+            return next(
+                (att.value for att in self.dataset_attributes if att.attribute.name == 'genebuild.last_geneset_update'),
+                next((att.value for att in self.dataset_attributes if att.attribute.name == 'genebuild.start_date'), None))
+        else:
+            # return Related genebuild version
+            logger.debug(F"Related datasets! : {self.genome_datasets.datasets}")
+            genebuild_ds = next(
+                (dataset for dataset in self.genome_datasets.datasets if dataset.dataset_type.name == 'genebuild'), None)
+            if genebuild_ds:
+                return genebuild_ds.genebuild_version
+            else:
+                raise MissingMetaException(f"Something is very wrong with dataset {self.dataset_uuid}")
 
 
 class DatasetAttribute(LoadAble, Base):
