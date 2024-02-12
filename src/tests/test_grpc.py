@@ -213,7 +213,7 @@ class TestMetadataDB:
     @pytest.mark.parametrize(
         "genome_uuid, assembly_accession, chromosomal_only, expected_output",
         [
-            # Chromosomal and non-chromosomal #NB Had to update the query to let the test pass.
+            # Chromosomal and non-chromosomal
             ("3704ceb1-948d-11ec-a39d-005056b38ce3", "GCA_000001405.14", False, 0),
             # Chromosomal only
             ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.29", True, 1),
