@@ -172,8 +172,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 else:
                     logging.info('Rewrite of existing datasets. Only assembly dataset attributes, genebuild '
                                  'dataset, dataset attributes, and assembly sequences are modified.')
-                    # In this case, we want to rewrite the existing datasets with new data, but keep the dataset_uuid
-                    # Update genebuild_dataset
+                    # TODO: We need to review this process, because if some Variation / Regulation / Compara datasets
+                    #  exists we'll expect either to refuse the updates - imagine this was a fix in sequences! OR we
+                    #  decide to delete the other datasets to force their recompute. In this case, we want to rewrite
+                    #  the existing datasets with new data, but keep the dataset_uuid Update genebuild_dataset
                     meta_session.query(DatasetAttribute).filter(
                         DatasetAttribute.dataset_id == genebuild_dataset.dataset_id).delete()
                     self.get_or_new_genebuild(species_id,
@@ -189,7 +191,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
         # Currently impossible with myisam without two phase commit (requires full refactor)
-        # This is a workaround and should be sufficent.
+        # This is a workaround and should be sufficient.
         with self.db.session_scope() as session:
             meta_session.commit()
             try:
@@ -460,6 +462,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     accession_body=self.get_meta_single_meta_key(species_id, "assembly.provider"),
                     assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
                     tol_id=tol_id,
+                    alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
                     created=func.now(),
                     assembly_uuid=str(uuid.uuid4()),
                     url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
@@ -528,8 +531,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
         # The assembly accession and genebuild version are extracted from the metadata of the species
         assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
-        if genebuild_version is None:
-            raise MissingMetaException("genebuild.version is required in the core database")
+        genebuild_start_date = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
+        if None in (genebuild_version, genebuild_start_date, assembly_accession):
+            raise MissingMetaException("genebuild.version/genebuild.start_date/assembly.accession are all "
+                                       "required in the core database")
 
         # The genebuild accession is formed by combining the assembly accession and the genebuild version
         genebuild_accession = assembly_accession + "_" + genebuild_version
@@ -542,7 +547,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         genebuild_start_date = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
         genebuild_provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
-
         test_status = meta_session.query(Dataset).filter(Dataset.label == genebuild_accession).one_or_none()
         if test_status:
             # Check for genebuild.provider_name
@@ -587,55 +591,5 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genebuild_dataset.version = genebuild_version
 
         attributes = self.get_meta_list_from_prefix_meta_key(species_id, "genebuild.")
-
-        genebuild_dataset_attributes = []
-        for attribute, value in attributes.items():
-            meta_attribute = meta_session.query(Attribute).filter(Attribute.name == attribute).one_or_none()
-            if meta_attribute is None:
-                # TODO: This will be removed after the 2000 species are loaded.
-                meta_attribute = Attribute(
-                    name=attribute,
-                    label=attribute,
-                    description=attribute,
-                    type="string",
-                )
-            # raise Exception(f"{attribute} does not exist. Add it to the database and reload.")
-            dataset_attribute = DatasetAttribute(
-                value=value,
-                dataset=genebuild_dataset,
-                attribute=meta_attribute,
-            )
-            genebuild_dataset_attributes.append(dataset_attribute)
-        # TODO: These should be deleted eventually as the paramaters have been changed to genebuild.XXX but not until the 241.
-        # Grab the necessary sample data and add it as an datasetattribute
-        gene_param_attribute = meta_session.query(Attribute).filter(Attribute.name == "sample.gene_param").one_or_none()
-        if gene_param_attribute is None:
-            gene_param_attribute = Attribute(
-                name="sample.gene_param",
-                label="sample.gene_param",
-                description="Sample Gene Data",
-                type="string",
-            )
-        sample_gene_param = DatasetAttribute(
-            value=self.get_meta_single_meta_key(species_id, "sample.gene_param"),
-            dataset=genebuild_dataset,
-            attribute=gene_param_attribute,
-        )
-        genebuild_dataset_attributes.append(sample_gene_param)
-        sample_location_attribute = meta_session.query(Attribute).filter(
-            Attribute.name == "sample.location_param").one_or_none()
-        if sample_location_attribute is None:
-            sample_location_attribute = Attribute(
-                name="sample.location_param",
-                label="sample.location_param",
-                description="Sample Location Data",
-                type="string",
-            )
-        sample_location_param = DatasetAttribute(
-            value=self.get_meta_single_meta_key(species_id, "sample.location_param"),
-            dataset=genebuild_dataset,
-            attribute=sample_location_attribute,
-        )
-        genebuild_dataset_attributes.append(sample_location_param)
-
+        genebuild_dataset_attributes = self.update_attributes(genebuild_dataset, attributes, meta_session)
         return genebuild_dataset, genebuild_dataset_attributes

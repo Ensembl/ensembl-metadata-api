@@ -14,9 +14,8 @@ from sqlalchemy import inspect
 from sqlalchemy.engine import make_url
 
 from ensembl.core.models import Meta
-
 from ensembl.production.metadata.api.exceptions import UpdaterException
-from ensembl.production.metadata.api.models import DatasetSource, Attribute
+from ensembl.production.metadata.api.models import DatasetSource, Attribute, DatasetAttribute, Dataset
 from ensembl.database import DBConnection
 from ensembl.production.metadata.api.models import EnsemblRelease
 

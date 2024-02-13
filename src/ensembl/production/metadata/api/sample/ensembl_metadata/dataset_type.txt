@@ -4,7 +4,7 @@
 4	evidence	Variation Evidence	Variation Annotation	Variation Annotation	\N	\N	\N	\N
 5	regulation_build	Regulations	Regulatory Annotation	Regulatory Annotation	\N	\N	\N	\N
 6	homologies	Comparative homologies	Comparative Annotation	Comparative Annotation	\N	genebuild	\N	\N
-7	regulatory_features	Regulatory Annotation	Core Annotation	Regulatory annotation for an assembly	\N	\N	\N	\N
+7	regulatory_features	Regulatory Annotation	Regulatory Annotation	Regulatory annotation for an assembly	\N	\N	\N	\N
 8	xref	External References	Core Annotation	Data obtained from external sources and their links	\N	genebuild	\N	\N
 9	protein_features	Protein Features	Core Annotation	Annotation for proteins from external sources	\N	xref	\N	\N
 10	appris	APPRIS	Core Annotation	Data obtained from APPRIS	\N	xref	protein_features	\N

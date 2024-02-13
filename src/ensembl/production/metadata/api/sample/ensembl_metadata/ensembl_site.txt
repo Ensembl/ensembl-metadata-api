@@ -1,1 +1,1 @@
-1	Ensembl	Ensembl Genome Browser	https://beta.ensembl.org
+1	Ensembl	MVP Ensembl	https://beta.ensembl.org
