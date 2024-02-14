@@ -94,8 +94,9 @@ CREATE TABLE dataset
     name              varchar(128) not null,
     version           varchar(128) null,
     created           datetime(6)  not null,
-    dataset_source_id int          not null,
     label             varchar(128) not null,
+    dataset_source_id int          not null,
+    dataset_type_id   int          not null,
     status            enum ('Submitted', 'Processing', 'Processed', 'Released') default 'Submitted' null,
     constraint dataset_uuid
         unique (dataset_uuid),

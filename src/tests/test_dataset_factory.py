@@ -20,19 +20,19 @@ import sqlalchemy
 from ensembl.database import UnitTestDB, DBConnection
 
 from ensembl.production.metadata.api.hive.dataset_factory import DatasetFactory
-from ensembl.production.metadata.api.models import Dataset, DatasetAttribute, Attribute
+from ensembl.production.metadata.api.models import Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'}]],indirect=True)
+@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'}]], indirect=True)
 class TestDatasetFactory:
     dbc = None  # type: UnitTestDB
 
     def test_update_dataset_status(self, multi_dbs):
         dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
-        test_uuid = '385f1ec2-bd06-40ce-873a-98e199f10534'
+        test_uuid = 'fc5d3e13-340c-4e2a-9f49-256fc319331e'
         dataset_factory.update_dataset_status(test_uuid)
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
@@ -45,8 +45,8 @@ class TestDatasetFactory:
 
     def test_update_dataset_attributes(self, multi_dbs):
         dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
-        test_uuid = '385f1ec2-bd06-40ce-873a-98e199f10534'
-        test_attributes = {"contig_n50" : "test1", "total_genome_length": "test2"}
+        test_uuid = 'fc5d3e13-340c-4e2a-9f49-256fc319331e'
+        test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
         #    def update_dataset_attributes(self,dataset_uuid, attribut_dict):
         dataset_factory.update_dataset_attributes(test_uuid, test_attributes)
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
@@ -55,22 +55,56 @@ class TestDatasetFactory:
             dataset_attribute = session.query(DatasetAttribute) \
                 .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
                 .filter(DatasetAttribute.dataset_id == dataset.dataset_id,
-                        Attribute.name == 'contig_n50',
+                        Attribute.name == 'assembly.contig_n50',
                         DatasetAttribute.value == 'test1') \
                 .one_or_none()
             assert dataset_attribute is not None
             dataset_factory = DatasetFactory(session=session)
-            test_attributes = {"gc_percentage": "test3", "longest_gene_length": "test4"}
+            test_attributes = {"assembly.gc_percentage": "test3", "genebuild.nc_longest_gene_length": "test4"}
             dataset_factory.update_dataset_attributes(test_uuid, test_attributes)
             session.commit()
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
             test_attribute = session.query(DatasetAttribute) \
                 .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
                 .filter(DatasetAttribute.dataset_id == dataset.dataset_id,
-                        Attribute.name == 'longest_gene_length',
+                        Attribute.name == 'genebuild.nc_longest_gene_length',
                         DatasetAttribute.value == 'test4') \
                 .all()
             assert test_attribute is not None
 
-
-
+    def test_create_dataset(self, multi_dbs):
+        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        with (metadata_db.session_scope() as session):
+            test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
+            test_genome_uuid = '48b1b849-3b73-4242-ae83-af2290aeb071'
+            test_dataset_source = session.query(DatasetSource).filter(
+                DatasetSource.name == 'mus_musculus_nodshiltj_core_110_1').one()
+            test_dataset_type = session.query(DatasetType).filter(DatasetType.name == 'regulatory_features').one()
+            test_name = 'test_name'
+            test_label = 'test_label'
+            test_version = 'test_version'
+            dataset_factory = DatasetFactory(session=session)
+            dataset_uuid, new_dataset_attributes, new_genome_dataset = dataset_factory.create_dataset(session,
+                                                                                                      test_genome_uuid,
+                                                                                                      test_dataset_source,
+                                                                                                      test_dataset_type,
+                                                                                                      test_attributes,
+                                                                                                      test_name,
+                                                                                                      test_label,
+                                                                                                      test_version)
+            session.commit()
+            created_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+            assert created_dataset.name == test_name
+            assert created_dataset.label == test_label
+            assert created_dataset.version == test_version
+            assert test_dataset_source == session.query(DatasetSource).filter(
+                DatasetSource.dataset_source_id == created_dataset.dataset_source_id).one()
+            assert test_dataset_type == session.query(DatasetType).filter(
+                DatasetType.dataset_type_id == created_dataset.dataset_type_id).one()
+            test_attribute = session.query(DatasetAttribute) \
+                .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
+                .filter(DatasetAttribute.dataset_id == created_dataset.dataset_id,
+                        Attribute.name == 'genebuild.nc_longest_gene_length',
+                        DatasetAttribute.value == 'test4') \
+                .all()
+            assert test_attribute is not None
