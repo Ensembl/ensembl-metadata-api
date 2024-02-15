@@ -69,6 +69,7 @@ class DatasetFactory():
             self.metadata_db = DBConnection(metadata_uri)
 
     #     #TODO: Determine how to implement genome_uuid when we can have multiples of each dataset type per genome
+    # Actually it is probably acceptable now, as we only consider unreleased datasets.
     def create_child_datasets(self, dataset_uuid=None, parent_type=None, child_type=None, dataset_attributes={},
                               genome_uuid=None):
         """
@@ -330,6 +331,4 @@ class DatasetFactory():
         """
         return session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
 
-
-# This is a direct copy of Marc's code in the core updater in an unmerged branch. I am not sure where we should keep it.
 
