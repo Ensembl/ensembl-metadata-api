@@ -28,6 +28,7 @@ from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
 import logging
 from ensembl.production.metadata.api.exceptions import *
+from ensembl.production.metadata.updater.updater_utils import update_attributes
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
@@ -591,5 +592,5 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genebuild_dataset.version = genebuild_version
 
         attributes = self.get_meta_list_from_prefix_meta_key(species_id, "genebuild.")
-        genebuild_dataset_attributes = self.update_attributes(genebuild_dataset, attributes, meta_session)
+        genebuild_dataset_attributes = update_attributes(genebuild_dataset, attributes, meta_session)
         return genebuild_dataset, genebuild_dataset_attributes
