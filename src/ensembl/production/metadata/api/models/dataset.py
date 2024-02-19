@@ -15,11 +15,12 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import datetime
 import uuid
+import logging
 
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
-
+logger = logging.getLogger(__name__)
 
 class Attribute(LoadAble, Base):
     __tablename__ = 'attribute'
@@ -34,6 +35,7 @@ class Attribute(LoadAble, Base):
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
     # many to one relationships
     # none
+
 
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
@@ -50,7 +52,8 @@ class Dataset(LoadAble, Base):
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
-    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset', cascade="all, delete, delete-orphan")
+    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset',
+                                      cascade="all, delete, delete-orphan")
     genome_datasets = relationship("GenomeDataset", back_populates='dataset', cascade="all, delete, delete-orphan")
     # many to one relationships
     # dataset_type_id to dataset_type
@@ -66,12 +69,14 @@ class Dataset(LoadAble, Base):
 
             return next(
                 (att.value for att in self.dataset_attributes if att.attribute.name == 'genebuild.last_geneset_update'),
-                next((att.value for att in self.dataset_attributes if att.attribute.name == 'genebuild.start_date'), None))
+                next((att.value for att in self.dataset_attributes if att.attribute.name == 'genebuild.start_date'),
+                     None))
         else:
             # return Related genebuild version
             logger.debug(F"Related datasets! : {self.genome_datasets.datasets}")
             genebuild_ds = next(
-                (dataset for dataset in self.genome_datasets.datasets if dataset.dataset_type.name == 'genebuild'), None)
+                (dataset for dataset in self.genome_datasets.datasets if dataset.dataset_type.name == 'genebuild'),
+                None)
             if genebuild_ds:
                 return genebuild_ds.genebuild_version
             else:
@@ -125,4 +130,3 @@ class DatasetType(LoadAble, Base):
     datasets = relationship('Dataset', back_populates='dataset_type')
     # many to one relationships
     # none
-
