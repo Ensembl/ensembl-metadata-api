@@ -22,8 +22,6 @@ from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 
-
-
 class Attribute(LoadAble, Base):
     __tablename__ = 'attribute'
 
@@ -38,11 +36,13 @@ class Attribute(LoadAble, Base):
     # many to one relationships
     # none
 
+
 class DatasetStatus(enum.Enum):
     SUBMITTED = 'Submitted'
     PROCESSING = 'Processing'
     PROCESSED = 'Processed'
     RELEASED = 'Released'
+
 
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
@@ -55,7 +55,7 @@ class Dataset(LoadAble, Base):
     created = Column(DATETIME(fsp=6), server_default=func.now(), default=datetime.datetime.utcnow)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
-    status = Column(Enum(DatasetStatus), server_default=DatasetStatus.SUBMITTED)
+    status = Column('status', Enum(DatasetStatus), default=DatasetStatus.SUBMITTED)
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
