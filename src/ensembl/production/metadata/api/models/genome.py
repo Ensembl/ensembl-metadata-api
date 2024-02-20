@@ -77,7 +77,7 @@ class Genome(LoadAble, Base):
 
         # Defining path templates
         path_templates = {
-            'genebuild': f"{common_path}/genebuild/{genebuild_version}",
+            'genebuild': f"{common_path}/geneset/{genebuild_version}",
             'assembly': f"{common_path}/genome",
             'homologies': f"{common_path}/homology/{genebuild_version}",
             'regulation': f"{common_path}/regulation",
