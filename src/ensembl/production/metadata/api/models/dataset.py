@@ -9,6 +9,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import enum
+
 from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index, JSON
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
@@ -18,6 +20,7 @@ import uuid
 
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
+
 
 
 
@@ -35,6 +38,12 @@ class Attribute(LoadAble, Base):
     # many to one relationships
     # none
 
+class DatasetStatus(enum.Enum):
+    SUBMITTED = 'Submitted'
+    PROCESSING = 'Processing'
+    PROCESSED = 'Processed'
+    RELEASED = 'Released'
+
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
 
@@ -46,11 +55,12 @@ class Dataset(LoadAble, Base):
     created = Column(DATETIME(fsp=6), server_default=func.now(), default=datetime.datetime.utcnow)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
-    status = Column(Enum('Submitted', 'Processing', 'Processed', 'Released'), server_default=text("'Submitted'"))
+    status = Column(Enum(DatasetStatus), server_default=DatasetStatus.SUBMITTED)
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
-    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset', cascade="all, delete, delete-orphan")
+    dataset_attributes = relationship("DatasetAttribute", back_populates='dataset',
+                                      cascade="all, delete, delete-orphan")
     genome_datasets = relationship("GenomeDataset", back_populates='dataset', cascade="all, delete, delete-orphan")
     # many to one relationships
     # dataset_type_id to dataset_type
@@ -66,12 +76,14 @@ class Dataset(LoadAble, Base):
 
             return next(
                 (att.value for att in self.dataset_attributes if att.attribute.name == 'genebuild.last_geneset_update'),
-                next((att.value for att in self.dataset_attributes if att.attribute.name == 'genebuild.start_date'), None))
+                next((att.value for att in self.dataset_attributes if att.attribute.name == 'genebuild.start_date'),
+                     None))
         else:
             # return Related genebuild version
             logger.debug(F"Related datasets! : {self.genome_datasets.datasets}")
             genebuild_ds = next(
-                (dataset for dataset in self.genome_datasets.datasets if dataset.dataset_type.name == 'genebuild'), None)
+                (dataset for dataset in self.genome_datasets.datasets if dataset.dataset_type.name == 'genebuild'),
+                None)
             if genebuild_ds:
                 return genebuild_ds.genebuild_version
             else:
@@ -128,4 +140,3 @@ class DatasetType(LoadAble, Base):
     datasets = relationship('Dataset', back_populates='dataset_type')
     # many to one relationships
     # none
-

@@ -14,12 +14,13 @@ from ensembl.database import DBConnection
 
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models import Dataset, Attribute, DatasetAttribute, Genome, GenomeDataset, \
-    DatasetType, DatasetSource
+    DatasetType, DatasetSource, DatasetStatus
 from sqlalchemy.sql import func
 import uuid
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
-class DatasetFactory():
+
+class DatasetFactory:
     """
     A class for interacting with the ensembl_genome_metadata database, specifically for modifying the dataset and
     dataset attribute tables.
@@ -48,6 +49,7 @@ class DatasetFactory():
     get_dataset(session, dataset_uuid):
         Retrieves a dataset by its UUID.
     """
+
     def __init__(self, session=None, metadata_uri=None):
         """
         Initializes the DatasetFactory instance.
@@ -90,6 +92,7 @@ class DatasetFactory():
             raise ValueError("Please only provide genome_uuid or dataset_uuid")
         if parent_type and child_type:
             raise ValueError("Please only provide child_type or parent_type")
+
         def fetch_parent_datasets(session):
             parent_dataset_types = set()
             potential_parent_datasets = []
@@ -111,7 +114,7 @@ class DatasetFactory():
                 if not parent_type and not child_type:
                     raise ValueError("Genome_uuid requires either child type or parent type.")
                 if child_type:
-                    #Alwalys go for the first one as dependencies will check the rest later.
+                    # Alwalys go for the first one as dependencies will check the rest later.
                     new_type = session.query(DatasetType).filter(DatasetType.name == child_type).one()
                     parent_dataset_types.add(new_type.parent.split(';')[0])
                 for genome_dataset in genome.genome_datasets:
@@ -148,7 +151,7 @@ class DatasetFactory():
             existing_datasets = session.query(Dataset).filter(
                 Dataset.dataset_type == child_dataset_type,
                 Dataset.genome_datasets.any(genome_id=parent_dataset.genome_datasets[0].genome_id),
-                Dataset.status.in_(['Submitted', 'Processing', 'Processed'])
+                Dataset.status.in_([DatasetStatus.SUBMITTED, DatasetStatus.PROCESSING, DatasetStatus.PROCESSED])
             ).count()
 
             if existing_datasets > 0:
@@ -172,7 +175,6 @@ class DatasetFactory():
             parent_dataset_types, potential_parent_datasets = fetch_parent_datasets(session)
             return process_datasets(session, parent_dataset_types, potential_parent_datasets)
 
-
     def get_parent_datasets(self, dataset_uuid):
         """
         Retrieves the parent datasets of a specified dataset. If the dataset does not have a parent,
@@ -184,15 +186,14 @@ class DatasetFactory():
         Returns:
         tuple: Two lists containing UUIDs and types of the parent datasets.
         """
-        parent_uuid = []
-        parent_type = []
+        parent_uuid = ''
 
-        def query_parent_datasets(session):
+        def query_parent_datasets(session, dataset_uuid):
             dataset = self.get_dataset(session, dataset_uuid)
             dataset_type = session.query(DatasetType).filter(
                 DatasetType.dataset_type_id == dataset.dataset_type_id).one()
             if dataset_type.parent is None:
-                return ['dataset_uuid'], ['top_level']
+                return None
             parent_dataset_types = dataset_type.parent.split(';')
             genome_id = next((gd.genome_id for gd in dataset.genome_datasets), None)
             if not genome_id:
@@ -205,17 +206,26 @@ class DatasetFactory():
 
             for gd in related_genome_datasets:
                 parent_uuid.append(gd.dataset.dataset_uuid)
-                parent_type.append(gd.dataset.dataset_type.name)
-
         if self.owns_session:
             with self.metadata_db.session_scope() as session:
                 query_parent_datasets(session)
         else:
             query_parent_datasets(self.session)
 
-        return parent_uuid, parent_type
+        return parent_uuid
 
+    def fetch_top_level_parent(self, session, dataset_uuid):
 
+    def get_top_level_parent(self, dataset_uuid, session=None, metadata_uri=None):
+        if session:
+            top_uuid = self._update_status(dataset_uuid)
+        elif metadata_uri:
+            metadata_db = DBConnection(metadata_uri)
+            with metadata_db.session_scope() as session:
+                top_uuid = self._update_status(dataset_uuid)
+        else:
+            raise DatasetFactoryException("session or metadata_uri are required")
+        return top_uuid
     def create_dataset(self, session, genome_uuid, dataset_source, dataset_type, dataset_attributes, name, label,
                        version):
         """
@@ -255,26 +265,40 @@ class DatasetFactory():
         dataset_uuid = new_dataset.dataset_uuid
         return dataset_uuid, new_dataset_attributes, new_genome_dataset
 
-    def _update_status(self, dataset, status=None):
 
-        valid_statuses = ['Submitted', 'Processing', 'Processed', 'Released']
-        if status is None:
-            old_status = dataset.status
-            if old_status == 'Released':
-                raise DatasetFactoryException("Unable to change status of Released dataset")
-            elif old_status == 'Submitted':
-                status = 'Processing'
-            elif old_status == 'Processing':
-                status = 'Processed'
-            elif old_status == 'Processed':
-                status = 'Released'
-        if status not in valid_statuses:
-            raise DatasetFactoryException(f"Unable to change status to {status} as this is not valid. Please use "
-                                          f"one of :{valid_statuses}")
+    def _check_childrens_status(self, dataset):
+        #returns the lowest possible status (ex submitted) for all datasets that are children.
+
+    def _update_status(self, session, dataset_uuid, status):
+
+        #sbumitted to processing update all parents, all the way to top level.
+        #processing to processed. Check children. Don't update if they are still processing. Update. Recursively call this on parent
+        #Processed to Released. Only accept top level. Check that all assembly and genebuild datsets (all the way down) are processed.
+        # Then convert all to released. #Add a blocker and warning in here.
+
+        #First Check if children have
+        if status == DatasetStatus.SUBMITTED:
+            parent_uuid = self.get_parent_dataset(session,dataset_uuid)
+            if parent_uuid != None
+                self._update_status(session, parent_uuid, Dataset.SUBMITTED)
+            #update all the way back.
+        elif status == DatasetStatus.PROCESSING:
+            #Update all the way back
+        elif status == DatasetStatus.PROCESSED:
+            #attempt update. See above
+        elif status == DatasetStatus.RELEASED:
+            #Update if all datasets in it's chain are processed, all genebuild and assembly are processed. Else return error.
+
+        parent_datasets =
         dataset.status = status
-        return status
 
-    def update_dataset_status(self, dataset_uuid, status=None):
+
+
+
+        return status, parent_status
+
+    def update_dataset_status(self, dataset_uuid, status=None, session=None, metadata_uri=None):
+        # TODO: Check parent for progress and update parent if child
         """
         Updates the status of a dataset identified by its UUID. The status is updated to the next logical state unless
         a specific state is provided.
@@ -286,14 +310,17 @@ class DatasetFactory():
         Returns:
         tuple: Dataset UUID and the updated status.
         """
-        if self.owns_session:
-            with self.metadata_db.session_scope() as session:
-                dataset = self.get_dataset(session, dataset_uuid)
-                updated_status = self._update_status(dataset, status)
+        if session:
+            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+            updated_status, parent_status = self._update_status(dataset, status)
+        elif metadata_uri:
+            metadata_db = DBConnection(metadata_uri)
+            with metadata_db.session_scope() as session:
+                dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+                updated_status, parent_status = self._update_status(dataset, status)
         else:
-            dataset = self.get_dataset(self.session, dataset_uuid)
-            updated_status = self._update_status(dataset, status)
-        return dataset_uuid, updated_status
+            raise DatasetFactoryException("session or metadata_uri are required")
+        return dataset_uuid, updated_status, parent_status
 
     def update_dataset_attributes(self, dataset_uuid, attribut_dict):
         """
@@ -330,5 +357,3 @@ class DatasetFactory():
         Dataset: The dataset object corresponding to the provided UUID.
         """
         return session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
-
-

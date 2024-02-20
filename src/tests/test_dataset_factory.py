@@ -67,7 +67,7 @@ class TestDatasetFactory:
 
     def test_create_dataset(self, multi_dbs):
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
-        with (metadata_db.session_scope() as session):
+        with metadata_db.session_scope() as session:
             test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
             test_genome_uuid = '48b1b849-3b73-4242-ae83-af2290aeb071'
             test_dataset_source = session.query(DatasetSource).filter(
