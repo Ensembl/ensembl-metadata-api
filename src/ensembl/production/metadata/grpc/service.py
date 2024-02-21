@@ -13,8 +13,10 @@ from concurrent import futures
 import grpc
 import logging
 
+from grpc_reflection.v1alpha import reflection
+
 from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc
+from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc, ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
 
 logger = logging.getLogger(__name__)
@@ -33,9 +35,15 @@ def serve():
     ensembl_metadata_pb2_grpc.add_EnsemblMetadataServicer_to_server(
         EnsemblMetadataServicer(), server
     )
+    SERVICE_NAMES = (
+        ensembl_metadata_pb2.DESCRIPTOR.services_by_name['EnsemblMetadata'].full_name,
+        reflection.SERVICE_NAME
+    )
+    reflection.enable_server_reflection(SERVICE_NAMES, server)
     server.add_insecure_port("[::]:50051")
     server.start()
     try:
+        logger.info("Starting GRPC Server")
         server.wait_for_termination()
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt caught, stopping the server...")
