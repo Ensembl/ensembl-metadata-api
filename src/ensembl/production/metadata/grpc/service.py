@@ -43,7 +43,7 @@ def serve():
     server.add_insecure_port("[::]:50051")
     server.start()
     try:
-        logger.info("Starting GRPC Server")
+        logger.info(f"Starting GRPC Server from {cfg.metadata_uri}")
         server.wait_for_termination()
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt caught, stopping the server...")

@@ -12,16 +12,14 @@
 """ Test Server Reflection discovery """
 
 import logging
-from pathlib import Path
 
 import pytest
 from google.protobuf.descriptor import MethodDescriptor
-from grpc_reflection.v1alpha import reflection
 from google.protobuf.descriptor_pool import DescriptorPool
+from grpc_reflection.v1alpha import reflection
+
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import EnsemblMetadata
-
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +60,6 @@ def grpc_server(_grpc_server, grpc_addr):
 
 
 class TestGRPCReflection:
-    dbc = None
 
     def test_services_discovery(self, grpc_stub_cls, grpc_channel, grpc_servicer):
         from grpc_reflection.v1alpha.proto_reflection_descriptor_database import ProtoReflectionDescriptorDatabase
@@ -73,6 +70,7 @@ class TestGRPCReflection:
         method_list = [func for func in dir(EnsemblMetadata) if
                        callable(getattr(EnsemblMetadata, func)) and not func.startswith("__")]
         for method_name in method_list:
+            print(method_name)
             method_desc = metadata_service.FindMethodByName(method_name)
             assert isinstance(method_desc, MethodDescriptor)
         assert 'ensembl_metadata.EnsemblMetadata' in services
