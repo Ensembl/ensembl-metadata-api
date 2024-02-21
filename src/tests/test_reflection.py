@@ -18,6 +18,7 @@ import pytest
 from google.protobuf.descriptor import MethodDescriptor
 from google.protobuf.descriptor_pool import DescriptorPool
 from grpc_reflection.v1alpha import reflection
+from grpc_reflection.v1alpha.proto_reflection_descriptor_database import ProtoReflectionDescriptorDatabase
 
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import EnsemblMetadata
@@ -62,22 +63,31 @@ def grpc_server(_grpc_server, grpc_addr):
 
 sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
+
 @pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_metadata"},
                                         {"src": sample_path / "ncbi_taxonomy"}]],
                          indirect=True)
 class TestGRPCReflection:
 
     def test_services_discovery(self, grpc_stub_cls, grpc_channel, grpc_servicer, multi_dbs):
-        from grpc_reflection.v1alpha.proto_reflection_descriptor_database import ProtoReflectionDescriptorDatabase
         reflection_db = ProtoReflectionDescriptorDatabase(grpc_channel)
         services = reflection_db.get_services()
+        assert 'ensembl_metadata.EnsemblMetadata' in services
+        assert 'grpc.reflection.v1alpha.ServerReflection' in services
         desc_pool = DescriptorPool(reflection_db)
         metadata_service = desc_pool.FindServiceByName('ensembl_metadata.EnsemblMetadata')
         method_list = [func for func in dir(EnsemblMetadata) if
                        callable(getattr(EnsemblMetadata, func)) and not func.startswith("__")]
         for method_name in method_list:
-            print(method_name)
             method_desc = metadata_service.FindMethodByName(method_name)
             assert isinstance(method_desc, MethodDescriptor)
-        assert 'ensembl_metadata.EnsemblMetadata' in services
-        assert 'grpc.reflection.v1alpha.ServerReflection' in services
+
+    def test_dynamic_invoke(self, multi_dbs, grpc_channel):
+        reflection_db = ProtoReflectionDescriptorDatabase(grpc_channel)
+        services = reflection_db.get_services()
+        desc_pool = DescriptorPool(reflection_db)
+        metadata_service = desc_pool.FindServiceByName('ensembl_metadata.EnsemblMetadata')
+        method_desc = metadata_service.FindMethodByName("GetTopLevelStatisticsByUUID")
+        assert isinstance(method_desc, MethodDescriptor)
+        from google.protobuf.message import Message
+
