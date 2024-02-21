@@ -12,6 +12,7 @@
 """ Test Server Reflection discovery """
 
 import logging
+from pathlib import Path
 
 import pytest
 from google.protobuf.descriptor import MethodDescriptor
@@ -59,9 +60,14 @@ def grpc_server(_grpc_server, grpc_addr):
     _grpc_server.stop(grace=None)
 
 
+sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
+
+@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_metadata"},
+                                        {"src": sample_path / "ncbi_taxonomy"}]],
+                         indirect=True)
 class TestGRPCReflection:
 
-    def test_services_discovery(self, grpc_stub_cls, grpc_channel, grpc_servicer):
+    def test_services_discovery(self, grpc_stub_cls, grpc_channel, grpc_servicer, multi_dbs):
         from grpc_reflection.v1alpha.proto_reflection_descriptor_database import ProtoReflectionDescriptorDatabase
         reflection_db = ProtoReflectionDescriptorDatabase(grpc_channel)
         services = reflection_db.get_services()
