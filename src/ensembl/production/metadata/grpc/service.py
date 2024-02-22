@@ -21,17 +21,14 @@ from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
 
 logger = logging.getLogger(__name__)
 
-# Determine the logging level based on the value of cfg.debug_mode
-cfg = MetadataConfig()
-log_level = logging.DEBUG if cfg.debug_mode else logging.WARNING
-
-logging.basicConfig(
-    level=log_level,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
-
 def serve():
+    cfg = MetadataConfig()
+    log_level = logging.DEBUG if cfg.debug_mode else logging.WARNING
+
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     ensembl_metadata_pb2_grpc.add_EnsemblMetadataServicer_to_server(
         EnsemblMetadataServicer(), server

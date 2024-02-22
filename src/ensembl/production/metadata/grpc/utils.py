@@ -21,9 +21,9 @@ import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 
 logger = logging.getLogger(__name__)
 
-cfg = MetadataConfig()
 
 def connect_to_db():
+    cfg = MetadataConfig()
     conn = GenomeAdaptor(
         metadata_uri=cfg.metadata_uri,
         taxonomy_uri=cfg.taxon_uri
@@ -120,6 +120,7 @@ def get_assembly_information(db_conn, assembly_uuid):
     logger.debug("No assembly information was found.")
     return msg_factory.create_assembly_info()
 
+
 # TODO: move this function to protobuf_msg_factory.py file
 def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     # we fetch attributes related to that genome
@@ -148,7 +149,7 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, re
     if not assembly_accession:
         logging.warning("Missing or Empty Assembly accession field.")
         return msg_factory.create_genome()
-
+    cfg = MetadataConfig()
     # TODO: Add try except to the other functions as well
     try:
         genome_results = db_conn.fetch_genomes(
@@ -170,7 +171,7 @@ def get_species_information(db_conn, genome_uuid):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_species()
-
+    cfg = MetadataConfig()
     species_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
         allow_unreleased=cfg.allow_unreleased
@@ -193,7 +194,7 @@ def get_sub_species_info(db_conn, organism_uuid, group):
     if not organism_uuid:
         logger.warning("Missing or Empty Organism UUID field.")
         return msg_factory.create_sub_species()
-
+    cfg = MetadataConfig()
     sub_species_results = db_conn.fetch_genomes(
         organism_uuid=organism_uuid,
         group=group,
@@ -222,6 +223,7 @@ def get_sub_species_info(db_conn, organism_uuid, group):
 
 
 def get_genome_uuid(db_conn, production_name, assembly_name, use_default=False):
+    cfg = MetadataConfig()
     if not production_name or not assembly_name:
         logger.warning("Missing or Empty production_name or assembly_name field.")
         return msg_factory.create_genome_uuid()
@@ -251,7 +253,7 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_genome()
-
+    cfg = MetadataConfig()
     genome_results = db_conn.fetch_genomes(
         genome_uuid=genome_uuid,
         release_version=release_version,
@@ -306,7 +308,7 @@ def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
     if not ensembl_name and not site_name:
         logger.warning("Missing or Empty ensembl_name and site_name field.")
         return msg_factory.create_genome()
-
+    cfg = MetadataConfig()
     genome_results = db_conn.fetch_genomes(
         ensembl_name=ensembl_name,
         site_name=site_name,
@@ -331,7 +333,7 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_datasets()
-
+    cfg = MetadataConfig()
     datasets_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
         # fetch all datasets, default is 'assembly' only
@@ -423,6 +425,7 @@ def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name):
 
 
 def release_iterator(metadata_db, site_name, release_version, current_only):
+    cfg = MetadataConfig()
     conn = ReleaseAdaptor(metadata_uri=cfg.metadata_uri)
 
     # set release_version/site_name to None if it's an empty list
@@ -436,21 +439,23 @@ def release_iterator(metadata_db, site_name, release_version, current_only):
     )
 
     for result in release_results:
-        logging.debug(f"Processing release: {result.EnsemblRelease.version if hasattr(result, 'EnsemblRelease') else None}")
+        logging.debug(
+            f"Processing release: {result.EnsemblRelease.version if hasattr(result, 'EnsemblRelease') else None}")
         yield msg_factory.create_release(result)
 
 
 def release_by_uuid_iterator(metadata_db, genome_uuid):
     if not genome_uuid:
         return
-
+    cfg = MetadataConfig()
     conn = ReleaseAdaptor(metadata_uri=cfg.metadata_uri)
     release_results = conn.fetch_releases_for_genome(
         genome_uuid=genome_uuid,
     )
 
     for result in release_results:
-        logging.debug(f"Processing release: {result.EnsemblRelease.version if hasattr(result, 'EnsemblRelease') else None}")
+        logging.debug(
+            f"Processing release: {result.EnsemblRelease.version if hasattr(result, 'EnsemblRelease') else None}")
         yield msg_factory.create_release(result)
 
 
@@ -480,7 +485,7 @@ def get_genome_uuid_by_tag(db_conn, genome_tag):
     if not genome_tag:
         logger.warning("Missing or Empty Genome tag field.")
         return msg_factory.create_genome_uuid()
-
+    cfg = MetadataConfig()
     genome_uuid_result = db_conn.fetch_genomes(
         genome_tag=genome_tag,
         allow_unreleased=cfg.allow_unreleased
@@ -501,7 +506,6 @@ def get_genome_uuid_by_tag(db_conn, genome_tag):
 
 
 def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
-
     # Request is sending an empty string '' instead of None when
     # an input parameter is not supplied by the user
     if not genome_uuid:
