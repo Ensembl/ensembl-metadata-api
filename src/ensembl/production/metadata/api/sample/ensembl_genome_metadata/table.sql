@@ -167,7 +167,7 @@ CREATE TABLE genome
     assembly_id     int                            not null,
     organism_id     int                            not null,
     is_best         tinyint(1)   default 0         not null,
-    production_name varchar(255) default 'default' not null,
+    production_name varchar(255) not null,
     constraint genome_genome_uuid_6b62d0ad_uniq
         unique (genome_uuid),
     constraint genome_assembly_id_0a748388_fk_assembly_assembly_id

@@ -40,7 +40,7 @@ def meta_factory(db_uri, metadata_uri, taxonomy_uri,force=False):
     # Dealing with other versionned databases like mart, ontology,...
     elif re.match(r'^\w+_?\d*_\d+$', db_url.database):
         raise Exception("other not implemented yet")
-    elif re.match(r'^ensembl_accounts|ensembl_archive|ensembl_autocomplete|ensembl_metadata|ensembl_production|'
+    elif re.match(r'^ensembl_accounts|ensembl_archive|ensembl_autocomplete|ensembl_genome_metadata|ensembl_production|'
                   r'ensembl_stable_ids|ncbi_taxonomy|ontology|website',
             db_url.database):
         raise Exception("other not implemented yet")

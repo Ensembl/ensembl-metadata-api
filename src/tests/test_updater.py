@@ -30,8 +30,11 @@ from ensembl.production.metadata.updater.core import CoreMetaUpdater
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
 
+sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_metadata'}, {'src': 'ncbi_taxonomy'},
+
+@pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_genome_metadata'},
+                                        {'src': sample_path / 'ncbi_taxonomy'},
                                         {'src': db_directory / 'core_1'}, {'src': db_directory / 'core_2'},
                                         {'src': db_directory / 'core_3'}, {'src': db_directory / 'core_4'},
                                         {'src': db_directory / 'core_5'}, {'src': db_directory / 'core_6'},
@@ -44,7 +47,8 @@ class TestUpdater:
     dbc = None  # type: UnitTestDB
 
     def test_new_organism(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_1'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_1'].dbc.url,
+                            multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
 
@@ -59,7 +63,7 @@ class TestUpdater:
             assert inserted_genome_uuid is not None
 
         # Look for organism, assembly and geneset
-        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         # Test the species
         with metadata_db.session_scope() as session:
             organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
@@ -93,7 +97,7 @@ class TestUpdater:
             assert sequence3 is not None
 
     def test_fail_existing_genome_uuid_no_data(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         with pytest.raises(Exception) as exif:
             test.process_core()
@@ -102,10 +106,10 @@ class TestUpdater:
                     "Please remove it from the meta key and resubmit" in str(exif.value))
 
     def test_update_assembly(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_3'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_3'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
-        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
             assert organism.scientific_name == 'carol_jabberwocky'
@@ -113,10 +117,10 @@ class TestUpdater:
 
     #
     def test_update_geneset(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_4'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_4'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
-        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).where(
                 (Dataset.version == "ENS02") & (Dataset.name == 'genebuild')
@@ -127,16 +131,16 @@ class TestUpdater:
             assert dataset.dataset_type.name == "genebuild"
 
     def test_taxonomy_common_name(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_5'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_5'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
-        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             organism = session.query(Organism).where(Organism.biosample_id == 'test_case_5').first()
             assert organism.common_name == 'sheep'
 
     def test_fail_existing_genome_uuid_data_not_match(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         with pytest.raises(Exception) as exif:
             test.process_core()
@@ -144,10 +148,10 @@ class TestUpdater:
                     "The force flag was not specified so the core was not updated." in str(exif.value))
 
     def test_update_unreleased_no_force(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_7'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_7'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
-        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # Test that assembly seqs have been updated
             new_seq = session.query(AssemblySequence).where(
@@ -205,7 +209,7 @@ class TestUpdater:
             assert count > 0
 
     def test_update_released_no_force(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_8'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_8'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
         with pytest.raises(Exception) as exif:
             test.process_core()
@@ -215,11 +219,11 @@ class TestUpdater:
                 exif.value))
 
     def test_update_released_force(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_metadata'].dbc.url,
+        test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url, force=True)
         # FIXME Should be run
         # test.process_core()
-        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # Test that assembly seqs have not been updated
             # new_seq = session.query(AssemblySequence).where(

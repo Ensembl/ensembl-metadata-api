@@ -25,17 +25,18 @@ pytest_plugins = ("ensembl.plugins.pytest_unittest",)
 def pytest_configure(config: Config) -> None:
     pytest.dbs_dir = Path(__file__).parent / 'src' / 'ensembl' / 'production' / 'metadata' / 'api' / 'sample'
 
-@pytest.fixture(scope="class")
+
+@pytest.fixture(scope="class", autouse=True)
 def engine(multi_dbs):
-    os.environ["METADATA_URI"] = multi_dbs["ensembl_metadata"].dbc.url
+    os.environ["METADATA_URI"] = multi_dbs["ensembl_genome_metadata"].dbc.url
     os.environ["TAXONOMY_URI"] = multi_dbs["ncbi_taxonomy"].dbc.url
-    yield db.create_engine(multi_dbs["ensembl_metadata"].dbc.url)
+    yield db.create_engine(multi_dbs["ensembl_genome_metadata"].dbc.url)
 
 
 @pytest.fixture(scope="class")
 def genome_db_conn(multi_dbs):
     genome_conn = GenomeAdaptor(
-        metadata_uri=multi_dbs["ensembl_metadata"].dbc.url,
+        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
         taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
     )
     yield genome_conn
@@ -44,6 +45,6 @@ def genome_db_conn(multi_dbs):
 @pytest.fixture(scope="class")
 def release_db_conn(multi_dbs):
     release_conn = ReleaseAdaptor(
-        metadata_uri=multi_dbs["ensembl_metadata"].dbc.url
+        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url
     )
     yield release_conn

@@ -41,20 +41,20 @@ def grpc_servicer():
 
 
 @pytest.fixture(scope='module')
-def grpc_stub_cls(grpc_channel):
+def grpc_stub(grpc_channel):
     from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import EnsemblMetadataStub
 
-    return EnsemblMetadataStub
+    return EnsemblMetadataStub(grpc_channel)
 
 
 @pytest.fixture(scope='module')
-def grpc_server(_grpc_server, grpc_addr):
+def grpc_server(_grpc_server, grpc_addr, grpc_add_to_server, grpc_servicer):
+    grpc_add_to_server(grpc_servicer, _grpc_server)
     SERVICE_NAMES = (
         ensembl_metadata_pb2.DESCRIPTOR.services_by_name['EnsemblMetadata'].full_name,
         reflection.SERVICE_NAME
     )
     reflection.enable_server_reflection(SERVICE_NAMES, _grpc_server)
-    # _grpc_server.ad(grpc_addr)
     _grpc_server.add_insecure_port(grpc_addr)
     _grpc_server.start()
     yield _grpc_server
@@ -64,12 +64,13 @@ def grpc_server(_grpc_server, grpc_addr):
 sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
 
-@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_metadata"},
+@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_genome_metadata"},
                                         {"src": sample_path / "ncbi_taxonomy"}]],
                          indirect=True)
 class TestGRPCReflection:
+    dbc = None
 
-    def test_services_discovery(self, grpc_stub_cls, grpc_channel, grpc_servicer, multi_dbs):
+    def test_services_discovery(self, multi_dbs, grpc_channel, grpc_server):
         reflection_db = ProtoReflectionDescriptorDatabase(grpc_channel)
         services = reflection_db.get_services()
         assert 'ensembl_metadata.EnsemblMetadata' in services
@@ -83,11 +84,13 @@ class TestGRPCReflection:
             assert isinstance(method_desc, MethodDescriptor)
 
     def test_dynamic_invoke(self, multi_dbs, grpc_channel):
-        reflection_db = ProtoReflectionDescriptorDatabase(grpc_channel)
-        services = reflection_db.get_services()
-        desc_pool = DescriptorPool(reflection_db)
-        metadata_service = desc_pool.FindServiceByName('ensembl_metadata.EnsemblMetadata')
-        method_desc = metadata_service.FindMethodByName("GetTopLevelStatisticsByUUID")
-        assert isinstance(method_desc, MethodDescriptor)
-        from google.protobuf.message import Message
-
+        from yagrc import reflector as yagrc_reflector
+        reflector = yagrc_reflector.GrpcReflectionClient()
+        reflector.load_protocols(grpc_channel, symbols=["ensembl_metadata.EnsemblMetadata"])
+        stub_class = reflector.service_stub_class("ensembl_metadata.EnsemblMetadata")
+        request_class = reflector.message_class("ensembl_metadata.GenomeUUIDRequest")
+        print('GRPC CHANNEL', grpc_channel)
+        stub = stub_class(grpc_channel)
+        response = stub.GetGenomeByUUID(request_class(genome_uuid='a733550b-93e7-11ec-a39d-005056b38ce3',
+                                                      release_version=None))
+        print(response)

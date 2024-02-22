@@ -55,3 +55,7 @@ class MetadataConfig:
     pool_recycle = os.environ.get("POOL_RECYCLE", 50)
     allow_unreleased = parse_boolean_var(os.environ.get("ALLOW_UNRELEASED", False))
     debug_mode = parse_boolean_var(os.environ.get("DEBUG", False))
+
+    #@property
+    #def metadata_uri(self):
+    #    return os.environ.get("METADATA_URI", f"mysql://ensembl@localhost:3306/ensembl_genome_metadata")
