@@ -52,7 +52,7 @@ class MetadataConfig:
     def __init__(self):
         super().__init__()
         self.metadata_uri = os.environ.get("METADATA_URI",
-                                           f"mysql://ensembl@localhost:3306/marco_ensembl_genome_metadata")
+                                           f"mysql://ensembl@localhost:3306/ensembl_genome_metadata")
         self.taxon_uri = os.environ.get("TAXONOMY_URI", f"mysql://ensembl@localhost:3306/marco_ncbi_taxonomy")
         self.pool_size = os.environ.get("POOL_SIZE", 20)
         self.max_overflow = os.environ.get("MAX_OVERFLOW", 0)

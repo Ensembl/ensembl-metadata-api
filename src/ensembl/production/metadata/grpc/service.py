@@ -21,6 +21,7 @@ from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
 
 logger = logging.getLogger(__name__)
 
+
 def serve():
     cfg = MetadataConfig()
     log_level = logging.DEBUG if cfg.debug_mode else logging.WARNING
@@ -42,6 +43,7 @@ def serve():
     server.start()
     try:
         logger.info(f"Starting GRPC Server from {cfg.metadata_uri}")
+        logger.info(f"DEBUG: {cfg.debug_mode}")
         server.wait_for_termination()
         yield server
     except KeyboardInterrupt:
@@ -52,5 +54,4 @@ def serve():
 
 if __name__ == "__main__":
     logger.info("gRPC server starting on port 50051...")
-    logger.info(f"DEBUG: {cfg.debug_mode}")
     serve()
