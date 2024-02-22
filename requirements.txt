@@ -21,8 +21,11 @@ grpcio==1.62.0
     #   -r requirements.in
     #   grpcio-reflection
     #   grpcio-tools
+    #   yagrc
 grpcio-reflection==1.62.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   yagrc
 grpcio-tools==1.62.0
     # via -r requirements.in
 idna==3.6
@@ -39,6 +42,7 @@ protobuf==4.25.3
     # via
     #   grpcio-reflection
     #   grpcio-tools
+    #   yagrc
 pytest==8.0.1
     # via
     #   ensembl-py
@@ -64,6 +68,8 @@ types-pymysql==1.1.0.1
     # via -r requirements.in
 urllib3==2.2.1
     # via requests
+yagrc==1.1.2
+    # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
