@@ -3,3 +3,4 @@ pytest
 pylint
 mypy
 coverage[toml]
+pytest-grpc

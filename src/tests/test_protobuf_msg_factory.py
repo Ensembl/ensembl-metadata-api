@@ -26,7 +26,7 @@ distribution = pkg_resources.get_distribution("ensembl-metadata-api")
 sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
 
 
-@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_metadata"},
+@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_genome_metadata"},
                                         {"src": sample_path / "ncbi_taxonomy"}]],
                          indirect=True)
 class TestClass:
