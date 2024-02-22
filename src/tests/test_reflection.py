@@ -17,42 +17,11 @@ from pathlib import Path
 import pytest
 from google.protobuf.descriptor import MethodDescriptor
 from google.protobuf.descriptor_pool import DescriptorPool
-from grpc_reflection.v1alpha import reflection
 from grpc_reflection.v1alpha.proto_reflection_descriptor_database import ProtoReflectionDescriptorDatabase
 from yagrc import reflector as yagrc_reflector
 
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import EnsemblMetadata
 
 logger = logging.getLogger(__name__)
-
-
-@pytest.fixture(scope='module')
-def grpc_add_to_server():
-    from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import add_EnsemblMetadataServicer_to_server
-
-    return add_EnsemblMetadataServicer_to_server
-
-
-@pytest.fixture(scope='module')
-def grpc_servicer(multi_dbs, engine):
-    from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
-    return EnsemblMetadataServicer()
-
-
-@pytest.fixture(scope='module')
-def grpc_server(_grpc_server, grpc_addr, grpc_add_to_server, grpc_servicer):
-    grpc_add_to_server(grpc_servicer, _grpc_server)
-    SERVICE_NAMES = (
-        ensembl_metadata_pb2.DESCRIPTOR.services_by_name['EnsemblMetadata'].full_name,
-        reflection.SERVICE_NAME
-    )
-    reflection.enable_server_reflection(SERVICE_NAMES, _grpc_server)
-    _grpc_server.add_insecure_port(grpc_addr)
-    _grpc_server.start()
-    yield _grpc_server
-    _grpc_server.stop(grace=None)
-
 
 sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
@@ -64,6 +33,8 @@ class TestGRPCReflection:
     dbc = None
 
     def test_services_discovery(self, multi_dbs, grpc_channel, grpc_server):
+        from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import EnsemblMetadata
+
         reflection_db = ProtoReflectionDescriptorDatabase(grpc_channel)
         services = reflection_db.get_services()
         assert 'ensembl_metadata.EnsemblMetadata' in services
