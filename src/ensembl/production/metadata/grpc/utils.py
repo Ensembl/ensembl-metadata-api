@@ -14,13 +14,14 @@ import logging
 
 from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
+from ensembl.production.metadata.grpc.config import MetadataConfig
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 
 logger = logging.getLogger(__name__)
 
+cfg = MetadataConfig()
 
 def connect_to_db():
     conn = GenomeAdaptor(

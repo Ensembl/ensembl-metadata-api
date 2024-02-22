@@ -28,7 +28,8 @@ logger = logging.getLogger(__name__)
 class GenomeAdaptor(BaseAdaptor):
     def __init__(self, metadata_uri: str, taxonomy_uri: str):
         super().__init__(metadata_uri)
-        self.taxonomy_db = DBConnection(taxonomy_uri, pool_size=MetadataConfig.pool_size, pool_recycle=MetadataConfig.pool_recycle)
+        self.taxonomy_db = DBConnection(taxonomy_uri, pool_size=MetadataConfig().pool_size,
+                                        pool_recycle=MetadataConfig().pool_recycle)
 
     def fetch_taxonomy_names(self, taxonomy_ids, synonyms=None):
 

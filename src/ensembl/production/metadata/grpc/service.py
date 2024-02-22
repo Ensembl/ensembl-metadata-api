@@ -15,13 +15,14 @@ import logging
 
 from grpc_reflection.v1alpha import reflection
 
-from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
+from ensembl.production.metadata.grpc.config import MetadataConfig
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc, ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
 
 logger = logging.getLogger(__name__)
 
 # Determine the logging level based on the value of cfg.debug_mode
+cfg = MetadataConfig()
 log_level = logging.DEBUG if cfg.debug_mode else logging.WARNING
 
 logging.basicConfig(
@@ -45,6 +46,7 @@ def serve():
     try:
         logger.info(f"Starting GRPC Server from {cfg.metadata_uri}")
         server.wait_for_termination()
+        yield server
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt caught, stopping the server...")
         server.stop(grace=0)  # Immediately stop the server

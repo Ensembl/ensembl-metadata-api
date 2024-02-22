@@ -26,7 +26,7 @@ def pytest_configure(config: Config) -> None:
     pytest.dbs_dir = Path(__file__).parent / 'src' / 'ensembl' / 'production' / 'metadata' / 'api' / 'sample'
 
 
-@pytest.fixture(scope="class", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def engine(multi_dbs):
     os.environ["METADATA_URI"] = multi_dbs["ensembl_genome_metadata"].dbc.url
     os.environ["TAXONOMY_URI"] = multi_dbs["ncbi_taxonomy"].dbc.url

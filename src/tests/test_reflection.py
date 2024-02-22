@@ -19,6 +19,7 @@ from google.protobuf.descriptor import MethodDescriptor
 from google.protobuf.descriptor_pool import DescriptorPool
 from grpc_reflection.v1alpha import reflection
 from grpc_reflection.v1alpha.proto_reflection_descriptor_database import ProtoReflectionDescriptorDatabase
+from yagrc import reflector as yagrc_reflector
 
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import EnsemblMetadata
@@ -34,17 +35,9 @@ def grpc_add_to_server():
 
 
 @pytest.fixture(scope='module')
-def grpc_servicer():
+def grpc_servicer(multi_dbs, engine):
     from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
-
     return EnsemblMetadataServicer()
-
-
-@pytest.fixture(scope='module')
-def grpc_stub(grpc_channel):
-    from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import EnsemblMetadataStub
-
-    return EnsemblMetadataStub(grpc_channel)
 
 
 @pytest.fixture(scope='module')
@@ -83,14 +76,14 @@ class TestGRPCReflection:
             method_desc = metadata_service.FindMethodByName(method_name)
             assert isinstance(method_desc, MethodDescriptor)
 
-    def test_dynamic_invoke(self, multi_dbs, grpc_channel):
-        from yagrc import reflector as yagrc_reflector
+    def test_dynamic_invoke(self, multi_dbs, grpc_channel, grpc_server):
+        logger.warning("multi dbs", multi_dbs)
         reflector = yagrc_reflector.GrpcReflectionClient()
         reflector.load_protocols(grpc_channel, symbols=["ensembl_metadata.EnsemblMetadata"])
         stub_class = reflector.service_stub_class("ensembl_metadata.EnsemblMetadata")
         request_class = reflector.message_class("ensembl_metadata.GenomeUUIDRequest")
-        print('GRPC CHANNEL', grpc_channel)
         stub = stub_class(grpc_channel)
-        response = stub.GetGenomeByUUID(request_class(genome_uuid='a733550b-93e7-11ec-a39d-005056b38ce3',
+        response = stub.GetGenomeByUUID(request_class(genome_uuid='a73351f7-93e7-11ec-a39d-005056b38ce3',
                                                       release_version=None))
-        print(response)
+        assert response.genome_uuid == 'a73351f7-93e7-11ec-a39d-005056b38ce3'
+        assert response.assembly.accession == 'GCA_000005845.2'
