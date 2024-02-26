@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Ensembl Metadata API / GRPC API 
 # SQLAlchemy ORM for the Ensembl Metadata database.
 # GRPC Service protofile to interact with metadata database through GRPC
@@ -55,8 +54,6 @@ workon ensembl_metadata_api
 pip install --upgrade pip
 pip install -r requirements-dev.txt
 ```
-
-=======
 To generate client and server files
 (Remember to run these after adding a new method in ensembl_metadata.proto)
 ```
@@ -138,7 +135,7 @@ mypy src
 ```
 Pylint will check the code for syntax, name errors and formatting style.
 Mypy will use type hints to statically type check the code.
-=======
+
 cd ensembl-metadata-service
 pylint src tests
 mypy src tests
@@ -153,5 +150,5 @@ docker build -t ensembl-metadata-service .
 
 ### To run docker container
 ```
- docker run -t -i -e METADATA_URI=<URI> -e TAXONOMY_URI=<URI> -p 80:80 ensembl-metadata-service
+ docker run -t -i -e METADATA_URI=<URI> -e TAXONOMY_URI=<URI> -p 80:80 ensembl-metadata-api
 ```

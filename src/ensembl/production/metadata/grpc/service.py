@@ -39,13 +39,11 @@ def serve():
         reflection.SERVICE_NAME
     )
     reflection.enable_server_reflection(SERVICE_NAMES, server)
-    server.add_insecure_port("[::]:50051")
+    server.add_insecure_port(f"[::]:{cfg.service_port}")
     server.start()
     try:
-        logger.info(f"Starting GRPC Server from {cfg.metadata_uri}")
-        logger.info(f"DEBUG: {cfg.debug_mode}")
+        logger.info(f"Starting GRPC Server on {cfg.service_port} DEBUG: {cfg.debug_mode}")
         server.wait_for_termination()
-        yield server
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt caught, stopping the server...")
         server.stop(grace=0)  # Immediately stop the server
@@ -53,5 +51,5 @@ def serve():
 
 
 if __name__ == "__main__":
-    logger.info("gRPC server starting on port 50051...")
+    logger.info(f"gRPC server starting...")
     serve()

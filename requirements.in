@@ -4,4 +4,3 @@ grpcio-tools
 grpcio-reflection
 sqlalchemy
 types-pymysql
-yagrc
