@@ -225,8 +225,20 @@ class DatasetFactory:
             all_child_datasets.extend(sub_children)
 
         return all_child_datasets
-    def _update_status(self, session, dataset_uuid, status):
 
+    def _query_depends_on(self,session, dataset_uuid):
+        dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one_or_none()
+        dataset_type = dataset.dataset_type
+        dependent_types = dataset_type.depends_on.split(',') if dataset_type.depends_on else []
+        dependent_datasets_info = []
+        for dtype in dependent_types:
+            new_uuid, new_status = self._query_related_genome_by_type(session,dataset_uuid,dtype)
+            dependent_datasets_info.append((new_uuid, new_status))
+        return dependent_datasets_info
+
+
+    def _update_status(self, session, dataset_uuid, status):
+        #TODO: Return UUID, status
         #Processed to Released. Only accept top level. Check that all assembly and genebuild datsets (all the way down) are processed.
         # Then convert all to released. #Add a blocker and warning in here.
         current_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
@@ -242,6 +254,10 @@ class DatasetFactory:
         elif status == DatasetStatus.PROCESSING:
             #Update to PROCESSING and all parents.
             #Do not touch the children.
+
+            #TODO:Add check the depending
+
+
             current_dataset.status = DatasetStatus.PROCESSING
             parent_uuid, parent_status = self._query_parent_datasets(session,dataset_uuid)
             if parent_uuid is not None:
@@ -286,7 +302,7 @@ class DatasetFactory:
 
 
 
-    def update_dataset_status(self, dataset_uuid, status=None, session=None, metadata_uri=None):
+    def update_dataset_status(self, dataset_uuid, status, session=None, metadata_uri=None):
         # TODO: Check parent for progress and update parent if child
         """
         Updates the status of a dataset identified by its UUID. The status is updated to the next logical state unless
