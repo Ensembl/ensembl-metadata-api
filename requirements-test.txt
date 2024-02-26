@@ -4,3 +4,4 @@ pylint
 mypy
 coverage[toml]
 pytest-grpc
+yagrc==1.1.2

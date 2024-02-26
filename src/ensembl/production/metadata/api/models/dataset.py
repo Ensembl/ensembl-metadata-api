@@ -48,7 +48,8 @@ class Dataset(LoadAble, Base):
     created = Column(DATETIME(fsp=6), server_default=func.now(), default=datetime.datetime.utcnow)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
-    status = Column(Enum('Submitted', 'Progressing', 'Processed'), server_default=text("'Submitted'"))
+    status = Column(Enum('Submitted', 'Progressing', 'Processed', 'Released'),
+                    server_default=text("'Submitted'"))
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
