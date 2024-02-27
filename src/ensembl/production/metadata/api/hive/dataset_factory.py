@@ -25,7 +25,7 @@ class DatasetFactory:
     def create_all_child_datasets(self, session, dataset_uuid):
         # Retrieve the top-level dataset
         top_level_dataset = self._get_dataset(session, dataset_uuid)
-        self._create_child_datasets_recursive(session, top_level_dataset)
+        self.__create_child_datasets_recursive(session, top_level_dataset)
 
     def create_dataset(self, session, genome_uuid, dataset_source, dataset_type, dataset_attributes, name, label,
                        version):
@@ -50,13 +50,15 @@ class DatasetFactory:
         dataset_uuid = new_dataset.dataset_uuid
         return dataset_uuid, new_dataset_attributes, new_genome_dataset
 
-    def get_parent_datasets(self, dataset_uuid, session=None, metadata_uri=None):
+    def get_parent_datasets(self, dataset_uuid, **kwargs):
+        session = kwargs.get('session')
+        metadata_uri = kwargs.get('metadata_uri')
         if session:
-            return self._query_parent_datasets(session, dataset_uuid)
+            return self.__query_parent_datasets(session, dataset_uuid)
         elif metadata_uri:
             metadata_db = DBConnection(metadata_uri)
             with metadata_db.session_scope() as session:
-                return self._query_parent_datasets(session, dataset_uuid)
+                return self.__query_parent_datasets(session, dataset_uuid)
         else:
             raise DatasetFactoryException("session or metadata_uri are required")
 
@@ -64,17 +66,17 @@ class DatasetFactory:
         updated_datasets = [(dataset_uuid, status)]
         session = kwargs.get('session')
         metadata_uri = kwargs.get('metadata_uri')
-        attribut_dict = kwargs.get('attribut_dict')
+        attribute_dict = kwargs.get('attribut_dict')
         if session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
             updated_datasets = self._update_status(dataset, status)
-            if attribut_dict:
+            if attribute_dict:
                 updated_datasets = self._update_status(dataset, status)
         elif metadata_uri:
             metadata_db = DBConnection(metadata_uri)
             with metadata_db.session_scope() as session:
                 dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
-                if attribut_dict:
+                if attribute_dict:
                     updated_datasets = self._update_status(dataset, status)
         else:
             raise DatasetFactoryException("session or metadata_uri are required")
@@ -83,7 +85,6 @@ class DatasetFactory:
     def update_dataset_attributes(self, dataset_uuid, attribut_dict, **kwargs):
         session = kwargs.get('session')
         metadata_uri = kwargs.get('metadata_uri')
-
         if not isinstance(attribut_dict, dict):
             raise TypeError("attribut_dict must be a dictionary")
         if session:
@@ -98,10 +99,8 @@ class DatasetFactory:
                 return dataset_attributes
 
     def get_genomes_by_status_and_type(self, status, type, **kwargs):
-
         session = kwargs.get('session')
         metadata_uri = kwargs.get('metadata_uri')
-
         if session:
             genome_data = self._query_genomes_by_status_and_type(session, status, type)
             return genome_data
@@ -111,13 +110,13 @@ class DatasetFactory:
                 genome_data = self._query_genomes_by_status_and_type(session, status, type)
                 return genome_data
 
-    def _create_child_datasets_recursive(self, session, parent_dataset):
+    def __create_child_datasets_recursive(self, session, parent_dataset):
         parent_dataset_type = session.query(DatasetType).filter(
             DatasetType.dataset_type_id == parent_dataset.dataset_type_id).one()
 
         # Find child dataset types for the parent dataset type
         child_dataset_types = session.query(DatasetType).filter(
-            DatasetType.parent == parent_dataset_type.name).all()
+            DatasetType.parent == parent_dataset_type.id).all()
 
         for child_type in child_dataset_types:
             # Example placeholders for dataset properties
@@ -135,44 +134,50 @@ class DatasetFactory:
 
             # Recursively create children of this new child dataset
             child_dataset = self._get_dataset(session, child_dataset_uuid)
-            self._create_child_datasets_recursive(session, child_dataset)
+            self.__create_child_datasets_recursive(session, child_dataset)
 
-    def _query_parent_datasets(self, session, dataset_uuid):
+    def __query_parent_datasets(self, session, dataset_uuid):
         dataset = self._get_dataset(session, dataset_uuid)
         dataset_type = session.query(DatasetType).filter(
             DatasetType.dataset_type_id == dataset.dataset_type_id).one()
         if dataset_type.parent is None:
             return None
-        parent_dataset_types = dataset_type.parent.split(';')
+        parent_dataset_type = dataset_type.parent
         genome_id = next((gd.genome_id for gd in dataset.genome_datasets), None)
         if not genome_id:
             raise ValueError("No associated Genome found for the given dataset UUID")
 
         parent_genome_dataset = session.query(GenomeDataset).join(Dataset).join(DatasetType).filter(
             GenomeDataset.genome_id == genome_id,
-            DatasetType.name.in_(parent_dataset_types)
-        ).one()
+            DatasetType.id == parent_dataset_type).one()
         parent_uuid = parent_genome_dataset.dataset.dataset_uuid
         parent_status = parent_genome_dataset.dataset.status
         return parent_uuid, parent_status
 
-    def _query_top_level_parent(self, session, dataset_uuid):
+    def __query_top_level_parent(self, session, dataset_uuid):
         current_uuid = dataset_uuid
         while True:
-            parent_data = self._query_parent_datasets(session, current_uuid)
+            parent_data = self.__query_parent_datasets(session, current_uuid)
             if parent_data is None:
                 return current_uuid
             current_uuid = parent_data[0]
 
-    def _query_related_genome_by_type(self, session, dataset_uuid, dataset_type):
+    def __query_related_genome_by_type(self, session, dataset_uuid, dataset_type):
         dataset = self._get_dataset(session, dataset_uuid)
         genome_id = next((gd.genome_id for gd in dataset.genome_datasets), None)
         if not genome_id:
             raise ValueError("No associated Genome found for the given dataset UUID")
+
+        # Determine if dataset_type is an ID or a name
+        if isinstance(dataset_type, int) or (isinstance(dataset_type, str) and dataset_type.isdigit()):
+            # dataset_type is treated as an ID
+            filter_condition = (GenomeDataset.genome_id == genome_id, Dataset.dataset_type_id == dataset_type)
+        else:
+            # dataset_type is treated as a name
+            filter_condition = (GenomeDataset.genome_id == genome_id, DatasetType.name == dataset_type)
+
         related_genome_dataset = session.query(GenomeDataset).join(Dataset).join(DatasetType).filter(
-            GenomeDataset.genome_id == genome_id,
-            DatasetType.name == dataset_type
-        ).one()
+            *filter_condition).one()
         related_uuid = related_genome_dataset.dataset.dataset_uuid
         related_status = related_genome_dataset.dataset.status
         return related_uuid, related_status
@@ -219,7 +224,7 @@ class DatasetFactory:
         dependent_types = dataset_type.depends_on.split(',') if dataset_type.depends_on else []
         dependent_datasets_info = []
         for dtype in dependent_types:
-            new_uuid, new_status = self._query_related_genome_by_type(session, dataset_uuid, dtype)
+            new_uuid, new_status = self.__query_related_genome_by_type(session, dataset_uuid, dtype)
             dependent_datasets_info.append((new_uuid, new_status))
         return dependent_datasets_info
 
@@ -233,7 +238,7 @@ class DatasetFactory:
             # Do not touch the children.
             # This should only be called in times of strife and error.
             current_dataset.status = DatasetStatus.SUBMITTED
-            parent_uuid, parent_status = self._query_parent_datasets(session, dataset_uuid)
+            parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
             if parent_uuid is not None:
                 self._update_status(session, parent_uuid, DatasetStatus.SUBMITTED)
 
@@ -247,7 +252,7 @@ class DatasetFactory:
                 if dep_status != DatasetStatus.PROCESSED or dep_status != DatasetStatus.RELEASED:
                     return dataset_uuid, status
             current_dataset.status = DatasetStatus.PROCESSING
-            parent_uuid, parent_status = self._query_parent_datasets(session, dataset_uuid)
+            parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
             if parent_uuid is not None:
                 self._update_status(session, parent_uuid, DatasetStatus.PROCESSING)
 
@@ -265,18 +270,18 @@ class DatasetFactory:
             if new_status == DatasetStatus.PROCESSED:
                 current_dataset.status = DatasetStatus.PROCESSED
                 # Check if parent needs to be updated
-                parent_uuid = self._query_parent_datasets(session, dataset_uuid)
+                parent_uuid = self.__query_parent_datasets(session, dataset_uuid)
                 if parent_uuid is not None:
                     self._update_status(session, parent_uuid, DatasetStatus.PROCESSED)
 
         elif status == DatasetStatus.RELEASED:
             # Get current datasets chain top level.
-            top_level_uuid = self._query_top_level_parent(dataset_uuid)
+            top_level_uuid = self.__query_top_level_parent(dataset_uuid)
             # Check that all children and sub children etc
             top_level_children = self._query_all_child_datasets(top_level_uuid)
-            genebuild_uuid = self._query_related_genome_by_type(session, dataset_uuid, "genebuild")
+            genebuild_uuid = self.__query_related_genome_by_type(session, dataset_uuid, "genebuild")
             top_level_children.extend(self._query_all_child_datasets(genebuild_uuid))
-            assembly_uuid = self._query_related_genome_by_type(session, dataset_uuid, "assembly")
+            assembly_uuid = self.__query_related_genome_by_type(session, dataset_uuid, "assembly")
             top_level_children.extend(self._query_all_child_datasets(assembly_uuid))
 
             # Update if all datasets in it's chain are processed, all genebuild and assembly are processed. Else return error.
