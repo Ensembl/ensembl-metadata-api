@@ -170,10 +170,8 @@ class DatasetFactory:
 
         # Determine if dataset_type is an ID or a name
         if isinstance(dataset_type, int) or (isinstance(dataset_type, str) and dataset_type.isdigit()):
-            # dataset_type is treated as an ID
             filter_condition = (GenomeDataset.genome_id == genome_id, Dataset.dataset_type_id == dataset_type)
         else:
-            # dataset_type is treated as a name
             filter_condition = (GenomeDataset.genome_id == genome_id, DatasetType.name == dataset_type)
 
         related_genome_dataset = session.query(GenomeDataset).join(Dataset).join(DatasetType).filter(
@@ -182,12 +180,12 @@ class DatasetFactory:
         related_status = related_genome_dataset.dataset.status
         return related_uuid, related_status
 
-    def _query_child_datasets(self, session, dataset_uuid):
+    def __query_child_datasets(self, session, dataset_uuid):
         parent_dataset = self._get_dataset(session, dataset_uuid)
         parent_dataset_type = session.query(DatasetType).filter(
             DatasetType.dataset_type_id == parent_dataset.dataset_type_id).one()
         child_dataset_types = session.query(DatasetType).filter(
-            DatasetType.parent == parent_dataset_type.name).all()
+            DatasetType.parent == parent_dataset_type.dataset_type_id).all()
         if not child_dataset_types:
             return []  # Return an empty list if no child types are found
         # This will break if we have multiple genome datasets for a single dataset, which is not currently the case.
@@ -208,7 +206,7 @@ class DatasetFactory:
 
     def _query_all_child_datasets(self, session, parent_dataset_uuid):
         # This method returns the child datasets for a given dataset
-        child_datasets = self._query_child_datasets(session, parent_dataset_uuid)
+        child_datasets = self.__query_child_datasets(session, parent_dataset_uuid)
 
         all_child_datasets = []
         for child_uuid, child_status in child_datasets:
@@ -258,7 +256,7 @@ class DatasetFactory:
 
         elif status == DatasetStatus.PROCESSED:
             # Get children
-            children_uuid = self._query_child_datasets(session, dataset_uuid)
+            children_uuid = self.__query_child_datasets(session, dataset_uuid)
             new_status = DatasetStatus.PROCESSED
             # Check to see if any are still processing or submitted
             for child, child_status in children_uuid:
