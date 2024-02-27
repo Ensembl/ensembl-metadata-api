@@ -17,10 +17,12 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import datetime
 import uuid
+import logging
 
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
+logger = logging.getLogger(__name__)
 
 class Attribute(LoadAble, Base):
     __tablename__ = 'attribute'

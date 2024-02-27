@@ -13,29 +13,36 @@ from concurrent import futures
 import grpc
 import logging
 
-from ensembl.production.metadata.grpc.config import MetadataConfig as cfg
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc
+from grpc_reflection.v1alpha import reflection
+
+from ensembl.production.metadata.grpc.config import MetadataConfig
+from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc, ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
 
 logger = logging.getLogger(__name__)
 
-# Determine the logging level based on the value of cfg.debug_mode
-log_level = logging.DEBUG if cfg.debug_mode else logging.WARNING
-
-logging.basicConfig(
-    level=log_level,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
 
 def serve():
+    cfg = MetadataConfig()
+    log_level = logging.DEBUG if cfg.debug_mode else logging.WARNING
+
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     ensembl_metadata_pb2_grpc.add_EnsemblMetadataServicer_to_server(
         EnsemblMetadataServicer(), server
     )
-    server.add_insecure_port("[::]:50051")
+    SERVICE_NAMES = (
+        ensembl_metadata_pb2.DESCRIPTOR.services_by_name['EnsemblMetadata'].full_name,
+        reflection.SERVICE_NAME
+    )
+    reflection.enable_server_reflection(SERVICE_NAMES, server)
+    server.add_insecure_port(f"[::]:{cfg.service_port}")
     server.start()
     try:
+        logger.info(f"Starting GRPC Server on {cfg.service_port} DEBUG: {cfg.debug_mode}")
         server.wait_for_termination()
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt caught, stopping the server...")
@@ -44,6 +51,5 @@ def serve():
 
 
 if __name__ == "__main__":
-    logger.info("gRPC server starting on port 50051...")
-    logger.info(f"DEBUG: {cfg.debug_mode}")
+    logger.info(f"gRPC server starting...")
     serve()

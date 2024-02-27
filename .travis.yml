@@ -6,11 +6,8 @@ python:
 services:
   - mysql
 before_script:
-  - pip install -r requirements.txt
   - pip install -r requirements-test.txt
   - pip install .
-  - export PYTHONPATH=$PYTHONPATH:$PWD/src
-
 script:
-  - echo "DB_HOST ENV $DB_HOST"
-  - coverage run -m pytest --server mysql://travis@127.0.0.1:3306
+  - echo "DB_HOST $METADATA_URI $TAXONOMY_URI"
+  - coverage run -m pytest -c pyproject.toml --server mysql://travis@127.0.0.1:3306

@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer):
     def __init__(self):
         self.db = utils.connect_to_db()
+        super().__init__()
 
     def GetSpeciesInformation(self, request, context):
         logger.debug(f"Received RPC for GetSpeciesInformation with request: {request}")

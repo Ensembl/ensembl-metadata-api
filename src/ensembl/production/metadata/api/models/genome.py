@@ -56,11 +56,9 @@ class Genome(LoadAble, Base):
              da.attribute.name == "genebuild.annotation_source"),
             'ensembl')
         # Genebuild version is either the laste_geneset_update or the start_date if not specified.
-        genebuild_version = next(
-            (da.value for da in genebuild_dataset.dataset_attributes if
-             da.attribute.name == "genebuild.version"), genebuild_dataset.version)
         try:
-            genebuild_version = re.sub(r"[^\w\s]", '', re.sub(r"\s+", '_', genebuild_version))
+            match = re.match(r'^(\d{4}-\d{2})', genebuild_dataset.genebuild_version)
+            genebuild_version = match.group(1).replace('-', '_')
         except TypeError as e:
             logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
             raise RuntimeError(e)
@@ -79,7 +77,7 @@ class Genome(LoadAble, Base):
 
         # Defining path templates
         path_templates = {
-            'genebuild': f"{common_path}/genebuild/{genebuild_version}",
+            'genebuild': f"{common_path}/geneset/{genebuild_version}",
             'assembly': f"{common_path}/genome",
             'homologies': f"{common_path}/homology/{genebuild_version}",
             'regulation': f"{common_path}/regulation",
