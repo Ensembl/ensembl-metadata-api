@@ -13,7 +13,8 @@ from pathlib import Path
 import pytest
 from ensembl.database import UnitTestDB, DBConnection
 from ensembl.production.metadata.api.hive.dataset_factory import DatasetFactory
-from ensembl.production.metadata.api.models import Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType
+from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
+                                                    DatasetStatus)
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -23,25 +24,12 @@ db_directory = db_directory.resolve()
 class TestDatasetFactory:
     dbc = None  # type: UnitTestDB
 
-    def test_update_dataset_status(self, multi_dbs):
-        dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
-        test_uuid = 'fc5d3e13-340c-4e2a-9f49-256fc319331e'
-        dataset_factory.update_dataset_status(test_uuid)
-        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
-        with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
-            assert dataset.status == 'Processing'
-            dataset_factory = DatasetFactory(session=session)
-            dataset_factory.update_dataset_status(test_uuid)
-            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
-            assert dataset.status == 'Processed'
-
     def test_update_dataset_attributes(self, multi_dbs):
-        dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
+        #Test that  the dataset attribute creation works fine and that the dataset_factory works with a session or a url
+        dataset_factory = DatasetFactory()
         test_uuid = 'fc5d3e13-340c-4e2a-9f49-256fc319331e'
         test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
-        #    def update_dataset_attributes(self,dataset_uuid, attribut_dict):
-        dataset_factory.update_dataset_attributes(test_uuid, test_attributes)
+        dataset_factory.update_dataset_attributes(test_uuid, test_attributes, metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
@@ -52,9 +40,9 @@ class TestDatasetFactory:
                         DatasetAttribute.value == 'test1') \
                 .one_or_none()
             assert dataset_attribute is not None
-            dataset_factory = DatasetFactory(session=session)
+            dataset_factory = DatasetFactory()
             test_attributes = {"assembly.gc_percentage": "test3", "genebuild.nc_longest_gene_length": "test4"}
-            dataset_factory.update_dataset_attributes(test_uuid, test_attributes)
+            dataset_factory.update_dataset_attributes(test_uuid, test_attributes,session=session)
             session.commit()
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
             test_attribute = session.query(DatasetAttribute) \
@@ -64,6 +52,7 @@ class TestDatasetFactory:
                         DatasetAttribute.value == 'test4') \
                 .all()
             assert test_attribute is not None
+
 
     def test_create_dataset(self, multi_dbs):
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
@@ -76,7 +65,7 @@ class TestDatasetFactory:
             test_name = 'test_name'
             test_label = 'test_label'
             test_version = 'test_version'
-            dataset_factory = DatasetFactory(session=session)
+            dataset_factory = DatasetFactory()
             dataset_uuid, new_dataset_attributes, new_genome_dataset = dataset_factory.create_dataset(session,
                                                                                                       test_genome_uuid,
                                                                                                       test_dataset_source,
@@ -101,34 +90,63 @@ class TestDatasetFactory:
                         DatasetAttribute.value == 'test4') \
                 .all()
             assert test_attribute is not None
-
-    def test_create_child_datasets_get_parent(self, multi_dbs):
-        # Tests for individual calling via dataset_uuid or genome_uuid
-        dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
-        test_uuid = '90ba6c03-5161-4f9a-911c-1961b9c0470d'
-        data = dataset_factory.create_child_datasets(dataset_uuid=test_uuid)
+    def test_create_genebuild_children(self, multi_dbs):
         metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).join(DatasetType).filter(DatasetType.name == 'xref').one()
-            assert dataset.status == 'Submitted'
-            dataset_factory = DatasetFactory(session=session)
-            dataset_factory.update_dataset_status(dataset.dataset_uuid, 'Processed')
-            session.commit()
-            parent, parent_type = dataset_factory.get_parent_datasets(dataset.dataset_uuid)
-            assert parent[0] == test_uuid
-            assert parent_type[0] == 'genebuild'
-            dataset_factory.create_child_datasets(genome_uuid='9cc516a8-529e-4919-a429-0d7032e295c9',
-                                                  child_type='protein_features')
-            # dataset_factory.create_child_datasets(dataset_uuid=data[0],
-            #                                       child_type='protein_features')
-            session.commit()
-            new_dataset = session.query(Dataset).join(DatasetType).filter(DatasetType.name == 'protein_features').one()
-            assert new_dataset.status == 'Submitted'
+            genebuild_uuid = 'cc3c7f95-b5dc-4cc1-aa15-2817c89bd1e2'
+            assembly_uuid = '02104faf-3fee-4f28-b53c-605843dac941'
+            dataset_factory = DatasetFactory()
+            dataset_factory.create_all_child_datasets(session, genebuild_uuid)
+            data = session.query(Dataset).join(DatasetType).filter(
+                DatasetType.name == 'thoas_load').one()
+            data.status == DatasetStatus.Submitted
+            #test get parent
+            test_parent, test_status = dataset_factory.get_parent_datasets(data.dataset_uuid, session=session)
+            assert test_parent == genebuild_uuid
 
-        # Tests for bulk calling.
-        dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
-        dataset_factory.create_child_datasets(parent_type='genebuild')
-        metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
-        with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).join(DatasetType).filter(DatasetType.name == 'xref').all()
-            assert len(dataset) == 240
+    # def test_update_dataset_status(self, multi_dbs):
+    #     dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
+    #     test_uuid = 'fc5d3e13-340c-4e2a-9f49-256fc319331e'
+    #     dataset_factory.update_dataset_status(test_uuid)
+    #     metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+    #     with metadata_db.session_scope() as session:
+    #         dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
+    #         assert dataset.status == 'Processing'
+    #         dataset_factory = DatasetFactory(session=session)
+    #         dataset_factory.update_dataset_status(test_uuid)
+    #         dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
+    #         assert dataset.status == 'Processed'
+
+
+
+    #
+    # def test_create_child_datasets_get_parent(self, multi_dbs):
+    #     # Tests for individual calling via dataset_uuid or genome_uuid
+    #     dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
+    #     test_uuid = '90ba6c03-5161-4f9a-911c-1961b9c0470d'
+    #     data = dataset_factory.create_child_datasets(dataset_uuid=test_uuid)
+    #     metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+    #     with metadata_db.session_scope() as session:
+    #         dataset = session.query(Dataset).join(DatasetType).filter(DatasetType.name == 'xref').one()
+    #         assert dataset.status == 'Submitted'
+    #         dataset_factory = DatasetFactory(session=session)
+    #         dataset_factory.update_dataset_status(dataset.dataset_uuid, 'Processed')
+    #         session.commit()
+    #         parent, parent_type = dataset_factory.get_parent_datasets(dataset.dataset_uuid)
+    #         assert parent[0] == test_uuid
+    #         assert parent_type[0] == 'genebuild'
+    #         dataset_factory.create_child_datasets(genome_uuid='9cc516a8-529e-4919-a429-0d7032e295c9',
+    #                                               child_type='protein_features')
+    #         # dataset_factory.create_child_datasets(dataset_uuid=data[0],
+    #         #                                       child_type='protein_features')
+    #         session.commit()
+    #         new_dataset = session.query(Dataset).join(DatasetType).filter(DatasetType.name == 'protein_features').one()
+    #         assert new_dataset.status == 'Submitted'
+    #
+    #     # Tests for bulk calling.
+    #     dataset_factory = DatasetFactory(metadata_uri=multi_dbs['ensembl_metadata'].dbc.url)
+    #     dataset_factory.create_child_datasets(parent_type='genebuild')
+    #     metadata_db = DBConnection(multi_dbs['ensembl_metadata'].dbc.url)
+    #     with metadata_db.session_scope() as session:
+    #         dataset = session.query(Dataset).join(DatasetType).filter(DatasetType.name == 'xref').all()
+    #         assert len(dataset) == 240

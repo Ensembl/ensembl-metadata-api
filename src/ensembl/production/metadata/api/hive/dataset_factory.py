@@ -14,7 +14,7 @@ from ensembl.database import DBConnection
 
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models import Dataset, Genome, GenomeDataset, \
-    DatasetType, DatasetStatus
+    DatasetType, DatasetStatus, DatasetSource
 from sqlalchemy.sql import func
 import uuid
 from ensembl.production.metadata.updater.updater_utils import update_attributes
@@ -24,6 +24,7 @@ class DatasetFactory:
 
     def create_all_child_datasets(self, session, dataset_uuid):
         # Retrieve the top-level dataset
+        #Will not work on datasets that are tied to multiple genomes!
         top_level_dataset = self.__get_dataset(session, dataset_uuid)
         self.__create_child_datasets_recursive(session, top_level_dataset)
 
@@ -120,8 +121,12 @@ class DatasetFactory:
 
         for child_type in child_dataset_types:
             # Example placeholders for dataset properties
-            genome_uuid = parent_dataset.genome_datasets.genome_id
-            dataset_source = parent_dataset.source
+            if len(parent_dataset.genome_datasets) > 1:
+                raise ValueError("More than one genome linked to a genome_dataset")
+
+                # Get the first genome's UUID
+            genome_uuid = parent_dataset.genome_datasets[0].genome.genome_uuid
+            dataset_source = parent_dataset.dataset_source
             dataset_type = child_type
             dataset_attributes = {}  # Populate with appropriate attributes
             name = dataset_type.name
@@ -129,9 +134,9 @@ class DatasetFactory:
             version = None
 
             # Create the child dataset
-            child_dataset_uuid = self.create_dataset(session, genome_uuid, dataset_source, dataset_type,
+            child_dataset_uuid, new_dataset_attributes, new_genome_dataset = self.create_dataset(session, genome_uuid, dataset_source, dataset_type,
                                                      dataset_attributes, name, label, version)
-
+            session.commit()
             # Recursively create children of this new child dataset
             child_dataset = self.__get_dataset(session, child_dataset_uuid)
             self.__create_child_datasets_recursive(session, child_dataset)
