@@ -10,9 +10,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from pathlib import Path
+
 import pytest
 from ensembl.database import UnitTestDB, DBConnection
-from ensembl.production.metadata.api.hive.dataset_factory import DatasetFactory
+from ensembl.production.metadata.api.factories.dataset_factory import DatasetFactory
+
 from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
                                                     DatasetStatus, GenomeDataset, Genome)
 
