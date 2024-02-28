@@ -21,7 +21,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from ensembl.database import DBConnection
-from ensembl.production.metadata.api.hive.dataset_factory import DatasetFactory
+from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.assembly import Assembly
 from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
