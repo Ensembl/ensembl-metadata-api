@@ -10,18 +10,19 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import uuid
+
 from ensembl.database import DBConnection
+from sqlalchemy.sql import func
 
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models import Dataset, Genome, GenomeDataset, \
-    DatasetType, DatasetStatus, DatasetSource
-from sqlalchemy.sql import func
-import uuid
+    DatasetType, DatasetStatus
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
 
 class DatasetFactory:
-
+    # TODO: Multiple genomes for a single dataset are not incoporated
     def create_all_child_datasets(self, session, dataset_uuid):
         # Retrieve the top-level dataset
         # Will not work on datasets that are tied to multiple genomes!
@@ -84,6 +85,7 @@ class DatasetFactory:
         return updated_datasets
 
     def update_dataset_attributes(self, dataset_uuid, attribut_dict, **kwargs):
+        #TODO ADD DELETE opiton to kwargs to redo dataset_attributes.
         session = kwargs.get('session')
         metadata_uri = kwargs.get('metadata_uri')
         if not isinstance(attribut_dict, dict):
@@ -99,16 +101,16 @@ class DatasetFactory:
                 dataset_attributes = update_attributes(dataset, attribut_dict, session)
                 return dataset_attributes
 
-    def get_genomes_by_status_and_type(self, status, type, **kwargs):
+    def get_genomes_by_status_and_type(self, status, dataset_type, **kwargs):
         session = kwargs.get('session')
         metadata_uri = kwargs.get('metadata_uri')
         if session:
-            genome_data = self.__query_genomes_by_status_and_type(session, status, type)
+            genome_data = self.__query_genomes_by_status_and_type(session, status, dataset_type)
             return genome_data
         else:
             metadata_db = DBConnection(metadata_uri)
             with metadata_db.session_scope() as session:
-                genome_data = self.__query_genomes_by_status_and_type(session, status, type)
+                genome_data = self.__query_genomes_by_status_and_type(session, status, dataset_type)
                 return genome_data
 
     def __create_child_datasets_recursive(self, session, parent_dataset):
@@ -239,6 +241,7 @@ class DatasetFactory:
         # Then convert all to released. #Add a blocker and warning in here.
         current_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
         updated_datasets = (dataset_uuid, current_dataset.status)
+        #if released
         if status == DatasetStatus.Submitted:
             # Update to SUBMITTED and all parents.
             # Do not touch the children.
@@ -251,12 +254,12 @@ class DatasetFactory:
         elif status == DatasetStatus.Processing:
             # Update to PROCESSING and all parents.
             # Do not touch the children.
-            if current_dataset.status == DatasetStatus.Released:
+            if current_dataset.status == DatasetStatus.Released:  #and it is not top level.
                 return updated_datasets
             # Check the dependents
             dependents = self.__query_depends_on(session, dataset_uuid)
             for uuid, dep_status in dependents:
-                if dep_status != DatasetStatus.Processed or dep_status != DatasetStatus.Released:
+                if dep_status in (DatasetStatus.Processed, DatasetStatus.Released):
                     return updated_datasets
             current_dataset.status = DatasetStatus.Processing
             parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
@@ -264,24 +267,23 @@ class DatasetFactory:
                 self.__update_status(session, parent_uuid, DatasetStatus.Processing)
 
         elif status == DatasetStatus.Processed:
-            if current_dataset.status == DatasetStatus.Released:
+            if current_dataset.status == DatasetStatus.Released:  #and it is not top level.
                 return updated_datasets
             # Get children
             children_uuid = self.__query_child_datasets(session, dataset_uuid)
-            new_status = DatasetStatus.Processed
             # Check to see if any are still processing or submitted
             for child, child_status in children_uuid:
-                if child_status == DatasetStatus.Processing or child_status == DatasetStatus.Submitted:
-                    new_status = DatasetStatus.Processing
+                if child_status in (DatasetStatus.Processing, DatasetStatus.Submitted):
+                    return updated_datasets
             # Update current dataset if all the children are updated.
-            if new_status == DatasetStatus.Processed:
-                current_dataset.status = DatasetStatus.Processed
-                # Check if parent needs to be updated
-                parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
-                if parent_uuid is not None:
-                    self.__update_status(session, parent_uuid, DatasetStatus.Processed)
+            current_dataset.status = DatasetStatus.Processed
+            # Check if parent needs to be updated
+            parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
+            if parent_uuid is not None:
+                self.__update_status(session, parent_uuid, DatasetStatus.Processed)
 
         elif status == DatasetStatus.Released:
+            #TODO: Check that you are top level. Then check all children are ready to release.
             # Get current datasets chain top level.
             top_level_uuid = self.__query_top_level_parent(session, dataset_uuid)
             # Check that all children and sub children etc
@@ -310,7 +312,7 @@ class DatasetFactory:
     def __get_dataset(self, session, dataset_uuid):
         return session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
 
-    def __query_genomes_by_status_and_type(self, session, status, type):
+    def __query_genomes_by_status_and_type(self, session, status, dataset_type):
         if session is None:
             raise ValueError("Session is not provided")
 
@@ -327,7 +329,7 @@ class DatasetFactory:
             DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
         ).filter(
             Dataset.status == status,
-            DatasetType.name == type
+            DatasetType.name == dataset_type
         ).all()
 
         # Execute query and fetch results
