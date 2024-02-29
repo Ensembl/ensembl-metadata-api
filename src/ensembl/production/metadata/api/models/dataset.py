@@ -10,7 +10,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import datetime
-import enum
 import logging
 import uuid
 
@@ -39,13 +38,6 @@ class Attribute(LoadAble, Base):
     # none
 
 
-class DatasetStatus(enum.Enum):
-    Submitted = 'Submitted'
-    Processing = 'Processing'
-    Processed = 'Processed'
-    Released = 'Released'
-
-
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
 
@@ -57,7 +49,7 @@ class Dataset(LoadAble, Base):
     created = Column(DATETIME(fsp=6), server_default=func.now(), default=datetime.datetime.utcnow)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
-    status = Column('status', Enum(DatasetStatus), default=DatasetStatus.Submitted)
+    status = Column(Enum('Submitted', 'Processing', 'Processed', 'Released'), server_default=text("'Submitted'"))
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset

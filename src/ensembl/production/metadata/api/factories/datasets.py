@@ -17,7 +17,7 @@ from sqlalchemy.sql import func
 
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models import Dataset, Genome, GenomeDataset, \
-    DatasetType, DatasetStatus
+    DatasetType
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
 
@@ -40,7 +40,7 @@ class DatasetFactory:
             label=label,
             created=func.now(),
             dataset_source=dataset_source,  # Must
-            status=DatasetStatus.Submitted,
+            status="Submitted",
         )
         genome = session.query(Genome).filter(Genome.genome_uuid == genome_uuid).one()
         new_genome_dataset = GenomeDataset(
@@ -243,47 +243,47 @@ class DatasetFactory:
         current_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
         updated_datasets = (dataset_uuid, current_dataset.status)
         #if released
-        if status == DatasetStatus.Submitted:
+        if status == "Submitted":
             # Update to SUBMITTED and all parents.
             # Do not touch the children.
             # This should only be called in times of strife and error.
-            current_dataset.status = DatasetStatus.Submitted
+            current_dataset.status = "Submitted"
             parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
             if parent_uuid is not None:
-                self.__update_status(session, parent_uuid, DatasetStatus.Submitted)
+                self.__update_status(session, parent_uuid, "Submitted")
 
-        elif status == DatasetStatus.Processing:
+        elif status == "Processing":
             # Update to PROCESSING and all parents.
             # Do not touch the children.
-            if current_dataset.status == DatasetStatus.Released:  #and it is not top level.
+            if current_dataset.status == "Released":  # and it is not top level.
                 return updated_datasets
             # Check the dependents
             dependents = self.__query_depends_on(session, dataset_uuid)
             for uuid, dep_status in dependents:
-                if dep_status not in (DatasetStatus.Processed, DatasetStatus.Released):
+                if dep_status not in ("Processed", "Released"):
                     return updated_datasets
-            current_dataset.status = DatasetStatus.Processing
+            current_dataset.status = "Processing"
             parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
             if parent_uuid is not None:
-                self.__update_status(session, parent_uuid, DatasetStatus.Processing)
+                self.__update_status(session, parent_uuid, "Processing")
 
-        elif status == DatasetStatus.Processed:
-            if current_dataset.status == DatasetStatus.Released:  #and it is not top level.
+        elif status == "Processed":
+            if current_dataset.status == "Released":  #and it is not top level.
                 return updated_datasets
             # Get children
             children_uuid = self.__query_child_datasets(session, dataset_uuid)
             # Check to see if any are still processing or submitted
             for child, child_status in children_uuid:
-                if child_status in (DatasetStatus.Processing, DatasetStatus.Submitted):
+                if child_status in ("Processing", "Submitted"):
                     return updated_datasets
             # Update current dataset if all the children are updated.
-            current_dataset.status = DatasetStatus.Processed
+            current_dataset.status = "Processed"
             # Check if parent needs to be updated
             parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
             if parent_uuid is not None:
-                self.__update_status(session, parent_uuid, DatasetStatus.Processed)
+                self.__update_status(session, parent_uuid, "Processed")
 
-        elif status == DatasetStatus.Released:
+        elif status == "Released":
             #TODO: Check that you are top level. Then check all children are ready to release.
             # Get current datasets chain top level.
             top_level_uuid = self.__query_top_level_parent(session, dataset_uuid)
@@ -296,15 +296,15 @@ class DatasetFactory:
 
             # Update if all datasets in it's chain are processed, all genebuild and assembly are processed. Else return error.
             for child_uuid, child_status in top_level_children:
-                if child_status != DatasetStatus.Released and child_status != DatasetStatus.Processed:
+                if child_status != "Released" and child_status != "Processed":
                     child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
                     raise DatasetFactoryException(
                         f"Dataset {child_uuid} is not released or processed. It is {child_status}")
             top_level_children = self.__query_all_child_datasets(session, top_level_uuid)
             for child_uuid, child_status in top_level_children:
                 child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
-                child_dataset.status = DatasetStatus.Released
-            current_dataset.status = DatasetStatus.Released
+                child_dataset.status = "Released"
+            current_dataset.status = "Released"
         else:
             raise DatasetFactoryException(f"Dataset status: {status} is not a vallid status")
         updated_datasets = (current_dataset.dataset_uuid, current_dataset.status)
