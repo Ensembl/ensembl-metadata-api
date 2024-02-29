@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from ensembl.database import DBConnection
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.assembly import Assembly
-from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource
+from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 from sqlalchemy import JSON
@@ -48,8 +48,11 @@ class GenomeInputFilter:
     run_all: int = 0
     columns: List = field(default_factory=lambda: [Genome.genome_uuid,
                                                    Genome.production_name.label('species'),
+                                                   Dataset.dataset_uuid,
+                                                   Dataset.status.label('dataset_status'),
+                                                   DatasetSource.name.label('dataset_source'),
                                                    DatasetType.name.label('dataset_type'),
-                                                   Dataset.dataset_uuid])
+                                                   ])
 
 
 class GenomeFactory:
@@ -127,9 +130,16 @@ class GenomeFactory:
             try:
                 query = self._get_query(filters)
                 logger.info(f'executing sql query  {query}')
-                for genome_info in session.execute(query).fetchall():
-                    genome_info = genome_info._asdict()
+                for genome in session.execute(query).fetchall():
+
+                    genome_info = genome._asdict()
                     dataset_uuid = genome_info.get('dataset_uuid', None)
+                    dataset_status = genome_info.get('dataset_status', None)
+
+                    #convert status enum object to string value
+                    if dataset_status and  isinstance(dataset_status, DatasetStatus) :
+                        genome_info['dataset_status'] = dataset_status.value
+
                     if not dataset_uuid:
                         logger.warn(
                             f"No dataset uuid found for genome {genome_info} skipping this genome "
