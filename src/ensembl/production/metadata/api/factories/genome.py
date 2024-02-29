@@ -147,7 +147,7 @@ class GenomeFactory:
                         continue
 
                     if update_dataset_status:
-                        _, status = dataset_factory.update_dataset_status(dataset_uuid, session, update_dataset_status)
+                        _, status = dataset_factory.update_dataset_status(dataset_uuid, update_dataset_status, session=session)
 
                         if update_dataset_status == status:
 
