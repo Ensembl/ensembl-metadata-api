@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 from ensembl.database import UnitTestDB, DBConnection
-from ensembl.production.metadata.api.factories.dataset_factory import DatasetFactory
 
+from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
                                                     DatasetStatus, GenomeDataset, Genome)
 
