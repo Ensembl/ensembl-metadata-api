@@ -9,15 +9,15 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import datetime
 import enum
+import logging
+import uuid
 
 from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index, JSON
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import datetime
-import uuid
-import logging
 
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
@@ -57,9 +57,8 @@ class Dataset(LoadAble, Base):
     created = Column(DATETIME(fsp=6), server_default=func.now(), default=datetime.datetime.utcnow)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
-    status = Column('status', Enum(DatasetStatus,
-                                   values_callable=lambda x: [str(status_enum.value) for status_enum in DatasetStatus]),
-                    default=DatasetStatus.Submitted)
+    status = Column('status', Enum(DatasetStatus), default=DatasetStatus.Submitted)
+
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
     dataset_attributes = relationship("DatasetAttribute", back_populates='dataset',
