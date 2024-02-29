@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from ensembl.database import DBConnection
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.assembly import Assembly
-from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
+from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 from sqlalchemy import JSON
@@ -82,6 +82,10 @@ class GenomeFactory:
             if filters.genome_uuid:
                 query = query.filter(Genome.genome_uuid.in_(filters.genome_uuid))
 
+            if filters.dataset_uuid:
+                print('dataset uuid..................')
+                query = query.filter(Dataset.dataset_uuid.in_(filters.dataset_uuid))
+
             if filters.division:
                 ensembl_divisions = filters.division
 
@@ -134,14 +138,15 @@ class GenomeFactory:
 
                     genome_info = genome._asdict()
                     dataset_uuid = genome_info.get('dataset_uuid', None)
-                    dataset_status = genome_info.get('dataset_status', None)
 
-                    #convert status enum object to string value
-                    if dataset_status and  isinstance(dataset_status, DatasetStatus) :
-                        genome_info['dataset_status'] = dataset_status.value
+                    #TODO: below code required with implementation of datasetstatus enum class in dataset models
+                    # #convert status enum object to string value
+                    # dataset_status = genome_info.get('dataset_status', None)
+                    # if dataset_status and  isinstance(dataset_status, DatasetStatus) :
+                    #     genome_info['dataset_status'] = dataset_status.value
 
                     if not dataset_uuid:
-                        logger.warn(
+                        logger.warning(
                             f"No dataset uuid found for genome {genome_info} skipping this genome "
                         )
                         continue
@@ -156,14 +161,13 @@ class GenomeFactory:
                             )
                             yield genome_info
                         else:
-                            logger.warn(
+                            logger.warning(
                                 f"Cannot update status for dataset uuid: {dataset_uuid} {update_dataset_status} to {status}  for genome {genome['genome_uuid']}"
                             )
 
                     # NOTE: when update_dataset_status is empty, returns all the genome irrespective of its dependencies and status
                     else:
                         yield genome_info
-
             except Exception as e:
                 raise ValueError(str(e))
 
@@ -208,11 +212,11 @@ def main():
         genome_fetcher = GenomeFactory()
 
         logger.info(f'Writing Results to {args.output}')
-        print(args)
         for genome in genome_fetcher.get_genomes(
                 metadata_db_uri=args.metadata_db_uri,
                 update_dataset_status=args.update_dataset_status,
                 genome_uuid=args.genome_uuid,
+                dataset_uuid=args.dataset_uuid,
                 organism_group_type=args.organism_group_type,
                 division=args.division,
                 dataset_type=args.dataset_type,
@@ -230,3 +234,5 @@ def main():
 if __name__ == "__main__":
     logger.info('Fetching Genome Information From New Metadata Database')
     main()
+
+
