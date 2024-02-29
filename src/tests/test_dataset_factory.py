@@ -102,11 +102,14 @@ class TestDatasetFactory:
         with metadata_db.session_scope() as session:
             genebuild_uuid = 'cc3c7f95-b5dc-4cc1-aa15-2817c89bd1e2'
             assembly_uuid = '02104faf-3fee-4f28-b53c-605843dac941'
+
             dataset_factory = DatasetFactory()
+
             dataset_factory.create_all_child_datasets(session, genebuild_uuid)
+            session.commit()
             data = session.query(Dataset).join(DatasetType).filter(
-                DatasetType.name == 'thoas_load').one()
-            data.status == DatasetStatus.Submitted
+                DatasetType.name == 'genome_browser_track').one()
+            assert data.status == DatasetStatus.Submitted
             # test get parent
             test_parent, test_status = dataset_factory.get_parent_datasets(data.dataset_uuid, session=session)
             assert test_parent == genebuild_uuid

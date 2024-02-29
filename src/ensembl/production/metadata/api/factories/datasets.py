@@ -40,7 +40,7 @@ class DatasetFactory:
             label=label,
             created=func.now(),
             dataset_source=dataset_source,  # Must
-            status='Submitted',
+            status=DatasetStatus.Submitted,
         )
         genome = session.query(Genome).filter(Genome.genome_uuid == genome_uuid).one()
         new_genome_dataset = GenomeDataset(
@@ -145,6 +145,7 @@ class DatasetFactory:
             # Recursively create children of this new child dataset
             child_dataset = self.__get_dataset(session, child_dataset_uuid)
             self.__create_child_datasets_recursive(session, child_dataset)
+
 
     def __query_parent_datasets(self, session, dataset_uuid):
         dataset = self.__get_dataset(session, dataset_uuid)
@@ -259,7 +260,7 @@ class DatasetFactory:
             # Check the dependents
             dependents = self.__query_depends_on(session, dataset_uuid)
             for uuid, dep_status in dependents:
-                if dep_status in (DatasetStatus.Processed, DatasetStatus.Released):
+                if dep_status not in (DatasetStatus.Processed, DatasetStatus.Released):
                     return updated_datasets
             current_dataset.status = DatasetStatus.Processing
             parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
