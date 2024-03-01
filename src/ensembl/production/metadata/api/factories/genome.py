@@ -159,6 +159,7 @@ class GenomeFactory:
                             logger.info(
                                 f"Updated Dataset status for dataset uuid: {dataset_uuid} from {update_dataset_status} to {status}  for genome {genome_info['genome_uuid']}"
                             )
+                            genome_info['dataset_updated_status'] = status
                             yield genome_info
                         else:
                             logger.warning(
