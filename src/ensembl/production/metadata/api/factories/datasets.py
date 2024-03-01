@@ -69,7 +69,7 @@ class DatasetFactory:
         updated_datasets = [(dataset_uuid, status)]
         session = kwargs.get('session')
         metadata_uri = kwargs.get('metadata_uri')
-        attribute_dict = kwargs.get('attribut_dict')
+        attribute_dict = kwargs.get('attribute_dict')
         if session:
             updated_datasets = self.__update_status(session, dataset_uuid, status)
             if attribute_dict:
@@ -84,21 +84,21 @@ class DatasetFactory:
             raise DatasetFactoryException("session or metadata_uri are required")
         return updated_datasets
 
-    def update_dataset_attributes(self, dataset_uuid, attribut_dict, **kwargs):
+    def update_dataset_attributes(self, dataset_uuid, attribute_dict, **kwargs):
         #TODO ADD DELETE opiton to kwargs to redo dataset_attributes.
         session = kwargs.get('session')
         metadata_uri = kwargs.get('metadata_uri')
-        if not isinstance(attribut_dict, dict):
-            raise TypeError("attribut_dict must be a dictionary")
+        if not isinstance(attribute_dict, dict):
+            raise TypeError("attribute_dict must be a dictionary")
         if session:
             dataset = self.__get_dataset(session, dataset_uuid)
-            dataset_attributes = update_attributes(dataset, attribut_dict, session)
+            dataset_attributes = update_attributes(dataset, attribute_dict, session)
             return dataset_attributes
         else:
             metadata_db = DBConnection(metadata_uri)
             with metadata_db.session_scope() as session:
                 dataset = self.__get_dataset(session, dataset_uuid)
-                dataset_attributes = update_attributes(dataset, attribut_dict, session)
+                dataset_attributes = update_attributes(dataset, attribute_dict, session)
                 return dataset_attributes
 
     def get_genomes_by_status_and_type(self, status, dataset_type, **kwargs):
