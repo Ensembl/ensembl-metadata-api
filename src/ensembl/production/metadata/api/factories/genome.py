@@ -121,7 +121,7 @@ class GenomeFactory:
             .join(GenomeDataset.dataset) \
             .join(Dataset.dataset_source) \
             .join(Dataset.dataset_type) \
-            .group_by(Genome.genome_id) \
+            .group_by(Genome.genome_id, Dataset.dataset_id) \
             .order_by(Genome.genome_uuid)
 
         return self._apply_filters(query, filters)
