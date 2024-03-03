@@ -169,7 +169,6 @@ class GenomeFactory:
                 yield genome_info
 
 
-
 def main():
     parser = argparse.ArgumentParser(
         prog='genome.py',

@@ -9,12 +9,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from pathlib import Path
 
+from pathlib import Path
 import pytest
 from ensembl.database import UnitTestDB, DBConnection
 from ensembl.production.metadata.api.factories.genome import GenomeFactory, GenomeInputFilters
-from sqlalchemy import func
 from ensembl.production.metadata.api.models import Dataset, Genome
 
 db_directory = Path(__file__).parent / 'databases'
@@ -35,6 +34,7 @@ def metadata_db(multi_dbs):
 @pytest.fixture(scope="class")
 def genome_factory():
     return GenomeFactory()
+
 
 @pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_genome_metadata'},
                                         {'src': sample_path / 'ncbi_taxonomy'},
