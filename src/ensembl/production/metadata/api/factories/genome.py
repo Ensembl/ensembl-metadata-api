@@ -44,7 +44,7 @@ class GenomeInputFilters:
     antispecies: List[str] = field(default_factory=list)
     dataset_status: List[str] = field(default_factory=lambda: ["Submitted"])
     batch_size: int = 50
-    page: int = 4
+    page: int = 1
     organism_group_type: str = "DIVISION"
     run_all: int = 0
     update_dataset_status: str = ""
@@ -169,6 +169,7 @@ class GenomeFactory:
                 yield genome_info
 
 
+
 def main():
     parser = argparse.ArgumentParser(
         prog='genome.py',
@@ -205,7 +206,7 @@ def main():
 
     args = parser.parse_args()
 
-    meta_details = re.match(r"mysql:\/\/.*:(.*?)@(.*?):\d+\/(.*)", args.metadata_db_uri)
+    meta_details = re.match(r"mysql:\/\/.*:?(.*?)@(.*?):\d+\/(.*)", args.metadata_db_uri)
     with open(args.output, 'w') as json_output:
         logger.info(f'Connecting Metadata Database with  host:{meta_details.group(2)} & dbname:{meta_details.group(3)}')
 
