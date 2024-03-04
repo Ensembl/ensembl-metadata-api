@@ -56,8 +56,12 @@ CREATE TABLE attribute
     name         varchar(128) not null,
     label        varchar(128) not null,
     description  varchar(255) null,
-    type         varchar(8)   not null,
-    constraint attribute_name_e1b1f4a7_uniq
+    type         enum ('integer', 'float', 'percent', 'string', 'bp') default 'string' null,
+    constraint name
+        unique (name),
+    constraint name_2
+        unique (name),
+    constraint name_3
         unique (name)
 );
 
@@ -77,7 +81,10 @@ CREATE TABLE dataset_type
     label           varchar(128) not null,
     topic           varchar(32)  not null,
     description     varchar(255) null,
-    details_uri     varchar(255) null
+    details_uri     varchar(255) null,
+    parent          varchar(255) null,
+    depends_on      varchar(255) null,
+    filter_on       JSON null
 );
 
 CREATE TABLE dataset
@@ -90,7 +97,9 @@ CREATE TABLE dataset
     label             varchar(128) not null,
     dataset_source_id int          not null,
     dataset_type_id   int          not null,
-    status            varchar(12)  not null,
+    status            enum ('Submitted', 'Processing', 'Processed', 'Released') default 'Submitted' null,
+    constraint dataset_uuid
+        unique (dataset_uuid),
     constraint dataset_dataset_source_id_fd96f115_fk_dataset_s
         foreign key (dataset_source_id) references dataset_source (dataset_source_id)
             on delete cascade,

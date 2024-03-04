@@ -1,7 +1,22 @@
-1	assembly	Genomic assembly	Core Annotation	Compilation of sequences for a genome	\N
-2	genebuild	Genomic Build	Core Annotation	Genomic annotations for an assembly	\N
-3	variation	mRatBN7.2	Variation Annotation	Short variant data for rattus_norvegicus	\N
-4	evidence	Variation Evidence	Variation Annotation	\N	\N
-5	regulation_build	Regulations	Regulatory Annotation	\N	\N
-6	homologies	Comparative homologies	Comparative Annotation	\N	\N
-7	regulatory_features	Regulatory Annotation	Regulatory Annotation	Regulatory annotation for an assembly	\N
+1	assembly	Genomic assembly	Core Annotation	Compilation of sequences for a genome	\N	\N	\N	\N
+2	genebuild	Genomic Build	Core Annotation	Genomic annotations for an assembly	\N	\N	\N	\N
+3	variation	mRatBN7.2	Variation Annotation	Short variant data for rattus_norvegicus	\N	\N	\N	\N
+4	evidence	Variation Evidence	Variation Annotation	\N	\N	\N	\N	\N
+5	regulation_build	Regulations	Regulatory Annotation	\N	\N	\N	\N	\N
+6	homologies	Comparative homologies	Comparative Annotation	\N	\N	\N	\N	\N
+7	regulatory_features	Regulatory Annotation	Regulatory Annotation	Regulatory annotation for an assembly	\N	\N	\N	\N
+8	xrefs	External References	Production Compute	Xref genome annotation for Genebuild	\N	2	\N	\N
+9	protein_features	Protein Features	Production Compute	Interpro scan run against proteins	\N	2	8	\N
+10	alpha_fold	AlphaFold	Production Compute	AlphaFold compute against proteins	\N	2	9	\N
+11	checksums	Checkums compute	Production Compute	Compute DNA sequences checksums	\N	2	\N	\N
+12	refget_load	Refget Loading	Production Compute	Refeget database provisioning	\N	2	11	\N
+13	compara_load	Compara Data Loading	Production Release Preparation	Load MongoDB homologies	\N	6	15	\N
+14	search_dumps	Data dumps for THOAS	Production Release Preparation	Dumps flat file for THOAS loading	\N	2	1,8,9	\N
+15	compara_compute	Compute homologie database	Production Compute	Compute genome homologies database	\N	6	\N	\N
+16	ftp_dumps	FTP File dumps	Production Release Preparation	Dumps all FTP File format from genebuild	\N	2	1,8,9	\N
+17	compara_dumps	Homologies file dumps	Production Compute	Dumped homologies tsv files	\N	6	15	\N
+18	blast	Blast file dumps	Production Compute	Dumps blast indexed files	\N	2	\N	\N
+20	variation_track	Variation Track API update	Production Release Preparation	Load Variation Track API	\N	3	\N	\N
+21	genome_browser_track	Genebuild Track API update	Production Release Preparation	Load Genebuild track API	\N	2	\N	\N
+22	regulation_track	Regulation Track API update	Production Release Preparation	Load Regulation Track API	\N	7	\N	\N
+23	thoas_load	Thoas Loading	Production Release Preparation	Load MongoDB THOAS collection	\N	2	11,12,14	\N

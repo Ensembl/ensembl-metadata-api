@@ -55,16 +55,3 @@ class BaseMetaUpdater:
             )
             meta_session.add(dataset_source)  # Only add a new DatasetSource to the session if it doesn't exist
         return dataset_source
-
-    def update_attributes(self, dataset, attributes, session):
-        genebuild_dataset_attributes = []
-        for attribute, value in attributes.items():
-            meta_attribute = session.query(Attribute).filter(Attribute.name == attribute).one_or_none()
-            if meta_attribute is None:
-                raise UpdaterException(f"{attribute} does not exist. Add it to the database and reload.")
-            genebuild_dataset_attributes.append(DatasetAttribute(
-                value=value,
-                dataset=dataset,
-                attribute=meta_attribute,
-            ))
-        return genebuild_dataset_attributes
