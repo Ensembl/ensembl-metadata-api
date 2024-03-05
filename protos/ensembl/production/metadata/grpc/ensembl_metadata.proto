@@ -65,7 +65,7 @@ service EnsemblMetadata {
 
   // Retrieve a list of dataset_ids associated with a genome UUID.
   rpc GetDatasetsListByUUID(DatasetsRequest) returns (Datasets) {}
-  
+
   // Retrieve dataset info by genome uuid and dataset_type
   rpc GetDatasetInformation(GenomeDatatypeRequest) returns (DatasetInfos) {}
 
@@ -76,11 +76,11 @@ service EnsemblMetadata {
   // genome_tag value will be either in assembly.url_name or tol_id column
   rpc GetGenomeUUIDByTag(GenomeTagRequest) returns (GenomeUUID) {}
 
- // Get FTP links associated with a Genome UUID and Dataset
+  // Get FTP links associated with a Genome UUID and Dataset
   rpc GetFTPLinks(FTPLinksRequest) returns (FTPLinks) {}
 
   // Get release version for a given genome_uuid
-   rpc GetReleaseVersionByUUID(ReleaseVersionRequest) returns (ReleaseVersion) {}
+  rpc GetReleaseVersionByUUID(ReleaseVersionRequest) returns (ReleaseVersion) {}
 }
 
 /*

@@ -1457,6 +1457,12 @@ class TestUtils:
             ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 110.1}),
             # genome_uuid, data_type_name and release_version
             ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 110.1}),
+            # genome_uuid, data_type_name is all and release_version
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "homologies", 111.1, {"releaseVersion": 110.1}),
+            # genome_uuid, data_type_name is all and release_version
+            # FIXME the message must change, since for all datasets, release Version might be different per dataset type
+            # Service would return a list of Version per datasetType
+            # ("a73351f7-93e7-11ec-a39d-005056b38ce3", "all", 111.1, {"releaseVersion": 110.1}),
             # no genome_uuid
             (None, "genebuild", 111.1, {}),
             # empty params
