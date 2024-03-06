@@ -228,7 +228,7 @@ class TestMetadataDB:
             assembly_accession=assembly_accession,
             chromosomal_only=chromosomal_only
         )
-        logger.debug(f"Retrieved {test[0:2]}")
+        logger.debug(f"Retrieved {test[0]}")
         assert test[-1].AssemblySequence.chromosomal == expected_output
 
     @pytest.mark.parametrize(
@@ -408,14 +408,12 @@ class TestMetadataDB:
         "allow_unreleased, output_count, expected_genome_uuid",
         [
             # fetches everything
-            (True, 283, "0e1a1b4a-efe8-43cc-9220-b5d93015cba6"),
+            (True, 241, "041b8327-222c-4bfe-ae27-1d93c6025428"),
             # fetches released datasets and genomes with current_only=1 (default)
-            (False, 114, "750e67f5-4811-441d-be46-a436786dfb27"),
+            (False, 100, "08b99cae-d007-4284-b20b-9f222827edb6"),
         ]
     )
     def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):
-        # FIXME This test takes ages, and generate a lot of unitary queries. SqlAlchemy results needs review before
-        #  moving to 2000
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
                              taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
         test = conn.fetch_genomes_info(
@@ -425,4 +423,4 @@ class TestMetadataDB:
         )
         output_to_list = list(test)
         assert len(output_to_list) == output_count
-        assert output_to_list[0][0]['genome'].Genome.genome_uuid == expected_genome_uuid
+        assert output_to_list[0][0]['genome'].genome_uuid == expected_genome_uuid
