@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import List, Tuple
 
 import sqlalchemy as db
+from sqlalchemy import desc
 from sqlalchemy.orm import aliased
 from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
@@ -419,7 +420,7 @@ class GenomeAdaptor(BaseAdaptor):
         logger.debug(f'Query {seq_select}')
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
-            return session.execute(seq_select).all()
+            return session.execute(seq_select.order_by(AssemblySequence.accession)).all()
 
     def fetch_sequences_by_genome_uuid(self, genome_uuid, chromosomal_only=False):
         return self.fetch_sequences(

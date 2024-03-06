@@ -229,7 +229,7 @@ class TestMetadataDB:
             chromosomal_only=chromosomal_only
         )
         logger.debug(f"Retrieved {test[0]}")
-        assert test[0].AssemblySequence.chromosomal == expected_output
+        assert test[-1].AssemblySequence.chromosomal == expected_output
 
     @pytest.mark.parametrize(
         "genome_uuid, assembly_sequence_name, chromosomal_only, expected_output",
