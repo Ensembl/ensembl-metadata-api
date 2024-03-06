@@ -23,6 +23,7 @@ from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 logger = logging.getLogger(__name__)
 
+
 class Attribute(LoadAble, Base):
     __tablename__ = 'attribute'
 
@@ -61,6 +62,8 @@ class Dataset(LoadAble, Base):
     dataset_type = relationship('DatasetType', back_populates="datasets")
     # dataset_source_id to dataset source
     dataset_source = relationship('DatasetSource', back_populates="datasets")
+    # parent dataset when created
+    parent = Column(ForeignKey('dataset.dataset_id'), name='parent_id', nullable=True, index=True)
 
     @property
     def genebuild_version(self):
@@ -126,7 +129,7 @@ class DatasetType(LoadAble, Base):
     topic = Column(String(32), nullable=False)
     description = Column(String(255))
     details_uri = Column(String(255))
-    parent = Column(String(128), default=None)
+    parent = Column(ForeignKey('dataset_type.dataset_type_id'), name='parent_id', nullable=True, index=True)
     depends_on = Column(String(128), default=None)
     filter_on = Column(JSON, default=None)
     # One to many relationships

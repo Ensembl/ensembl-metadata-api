@@ -9,6 +9,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+from __future__ import annotations
+from typing import List, Tuple
 
 import sqlalchemy as db
 from sqlalchemy.orm import aliased
@@ -82,7 +84,8 @@ class GenomeAdaptor(BaseAdaptor):
     def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None, assembly_uuid=None,
                       assembly_accession=None, assembly_name=None, use_default_assembly=False, ensembl_name=None,
                       production_name=None, taxonomy_id=None, group=None, group_type=None, allow_unreleased=False,
-                      unreleased_only=False, site_name=None, release_type=None, release_version=None, current_only=True):
+                      unreleased_only=False, site_name=None, release_type=None, release_version=None,
+                      current_only=True):
         """
         Fetches genome information based on the specified parameters.
 
@@ -430,9 +433,17 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
 
-    def fetch_genome_datasets(self, genome_id=None, genome_uuid=None, organism_uuid=None, allow_unreleased=False,
-                              unreleased_only=False, dataset_uuid=None, dataset_source=None, dataset_type_name=None,
-                              release_version=None, dataset_attributes=None):
+    def fetch_genome_datasets(self, genome_id: (int | List[int]) = None,
+                              genome_uuid: (str | List[str]) = None,
+                              organism_uuid: (str | List[str]) = None,
+                              allow_unreleased: bool = False,
+                              unreleased_only: bool = False,
+                              dataset_uuid: (str | List[str]) = None,
+                              dataset_source: str = None,
+                              dataset_type_name: str = None,
+                              release_version: float = None,
+                              dataset_attributes: bool = None) -> List[
+        Tuple[Genome, GenomeDataset, Dataset, DatasetType, DatasetSource, EnsemblRelease, DatasetAttribute, Attribute]]:
         """
         Fetches genome datasets based on the provided parameters.
 
@@ -484,43 +495,50 @@ class GenomeAdaptor(BaseAdaptor):
                 .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id).order_by(
                 Genome.genome_uuid, Dataset.dataset_uuid)
 
-            # set default group topic as 'assembly' to fetch unique datasource
-            if not dataset_type_name:
-                dataset_type_name = "assembly"
-
-            genome_id = check_parameter(genome_id)
-            genome_uuid = check_parameter(genome_uuid)
-            organism_uuid = check_parameter(organism_uuid)
-            dataset_uuid = check_parameter(dataset_uuid)
-            dataset_type_name = check_parameter(dataset_type_name)
-            dataset_source = check_parameter(dataset_source)
-
             if genome_id is not None:
-                genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
+                logger.debug(f"Filter on genome_id {genome_id}")
+                if type(genome_id) is list:
+                    genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
+                else:
+                    genome_select = genome_select.filter(Genome.genome_id == genome_id)
 
             if genome_uuid is not None:
-                genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
+                logger.debug(f"Filter on genome_uuid {genome_uuid}")
+
+                if type(genome_uuid) is list:
+                    genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
+                else:
+                    genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
 
             if organism_uuid is not None:
-                genome_select = genome_select.join(Organism, Organism.organism_id == Genome.organism_id) \
-                    .filter(Organism.organism_uuid.in_(organism_uuid))
+                logger.debug(f"Filter on organism_uuid {organism_uuid}")
+
+                if type(organism_uuid) is list:
+                    genome_select = genome_select.join(Organism, Organism.organism_id == Genome.organism_id).filter(
+                        Organism.organism_uuid.in_(organism_uuid))
+                else:
+                    genome_select = genome_select.join(Organism, Organism.organism_id == Genome.organism_id).filter(
+                        Organism.organism_uuid == organism_uuid)
 
             if dataset_uuid is not None:
-                genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
-
-            if "all" in dataset_type_name:
+                logger.debug(f"Filter on dataset_uuid {dataset_uuid}")
+                if type(dataset_uuid) is list:
+                    genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
+                else:
+                    genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
+            dataset_type_name = "assembly" if dataset_type_name is None else dataset_type_name
+            if dataset_type_name == "all":
                 # TODO: fetch the list dynamically from the DB
                 # TODO: you can as well simply remove the filter, if you want them all.
-                dataset_type_names = [
-                    'assembly', 'genebuild', 'variation', 'evidence',
-                    'regulation_build', 'homologies', 'regulatory_features'
-                ]
-                genome_select = genome_select.filter(DatasetType.name.in_(dataset_type_names))
+                logger.debug(f"Filter on all dataset_type with no parent (main ones)")
+                genome_select = genome_select.filter(DatasetType.parent == None)
             else:
-                genome_select = genome_select.filter(DatasetType.name.in_(dataset_type_name))
+                logger.debug(f"Filter on dataset_type_name {dataset_type_name}")
+                genome_select = genome_select.filter(DatasetType.name == dataset_type_name)
 
             if dataset_source is not None:
-                genome_select = genome_select.filter(DatasetSource.name.in_(dataset_source))
+                logger.debug(f"Filter on dataset_source {dataset_source}")
+                genome_select = genome_select.filter(DatasetSource.name == dataset_source)
 
             if dataset_attributes:
                 genome_select = genome_select.add_columns(DatasetAttribute, Attribute) \
@@ -554,6 +572,7 @@ class GenomeAdaptor(BaseAdaptor):
                         .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
 
                     if release_version:
+                        logger.debug(f"Filter on release_version <= {release_version}")
                         genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
             logger.debug(genome_select)
