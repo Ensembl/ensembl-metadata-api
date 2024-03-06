@@ -9,25 +9,24 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.`
-import re
+import logging
 from collections import defaultdict
+
 import sqlalchemy as db
 import sqlalchemy.exc
-
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
     SeqRegionSynonym, AttribType
-from sqlalchemy import select, and_, create_engine
-from sqlalchemy import or_
-from ensembl.database import DBConnection
-from sqlalchemy.exc import NoResultFound, SQLAlchemyError
-from sqlalchemy.orm import aliased, Session
-
-from ensembl.production.metadata.api.models import *
-from ensembl.production.metadata.updater.base import BaseMetaUpdater
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
-import logging
+from sqlalchemy import or_
+from sqlalchemy import select, and_
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import aliased
+
 from ensembl.production.metadata.api.exceptions import *
+from ensembl.production.metadata.api.factories.datasets import DatasetFactory
+from ensembl.production.metadata.api.models import *
+from ensembl.production.metadata.updater.base import BaseMetaUpdater
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
 
@@ -439,22 +438,25 @@ class CoreMetaUpdater(BaseMetaUpdater):
         else:
             dataset_source = source
 
+        # This should return the existing objects
         if assembly is not None and existing is None:
             # Get the existing assembly dataset
             assembly_dataset = meta_session.query(Dataset).filter(Dataset.label == assembly_accession).one_or_none()
             # I should not need this, but double check on database updating.
             assembly_dataset_attributes = assembly_dataset.dataset_attributes
             assembly_sequences = assembly.assembly_sequences
-
             return assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source
 
         else:
-            is_reference = 1 if self.get_meta_single_meta_key(species_id, "assembly.is_reference") else 0
-            with self.db.session_scope() as session:
-                level = (session.execute(db.select(CoordSystem.name).filter(
-                    CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
-                tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")
+
+            attributes = self.get_meta_list_from_prefix_meta_key(species_id, "assembly")
+
             if existing is None:
+                is_reference = 1 if self.get_meta_single_meta_key(species_id, "assembly.is_reference") else 0
+                with self.db.session_scope() as session:
+                    level = (session.execute(db.select(CoordSystem.name).filter(
+                        CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
+                    tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")
                 assembly = Assembly(
                     ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
                     accession=self.get_meta_single_meta_key(species_id, "assembly.accession"),
@@ -469,57 +471,24 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
                     is_reference=is_reference
                 )
-            dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "assembly").first()
-
-            if existing is None:
-                assembly_dataset = Dataset(
-                    dataset_uuid=str(uuid.uuid4()),
-                    dataset_type=dataset_type,  # extract from dataset_type
-                    name="assembly",
-                    # version=None, Could be changed.
-                    label=assembly.accession,  # Required. Makes for a quick lookup
-                    created=func.now(),
-                    dataset_source=dataset_source,  # extract from dataset_source
-                    status='Submitted',
-                )
-            else:
-                assembly_dataset = existing
-                assembly_dataset.dataset_source = dataset_source
-
-            attributes = self.get_meta_list_from_prefix_meta_key(species_id, "assembly")
-            assembly_dataset_attributes = []
-            # Should be able to delete the attribute creation.
-            for attribute, value in attributes.items():
-                meta_attribute = meta_session.query(Attribute).filter(Attribute.name == attribute).one_or_none()
-                if meta_attribute is None:
-                    meta_attribute = Attribute(
-                        name=attribute,
-                        label=attribute,
-                        description=attribute,
-                        type="string",
-                    )
-                    # TODO re-add after 2500
-                    # raise Exception(f"{attribute} does not exist. Add it to the database and reload.")
-                dataset_attribute = DatasetAttribute(
-                    value=value,
-                    dataset=assembly_dataset,
-                    attribute=meta_attribute,
-                )
-                assembly_dataset_attributes.append(dataset_attribute)
-            if existing is None:
+                dataset_factory = DatasetFactory()
+                dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "assembly").first()
+                (dataset_uuid, assembly_dataset, assembly_dataset_attributes,
+                 new_genome_dataset) = dataset_factory.create_dataset(meta_session, None, dataset_source,
+                                                                      dataset_type, attributes, "assembly",
+                                                                      assembly.accession, None, 'Processed')
                 meta_session.add(assembly)
                 meta_session.add(assembly_dataset)
                 assembly_sequences = self.get_assembly_sequences(species_id, assembly)
                 meta_session.add_all(assembly_sequences)
-            # Only reload the assembly sequences if the data is not released.
-            elif assembly.is_released():
+            else:
+                assembly_dataset = existing
+                assembly_dataset.dataset_source = dataset_source
+                for dataset_attribute in assembly_dataset.dataset_attributes:
+                    meta_session.delete(dataset_attribute)
+                assembly_dataset_attributes = update_attributes(assembly_dataset, attributes, meta_session)
                 assembly_sequences = meta_session.query(AssemblySequence).filter(
                     AssemblySequence.assembly_id == assembly.assembly_id)
-            else:
-                meta_session.query(AssemblySequence).filter(
-                    AssemblySequence.assembly_id == assembly.assembly_id).delete()
-                assembly_sequences = self.get_assembly_sequences(species_id, assembly)
-                meta_session.add_all(assembly_sequences)
             meta_session.add_all(assembly_dataset_attributes)
             return assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source
 

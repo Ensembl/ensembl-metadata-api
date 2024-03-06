@@ -30,8 +30,18 @@ class DatasetFactory:
         top_level_dataset = self.__get_dataset(session, dataset_uuid)
         self.__create_child_datasets_recursive(session, top_level_dataset)
 
-    def create_dataset(self, session, genome_uuid, dataset_source, dataset_type, dataset_attributes, name, label,
-                       version):
+    def create_dataset(self, session, genome_input, dataset_source, dataset_type, dataset_attributes, name, label,
+                       version, status="Submitted"):
+        # Check if genome_input is a UUID (string) or a Genome object
+        if isinstance(genome_input, str):
+            genome = session.query(Genome).filter(Genome.genome_uuid == genome_input).one()
+        elif isinstance(genome_input, Genome):
+            genome = genome_input
+        elif genome_input is None:
+            genome = None
+        else:
+            raise ValueError("Invalid genome input. Must be either a UUID string or a Genome object.")
+
         new_dataset = Dataset(
             dataset_uuid=str(uuid.uuid4()),
             dataset_type=dataset_type,  # Must be an object returned from the current session
@@ -40,18 +50,21 @@ class DatasetFactory:
             label=label,
             created=func.now(),
             dataset_source=dataset_source,  # Must
-            status="Submitted",
-        )
-        genome = session.query(Genome).filter(Genome.genome_uuid == genome_uuid).one()
-        new_genome_dataset = GenomeDataset(
-            genome=genome,
-            dataset=new_dataset,
-            is_current=False,
+            status=status,
         )
         new_dataset_attributes = update_attributes(new_dataset, dataset_attributes, session)
-        session.add(new_genome_dataset)
         dataset_uuid = new_dataset.dataset_uuid
-        return dataset_uuid, new_dataset_attributes, new_genome_dataset
+
+        if genome is not None:
+            new_genome_dataset = GenomeDataset(
+                genome=genome,
+                dataset=new_dataset,
+                is_current=False,
+            )
+            session.add(new_genome_dataset)
+            return dataset_uuid, new_dataset, new_dataset_attributes, new_genome_dataset
+        else:
+            return dataset_uuid, new_dataset, new_dataset_attributes, None
 
     def get_parent_datasets(self, dataset_uuid, **kwargs):
         session = kwargs.get('session')
@@ -136,7 +149,8 @@ class DatasetFactory:
             version = None
 
             # Create the child dataset
-            child_dataset_uuid, new_dataset_attributes, new_genome_dataset = self.create_dataset(session, genome_uuid,
+            child_dataset_uuid, new_dataset, new_dataset_attributes, new_genome_dataset = self.create_dataset(session,
+                                                                                                              genome_uuid,
                                                                                                  dataset_source,
                                                                                                  dataset_type,
                                                                                                  dataset_attributes,

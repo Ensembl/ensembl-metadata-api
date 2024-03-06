@@ -9,23 +9,16 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import re
 from pathlib import Path
-from unittest import mock
-from unittest.mock import Mock, patch
 
 import pytest
-import re
-
-import sqlalchemy
+from ensembl.core.models import Meta
 from ensembl.database import UnitTestDB, DBConnection
 
-from ensembl.production.metadata.api.exceptions import UpdateBackCoreException, MetadataUpdateException
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence, DatasetAttribute, \
-    DatasetSource, DatasetType, Attribute, Genome
-from ensembl.core.models import Meta
-
-from ensembl.production.metadata.updater.core import CoreMetaUpdater
+    DatasetSource, DatasetType, Attribute
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -161,7 +154,7 @@ class TestUpdater:
                 (AssemblySequence.name == 'TEST1_seqA')).first()
             # TODO Review this test after Proper discussion with GB / Variation / Etc about impact of changing sequences
             #  in existing assembly
-            # assert old_seq is None
+            assert old_seq is not None
             datasets = session.query(Dataset)
             # Check that the old datasets have been removed
             count = session.query(Dataset).join(DatasetSource).filter(
@@ -222,17 +215,16 @@ class TestUpdater:
         test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url, force=True)
         # FIXME Should be run
-        # test.process_core()
+        test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # Test that assembly seqs have not been updated
-            # new_seq = session.query(AssemblySequence).where(
-            #     (AssemblySequence.name == 'TEST1_seq_BAD')).first()
-            # assert new_seq is None
+            new_seq = session.query(AssemblySequence).where(
+                (AssemblySequence.name == 'TEST1_seq_BAD')).first()
+            assert new_seq is None
             old_seq = session.query(AssemblySequence).where(
                 (AssemblySequence.accession == 'BX284601.5')).first()
-            # FIXME
-            #  assert old_seq is not None
+            assert old_seq is not None
 
             i = session.query(Dataset).join(DatasetSource).filter(
                 DatasetSource.name == 'caenorhabditis_elegans_core_55_108_282'
