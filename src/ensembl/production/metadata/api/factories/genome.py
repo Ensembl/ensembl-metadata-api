@@ -24,7 +24,6 @@ from ensembl.database import DBConnection
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
-from ensembl.production.metadata.api.models.assembly import Assembly
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 from sqlalchemy import select, text
 from typing import List
