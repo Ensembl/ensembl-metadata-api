@@ -382,9 +382,9 @@ class GenomeAdaptor(BaseAdaptor):
             list: A list of fetched sequences.
         """
         genome_id = check_parameter(genome_id)
-        # genome_uuid = check_parameter(genome_uuid)
+        genome_uuid = check_parameter(genome_uuid)
         assembly_uuid = check_parameter(assembly_uuid)
-        # assembly_accession = check_parameter(assembly_accession)
+        assembly_accession = check_parameter(assembly_accession)
         assembly_sequence_accession = check_parameter(assembly_sequence_accession)
         assembly_sequence_name = check_parameter(assembly_sequence_name)
 
@@ -416,7 +416,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         if assembly_sequence_name is not None:
             seq_select = seq_select.filter(AssemblySequence.name == assembly_sequence_name)
-        logger.debug(f'Query {seq_select}')
+
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(seq_select).all()
@@ -493,7 +493,7 @@ class GenomeAdaptor(BaseAdaptor):
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
                 .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id).order_by(
-                Genome.genome_uuid, Dataset.dataset_uuid).distinct()
+                Genome.genome_uuid, Dataset.dataset_uuid)
 
             if genome_id is not None:
                 logger.debug(f"Filter on genome_id {genome_id}")
@@ -598,13 +598,13 @@ class GenomeAdaptor(BaseAdaptor):
 
     ):
         try:
-            # genome_id = check_parameter(genome_id)
-            # genome_uuid = check_parameter(genome_uuid)
+            genome_id = check_parameter(genome_id)
+            genome_uuid = check_parameter(genome_uuid)
             ensembl_name = check_parameter(ensembl_name)
             group = check_parameter(group)
             group_type = check_parameter(group_type)
-            # dataset_type_name = check_parameter(dataset_type_name)
-            # dataset_source = check_parameter(dataset_source)
+            dataset_type_name = check_parameter(dataset_type_name)
+            dataset_source = check_parameter(dataset_source)
 
             if group is None:
                 group_type = group_type if group_type else ['Division']
@@ -622,24 +622,18 @@ class GenomeAdaptor(BaseAdaptor):
                 group=group,
                 group_type=group_type,
             )
-            genomes_uuids = [genome[0].genome_uuid for genome in genomes]
-            genomes_datasets = self.fetch_genome_datasets(
-                genome_uuid=genomes_uuids,
-                allow_unreleased=allow_unreleased_datasets,
-                dataset_type_name=dataset_type_name,
-                dataset_source=dataset_source,
-                dataset_attributes=dataset_attributes
-            )
-            agglo = {}
-            logger.debug(f'genome datasets {genomes_datasets[0]}')
-            for genome_infos in genomes_datasets:
-                if genome_infos[0].genome_uuid not in agglo.keys():
-                    agglo[genome_infos[0].genome_uuid] = {'genome': genome_infos[0], 'datasets': []}
-                if genome_infos[2] not in agglo[genome_infos[0].genome_uuid]['datasets']:
-                    agglo[genome_infos[0].genome_uuid]['datasets'].append(genome_infos[2])
-            for genome_uuid, data in agglo.items():
-                logger.debug(f'genome_uuid: {genome_uuid}, datasets {data["datasets"]}')
-                res = [{'genome': data['genome'], 'datasets': data['datasets']}]
+
+            for genome in genomes:
+                # FIXME, looping over each genome could be costly, like very costly.
+                #  Better approach could be to pre-fetch related objects
+                dataset = self.fetch_genome_datasets(
+                    genome_uuid=genome[0].genome_uuid,
+                    allow_unreleased=allow_unreleased_datasets,
+                    dataset_type_name=dataset_type_name,
+                    dataset_source=dataset_source,
+                    dataset_attributes=dataset_attributes
+                )
+                res = [{'genome': genome, 'datasets': dataset}]
                 yield res
         except Exception as e:
             raise ValueError(str(e))
