@@ -114,6 +114,7 @@ class GenomeFactory:
     def _build_query(self, filters):
         query = select(filters.columns) \
             .select_from(Genome) \
+            .join(Genome.assembly) \
             .join(Genome.organism) \
             .join(Organism.organism_group_members) \
             .join(OrganismGroupMember.organism_group) \
