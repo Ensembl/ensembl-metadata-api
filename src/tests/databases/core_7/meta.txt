@@ -1,4 +1,4 @@
-12	1	assembly.accession	weird01
+12	1	assembly.accession	test1
 14	1	assembly.default	NewTest
 13	1	assembly.name	jaber01
 11	1	assembly.ucsc_alias	test_alias
@@ -18,7 +18,8 @@
 18	1	genebuild.sample_gene	ENSAMXG00005000318
 19	1	genebuild.sample_location	KB871578.1:9766653-9817473
 20	1	strain.type	test
-23	1	genebuild.provider_name	testforname
-24	1	genebuild.start_date	test
+23	1	genebuild.provider_name	testfornamenew
+24	1	genebuild.start_date	2023-08-Ensembl
 25	1	genebuild.havana_datafreeze_date	test2
-
+26	1	schema_version	110
+27	1	assembly.total_coding_sequence_length	8989

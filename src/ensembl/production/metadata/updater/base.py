@@ -9,14 +9,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import sqlalchemy as db
+from ensembl.database import DBConnection
 from sqlalchemy import inspect
 from sqlalchemy.engine import make_url
 
-from ensembl.core.models import Meta
-from ensembl.production.metadata.api.exceptions import UpdaterException
-from ensembl.production.metadata.api.models import DatasetSource, Attribute, DatasetAttribute, Dataset
-from ensembl.database import DBConnection
+from ensembl.production.metadata.api.models import DatasetSource
 from ensembl.production.metadata.api.models import EnsemblRelease
 
 
@@ -44,9 +41,11 @@ class BaseMetaUpdater:
         insp = inspect(obj)
         return insp.transient or insp.pending
 
-    def get_or_new_source(self, meta_session, db_type):
+    def get_or_new_source(self, meta_session, db_type, name=None):
         db_uri = self.db_uri
-        name = make_url(db_uri).database
+        if name is None:
+            # For core databases
+            name = make_url(db_uri).database
         dataset_source = meta_session.query(DatasetSource).filter(DatasetSource.name == name).one_or_none()
         if dataset_source is None:
             dataset_source = DatasetSource(
