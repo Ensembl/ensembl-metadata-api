@@ -16,7 +16,7 @@ from ensembl.database import UnitTestDB, DBConnection
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
-                                                    GenomeDataset, Genome)
+                                                    GenomeDataset, Genome, DatasetStatus)
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -109,7 +109,7 @@ class TestDatasetFactory:
             session.commit()
             data = session.query(Dataset).join(DatasetType).filter(
                 DatasetType.name == 'genome_browser_track').one()
-            assert data.status == "Submitted"
+            assert data.status == DatasetStatus.SUBMITTED # "Submitted"
             # test get parent
             test_parent, test_status = dataset_factory.get_parent_datasets(data.dataset_uuid, session=session)
             assert test_parent == genebuild_uuid
@@ -139,30 +139,30 @@ class TestDatasetFactory:
             xref_uuid = xref_uuid[0]
             # Processing
             # Fail to update protein_features
-            temp, failed_status = dataset_factory.update_dataset_status(protfeat_uuid, "Processing",
+            temp, failed_status = dataset_factory.update_dataset_status(protfeat_uuid, DatasetStatus.PROCESSING, #"Processing",
                                                                         session=session)
             session.commit()
             failed_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
-            assert failed_status == "Submitted"
-            assert failed_status_check[0] == "Submitted"
+            assert failed_status == DatasetStatus.SUBMITTED #"Submitted"
+            assert failed_status_check[0] == DatasetStatus.SUBMITTED # "Submitted"
             # succeed on xref
-            temp, succeed_status = dataset_factory.update_dataset_status(xref_uuid, "Processing",
+            temp, succeed_status = dataset_factory.update_dataset_status(xref_uuid, DatasetStatus.PROCESSING, #"Processing",
                                                                          session=session)
             session.commit()
             succeed_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == xref_uuid).one()
             genebuild_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == genebuild_uuid).one()
-            assert succeed_status == "Processing"
-            assert succeed_status_check[0] == "Processing"
-            assert genebuild_status_check[0] == "Processing"
+            assert succeed_status == DatasetStatus.PROCESSING #"Processing"
+            assert succeed_status_check[0] == DatasetStatus.PROCESSING # "Processing"
+            assert genebuild_status_check[0] == DatasetStatus.PROCESSING #"Processing"
 
             # Processed
             # Fail to update genebuild
-            temp, failed_status = dataset_factory.update_dataset_status(genebuild_uuid, "Processed",
+            temp, failed_status = dataset_factory.update_dataset_status(genebuild_uuid, DatasetStatus.PROCESSED, #"Processed",
                                                                         session=session)
             session.commit()
             genebuild_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == genebuild_uuid).one()
-            assert failed_status == "Processing"
-            assert genebuild_status_check[0] == "Processing"
+            assert failed_status == DatasetStatus.PROCESSING # "Processing"
+            assert genebuild_status_check[0] == DatasetStatus.PROCESSING # "Processing"
             # Change all the children
             child_dataset_uuids = session.query(Dataset.dataset_uuid) \
                 .join(GenomeDataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
@@ -172,21 +172,27 @@ class TestDatasetFactory:
                 .filter(DatasetType.name != "genebuild").all()
             for temp_uuid in child_dataset_uuids:
                 temp_uuid = temp_uuid[0]
-                dataset_factory.update_dataset_status(temp_uuid, "Processed", session=session)
+                dataset_factory.update_dataset_status(temp_uuid, DatasetStatus.PROCESSED, session=session) #"Processed", session=session)
                 session.commit()
             genebuild_status_check = session.query(Dataset.status).filter(
                 Dataset.dataset_uuid == genebuild_uuid).one()
-            assert genebuild_status_check[0] == "Processed"
-            dataset_factory.update_dataset_status(genebuild_uuid, "Released", session=session)
+            assert genebuild_status_check[0] == DatasetStatus.PROCESSED # "Processed"
+            dataset_factory.update_dataset_status(genebuild_uuid, DatasetStatus.RELEASED, session=session) #"Released", session=session)
             session.commit()
             genebuild_status_check = session.query(Dataset.status).filter(
                 Dataset.dataset_uuid == genebuild_uuid).one()
-            assert genebuild_status_check[0] == "Released"
+            assert genebuild_status_check[0] == DatasetStatus.RELEASED # "Released"
             protfeat_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
-            assert protfeat_status_check[0] == "Released"
+            assert protfeat_status_check[0] == DatasetStatus.RELEASED # "Released"
 
             # Check for submitted change
-            dataset_factory.update_dataset_status(protfeat_uuid, "Submitted", session=session)
+            dataset_factory.update_dataset_status(protfeat_uuid, DatasetStatus.SUBMITTED, session=session) #"Submitted", session=session)
             session.commit()
             submitted_status = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
-            assert submitted_status[0] == "Submitted"
+            assert submitted_status[0] == DatasetStatus.SUBMITTED # "Submitted"
+
+    def test_str_status_fetch(self, multi_dbs):
+        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        with metadata_db.session_scope() as session:
+            datasets = session.query(Dataset).filter(Dataset.status == DatasetStatus.SUBMITTED)
+            print(datasets)

@@ -38,6 +38,20 @@ class Attribute(LoadAble, Base):
     # many to one relationships
     # none
 
+import enum
+
+class DatasetStatus(enum.Enum):
+    SUBMITTED = "Submitted"
+    PROCESSING = "Processing"
+    PROCESSED = "Processed"
+    RELEASED = "Released"
+
+import sqlalchemy
+SqlQuantityType = sqlalchemy.types.Enum(
+  DatasetStatus,
+   name='dataset_status',
+   values_callable=lambda obj: [e.value for e in obj]
+)
 
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
@@ -50,7 +64,7 @@ class Dataset(LoadAble, Base):
     created = Column(DATETIME(fsp=6), server_default=func.now(), default=datetime.datetime.utcnow)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
-    status = Column(Enum('Submitted', 'Processing', 'Processed', 'Released'), server_default=text('Submitted'))
+    status = Column(SqlQuantityType, server_default=text('Submitted'))
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
