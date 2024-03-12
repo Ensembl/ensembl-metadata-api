@@ -20,5 +20,5 @@
 20	1	strain.type	test
 21	1	genome.genome_uuid	test
 23	1	genebuild.provider_name	test2
-24	1	genebuild.start_date	test
+24	1	genebuild.start_date	2023-07-Ensembl
 25	1	schema_version	110

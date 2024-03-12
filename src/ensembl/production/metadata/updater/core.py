@@ -88,7 +88,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         This method contains the logic for updating the metadata
         """
 
-        with (self.metadata_db.session_scope() as meta_session):
+        with self.metadata_db.session_scope() as meta_session:
             organism, division, organism_group_member = self.get_or_new_organism(species_id, meta_session)
             assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source = self.get_or_new_assembly(
                 species_id, meta_session)

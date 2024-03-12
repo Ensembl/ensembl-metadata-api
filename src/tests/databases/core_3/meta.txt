@@ -18,5 +18,5 @@
 19	1	genebuild.sample_location	KB871578.1:9766653-9817473
 20	1	strain.type	test
 23	1	genebuild.provider_name	test
-24	1	genebuild.start_date	test
+24	1	genebuild.start_date	2023-07-Ensembl
 25	1	schema_version	110
