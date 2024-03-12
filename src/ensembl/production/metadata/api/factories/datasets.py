@@ -52,7 +52,10 @@ class DatasetFactory:
             dataset_source=dataset_source,  # Must
             status=status,
         )
-        new_dataset_attributes = update_attributes(new_dataset, dataset_attributes, session)
+        if dataset_attributes is not None:
+            new_dataset_attributes = update_attributes(new_dataset, dataset_attributes, session)
+        else:
+            new_dataset_attributes = None
         dataset_uuid = new_dataset.dataset_uuid
 
         if genome is not None:
@@ -135,7 +138,14 @@ class DatasetFactory:
             DatasetType.parent == parent_dataset_type.dataset_type_id).all()
 
         for child_type in child_dataset_types:
-            # Example placeholders for dataset properties
+            # Check if a dataset with the same type and genome exists
+            existing_datasets = session.query(Dataset).join(GenomeDataset).filter(
+                Dataset.dataset_type_id == child_type.dataset_type_id,
+                GenomeDataset.genome_id.in_([gd.genome_id for gd in parent_dataset.genome_datasets])
+            ).all()
+            if any(d.status in ['Submitted', 'Processing'] for d in existing_datasets):
+                continue  # Skip creation if any dataset is already Processed or Released
+
             if len(parent_dataset.genome_datasets) > 1:
                 raise ValueError("More than one genome linked to a genome_dataset")
 

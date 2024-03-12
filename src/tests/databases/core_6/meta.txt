@@ -21,3 +21,4 @@
 21	1	genome.genome_uuid	90720316-006c-470b-a7dd-82d28f952264
 23	1	genebuild.provider_name	test
 24	1	genebuild.start_date	test
+25	1	schema_version	110

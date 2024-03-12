@@ -9,7 +9,6 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.`
-import logging
 from collections import defaultdict
 
 import sqlalchemy as db
@@ -23,7 +22,6 @@ from sqlalchemy import select, and_
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import aliased
 
-from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
@@ -90,7 +88,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         This method contains the logic for updating the metadata
         """
 
-        with self.metadata_db.session_scope() as meta_session:
+        with (self.metadata_db.session_scope() as meta_session):
             organism, division, organism_group_member = self.get_or_new_organism(species_id, meta_session)
             assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source = self.get_or_new_assembly(
                 species_id, meta_session)
@@ -152,6 +150,35 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
                 # Create genome and populate the database with assembly and dataset
             elif self.is_object_new(genebuild_dataset):
+                # Check that genest update or provider name has changed from last time.
+
+                dataset_attr_alias1 = aliased(DatasetAttribute)
+                attribute_alias1 = aliased(Attribute)
+                dataset_attr_alias2 = aliased(DatasetAttribute)
+                attribute_alias2 = aliased(Attribute)
+                provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
+                geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
+                query = meta_session.query(Assembly).join(
+                    Genome, Assembly.genomes
+                ).join(GenomeDataset, Genome.genome_datasets
+                       ).join(Dataset, GenomeDataset.dataset
+                              ).join(dataset_attr_alias1, Dataset.dataset_attributes
+                                     ).join(attribute_alias1, dataset_attr_alias1.attribute
+                                            ).join(dataset_attr_alias2, Dataset.dataset_attributes
+                                                   ).join(attribute_alias2, dataset_attr_alias2.attribute
+                                                          ).filter(Assembly.accession == assembly.accession,
+                                                                   Dataset.dataset_type.has(name="genebuild"),
+                                                                   and_(
+                                                                       attribute_alias1.name == "genebuild.provider_name",
+                                                                       dataset_attr_alias1.value == provider_name,
+                                                                       attribute_alias2.name == "genebuild.last_geneset_update",
+                                                                       dataset_attr_alias2.value == geneset_update
+                                                                   )
+                                                                   )
+                if meta_session.query(query.exists()).scalar():
+                    raise MetadataUpdateException(
+                        "genebuild.provider_name or genebuild.last_geneset_update must be updated.")
+
                 logging.info('New genebuild')
                 # Create genome and populate the database with genebuild dataset
                 new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
@@ -238,6 +265,17 @@ class CoreMetaUpdater(BaseMetaUpdater):
             is_current=True,
         )
         meta_session.add(genebuild_genome_dataset)
+        # Homology dataset creation
+        homology_uuid, homology_dataset, homology_dataset_attributes, homology_genome_dataset = self.new_homology(
+            meta_session, species_id, genome=new_genome)
+        meta_session.add(homology_genome_dataset)
+
+        # Create children datasets here!
+        meta_session.commit()
+        dataset_factory = DatasetFactory()
+        dataset_factory.create_all_child_datasets(meta_session, genebuild_dataset.dataset_uuid)
+        dataset_factory.create_all_child_datasets(meta_session, homology_dataset.dataset_uuid)
+
         return new_genome, assembly_genome_dataset, genebuild_genome_dataset
 
     def get_or_new_organism(self, species_id, meta_session):
@@ -261,9 +299,14 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     NCBITaxaName.name_class == "genbank common name"
                 ).one_or_none()
                 common_name = common_name.name if common_name is not None else '-'
+        # Ensure that the first character is upper case.
+        common_name = common_name[0].upper() + common_name[1:]
+        species_taxonomy_id = self.get_meta_single_meta_key(species_id, "species.species_taxonomy_id")
+        if species_taxonomy_id is None:
+            species_taxonomy_id = taxid
         # Instantiate a new Organism object using data fetched from metadata.
         new_organism = Organism(
-            species_taxonomy_id=self.get_meta_single_meta_key(species_id, "species.species_taxonomy_id"),
+            species_taxonomy_id=species_taxonomy_id,
             taxonomy_id=self.get_meta_single_meta_key(species_id, "species.taxonomy_id"),
             common_name=common_name,
             scientific_name=self.get_meta_single_meta_key(species_id, "species.scientific_name"),
@@ -498,14 +541,14 @@ class CoreMetaUpdater(BaseMetaUpdater):
         This method contains the logic for updating the metadata
         This is not a get, as we don't update the metadata for genebuild, only replace it if it is not released.
         """
-        # The assembly accession and genebuild version are extracted from the metadata of the species
         assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
-        genebuild_start_date = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
-        if None in (genebuild_version, genebuild_start_date, assembly_accession):
-            raise MissingMetaException("genebuild.version/genebuild.start_date/assembly.accession are all "
-                                       "required in the core database")
-
+        if self.get_meta_single_meta_key(species_id,
+                                         "genebuild.provider_name") is None or self.get_meta_single_meta_key(species_id,
+                                                                                                             "genebuild.last_geneset_update") is None or self.get_meta_single_meta_key(
+            species_id, "genebuild.start_date") is None:
+            MissingMetaException(
+                "genebuild.provider_name, genebuild.last_geneset_update, genebuild.start_date are required keys")
         # The genebuild accession is formed by combining the assembly accession and the genebuild version
         genebuild_accession = assembly_accession + "_" + genebuild_version
         if source is None:
@@ -514,52 +557,44 @@ class CoreMetaUpdater(BaseMetaUpdater):
             dataset_source = source
 
         dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
-
-        genebuild_start_date = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
-        genebuild_provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
         test_status = meta_session.query(Dataset).filter(Dataset.label == genebuild_accession).one_or_none()
-        if test_status:
-            # Check for genebuild.provider_name
-            provider_name_check = meta_session.query(DatasetAttribute).join(Attribute).filter(
-                DatasetAttribute.dataset_id == test_status.dataset_id,
-                Attribute.name == "genebuild.provider_name",
-                DatasetAttribute.value == genebuild_provider_name
-            ).one_or_none()
 
-            if provider_name_check:
-                # Check for genebuild.start_date
-                start_date_check = meta_session.query(DatasetAttribute).join(Attribute).filter(
-                    DatasetAttribute.dataset_id == test_status.dataset_id,
-                    Attribute.name == "genebuild.start_date",
-                    DatasetAttribute.value == genebuild_start_date
-                ).one_or_none()
-
-                if start_date_check is None:
-                    test_status = None
-
-
+        # Return existing data if no update is required
         if test_status is not None and existing is False:
             genebuild_dataset = test_status
             genebuild_dataset_attributes = genebuild_dataset.dataset_attributes
             return genebuild_dataset, genebuild_dataset_attributes
-
+        attributes = self.get_meta_list_from_prefix_meta_key(species_id, "genebuild.")
         if existing is False:
-            genebuild_dataset = Dataset(
-                dataset_uuid=str(uuid.uuid4()),
-                dataset_type=dataset_type,
-                name="genebuild",
-                version=genebuild_version,
-                label=genebuild_accession,
-                created=func.now(),
-                dataset_source=dataset_source,
-                status='Submitted',
-            )
+            dataset_factory = DatasetFactory()
+            (dataset_uuid, genebuild_dataset, genebuild_dataset_attributes,
+             new_genome_dataset) = dataset_factory.create_dataset(meta_session, None, dataset_source,
+                                                                  dataset_type, attributes, "genebuild",
+                                                                  genebuild_accession, genebuild_version)
         else:
             genebuild_dataset = existing
             genebuild_dataset.label = genebuild_accession
             genebuild_dataset.dataset_source = dataset_source
             genebuild_dataset.version = genebuild_version
+            for dataset_attribute in genebuild_dataset.dataset_attributes:
+                meta_session.delete(dataset_attribute)
+            genebuild_dataset_attributes = update_attributes(genebuild_dataset, attributes, meta_session)
 
-        attributes = self.get_meta_list_from_prefix_meta_key(species_id, "genebuild.")
-        genebuild_dataset_attributes = update_attributes(genebuild_dataset, attributes, meta_session)
         return genebuild_dataset, genebuild_dataset_attributes
+
+    def new_homology(self, meta_session, species_id, genome=None, source=None, dataset_attributes=None, version="1.0"):
+        if source is None:
+            production_name = self.get_meta_single_meta_key(species_id, "species.production_name")
+            db_version = self.get_meta_single_meta_key(species_id, "schema_version")
+            compara_name = production_name + "_compara_" + db_version
+            dataset_source = self.get_or_new_source(meta_session, "compara", name="compara_name")
+        else:
+            dataset_source = source
+        dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "homologies").first()
+        dataset_factory = DatasetFactory()
+        (dataset_uuid, homology_dataset, homology_dataset_attributes,
+         homology_genome_dataset) = dataset_factory.create_dataset(meta_session, genome, dataset_source,
+                                                                   dataset_type, dataset_attributes,
+                                                                   "compara_homologies",
+                                                                   "Compara homologies", version)
+        return dataset_uuid, homology_dataset, homology_dataset_attributes, homology_genome_dataset

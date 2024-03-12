@@ -19,3 +19,4 @@
 20	1	strain.type	test
 23	1	genebuild.provider_name	test
 24	1	genebuild.start_date	test
+25	1	schema_version	110
