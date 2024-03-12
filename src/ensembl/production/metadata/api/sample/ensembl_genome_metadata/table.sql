@@ -82,9 +82,12 @@ CREATE TABLE dataset_type
     topic           varchar(32)  not null,
     description     varchar(255) null,
     details_uri     varchar(255) null,
-    parent          varchar(255) null,
-    depends_on      varchar(255) null,
-    filter_on       JSON null
+    parent_id       int          default null,
+    depends_on      varchar(128) null,
+    filter_on       longtext     null,
+    constraint dataset_type_parent_id_fk
+        foreign key (parent_id) references dataset_type (dataset_type_id)
+            on delete set null
 );
 
 CREATE TABLE dataset
@@ -97,14 +100,16 @@ CREATE TABLE dataset
     label             varchar(128) not null,
     dataset_source_id int          not null,
     dataset_type_id   int          not null,
-    status            enum ('Submitted', 'Processing', 'Processed', 'Released') default 'Submitted' null,
-    constraint dataset_uuid
-        unique (dataset_uuid),
+    status            varchar(12)  not null,
+    parent_id         int          default null,
     constraint dataset_dataset_source_id_fd96f115_fk_dataset_s
         foreign key (dataset_source_id) references dataset_source (dataset_source_id)
             on delete cascade,
     constraint dataset_dataset_type_id_47284562_fk_dataset_type_dataset_type_id
-        foreign key (dataset_type_id) references dataset_type (dataset_type_id)
+        foreign key (dataset_type_id) references dataset_type (dataset_type_id),
+    constraint dataset_parent_id_fk
+        foreign key (parent_id) references dataset (dataset_id)
+            on delete cascade
 );
 
 CREATE TABLE dataset_attribute

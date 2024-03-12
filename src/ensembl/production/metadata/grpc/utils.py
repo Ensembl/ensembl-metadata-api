@@ -551,7 +551,7 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
         return response_data
 
     elif len(release_version_result) > 1:
-        logger.debug("Multiple results returned.")
+        logger.debug(f"Multiple results returned. {release_version_result}")
     else:
-        logger.debug("No Release Version found.")
+        logger.info("No Release Version found.")
     return msg_factory.create_release_version()
