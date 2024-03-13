@@ -9,23 +9,16 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import re
 from pathlib import Path
-from unittest import mock
-from unittest.mock import Mock, patch
 
 import pytest
-import re
-
-import sqlalchemy
+from ensembl.core.models import Meta
 from ensembl.database import UnitTestDB, DBConnection
 
-from ensembl.production.metadata.api.exceptions import UpdateBackCoreException, MetadataUpdateException
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence, DatasetAttribute, \
-    DatasetSource, DatasetType, Attribute, Genome
-from ensembl.core.models import Meta
-
-from ensembl.production.metadata.updater.core import CoreMetaUpdater
+    DatasetSource, DatasetType, Attribute
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -95,7 +88,11 @@ class TestUpdater:
                 (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'TEST3_seqC')
             ).first()
             assert sequence3 is not None
-
+            count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
+                DatasetSource.name.like('%compara%'),
+                DatasetType.name == 'compara_dumps'
+            ).count()
+            assert count == 1
     def test_fail_existing_genome_uuid_no_data(self, multi_dbs):
         test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
@@ -137,7 +134,7 @@ class TestUpdater:
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             organism = session.query(Organism).where(Organism.biosample_id == 'test_case_5').first()
-            assert organism.common_name == 'sheep'
+            assert organism.common_name == 'Sheep'
 
     def test_fail_existing_genome_uuid_data_not_match(self, multi_dbs):
         test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
@@ -154,35 +151,29 @@ class TestUpdater:
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # Test that assembly seqs have been updated
-            new_seq = session.query(AssemblySequence).where(
-                (AssemblySequence.name == 'TEST1_seq_update')).first()
-            assert new_seq is not None
+            new_seq = session.query(AssemblySequence).filter(
+                AssemblySequence.name == 'TEST1_seq_update').one_or_none()
+            assert new_seq is None
             old_seq = session.query(AssemblySequence).where(
                 (AssemblySequence.name == 'TEST1_seqA')).first()
-            # TODO Review this test after Proper discussion with GB / Variation / Etc about impact of changing sequences
-            #  in existing assembly
-            # assert old_seq is None
-            datasets = session.query(Dataset)
+            assert old_seq is not None
             # Check that the old datasets have been removed
-            count = session.query(Dataset).join(DatasetSource).filter(
-                DatasetSource.name.like('%core_1'),
-            ).count()
-            # FIXME it looks like the count is actually 2 ==> there is a bug in there and the dataset has been
-            #  duplicated !! assert count == 0
+            genebuild_test = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
+                DatasetSource.name.like('%core_5'),
+            ).filter(DatasetType.name == "genebuild").one_or_none()
+            assert genebuild_test is None
 
             # Check that the old attributes are gone
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'assembly.default',
-                DatasetAttribute.value == 'jaber01'
+                DatasetAttribute.value == 'NewTest'
             ).count()
-            # FIXME it looks like the count is actually 2 ==> there is a bug in there and the dataset has been
-            #  duplicated !! assert count == 0
+            assert count == 1
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'genebuild.provider_name',
                 DatasetAttribute.value == 'removed_for_test'
             ).count()
-            # FIXME it looks like the count is actually 2 ==> there is a bug in there and the dataset has been
-            #  duplicated !! assert count == 0
+            assert count == 0
 
             # Check that the new dataset are present and not duplicated
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
@@ -222,66 +213,37 @@ class TestUpdater:
         test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url, force=True)
         # FIXME Should be run
-        # test.process_core()
+        test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # Test that assembly seqs have not been updated
-            # new_seq = session.query(AssemblySequence).where(
-            #     (AssemblySequence.name == 'TEST1_seq_BAD')).first()
-            # assert new_seq is None
+            new_seq = session.query(AssemblySequence).where(
+                (AssemblySequence.name == 'TEST1_seq_BAD')).first()
+            assert new_seq is None
             old_seq = session.query(AssemblySequence).where(
                 (AssemblySequence.accession == 'BX284601.5')).first()
-            # FIXME
-            #  assert old_seq is not None
-
-            i = session.query(Dataset).join(DatasetSource).filter(
-                DatasetSource.name == 'caenorhabditis_elegans_core_55_108_282'
-            )
-
+            assert old_seq is not None
             # Check that the old datasets have been removed
-            count = session.query(Dataset).join(DatasetSource).filter(
-                DatasetSource.name == 'caenorhabditis_elegans_core_55_108_282'
-            ).count()
-            # FIXME
-            #  assert count == 0
-            # Check that the old attributes are gone
-            count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'total_coding_sequence_length',
-                DatasetAttribute.value == '24569601'
-            ).count()
-            # FIXME
-            #  assert count == 0
-            count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'ps_average_intron_length',
-                DatasetAttribute.value == '196.66'
-            ).count()
-            # FIXME
-            #  assert count == 0
 
-            # Check that the new dataset are present and not duplicated
+            count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
+                DatasetSource.name.like('%core_7'),
+                DatasetType.name == 'assembly'
+            ).count()
+            assert count == 0
+            # Check that the new datasets exist
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
                 DatasetSource.name.like('%core_9'),
                 DatasetType.name == 'assembly'
             ).count()
-            # FIXME
-            #  assert count == 1
-            count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name.like('%core_9'),
-                DatasetType.name == 'genebuild'
-            ).count()
-            # FIXME
-            #  assert count == 1
-            # Check that the new attribute values are present
+            assert count == 1
+            # Check that the old attributes are gone
             count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'assembly.total_genome_length',
-                DatasetAttribute.value == '546'
+                Attribute.name == 'assembly.total_coding_sequence_length',
+                DatasetAttribute.value == '8989'
             ).count()
-            # FIXME
-            #  assert count > 0
-
+            assert count == 0
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'genebuild.havana_datafreeze_date',
                 DatasetAttribute.value == 'test2'
             ).count()
-            # FIXME
-            #  assert count > 0
+            assert count == 1

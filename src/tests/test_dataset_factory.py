@@ -72,7 +72,8 @@ class TestDatasetFactory:
             test_label = 'test_label'
             test_version = 'test_version'
             dataset_factory = DatasetFactory()
-            dataset_uuid, new_dataset_attributes, new_genome_dataset = dataset_factory.create_dataset(session,
+            dataset_uuid, created_dataset, new_dataset_attributes, new_genome_dataset = dataset_factory.create_dataset(
+                session,
                                                                                                       test_genome_uuid,
                                                                                                       test_dataset_source,
                                                                                                       test_dataset_type,
