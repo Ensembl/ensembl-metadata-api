@@ -22,8 +22,7 @@ from google.protobuf import json_format
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 
-distribution = pkg_resources.get_distribution("ensembl-metadata-api")
-sample_path = Path(distribution.location) / "ensembl" / "production" / "metadata" / "api" / "sample"
+sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
 
 @pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_genome_metadata"},
