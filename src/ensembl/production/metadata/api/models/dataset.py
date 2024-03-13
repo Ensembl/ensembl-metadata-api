@@ -12,16 +12,33 @@
 import datetime
 import logging
 import uuid
+import enum
 
+import sqlalchemy
 from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index, JSON
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.types import Enum
 
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
 logger = logging.getLogger(__name__)
+
+
+class DatasetStatus(enum.Enum):
+    SUBMITTED = "Submitted"
+    PROCESSING = "Processing"
+    PROCESSED = "Processed"
+    RELEASED = "Released"
+
+
+DatasetStatusType = sqlalchemy.types.Enum(
+    DatasetStatus,
+    name='dataset_status',
+    values_callable=lambda obj: [e.value for e in obj]
+)
 
 
 class Attribute(LoadAble, Base):
@@ -36,22 +53,7 @@ class Attribute(LoadAble, Base):
     # attribute_id within dataset attribute
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
     # many to one relationships
-    # none
 
-import enum
-
-class DatasetStatus(enum.Enum):
-    SUBMITTED = "Submitted"
-    PROCESSING = "Processing"
-    PROCESSED = "Processed"
-    RELEASED = "Released"
-
-import sqlalchemy
-SqlQuantityType = sqlalchemy.types.Enum(
-  DatasetStatus,
-   name='dataset_status',
-   values_callable=lambda obj: [e.value for e in obj]
-)
 
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
@@ -64,7 +66,7 @@ class Dataset(LoadAble, Base):
     created = Column(DATETIME(fsp=6), server_default=func.now(), default=datetime.datetime.utcnow)
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
-    status = Column(SqlQuantityType, server_default=text('Submitted'))
+    status = Column(DatasetStatusType, server_default=text('Submitted'))
 
     # One to many relationships
     # dataset_id to dataset attribute and genome dataset
