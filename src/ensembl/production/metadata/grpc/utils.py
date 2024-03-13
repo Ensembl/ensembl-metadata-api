@@ -268,7 +268,7 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     return msg_factory.create_genome()
 
 
-def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
+def get_genomes_by_keyword_iterator(db_conn, keyword, release_version=None):
     if not keyword:
         logger.warning("Missing or Empty Keyword field.")
         return msg_factory.create_genome()
@@ -284,14 +284,13 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version):
         # Group `genome_results` based on the `assembly_accession` field
         for _, genome_release_group in itertools.groupby(genome_results, lambda r: r.Assembly.accession):
             # Sort the genomes in each group based on the `release_version` field in descending order
-            sorted_genomes = sorted(genome_release_group, key=lambda g: g.EnsemblRelease.version, reverse=True)
+            sorted_genomes = sorted(genome_release_group, key=lambda g: g.EnsemblRelease.version if g.EnsemblRelease is not None else g.Genome.genome_uuid, reverse=True)
             # Select the most recent genome from the sorted group (first element)
             most_recent_genome = sorted_genomes[0]
             # Add the most recent genome to the `most_recent_genomes` list
             most_recent_genomes.append(most_recent_genome)
 
         for genome_row in most_recent_genomes:
-            logging.debug(f"Processing genome: {genome_row.Genome.genome_uuid}")
             yield msg_factory.create_genome(data=genome_row)
 
     logger.debug("No genomes were found.")

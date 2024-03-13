@@ -9,11 +9,28 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import enum
+
+import sqlalchemy
 from sqlalchemy import Column, Integer, String, Index, DECIMAL, Date, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
+
+
+class ReleaseStatus(enum.Enum):
+    PLANNED = "Planned"
+    PROCESSING = "Processing"
+    PROCESSED = "Processed"
+    RELEASED = "Released"
+
+
+ReleaseStatusType = sqlalchemy.types.Enum(
+    ReleaseStatus,
+    name='release_status',
+    values_callable=lambda obj: [e.value for e in obj]
+)
 
 
 class EnsemblSite(LoadAble, Base):
@@ -43,6 +60,7 @@ class EnsemblRelease(LoadAble, Base):
     is_current = Column(TINYINT(1), nullable=False, default=0)
     site_id = Column(ForeignKey('ensembl_site.site_id'), index=True)
     release_type = Column(String(16), nullable=False)
+    status = Column(ReleaseStatusType, nullable=False, default=ReleaseStatus.PLANNED)
     # One to many relationships
     # release_id to genome dataset and genome release
     genome_datasets = relationship('GenomeDataset', back_populates='ensembl_release')
@@ -50,4 +68,3 @@ class EnsemblRelease(LoadAble, Base):
     # many to one relationships
     # site_id to ensembl_site
     ensembl_site = relationship('EnsemblSite', back_populates='ensembl_releases')
-

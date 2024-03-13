@@ -39,13 +39,24 @@ def engine(multi_dbs):
     yield db.create_engine(multi_dbs["ensembl_genome_metadata"].dbc.url)
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def genome_db_conn(multi_dbs):
     genome_conn = GenomeAdaptor(
         metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
         taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
     )
     yield genome_conn
+
+
+@pytest.fixture(scope="function")
+def genome_db_conn_unreleased(multi_dbs):
+    os.environ["ALLOW_UNRELEASED"] = 'True'
+    genome_conn = GenomeAdaptor(
+        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
+        taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
+    )
+    yield genome_conn
+    os.environ["ALLOW_UNRELEASED"] = 'False'
 
 
 @pytest.fixture(scope="class")

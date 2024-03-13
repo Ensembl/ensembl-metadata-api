@@ -15,16 +15,17 @@ Unit tests for utils.py
 import json
 from pathlib import Path
 
-import pkg_resources
 import pytest
 from ensembl.database import UnitTestDB
 from google.protobuf import json_format
 
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
+from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
 sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
+
 
 
 @pytest.mark.parametrize("multi_dbs",
@@ -1202,6 +1203,11 @@ class TestUtils:
 
         assert len(output) == 50
         assert all(genome['organism']['commonName'].lower() == 'human' for genome in output)
+
+    def test_get_genomes_by_keyword_unreleased(self, genome_db_conn_unreleased):
+        unreleased = [json.loads(json_format.MessageToJson(response)) for response in
+                      utils.get_genomes_by_keyword_iterator(genome_db_conn_unreleased, "Human")]
+        assert len(unreleased) == 99
 
     def test_get_genomes_by_keyword_release_unspecified(self, genome_db_conn):
         output = [json.loads(json_format.MessageToJson(response)) for response in

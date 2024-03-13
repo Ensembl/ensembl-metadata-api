@@ -10,20 +10,20 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from __future__ import annotations
+
+import logging
 from typing import List, Tuple
 
 import sqlalchemy as db
-from sqlalchemy import desc
-from sqlalchemy.orm import aliased
 from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
-from ensembl.production.metadata.grpc.adaptors.base import BaseAdaptor, check_parameter
+from sqlalchemy import and_
+from sqlalchemy.orm import aliased
+
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
-    Attribute, DatasetAttribute
-import logging
-
-from ensembl.production.metadata.grpc.config import MetadataConfig
+    Attribute, DatasetAttribute, ReleaseStatus
+from ensembl.production.metadata.grpc.adaptors.base import BaseAdaptor, check_parameter
 
 logger = logging.getLogger(__name__)
 
@@ -325,42 +325,48 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_genome_by_keyword(self, keyword=None, release_version=None):
+    def fetch_genome_by_keyword(self, keyword, release_version=None):
         """
         Fetches genomes based on a keyword and release version.
 
         Args:
-            keyword (str or None): Keyword to search for in various attributes of genomes, assemblies, and organisms.
+            keyword (str - Mandatory): Keyword to search for in various attributes of genomes, assemblies, and organisms.
             release_version (int or None): Release version to filter by. If set to 0 or None, fetches only current genomes.
 
         Returns:
             list: A list of fetched genomes matching the keyword and release version.
         """
-        genome_query = db.select(
-            Genome, GenomeRelease, EnsemblRelease, Assembly, Organism, EnsemblSite
-        ).select_from(Genome) \
-            .outerjoin(Organism, Organism.organism_id == Genome.organism_id) \
-            .outerjoin(Assembly, Assembly.assembly_id == Genome.assembly_id) \
-            .outerjoin(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id) \
-            .outerjoin(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id) \
-            .outerjoin(EnsemblSite, EnsemblSite.site_id == EnsemblRelease.site_id)
 
-        if keyword is not None:
-            genome_query = genome_query.where(db.or_(db.func.lower(Assembly.tol_id) == keyword.lower(),
-                                                     db.func.lower(Assembly.accession) == keyword.lower(),
-                                                     db.func.lower(Assembly.name) == keyword.lower(),
-                                                     db.func.lower(Assembly.ensembl_name) == keyword.lower(),
-                                                     db.func.lower(Organism.common_name) == keyword.lower(),
-                                                     db.func.lower(Organism.scientific_name) == keyword.lower(),
-                                                     db.func.lower(
-                                                         Organism.scientific_parlance_name) == keyword.lower(),
-                                                     db.func.lower(Organism.species_taxonomy_id) == keyword.lower()))
-
-        if release_version == 0 or release_version is None:
-            genome_query = genome_query.where(EnsemblRelease.is_current == 1)
+        genome_query = db.select(Genome, Assembly, Organism, EnsemblRelease).select_from(Genome) \
+            .join(Organism, Genome.organism_id == Organism.organism_id) \
+            .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+        if self.config.allow_unreleased:
+            logger.debug("Allowed Unreleased No more filtering")
+            genome_query = genome_query.outerjoin(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
+                .outerjoin(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
+                .outerjoin(EnsemblSite, EnsemblSite.site_id == self.config.ensembl_site_id)
+            if release_version is not None and release_version > 0:
+                genome_query = genome_query.where(EnsemblRelease.version <= release_version)
         else:
-            genome_query = genome_query.where(EnsemblRelease.version <= release_version)
-
+            logger.debug("NOT Allowed Unreleased")
+            genome_query = genome_query.join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
+                .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
+                .join(EnsemblSite, EnsemblSite.site_id == self.config.ensembl_site_id)
+            subquery = db.select(EnsemblRelease.version).filter(
+                and_(EnsemblRelease.status == ReleaseStatus.RELEASED, EnsemblRelease.is_current == 1))
+            if release_version is not None and release_version > 0:
+                subquery.filter(EnsemblRelease.version <= release_version)
+            genome_query = genome_query.where(EnsemblRelease.version <= subquery.subquery())
+        genome_query = genome_query.where(db.or_(db.func.lower(Assembly.tol_id) == keyword.lower(),
+                                                 db.func.lower(Assembly.accession) == keyword.lower(),
+                                                 db.func.lower(Assembly.name) == keyword.lower(),
+                                                 db.func.lower(Assembly.ensembl_name) == keyword.lower(),
+                                                 db.func.lower(Organism.common_name) == keyword.lower(),
+                                                 db.func.lower(Organism.scientific_name) == keyword.lower(),
+                                                 db.func.lower(
+                                                     Organism.scientific_parlance_name) == keyword.lower(),
+                                                 db.func.lower(Organism.species_taxonomy_id) == keyword.lower()))
+        logger.debug(f"byKeyWord: {genome_query} {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_query).all()
@@ -626,11 +632,11 @@ class GenomeAdaptor(BaseAdaptor):
             genomes_uuids = [genome[0].genome_uuid for genome in genomes]
             genomes_datasets = self.fetch_genome_datasets(
                 genome_uuid=genomes_uuids,
-                    allow_unreleased=allow_unreleased_datasets,
-                    dataset_type_name=dataset_type_name,
-                    dataset_source=dataset_source,
-                    dataset_attributes=dataset_attributes
-                )
+                allow_unreleased=allow_unreleased_datasets,
+                dataset_type_name=dataset_type_name,
+                dataset_source=dataset_source,
+                dataset_attributes=dataset_attributes
+            )
             agglo = {}
             logger.debug(f'genome datasets {genomes_datasets[0]}')
             for genome_infos in genomes_datasets:

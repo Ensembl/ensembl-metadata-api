@@ -299,7 +299,7 @@ def create_genome_assembly_sequence_region(data=None):
 
 
 def create_release(data=None):
-    if data is None:
+    if data is None or data.EnsemblRelease is None:
         return ensembl_metadata_pb2.Release()
 
     release = ensembl_metadata_pb2.Release(
@@ -307,9 +307,9 @@ def create_release(data=None):
         release_date=str(data.EnsemblRelease.release_date) if hasattr(data, 'EnsemblRelease') else "Unreleased",
         release_label=data.EnsemblRelease.label if hasattr(data, 'EnsemblRelease') else "Unreleased",
         is_current=data.EnsemblRelease.is_current if hasattr(data, 'EnsemblRelease') else False,
-        site_name=data.EnsemblSite.name if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
-        site_label=data.EnsemblSite.label if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
-        site_uri=data.EnsemblSite.uri if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
+        site_name=data.EnsemblSite.name if hasattr(data, 'EnsemblSite') else "Unknown",
+        site_label=data.EnsemblSite.label if hasattr(data, 'EnsemblSite') else "Unknown",
+        site_uri=data.EnsemblSite.uri if hasattr(data, 'EnsemblSite') else "Unknown",
     )
     return release
 

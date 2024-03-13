@@ -53,9 +53,9 @@ create index assembly_sequence_name_assembly_id_index
 CREATE TABLE attribute
 (
     attribute_id int auto_increment primary key,
-    name         varchar(128) not null,
-    label        varchar(128) not null,
-    description  varchar(255) null,
+    name         varchar(128)                                                          not null,
+    label        varchar(128)                                                          not null,
+    description  varchar(255)                                                          null,
     type         enum ('integer', 'float', 'percent', 'string', 'bp') default 'string' null,
     constraint name
         unique (name),
@@ -82,7 +82,7 @@ CREATE TABLE dataset_type
     topic           varchar(32)  not null,
     description     varchar(255) null,
     details_uri     varchar(255) null,
-    parent_id       int          default null,
+    parent_id       int default null,
     depends_on      varchar(128) null,
     filter_on       longtext     null,
     constraint dataset_type_parent_id_fk
@@ -101,7 +101,7 @@ CREATE TABLE dataset
     dataset_source_id int          not null,
     dataset_type_id   int          not null,
     status            varchar(12)  not null,
-    parent_id         int          default null,
+    parent_id         int default null,
     constraint dataset_dataset_source_id_fd96f115_fk_dataset_s
         foreign key (dataset_source_id) references dataset_source (dataset_source_id)
             on delete cascade,
@@ -148,6 +148,7 @@ CREATE TABLE ensembl_release
     is_current   tinyint(1)     not null,
     release_type varchar(16)    not null,
     site_id      int            null,
+    status       varchar(12)    not null,
     constraint ensembl_release_version_site_id_b743399a_uniq
         unique (version, site_id),
     constraint ensembl_release_site_id_7c2f537a_fk_ensembl_site_site_id
@@ -176,12 +177,12 @@ CREATE TABLE organism
 CREATE TABLE genome
 (
     genome_id       int auto_increment primary key,
-    genome_uuid     varchar(40)                    not null,
-    created         datetime(6)                    not null,
-    assembly_id     int                            not null,
-    organism_id     int                            not null,
-    is_best         tinyint(1)   default 0         not null,
-    production_name varchar(255) not null,
+    genome_uuid     varchar(40)          not null,
+    created         datetime(6)          not null,
+    assembly_id     int                  not null,
+    organism_id     int                  not null,
+    is_best         tinyint(1) default 0 not null,
+    production_name varchar(255)         not null,
     constraint genome_genome_uuid_6b62d0ad_uniq
         unique (genome_uuid),
     constraint genome_assembly_id_0a748388_fk_assembly_assembly_id
