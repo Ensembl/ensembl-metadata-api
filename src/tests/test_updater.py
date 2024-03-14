@@ -16,6 +16,7 @@ import pytest
 from ensembl.core.models import Meta
 from ensembl.database import UnitTestDB, DBConnection
 
+from ensembl.production.metadata.api.exceptions import MetadataUpdateException
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence, DatasetAttribute, \
     DatasetSource, DatasetType, Attribute
@@ -90,13 +91,14 @@ class TestUpdater:
             assert sequence3 is not None
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
                 DatasetSource.name.like('%compara%'),
-                DatasetType.name == 'compara_dumps'
+                DatasetType.name == 'homology_dumps'
             ).count()
             assert count == 1
+
     def test_fail_existing_genome_uuid_no_data(self, multi_dbs):
         test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
-        with pytest.raises(Exception) as exif:
+        with pytest.raises(MetadataUpdateException) as exif:
             test.process_core()
             assert ("Database contains a Genome.genome_uuid, "
                     "but the corresponding data is not in the meta table. "
@@ -139,7 +141,7 @@ class TestUpdater:
     def test_fail_existing_genome_uuid_data_not_match(self, multi_dbs):
         test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
-        with pytest.raises(Exception) as exif:
+        with pytest.raises(MetadataUpdateException) as exif:
             test.process_core()
             assert ("Core database contains a genome.genome_uuid which matches an entry in the meta table. "
                     "The force flag was not specified so the core was not updated." in str(exif.value))
@@ -212,7 +214,6 @@ class TestUpdater:
     def test_update_released_force(self, multi_dbs):
         test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url, force=True)
-        # FIXME Should be run
         test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:

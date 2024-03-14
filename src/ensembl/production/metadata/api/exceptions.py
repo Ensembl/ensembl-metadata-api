@@ -45,10 +45,17 @@ class UpdateBackCoreException(UpdaterException, RuntimeError):
     """An error occurred while updating back the core database"""
     pass
 
+
 class TypeNotFoundException(UpdaterException, RuntimeError):
     """Dataset Type not found"""
     pass
 
+
 class DatasetFactoryException(Exception):
     """An error occured while using dataset factory"""
+    pass
+
+
+class ExistingGenomeIdCoreException(UpdaterException):
+    """ Meta table in core defines a genome_uuid key but it doesn't match with the one already in metadata db"""
     pass

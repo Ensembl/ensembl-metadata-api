@@ -887,6 +887,8 @@
 2518	679d6452-799c-4a2f-8906-0db6c639e498	regulatory_features	1.0	2023-11-15 15:07:12.410801	Regulatory Annotation	670	7	Submitted	\N
 2519	bee4dca6-894e-4017-8376-0b13675de93a	regulatory_features	1.0	2023-11-15 15:07:13.156918	Regulatory Annotation	671	7	Submitted	\N
 2520	fc5d3e13-340c-4e2a-9f49-256fc319331e	regulatory_features	1.0	2023-11-15 15:07:13.825117	Regulatory Annotation	672	7	Submitted	\N
-2522	747e14d7-4b82-4190-9899-d196e489ee18	xrefs	\N	2024-03-12 09:44:26.000000	Child of genebuild	1	8	Processed	\N
-2523	fd45b1cf-a948-4556-9ce6-40c65371e4ad	protein_features	\N	2024-03-12 09:44:26.000000	Child of genebuild	1	9	Submitted	\N
-2524	747e14d7-4b82-4190-9899-d196e489ee20	xrefs	\N	2024-03-12 09:44:26.000000	Child of genebuild	1	8	Submitted	\N
+2521	fe5d3e13-350c-4e2a-9f49-256fc319331e	core_compute	1.0	2023-11-15 15:07:13.825117	Core Compute	1	8	Processed	\N
+2522	fd5d3e13-350c-4e2a-9f49-256fc319331e	core_compute	1.0	2023-11-15 15:07:13.825117	Core Compute	1	8	Submitted	\N
+2523	747e14d7-4b82-4190-9899-d196e489ee18	xrefs	\N	2024-03-12 09:44:26.000000	Child of genebuild	1	13	Processed	\N
+2524	fd45b1cf-a948-4556-9ce6-40c65371e4ad	protein_features	\N	2024-03-12 09:44:26.000000	Child of genebuild	1	14	Submitted	\N
+2525	747e14d7-4b82-4190-9899-d196e489ee20	xrefs	\N	2024-03-12 09:44:26.000000	Child of genebuild	1	13	Submitted	\N
