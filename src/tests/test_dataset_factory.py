@@ -122,7 +122,7 @@ class TestDatasetFactory:
     def test_update_dataset_status(self, multi_dbs, dataset_factory):
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            genebuild_uuid = 'cc3c7f95-b5dc-4cc1-aa15-2817c89bd1e2'
+            genebuild_uuid = '9a3fc0ba-58da-4919-b33f-7da46aa046a8'
             genebuild_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
             # Get the genome for this one
             genome_uuid = genebuild_dataset.genome_datasets[0].genome.genome_uuid
@@ -162,7 +162,6 @@ class TestDatasetFactory:
             # Processed
             # Fail to update genebuild
             temp, failed_status = dataset_factory.update_dataset_status(genebuild_uuid, DatasetStatus.PROCESSED,
-                                                                        # "Processed",
                                                                         session=session)
             session.commit()
             genebuild_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == genebuild_uuid).one()

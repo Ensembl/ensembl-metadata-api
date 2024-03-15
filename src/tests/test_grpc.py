@@ -21,9 +21,12 @@ from ensembl.database import UnitTestDB
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 import logging
+
 sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
 logger = logging.getLogger(__name__)
+
+
 @pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_genome_metadata"},
                                         {"src": sample_path / "ncbi_taxonomy"}]],
                          indirect=True)

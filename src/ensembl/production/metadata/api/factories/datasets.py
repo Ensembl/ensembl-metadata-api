@@ -48,7 +48,7 @@ class DatasetFactory:
         return True
 
     def create_dataset(self, session, genome_input, dataset_source, dataset_type, dataset_attributes, name, label,
-                       version, parent=None, status="Submitted"):
+                       version, status=DatasetStatus.SUBMITTED, parent=None):
         # Check if genome_input is a UUID (string) or a Genome object
         if isinstance(status, str):
             status = DatasetStatus(status)
@@ -71,7 +71,7 @@ class DatasetFactory:
             created=func.now(),
             dataset_source=dataset_source,  # Must
             status=status,
-            parent_id=parent.dataset_id
+            parent_id=parent.dataset_id if parent else None
         )
         if dataset_attributes is not None:
             new_dataset_attributes = update_attributes(new_dataset, dataset_attributes, session)
