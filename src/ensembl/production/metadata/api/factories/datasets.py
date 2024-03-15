@@ -11,7 +11,7 @@
 #   limitations under the License.
 
 import uuid
-
+import logging
 from ensembl.database import DBConnection
 from sqlalchemy.engine import make_url
 from sqlalchemy.sql import func
@@ -20,6 +20,8 @@ from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models import Dataset, Genome, GenomeDataset, \
     DatasetType, DatasetStatus
 from ensembl.production.metadata.updater.updater_utils import update_attributes
+
+logger = logging.getLogger(__name__)
 
 
 class DatasetFactory:
@@ -42,9 +44,11 @@ class DatasetFactory:
         else:
             top_level_dataset = self.__get_dataset(session, dataset_uuid)
             self.__create_child_datasets_recursive(session, top_level_dataset)
+        # TODO add return code for errors?
+        return True
 
     def create_dataset(self, session, genome_input, dataset_source, dataset_type, dataset_attributes, name, label,
-                       version, status="Submitted"):
+                       version, parent=None, status="Submitted"):
         # Check if genome_input is a UUID (string) or a Genome object
         if isinstance(status, str):
             status = DatasetStatus(status)
@@ -67,6 +71,7 @@ class DatasetFactory:
             created=func.now(),
             dataset_source=dataset_source,  # Must
             status=status,
+            parent_id=parent.dataset_id
         )
         if dataset_attributes is not None:
             new_dataset_attributes = update_attributes(new_dataset, dataset_attributes, session)
@@ -153,7 +158,8 @@ class DatasetFactory:
                 Dataset.dataset_type_id == child_type.dataset_type_id,
                 GenomeDataset.genome_id.in_([gd.genome_id for gd in parent_dataset.genome_datasets])
             ).all()
-            if any(d.status in ['Submitted', 'Processing'] for d in existing_datasets):
+            if any(d.status in [DatasetStatus.SUBMITTED, DatasetStatus.PROCESSING] for d in existing_datasets):
+                logger.debug("Skipped creation some DS are processed or Released")
                 continue  # Skip creation if any dataset is already Processed or Released
 
             if len(parent_dataset.genome_datasets) > 1:
@@ -167,7 +173,6 @@ class DatasetFactory:
             name = dataset_type.name
             label = f"Child of {parent_dataset.name}"
             version = None
-
             # Create the child dataset
             child_dataset_uuid, new_dataset, new_dataset_attributes, new_genome_dataset = self.create_dataset(session,
                                                                                                               genome_uuid,
@@ -176,7 +181,9 @@ class DatasetFactory:
                                                                                                               dataset_attributes,
                                                                                                               name,
                                                                                                               label,
-                                                                                                              version)
+                                                                                                              version,
+                                                                                                              parent=parent_dataset,
+                                                                                                              status=parent_dataset.status)
             session.commit()
             # Recursively create children of this new child dataset
             child_dataset = self.__get_dataset(session, child_dataset_uuid)
@@ -349,7 +356,8 @@ class DatasetFactory:
         return updated_datasets
 
     def __get_dataset(self, session, dataset_uuid):
-        return session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+        query = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid)
+        return query.one()
 
     def __query_genomes_by_status_and_type(self, session, status, dataset_type):
         if session is None:

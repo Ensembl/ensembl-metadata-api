@@ -11,7 +11,7 @@ CREATE TABLE assembly
     created          datetime(6)  null,
     ensembl_name     varchar(255) null,
     alt_accession    varchar(16)  null,
-    assembly_uuid    char(40)     not null,
+    assembly_uuid    char(36)     not null,
     is_reference     tinyint(1)   not null,
     url_name         varchar(128) null,
     constraint accession
@@ -93,7 +93,7 @@ CREATE TABLE dataset_type
 CREATE TABLE dataset
 (
     dataset_id        int auto_increment primary key,
-    dataset_uuid      varchar(40)  not null,
+    dataset_uuid      char(36)  not null,
     name              varchar(128) not null,
     version           varchar(128) null,
     created           datetime(6)  not null,
@@ -165,7 +165,7 @@ CREATE TABLE organism
     scientific_name          varchar(128)  null,
     biosample_id             varchar(128)  not null,
     scientific_parlance_name varchar(255)  null,
-    organism_uuid            char(40)      not null,
+    organism_uuid            char(36)      not null,
     strain_type              varchar(128)  null,
     `rank`                   int default 0 null,
     constraint ensembl_name
@@ -177,7 +177,7 @@ CREATE TABLE organism
 CREATE TABLE genome
 (
     genome_id       int auto_increment primary key,
-    genome_uuid     varchar(40)          not null,
+    genome_uuid     char(36)             not null,
     created         datetime(6)          not null,
     assembly_id     int                  not null,
     organism_id     int                  not null,

@@ -99,20 +99,25 @@ class TestDatasetFactory:
     def test_create_genebuild_children(self, multi_dbs, dataset_factory):
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            genebuild_uuid = 'cc3c7f95-b5dc-4cc1-aa15-2817c89bd1e2'
-            assembly_uuid = '02104faf-3fee-4f28-b53c-605843dac941'
+            genebuild_uuid = '53936715-1371-4343-95af-f39d06943db7'
+            genebuild_ds = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
             dataset_factory.create_all_child_datasets(genebuild_uuid, session)
-            session.commit()
+
+        with metadata_db.session_scope() as session:
             data = session.query(Dataset).join(DatasetType).filter(
-                DatasetType.name == 'web_gb_content').one()
+                DatasetType.name == 'web_gb_content' and Dataset.parent == genebuild_ds).one()
             sdata = session.query(Dataset).join(DatasetType).filter(
-                DatasetType.name == 'gb_track_api').one()
+                DatasetType.name == 'gb_track_api' and Dataset.parent == genebuild_ds).one()
             assert data.status == DatasetStatus.SUBMITTED  # "Submitted"
+            assert sdata.status == DatasetStatus.SUBMITTED  # "Submitted"
             # test get parent
             test_parent, test_status = dataset_factory.get_parent_datasets(data.dataset_uuid, session=session)
             assert test_parent == genebuild_uuid
             stest_parent, test_status = dataset_factory.get_parent_datasets(data.dataset_uuid, session=session)
             assert test_parent == stest_parent
+            assert len(data.children) == 2
+            assert any(x for x in data.children if x.name == 'gb_browser_files')
+            assert any(x for x in data.children if x.name == 'gb_track_api')
 
     def test_update_dataset_status(self, multi_dbs, dataset_factory):
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)

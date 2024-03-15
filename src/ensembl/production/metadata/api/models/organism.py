@@ -24,7 +24,7 @@ class Organism(LoadAble, Base):
     __tablename__ = "organism"
 
     organism_id = Column(Integer, primary_key=True)
-    organism_uuid = Column(String(128), unique=True, nullable=False, default=uuid.uuid4)
+    organism_uuid = Column(String(32), unique=True, nullable=False, default=uuid.uuid4)
     taxonomy_id = Column(Integer, nullable=False)
     species_taxonomy_id = Column(Integer)
     common_name = Column(String(128), nullable=False)
