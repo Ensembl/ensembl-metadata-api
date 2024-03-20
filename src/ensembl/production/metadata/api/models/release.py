@@ -17,6 +17,7 @@ from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
+from ensembl.production.metadata.grpc.config import MetadataConfig
 
 
 class ReleaseStatus(enum.Enum):
@@ -32,6 +33,8 @@ ReleaseStatusType = sqlalchemy.types.Enum(
     values_callable=lambda obj: [e.value for e in obj]
 )
 
+cfg = MetadataConfig()
+
 
 class EnsemblSite(LoadAble, Base):
     __tablename__ = 'ensembl_site'
@@ -40,11 +43,11 @@ class EnsemblSite(LoadAble, Base):
     name = Column(String(64), nullable=False)
     label = Column(String(64), nullable=False)
     uri = Column(String(64), nullable=False)
-    # One to many relationships
-    # site_id to ensembl_release
-    ensembl_releases = relationship('EnsemblRelease', back_populates='ensembl_site')
-    # many to one relationships
-    # none
+    # Added fileter condition on every join to EnsemblSite for code clarity
+    # No other than configure site data should be returned
+    ensembl_releases = relationship('EnsemblRelease', back_populates='ensembl_site',
+                                    primaryjoin=f"and_(EnsemblSite.site_id==EnsemblRelease.site_id, "
+                                                f"EnsemblSite.site_id=={cfg.ensembl_site_id})")
 
 
 class EnsemblRelease(LoadAble, Base):

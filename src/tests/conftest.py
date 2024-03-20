@@ -60,6 +60,24 @@ def genome_db_conn_unreleased(multi_dbs):
     os.environ["ALLOW_UNRELEASED"] = 'False'
 
 
+@pytest.fixture(scope="function")
+def release_db_conn_unreleased(multi_dbs):
+    os.environ["ALLOW_UNRELEASED"] = 'True'
+    release_conn = ReleaseAdaptor(
+        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url
+    )
+    yield release_conn
+    os.environ["ALLOW_UNRELEASED"] = 'False'
+
+
+@pytest.fixture(scope="function")
+def release_db_conn(multi_dbs):
+    release_conn = ReleaseAdaptor(
+        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
+    )
+    yield release_conn
+
+
 @pytest.fixture(scope="class")
 def release_db_conn(multi_dbs):
     release_conn = ReleaseAdaptor(

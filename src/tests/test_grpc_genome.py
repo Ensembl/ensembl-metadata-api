@@ -13,14 +13,13 @@
 Unit tests for api module
 """
 
-import pytest
-import pkg_resources
+import logging
 from pathlib import Path
 
+import pytest
 from ensembl.database import UnitTestDB
+
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
-from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
-import logging
 
 sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
@@ -32,10 +31,6 @@ logger = logging.getLogger(__name__)
                          indirect=True)
 class TestMetadataDB:
     dbc = None  # type: UnitTestDB
-
-    def test_load_database(self, multi_dbs):
-        db_test = ReleaseAdaptor(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        assert db_test, "DB should not be empty"
 
     @pytest.mark.parametrize(
         "allow_unreleased, unreleased_only, current_only, output_count",
@@ -95,27 +90,6 @@ class TestMetadataDB:
             current_only=True
         )
         assert len(test) == 0
-
-    def test_fetch_releases(self, multi_dbs):
-        conn = ReleaseAdaptor(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        test = conn.fetch_releases(release_id=2)
-        # test the one to many connection
-        assert test[0].EnsemblSite.name == 'Ensembl'
-        assert test[0].EnsemblSite.label == 'MVP Ensembl'
-        # test the direct access.
-        assert test[0].EnsemblRelease.label == 'Scaling Phase 1'
-
-    # currently only have one release, so the testing is not comprehensive
-    def test_fetch_releases_for_genome(self, multi_dbs):
-        conn = ReleaseAdaptor(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        test = conn.fetch_releases_for_genome('ae794660-8751-41cc-8883-b2fcdc7a74e8')
-        assert test[0].EnsemblSite.name == 'Ensembl'
-
-    def test_fetch_releases_for_dataset(self, multi_dbs):
-        conn = ReleaseAdaptor(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        test = conn.fetch_releases_for_dataset('3d653b2d-aa8d-4f7e-8f92-55f57c7cac3a')
-        assert test[0].EnsemblSite.name == 'Ensembl'
-        assert test[0].EnsemblRelease.label == 'beta-1'
 
     def test_fetch_taxonomy_names(self, multi_dbs):
         conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,

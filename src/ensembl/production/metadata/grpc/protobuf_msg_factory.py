@@ -22,7 +22,7 @@ def create_species(species_data=None, taxo_info=None):
         scientific_name=species_data.Organism.scientific_name,
         scientific_parlance_name=species_data.Organism.scientific_parlance_name,
         genbank_common_name=taxo_info["genbank_common_name"],
-        synonym=taxo_info["synonym"],
+        synonym=taxo_info["synonym"]
     )
     return species
 
@@ -306,11 +306,12 @@ def create_release(data=None):
         release_version=data.EnsemblRelease.version if hasattr(data, 'EnsemblRelease') else None,
         release_date=str(data.EnsemblRelease.release_date) if hasattr(data, 'EnsemblRelease') else "Unreleased",
         release_label=data.EnsemblRelease.label if hasattr(data, 'EnsemblRelease') else "Unreleased",
-        is_current=data.EnsemblRelease.is_current if hasattr(data, 'EnsemblRelease') else False,
+        is_current=data.EnsemblRelease.is_current if hasattr(data, 'EnsemblRelease') else "False",
         site_name=data.EnsemblSite.name if hasattr(data, 'EnsemblSite') else "Unknown",
         site_label=data.EnsemblSite.label if hasattr(data, 'EnsemblSite') else "Unknown",
         site_uri=data.EnsemblSite.uri if hasattr(data, 'EnsemblSite') else "Unknown",
     )
+    print(f"Release {release}")
     return release
 
 

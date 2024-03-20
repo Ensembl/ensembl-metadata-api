@@ -422,11 +422,8 @@ def release_iterator(metadata_db, site_name, release_version, current_only):
     release_version = release_version or None
     site_name = site_name or None
 
-    release_results = conn.fetch_releases(
-        release_version=release_version,
-        current_only=current_only,
-        site_name=site_name
-    )
+    release_results = conn.fetch_releases(release_version=release_version, current_only=current_only,
+                                          site_name=site_name)
 
     for result in release_results:
         logging.debug(

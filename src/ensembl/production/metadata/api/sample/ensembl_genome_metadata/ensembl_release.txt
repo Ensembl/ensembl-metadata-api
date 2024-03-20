@@ -1,4 +1,4 @@
 1	110.1	2023-10-18	beta-1	1	partial	1	Released
-2	110.2	2023-09-15	Scaling Phase 1	0	partial	1	Processed
-3	110.3	2023-11-15	Scaling Phase 2	0	partial	1	Processing
-4	110.4	2023-12-15	MVP Release 1	0	integrated	1	Planned
+2	110.2	2024-01-30	Scaling Phase 1	0	partial	1	Processed
+3	110.3	2024-05-05	Scaling Phase 2	0	partial	1	Processing
+4	110.4	2024-08-15	MVP Release 1	0	integrated	1	Planned
