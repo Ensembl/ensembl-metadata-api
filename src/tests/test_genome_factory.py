@@ -17,14 +17,9 @@ from ensembl.production.metadata.api.factories.genomes import GenomeFactory, Gen
 from sqlalchemy import func
 from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus
 
-db_directory = Path(__file__).parent / 'databases'
-db_directory = db_directory.resolve()
 
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
-
-
-@pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_genome_metadata'},
-                                        {'src': sample_path / 'ncbi_taxonomy'},
+@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_genome_metadata'},
+                                        {'src': 'ncbi_taxonomy'},
                                         ]], indirect=True)
 @pytest.fixture(scope="class")
 def metadata_db(multi_dbs):

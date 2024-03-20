@@ -22,11 +22,9 @@ from ensembl.database import UnitTestDB
 from ensembl.production.metadata.api.exceptions import TypeNotFoundException
 from ensembl.production.metadata.api.models import Organism, Genome
 
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
-
-@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_genome_metadata"},
-                                        {"src": sample_path / "ncbi_taxonomy"}]], indirect=True)
+@pytest.mark.parametrize("multi_dbs", [[{"src": "ensembl_genome_metadata"},
+                                        {"src": "ncbi_taxonomy"}]], indirect=True)
 class TestApi:
     dbc = None  # type: UnitTestDB
 

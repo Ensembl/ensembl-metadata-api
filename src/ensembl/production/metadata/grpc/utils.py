@@ -52,11 +52,8 @@ def get_top_level_statistics(db_conn, organism_uuid, group):
         logger.warning("Missing or Empty Organism UUID field.")
         return msg_factory.create_top_level_statistics()
 
-    stats_results = db_conn.fetch_genome_datasets(
-        organism_uuid=organism_uuid,
-        dataset_type_name="all",
-        dataset_attributes=True
-    )
+    stats_results = db_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all",
+                                                  dataset_attributes=True)
 
     if len(stats_results) > 0:
         stats_by_genome_uuid = msg_factory.create_stats_by_genome_uuid(stats_results)
@@ -76,11 +73,8 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_top_level_statistics_by_uuid()
 
-    stats_results = db_conn.fetch_genome_datasets(
-        genome_uuid=genome_uuid,
-        dataset_type_name="all",
-        dataset_attributes=True
-    )
+    stats_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all",
+                                                  dataset_attributes=True)
 
     statistics = []
     if len(stats_results) > 0:
@@ -123,12 +117,8 @@ def get_assembly_information(db_conn, assembly_uuid):
 # TODO: move this function to protobuf_msg_factory.py file
 def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     # we fetch attributes related to that genome
-    attrib_data_results = db_conn.fetch_genome_datasets(
-        genome_uuid=genome.Genome.genome_uuid,
-        release_version=release_version,
-        dataset_type_name="all",
-        dataset_attributes=True
-    )
+    attrib_data_results = db_conn.fetch_genome_datasets(genome_uuid=genome.Genome.genome_uuid, dataset_type_name="all",
+                                                        release_version=release_version, dataset_attributes=True)
     # fetch related assemblies count
     related_assemblies_count = db_conn.fetch_related_assemblies_count(
         organism_uuid=genome.Organism.organism_uuid
@@ -150,10 +140,7 @@ def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, re
         return msg_factory.create_genome()
     # TODO: Add try except to the other functions as well
     try:
-        genome_results = db_conn.fetch_genomes(
-            assembly_accession=assembly_accession,
-            allow_unreleased=MetadataConfig().allow_unreleased
-        )
+        genome_results = db_conn.fetch_genomes(assembly_accession=assembly_accession)
     except Exception as e:
         logging.error(f"Error fetching genomes: {e}")
         raise
@@ -169,10 +156,7 @@ def get_species_information(db_conn, genome_uuid):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_species()
-    species_results = db_conn.fetch_genomes(
-        genome_uuid=genome_uuid,
-        allow_unreleased=MetadataConfig().allow_unreleased
-    )
+    species_results = db_conn.fetch_genomes(genome_uuid=genome_uuid)
     if len(species_results) == 1:
         tax_id = species_results[0].Organism.taxonomy_id
         taxo_results = db_conn.fetch_taxonomy_names(tax_id)
@@ -191,11 +175,7 @@ def get_sub_species_info(db_conn, organism_uuid, group):
     if not organism_uuid:
         logger.warning("Missing or Empty Organism UUID field.")
         return msg_factory.create_sub_species()
-    sub_species_results = db_conn.fetch_genomes(
-        organism_uuid=organism_uuid,
-        group=group,
-        allow_unreleased=MetadataConfig().allow_unreleased
-    )
+    sub_species_results = db_conn.fetch_genomes(organism_uuid=organism_uuid, group=group)
 
     species_name = []
     species_type = []
@@ -223,12 +203,8 @@ def get_genome_uuid(db_conn, production_name, assembly_name, use_default=False):
         logger.warning("Missing or Empty production_name or assembly_name field.")
         return msg_factory.create_genome_uuid()
 
-    genome_uuid_result = db_conn.fetch_genomes(
-        production_name=production_name,
-        assembly_name=assembly_name,
-        use_default_assembly=use_default,
-        allow_unreleased=MetadataConfig().allow_unreleased
-    )
+    genome_uuid_result = db_conn.fetch_genomes(assembly_name=assembly_name, use_default_assembly=use_default,
+                                               production_name=production_name)
 
     if len(genome_uuid_result) == 1:
         response_data = msg_factory.create_genome_uuid(
@@ -248,11 +224,7 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_genome()
-    genome_results = db_conn.fetch_genomes(
-        genome_uuid=genome_uuid,
-        release_version=release_version,
-        allow_unreleased=MetadataConfig().allow_unreleased
-    )
+    genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
 
     if len(genome_results) == 1:
         response_data = create_genome_with_attributes_and_count(
@@ -301,12 +273,8 @@ def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
     if not ensembl_name and not site_name:
         logger.warning("Missing or Empty ensembl_name and site_name field.")
         return msg_factory.create_genome()
-    genome_results = db_conn.fetch_genomes(
-        ensembl_name=ensembl_name,
-        site_name=site_name,
-        release_version=release_version,
-        allow_unreleased=MetadataConfig().allow_unreleased
-    )
+    genome_results = db_conn.fetch_genomes(biosample_id=ensembl_name, site_name=site_name,
+                                           release_version=release_version)
     if len(genome_results) == 1:
         response_data = create_genome_with_attributes_and_count(
             db_conn=db_conn, genome=genome_results[0], release_version=release_version
@@ -325,14 +293,8 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_datasets()
-    datasets_results = db_conn.fetch_genome_datasets(
-        genome_uuid=genome_uuid,
-        # fetch all datasets, default is 'assembly' only
-        dataset_type_name="all",
-        release_version=release_version,
-        allow_unreleased=MetadataConfig().allow_unreleased,
-        dataset_attributes=True
-    )
+    datasets_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all",
+                                                     release_version=release_version, dataset_attributes=True)
 
     if len(datasets_results) > 0:
         # ds_obj_dict where all datasets are stored as:
@@ -451,11 +413,8 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_dataset_infos()
 
-    dataset_results = db_conn.fetch_genome_datasets(
-        genome_uuid=genome_uuid,
-        dataset_type_name=requested_dataset_type,
-        dataset_attributes=True
-    )
+    dataset_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name=requested_dataset_type,
+                                                    dataset_attributes=True)
     response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
     logger.debug(f"Response data: \n{response_data}")
     return response_data
@@ -473,10 +432,7 @@ def get_genome_uuid_by_tag(db_conn, genome_tag):
         logger.warning("Missing or Empty Genome tag field.")
         return msg_factory.create_genome_uuid()
 
-    genome_uuid_result = db_conn.fetch_genomes(
-        genome_tag=genome_tag,
-        allow_unreleased=MetadataConfig().allow_unreleased
-    )
+    genome_uuid_result = db_conn.fetch_genomes(genome_tag=genome_tag)
 
     if len(genome_uuid_result) == 1:
         response_data = msg_factory.create_genome_uuid(
@@ -535,11 +491,8 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_release_version()
 
-    release_version_result = db_conn.fetch_genome_datasets(
-        genome_uuid=genome_uuid,
-        dataset_type_name=dataset_type,
-        release_version=release_version
-    )
+    release_version_result = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name=dataset_type,
+                                                           release_version=release_version)
 
     if len(release_version_result) == 1:
         response_data = msg_factory.create_release_version(release_version_result[0])

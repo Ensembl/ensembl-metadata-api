@@ -20,14 +20,11 @@ from google.protobuf.descriptor_pool import DescriptorPool
 from grpc_reflection.v1alpha.proto_reflection_descriptor_database import ProtoReflectionDescriptorDatabase
 from yagrc import reflector as yagrc_reflector
 
-
 logger = logging.getLogger(__name__)
 
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
-
-@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_genome_metadata"},
-                                        {"src": sample_path / "ncbi_taxonomy"}]],
+@pytest.mark.parametrize("multi_dbs", [[{"src": "ensembl_genome_metadata"},
+                                        {"src": "ncbi_taxonomy"}]],
                          indirect=True)
 class TestGRPCReflection:
     dbc = None

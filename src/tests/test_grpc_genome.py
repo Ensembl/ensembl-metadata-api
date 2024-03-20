@@ -21,166 +21,169 @@ from ensembl.database import UnitTestDB
 
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
-
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_genome_metadata"},
-                                        {"src": sample_path / "ncbi_taxonomy"}]],
+@pytest.mark.parametrize("multi_dbs", [[{"src": Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                        {"src": Path(__file__).parent / "databases/ncbi_taxonomy"}]],
                          indirect=True)
-class TestMetadataDB:
-    dbc = None  # type: UnitTestDB
+class TestGRPCGenomeAdaptor:
+    dbc: UnitTestDB = None
 
     @pytest.mark.parametrize(
         "allow_unreleased, unreleased_only, current_only, output_count",
         [
-            # fetches everything (141 released + 100 unreleased)
-            (True, False, True, 241),
-            # fetches all released genomes (with current_only=0)
-            (False, False, False, 100),
-            # fetches released genomes with current_only=1 (default)
-            (False, False, True, 100),
-            # fetches all unreleased genomes
-            (False, True, True, 141),
-        ]
+            (True, False, False, 19),  # Allow Unreleased
+            (False, False, False, 10),  # Do not allow unreleased - fetch all even from previous releases
+            (False, True, False, 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
+            (False, False, True, 3)  # Only the ones from current release
+        ],
+        indirect=['allow_unreleased']
     )
-    def test_fetch_all_genomes(self, multi_dbs, allow_unreleased, unreleased_only, current_only, output_count):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(
-            allow_unreleased=allow_unreleased,
-            unreleased_only=unreleased_only,
-            current_only=current_only
-        )
+    def test_fetch_genomes_release(self, genome_conn, allow_unreleased, unreleased_only, current_only, output_count):
+        """
+        Test fetching all released genomes
+        - Unreleased_only: should have no effect on results
+        - Current_only: Should filter against only release 110.1 (current)
+        """
+        test = genome_conn.fetch_genomes(unreleased_only=unreleased_only, current_only=current_only)
         assert len(test) == output_count
 
-    def test_fetch_with_all_args_no_conflict(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(
-            genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
-            assembly_accession="GCA_000002985.3",
-            assembly_name="WBcel235",
-            ensembl_name="caenorhabditis_elegans",
-            taxonomy_id="6239",
-            group="EnsemblMetazoa",
-            allow_unreleased=False,
-            site_name="Ensembl",
-            release_type="integrated",
-            release_version="108.0",
-            current_only=True
+    @pytest.mark.parametrize(
+        "allow_unreleased, release_version, current_only, output_count",
+        [
+            (True, 108.0, False, 1),  # Released/Unreleased has no effect on released genome TRUE
+            (False, 108.0, False, 1),  # Released/Unreleased has no effect on released genome FALSE
+            (False, 110.1, False, 1),  # Wrong Release specified, not current release only
+            (False, 108.0, False, 1),  # Right Release with current False
+            (False, 108.0, True, 0),  # Right Release with only current True
+            (False, 110.1, True, 0),  # Wrong Release with only_current True
+            (True, 110.1, True, 1)  # Unreleased
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_with_celegans_all_args(self, genome_conn, allow_unreleased, release_version,
+                                          current_only, output_count):
+        """ Version is not right """
+        celegans = genome_conn.fetch_genomes(genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
+                                             assembly_accession="GCA_000002985.3", assembly_name="WBcel235",
+                                             biosample_id="SAMN04256190", taxonomy_id="6239",
+                                             group="EnsemblMetazoa", site_name="Ensembl",
+                                             release_type="integrated",
+                                             release_version=release_version,
+                                             current_only=current_only)
+        assert len(celegans) == output_count
+        if output_count == 1:
+            assert celegans[0].Organism.biosample_id == 'SAMN04256190'
+            assert celegans[0].EnsemblRelease.version == 108.0
+
+    def test_fetch_taxonomy_names(self, genome_conn):
+        taxon_names = genome_conn.fetch_taxonomy_names(taxonomy_ids=[6239, 511145])
+        assert taxon_names[511145]['scientific_name'] == 'Escherichia coli str. K-12 substr. MG1655'
+
+    def test_fetch_taxonomy_ids(self, genome_conn):
+        taxon_ids = genome_conn.fetch_taxonomy_ids(taxonomy_names='Caenorhabditis elegans')
+        assert taxon_ids[0] == 6239
+
+    def test_fetch_genomes(self, genome_conn):
+        human = genome_conn.fetch_genomes(genome_uuid='9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1')
+        assert human[0].Organism.scientific_name == 'Homo sapiens'
+
+    @pytest.mark.parametrize(
+        "allow_unreleased, division, output_count",
+        [
+            (False, 'EnsemblVertebrates', 5),  # Released genomes for Vertebrates
+            (True, 'EnsemblVertebrates', 14),  # Unreleased genomes for Vertebrates
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_genomes_by_group_division(self, genome_conn, allow_unreleased, division, output_count):
+        division_members = genome_conn.fetch_genomes(group=division)
+        assert len(division_members) == output_count
+
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count",
+        [(True, 1), (False, 0)],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_genomes_by_genome_uuid(self, genome_conn, allow_unreleased, output_count):
+        genomes = genome_conn.fetch_genomes_by_genome_uuid('a73357ab-93e7-11ec-a39d-005056b38ce3')
+        assert len(genomes) == output_count
+        if output_count:
+            assert genomes[0].Organism.scientific_name == 'Triticum aestivum'
+
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count",
+        [(True, 1), (False, 0)],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_genome_by_ensembl_and_assembly_name(self, genome_conn, allow_unreleased, output_count):
+        genomes = genome_conn.fetch_genomes(assembly_name='R64-1-1', biosample_id='SAMEA3184125')
+        if output_count:
+            assert genomes[0].Organism.scientific_name == 'Saccharomyces cerevisiae S288c'
+
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count",
+        [(True, 1), (False, 0)],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_genomes_by_assembly_accession(self, genome_conn, allow_unreleased, output_count):
+        genomes = genome_conn.fetch_genomes_by_assembly_accession('GCA_000005845.2')
+        if output_count:
+            assert genomes[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12'
+
+    def test_fetch_genomes_by_assembly_sequence_accession(self, genome_conn):
+        sequences = genome_conn.fetch_sequences(
+            genome_uuid='2020e8d5-4d87-47af-be78-0b15e48970a7',
+            assembly_accession='GCA_018469415.1',
+            assembly_sequence_accession='JAGYYT010000001.1'
         )
-        assert len(test) == 0
+        assert sequences[0].AssemblySequence.name == 'JAGYYT010000001.1'
+        assert sequences[0].AssemblySequence.sequence_location == 'SO:0000738'
 
-    def test_fetch_with_all_args_conflict(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(
-            genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
-            assembly_accession="GCA_000002985.3",
-            assembly_name="WBcel235",
-            ensembl_name="caenorhabditis_elegans",
-            taxonomy_id="9606",  # Conflicting taxonomy_id
-            group="EnsemblBacteria",  # Conflicting group
-            allow_unreleased=False,
-            site_name="Ensembl",
-            release_type="integrated",
-            release_version="108.0",
-            current_only=True
-        )
-        assert len(test) == 0
-
-    def test_fetch_taxonomy_names(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_taxonomy_names(taxonomy_ids=[6239, 511145])
-        assert test[511145]['scientific_name'] == 'Escherichia coli str. K-12 substr. MG1655'
-
-    def test_fetch_taxonomy_ids(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_taxonomy_ids(taxonomy_names='Caenorhabditis elegans')
-        assert test[0] == 6239
-
-    def test_fetch_genomes(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3')
-        assert test[0].Organism.scientific_name == 'Homo sapiens'
-
-    # def test_fetch_genomes_by_group_division(self, multi_dbs):
-    #     conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-    #                          taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-    #     division_filter = 'EnsemblVertebrates'
-    #     test = conn.fetch_genomes(group=division_filter)
-    #     assert len(test) == 1
-    #        Other PR will likely change this drastically, so the effort is not really necessary. Their are 7 groups.
-    #        assert division_filter in division_results
-
-    def test_fetch_genomes_by_genome_uuid(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_genome_uuid('b00f5b0a-b434-4949-9c05-140826c96cd4')
-        assert test[0].Organism.scientific_name == 'Oryzias latipes'
-
-    def test_fetch_genome_by_ensembl_and_assembly_name(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(assembly_name='NOD_ShiLtJ_v1', ensembl_name='SAMN04489827')
-        assert test[0].Organism.scientific_name == 'Mus musculus'
-
-    def test_fetch_genomes_by_assembly_accession(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_assembly_accession('GCA_000005845.2')
-        assert test[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12'
-
-    def test_fetch_genomes_by_assembly_sequence_accession(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_sequences(
-            genome_uuid='a7335667-93e7-11ec-a39d-005056b38ce3',
-            assembly_accession='GCA_000001405.29',
-            assembly_sequence_accession='HG2280_PATCH'
-        )
-        assert test[0].AssemblySequence.name == 'HG2280_PATCH'
-
-    def test_fetch_genomes_by_assembly_sequence_accession_empty(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_sequences(
+    def test_fetch_genomes_by_assembly_sequence_accession_empty(self, genome_conn):
+        sequences = genome_conn.fetch_sequences(
             genome_uuid='s0m3-r4nd0m-g3n3-uu1d-v4lu3',
             assembly_accession='GCA_000001405.14',
             assembly_sequence_accession='11'
         )
-        assert len(test) == 0
+        assert len(sequences) == 0
 
-    def test_fetch_genomes_by_ensembl_name(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_ensembl_name('SAMN04489826')
-        assert test[0].Organism.scientific_name == 'Mus musculus'
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count",
+        [(True, 1), (False, 0)],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_genomes_by_ensembl_name(self, genome_conn, allow_unreleased, output_count):
+        genomes = genome_conn.fetch_genomes_by_ensembl_name('SAMN00102897')
+        assert len(genomes) == output_count
+        if output_count:
+            assert genomes[0].Organism.scientific_name == 'Plasmodium falciparum 3D7'
 
-    def test_fetch_genomes_by_taxonomy_id(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_taxonomy_id(10090)
-        assert test[0].Organism.scientific_name == 'Mus musculus'
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count",
+        [(True, 1), (False, 0)],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_genomes_by_taxonomy_id(self, genome_conn, allow_unreleased, output_count):
+        genomes = genome_conn.fetch_genomes_by_taxonomy_id(36329)
+        assert len(genomes) == output_count
+        if output_count:
+            assert genomes[0].Organism.scientific_name == 'Plasmodium falciparum 3D7'
 
-    def test_fetch_genomes_by_scientific_name(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_by_scientific_name(
-            scientific_name='Oryzias latipes',
-            site_name='Ensembl'
-        )
-        assert test[0].Organism.common_name == 'Japanese medaka'
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count",
+        [(True, 1), (False, 0)],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_genomes_by_scientific_name(self, genome_conn, allow_unreleased, output_count):
+        genomes = genome_conn.fetch_genomes_by_scientific_name(scientific_name='Plasmodium falciparum 3D7')
+        assert len(genomes) == output_count
+        if output_count:
+            assert genomes[0].Organism.common_name == 'Malaria parasite'
 
-    def test_fetch_sequences(self, multi_dbs):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_sequences(assembly_uuid='9d6b239c-46dd-4c79-bc29-1089f348d31d')
+    def test_fetch_sequences(self, genome_conn):
+        test = genome_conn.fetch_sequences(assembly_uuid='9d6b239c-46dd-4c79-bc29-1089f348d31d')
         # this test is going to drive me nuts
         # Locally and on GitLab CI/CD: AssemblySequence.accession == 'CHR_HG107_PATCH'
         # in Travis, its: AssemblySequence.accession == 'KI270757.1'
@@ -196,17 +199,15 @@ class TestMetadataDB:
             ("a7335667-93e7-11ec-a39d-005056b38ce3", "GCA_000001405.29", True, 1),
         ]
     )
-    def test_fetch_sequences_chromosomal(self, multi_dbs, genome_uuid, assembly_accession, chromosomal_only,
+    def test_fetch_sequences_chromosomal(self, genome_conn, genome_uuid, assembly_accession, chromosomal_only,
                                          expected_output):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_sequences(
+        sequences = genome_conn.fetch_sequences(
             genome_uuid=genome_uuid,
             assembly_accession=assembly_accession,
             chromosomal_only=chromosomal_only
         )
-        logger.debug(f"Retrieved {test[0]}")
-        assert test[-1].AssemblySequence.chromosomal == expected_output
+        logger.debug(f"Retrieved {sequences[0]}")
+        assert sequences[-1].AssemblySequence.chromosomal == expected_output
 
     @pytest.mark.parametrize(
         "genome_uuid, assembly_sequence_name, chromosomal_only, expected_output",
@@ -219,69 +220,53 @@ class TestMetadataDB:
             ("some-random-genome-uuid", "fake_assembly_name", False, None),
         ]
     )
-    def test_fetch_sequences_by_assembly_seq_name(self, multi_dbs, genome_uuid, assembly_sequence_name,
+    def test_fetch_sequences_by_assembly_seq_name(self, genome_conn, genome_uuid, assembly_sequence_name,
                                                   chromosomal_only, expected_output):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_sequences(
+        sequences = genome_conn.fetch_sequences(
             genome_uuid=genome_uuid,
             assembly_sequence_name=assembly_sequence_name,
             chromosomal_only=chromosomal_only
         )
-        for result in test:
+        for result in sequences:
             assert result.AssemblySequence.accession == expected_output
 
     @pytest.mark.parametrize(
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 888),
+            (None, None, True, False, "3474e0d6-d031-40bc-a4ae-230236886568", 38),
             # specifying genome_uuid
-            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "254a68c7-f512-446d-a958-983a2713daf2", 6),
             # specifying dataset_uuid
-            (None, "3674ac83-c8ad-453f-a143-d02304d4aa36", False, False, "3674ac83-c8ad-453f-a143-d02304d4aa36", 1),
+            (None, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", False, False, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "0fdb2bd2-db62-455c-abe9-794fc99b35d2", 521),
+            (None, None, False, True, "3474e0d6-d031-40bc-a4ae-230236886568", 38),
         ]
     )
     def test_fetch_genome_dataset_all(
-            self, multi_dbs, genome_uuid,
+            self, genome_conn, genome_uuid,
             dataset_uuid, allow_unreleased,
             unreleased_only, expected_dataset_uuid,
             expected_count):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(
-            genome_uuid=genome_uuid,
-            dataset_uuid=dataset_uuid,
-            unreleased_only=unreleased_only,
-            allow_unreleased=allow_unreleased,
-            # fetch all datasets (default: dataset_type_name="assembly")
-            dataset_type_name="all"
-        )
-        assert test[0].Dataset.dataset_uuid == expected_dataset_uuid
-        assert len(test) == expected_count
+        genome_datasets = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid, unreleased_only=unreleased_only,
+                                                            dataset_uuid=dataset_uuid, dataset_type_name="all")
+        assert genome_datasets[0].Dataset.dataset_uuid == expected_dataset_uuid
+        assert len(genome_datasets) == expected_count
 
     @pytest.mark.parametrize(
         "organism_uuid, expected_count",
         [
             # homo_sapiens_37
-            ("1d336185-affe-4a91-85bb-04ebd73cbb56", 11),
+            ("1d336185-affe-4a91-85bb-04ebd73cbb56", 13),
             # e-coli
             ("1e579f8d-3880-424e-9b4f-190eb69280d9", 3),
             # non-existing organism
             ("organism-yet-to-be-discovered", 0),
         ]
     )
-    def test_fetch_genome_dataset_by_organism_uuid(self, multi_dbs, organism_uuid, expected_count):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genome_datasets(
-            organism_uuid=organism_uuid,
-            # fetch all datasets (default: dataset_type_name="assembly")
-            dataset_type_name="all"
-        )
-        assert len(test) == expected_count
+    def test_fetch_genome_dataset_by_organism_uuid(self, genome_conn, organism_uuid, expected_count):
+        genomes = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all")
+        assert len(genomes) == expected_count
 
     @pytest.mark.parametrize(
         "production_name, assembly_name, use_default_assembly, expected_output",
@@ -290,18 +275,12 @@ class TestMetadataDB:
             ("homo_sapiens_37", "GRCh37", True, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
         ]
     )
-    def test_fetch_genome_uuid(self, multi_dbs, production_name, assembly_name, use_default_assembly, expected_output):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(
-            production_name=production_name,
-            assembly_name=assembly_name,
-            use_default_assembly=use_default_assembly,
-            allow_unreleased=True,
-            current_only=False
-        )
-        assert len(test) == 1
-        assert test[0].Genome.genome_uuid == expected_output
+    def test_fetch_genome_uuid(self, genome_conn, production_name, assembly_name, use_default_assembly,
+                               expected_output):
+        genomes = genome_conn.fetch_genomes(assembly_name=assembly_name, use_default_assembly=use_default_assembly,
+                                            production_name=production_name, current_only=False)
+        assert len(genomes) == 1
+        assert genomes[0].Genome.genome_uuid == expected_output
 
     @pytest.mark.parametrize(
         "production_name, assembly_name, use_default_assembly, expected_output",
@@ -310,18 +289,12 @@ class TestMetadataDB:
             ("homo_sapiens", "GRCh38", True, "a7335667-93e7-11ec-a39d-005056b38ce3"),
         ]
     )
-    def test_fetch_genome_uuid_is_current(self, multi_dbs, production_name, assembly_name, use_default_assembly,
+    def test_fetch_genome_uuid_is_current(self, genome_conn, production_name, assembly_name, use_default_assembly,
                                           expected_output):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(
-            production_name=production_name,
-            assembly_name=assembly_name,
-            use_default_assembly=use_default_assembly,
-            allow_unreleased=True
-        )
-        assert len(test) == 1
-        assert test[0].Genome.genome_uuid == expected_output
+        genomes = genome_conn.fetch_genomes(assembly_name=assembly_name, use_default_assembly=use_default_assembly,
+                                            production_name=production_name)
+        assert len(genomes) == 1
+        assert genomes[0].Genome.genome_uuid == expected_output
 
     @pytest.mark.parametrize(
         "production_name, assembly_name, use_default_assembly",
@@ -330,74 +303,59 @@ class TestMetadataDB:
             ("homo_sapiens", "GRCh37.p13", True),
         ]
     )
-    def test_fetch_genome_uuid_empty(self, multi_dbs, production_name, assembly_name, use_default_assembly):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes(
-            production_name=production_name,
-            assembly_name=assembly_name,
-            use_default_assembly=use_default_assembly
-        )
-        assert len(test) == 0
+    def test_fetch_genome_uuid_empty(self, genome_conn, production_name, assembly_name, use_default_assembly):
+        genomes = genome_conn.fetch_genomes(assembly_name=assembly_name, use_default_assembly=use_default_assembly,
+                                            production_name=production_name)
+        assert len(genomes) == 0
 
     @pytest.mark.parametrize(
         "species_taxonomy_id, expected_organism, expected_assemblies_count",
         [
             # fetch everything
-            (None, "human", 99)
+            (None, "Human", 14)
         ]
     )
-    def test_fetch_organisms_group_counts(self, multi_dbs, species_taxonomy_id, expected_organism,
+    def test_fetch_organisms_group_counts(self, genome_conn, species_taxonomy_id, expected_organism,
                                           expected_assemblies_count):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_organisms_group_counts()
+        genomes = genome_conn.fetch_organisms_group_counts()
         # When fetching everything:
         # First result should be Human
-        assert test[0][1] == expected_organism
+        assert genomes[0][1] == expected_organism
         # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
-        assert test[0][4] == expected_assemblies_count
-
-        # for data in test[1:]:
-        #     # All others have only one genome in test DB
-        #     assert data[4] == 1
+        assert genomes[0][4] == expected_assemblies_count
 
     @pytest.mark.parametrize(
-        "organism_uuid, expected_assemblies_count",
+        "organism_uuid, expected_assemblies_count, allow_unreleased",
         [
-            # Human
-            ('1d336185-affe-4a91-85bb-04ebd73cbb56', 99),
-            # Triticum aestivum
-            ('8dbb0666-8a06-46a7-80eb-e63055ae93d2', 1),
+            # Human 10 Assemblies in test set are released
+            ('1d336185-affe-4a91-85bb-04ebd73cbb56', 10, False),
+            # Another Human but not released
+            ('7f1653e1-9be5-4313-9fe9-800ae18d87b4', 14, True),
+            # E.Coli only one Assembly
+            ('a73351f7-93e7-11ec-a39d-005056b38ce3', 0, True),
         ]
     )
-    def test_fetch_related_assemblies_count(self, multi_dbs, organism_uuid, expected_assemblies_count):
-        conn = GenomeAdaptor(
-            metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-            taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url
-        )
-
-        test = conn.fetch_related_assemblies_count(organism_uuid=organism_uuid)
+    def test_fetch_related_assemblies_count(self, genome_conn, organism_uuid, expected_assemblies_count,
+                                            allow_unreleased):
+        genomes = genome_conn.fetch_related_assemblies_count(organism_uuid=organism_uuid)
         # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
-        assert test == expected_assemblies_count
+        assert genomes == expected_assemblies_count
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count, expected_genome_uuid",
         [
             # fetches everything
-            (True, 241, "041b8327-222c-4bfe-ae27-1d93c6025428"),
+            (True, 7, "041b8327-222c-4bfe-ae27-1d93c6025428"),
             # fetches released datasets and genomes with current_only=1 (default)
-            (False, 100, "08b99cae-d007-4284-b20b-9f222827edb6"),
+            (False, 7, "3704ceb1-948d-11ec-a39d-005056b38ce3"),
         ]
     )
-    def test_fetch_genomes_info(self, multi_dbs, allow_unreleased, output_count, expected_genome_uuid):
-        conn = GenomeAdaptor(metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url,
-                             taxonomy_uri=multi_dbs['ncbi_taxonomy'].dbc.url)
-        test = conn.fetch_genomes_info(
+    def test_fetch_genomes_info(self, genome_conn, allow_unreleased, output_count, expected_genome_uuid):
+        genomes = genome_conn.fetch_genomes_info(
             allow_unreleased_genomes=allow_unreleased,
             allow_unreleased_datasets=allow_unreleased,
             group_type=['division', 'internal']
         )
-        output_to_list = list(test)
+        output_to_list = list(genomes)
         assert len(output_to_list) == output_count
         assert output_to_list[0][0]['genome'].genome_uuid == expected_genome_uuid

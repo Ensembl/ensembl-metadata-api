@@ -13,17 +13,13 @@
 Unit tests for api module
 """
 
-import pytest
-import pkg_resources
+import logging
 from pathlib import Path
 
+import pytest
 from ensembl.database import UnitTestDB
 
 from ensembl.production.metadata.api.models import ReleaseStatus
-from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
-from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
-import logging
-
 
 logger = logging.getLogger(__name__)
 

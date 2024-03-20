@@ -31,22 +31,18 @@ sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadat
 class TestClass:
     dbc = None  # type: UnitTestDB
 
-    def test_create_genome(self, multi_dbs, genome_db_conn):
+    def test_create_genome(self, multi_dbs, genome_conn):
         """Test service.create_genome function"""
-        genome_input_data = genome_db_conn.fetch_genomes(
-            genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
-        )
+        genome_input_data = genome_conn.fetch_genomes(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         # Make sure we are only getting one
         assert len(genome_input_data) == 1
 
-        attrib_input_data = genome_db_conn.fetch_genome_datasets(
-            genome_uuid=genome_input_data[0].Genome.genome_uuid,
-            dataset_attributes=True
-        )
+        attrib_input_data = genome_conn.fetch_genome_datasets(genome_uuid=genome_input_data[0].Genome.genome_uuid,
+                                                              dataset_attributes=True)
         # 11 attributes
         assert len(attrib_input_data) == 25
 
-        related_assemblies_input_count = genome_db_conn.fetch_related_assemblies_count(
+        related_assemblies_input_count = genome_conn.fetch_related_assemblies_count(
             organism_uuid=genome_input_data[0].Organism.organism_uuid
         )
         # There are three related assemblies
@@ -105,8 +101,8 @@ class TestClass:
         )
         assert json.loads(output) == expected_output
 
-    def test_create_assembly_info(self, multi_dbs, genome_db_conn):
-        input_data = genome_db_conn.fetch_sequences(assembly_uuid="fd7fea38-981a-4d73-a879-6f9daef86f08")
+    def test_create_assembly_info(self, multi_dbs, genome_conn):
+        input_data = genome_conn.fetch_sequences(assembly_uuid="fd7fea38-981a-4d73-a879-6f9daef86f08")
         expected_output = {
             "accession": "GCA_000001405.29",
             "assemblyUuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
@@ -120,10 +116,10 @@ class TestClass:
         output = json_format.MessageToJson(msg_factory.create_assembly_info(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_species(self, multi_dbs, genome_db_conn):
-        species_input_data = genome_db_conn.fetch_genomes(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
+    def test_create_species(self, multi_dbs, genome_conn):
+        species_input_data = genome_conn.fetch_genomes(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         tax_id = species_input_data[0].Organism.taxonomy_id
-        taxo_results = genome_db_conn.fetch_taxonomy_names(tax_id)
+        taxo_results = genome_conn.fetch_taxonomy_names(tax_id)
         expected_output = {
             "genbankCommonName": "human",
             "genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
@@ -135,14 +131,11 @@ class TestClass:
         output = json_format.MessageToJson(msg_factory.create_species(species_input_data[0], taxo_results[tax_id]))
         assert json.loads(output) == expected_output
 
-    def test_create_stats_by_organism_uuid(self, genome_db_conn):
+    def test_create_stats_by_organism_uuid(self, genome_conn):
         # ecoli
         organism_uuid = "1e579f8d-3880-424e-9b4f-190eb69280d9"
-        input_data = genome_db_conn.fetch_genome_datasets(
-            organism_uuid=organism_uuid,
-            dataset_attributes=True,
-            dataset_type_name="all"
-        )
+        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all",
+                                                       dataset_attributes=True)
 
         first_expected_stat = {
             'label': 'assembly.accession',
@@ -156,14 +149,11 @@ class TestClass:
         # print(json.loads(output)['statistics'])
         assert json.loads(output)['statistics'][0] == first_expected_stat
 
-    def test_create_top_level_statistics(self, multi_dbs, genome_db_conn):
+    def test_create_top_level_statistics(self, multi_dbs, genome_conn):
         # ecoli
         organism_uuid = "1e579f8d-3880-424e-9b4f-190eb69280d9"
-        input_data = genome_db_conn.fetch_genome_datasets(
-            organism_uuid=organism_uuid,
-            dataset_attributes=True,
-            dataset_type_name="all"
-        )
+        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all",
+                                                       dataset_attributes=True)
 
         first_expected_stat = {
             'label': 'assembly.accession',
@@ -187,8 +177,8 @@ class TestClass:
         assert output_dict['statsByGenomeUuid'][0]['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
         assert output_dict['statsByGenomeUuid'][0]['statistics'][0] == first_expected_stat
 
-    def test_create_genome_sequence(self, multi_dbs, genome_db_conn):
-        input_data = genome_db_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
+    def test_create_genome_sequence(self, multi_dbs, genome_conn):
+        input_data = genome_conn.fetch_sequences(genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3")
         expected_output = {
             'accession': '11',
             'chromosomal': True,
@@ -199,8 +189,8 @@ class TestClass:
         output = json_format.MessageToJson(msg_factory.create_genome_sequence(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_assembly_region(self, multi_dbs, genome_db_conn):
-        input_data = genome_db_conn.fetch_sequences(
+    def test_create_assembly_region(self, multi_dbs, genome_conn):
+        input_data = genome_conn.fetch_sequences(
             genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
         )
         # TODO: Check why this is failing when name and chromosomal is provided
@@ -208,8 +198,8 @@ class TestClass:
         output = json_format.MessageToJson(msg_factory.create_assembly_region(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_genome_assembly_sequence_region(self, multi_dbs, genome_db_conn):
-        input_data = genome_db_conn.fetch_sequences(
+    def test_create_genome_assembly_sequence_region(self, multi_dbs, genome_conn):
+        input_data = genome_conn.fetch_sequences(
             genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3",
             assembly_accession="GCA_000001405.29",
             assembly_sequence_accession="Y"
@@ -237,8 +227,8 @@ class TestClass:
         output = json_format.MessageToJson(msg_factory.create_release(input_data[0]))
         assert json.loads(output) == expected_output
 
-    def test_create_organisms_group_count(self, multi_dbs, genome_db_conn):
-        input_data = genome_db_conn.fetch_organisms_group_counts()
+    def test_create_organisms_group_count(self, multi_dbs, genome_conn):
+        input_data = genome_conn.fetch_organisms_group_counts()
         expected_result = {
             "organismsGroupCount": [
                 {
@@ -273,11 +263,8 @@ class TestClass:
             ("iDontExist", False, {}),
         ]
     )
-    def test_create_genome_uuid(self, genome_db_conn, genome_tag, current_only, expected_output):
-        input_data = genome_db_conn.fetch_genomes(
-            genome_tag=genome_tag,
-            current_only=current_only
-        )
+    def test_create_genome_uuid(self, genome_conn, genome_tag, current_only, expected_output):
+        input_data = genome_conn.fetch_genomes(genome_tag=genome_tag, current_only=current_only)
 
         genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) == 1 else ""
         output = json_format.MessageToJson(

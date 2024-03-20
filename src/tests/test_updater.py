@@ -24,18 +24,15 @@ from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
 
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
-
-@pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_genome_metadata'},
-                                        {'src': sample_path / 'ncbi_taxonomy'},
-                                        {'src': db_directory / 'core_1'}, {'src': db_directory / 'core_2'},
-                                        {'src': db_directory / 'core_3'}, {'src': db_directory / 'core_4'},
-                                        {'src': db_directory / 'core_5'}, {'src': db_directory / 'core_6'},
-                                        {'src': db_directory / 'core_7'}, {'src': db_directory / 'core_8'},
-                                        {'src': db_directory / 'core_9'}
+@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_genome_metadata'},
+                                        {'src': 'ncbi_taxonomy'},
+                                        {'src': 'core_1'}, {'src': 'core_2'},
+                                        {'src': 'core_3'}, {'src': 'core_4'},
+                                        {'src': 'core_5'}, {'src': 'core_6'},
+                                        {'src': 'core_7'}, {'src': 'core_8'},
+                                        {'src': 'core_9'}
                                         ]],
-
                          indirect=True)
 class TestUpdater:
     dbc = None  # type: UnitTestDB

@@ -19,14 +19,11 @@ from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
                                                     GenomeDataset, Genome, DatasetStatus)
 
-db_directory = Path(__file__).parent / 'databases'
-db_directory = db_directory.resolve()
 logger = logging.getLogger(__name__)
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_genome_metadata'},
-                                        {'src': sample_path / 'ncbi_taxonomy'},
+@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_genome_metadata'},
+                                        {'src': 'ncbi_taxonomy'},
                                         ]], indirect=True)
 class TestDatasetFactory:
     dbc = None  # type: UnitTestDB

@@ -59,13 +59,13 @@ class TestUtils:
             (100, []),
         ]
     )
-    def test_get_alternative_names(self, genome_db_conn, taxon_id, expected_output):
-        output = utils.get_alternative_names(genome_db_conn, taxon_id)
+    def test_get_alternative_names(self, genome_conn, taxon_id, expected_output):
+        output = utils.get_alternative_names(genome_conn, taxon_id)
         assert output == expected_output
 
-    def test_get_assembly_information(self, genome_db_conn):
+    def test_get_assembly_information(self, genome_conn):
         output = json_format.MessageToJson(
-            utils.get_assembly_information(genome_db_conn, "fd7fea38-981a-4d73-a879-6f9daef86f08"))
+            utils.get_assembly_information(genome_conn, "fd7fea38-981a-4d73-a879-6f9daef86f08"))
         expected_output = {
             "accession": "GCA_000001405.29",
             "assemblyUuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
@@ -77,11 +77,11 @@ class TestUtils:
         }
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_from_assembly_accession_iterator(self, genome_db_conn):
+    def test_get_genomes_from_assembly_accession_iterator(self, genome_conn):
         output = [
             json.loads(json_format.MessageToJson(response)) for response in
             utils.get_genomes_from_assembly_accession_iterator(
-                db_conn=genome_db_conn, assembly_accession="GCA_000005845.2", release_version=None
+                db_conn=genome_conn, assembly_accession="GCA_000005845.2", release_version=None
             )
         ]
 
@@ -137,12 +137,12 @@ class TestUtils:
             ("asdfasdfadf", None),
         ]
     )
-    def test_get_genomes_from_assembly_accession_iterator_null(self, genome_db_conn, assembly_accession,
+    def test_get_genomes_from_assembly_accession_iterator_null(self, genome_conn, assembly_accession,
                                                                release_version):
         output = [
             json.loads(json_format.MessageToJson(response)) for response in
             utils.get_genomes_from_assembly_accession_iterator(
-                db_conn=genome_db_conn, assembly_accession=assembly_accession, release_version=release_version
+                db_conn=genome_conn, assembly_accession=assembly_accession, release_version=release_version
             )
         ]
         assert output == []
@@ -167,11 +167,11 @@ class TestUtils:
     #     expected_output2 = {}
     #     assert json.loads(output2) == expected_output2
 
-    def test_get_top_level_statistics(self, genome_db_conn):
+    def test_get_top_level_statistics(self, genome_conn):
         # Triticum aestivum
         output = json_format.MessageToJson(
             utils.get_top_level_statistics(
-                db_conn=genome_db_conn,
+                db_conn=genome_conn,
                 group="EnsemblPlants",
                 organism_uuid="6f56c6d1-d06e-44d3-b766-ab5f6509f255",
             )
@@ -199,10 +199,10 @@ class TestUtils:
     #	'statisticValue': '249.47'
     # }
 
-    def test_get_top_level_statistics_by_uuid(self, genome_db_conn):
+    def test_get_top_level_statistics_by_uuid(self, genome_conn):
         output = json_format.MessageToJson(
             utils.get_top_level_statistics_by_uuid(
-                genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3"
+                genome_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3"
             )
         )
         output = json.loads(output)
@@ -220,12 +220,12 @@ class TestUtils:
             'statisticValue': '22'
         }
 
-    def test_get_datasets_list_by_uuid(self, genome_db_conn):
+    def test_get_datasets_list_by_uuid(self, genome_conn):
         # the expected_output is too long and duplicated
         # because of the returned attributes
         # TODO: Fix this later
         output = json_format.MessageToJson(
-            utils.get_datasets_list_by_uuid(genome_db_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.1))
+            utils.get_datasets_list_by_uuid(genome_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.1))
 
         expected_output = {
             'datasets': {
@@ -784,16 +784,16 @@ class TestUtils:
         }
         assert json.loads(output) == expected_output
 
-    def test_get_datasets_list_by_uuid_no_results(self, genome_db_conn):
+    def test_get_datasets_list_by_uuid_no_results(self, genome_conn):
         output = json_format.MessageToJson(
-            utils.get_datasets_list_by_uuid(genome_db_conn, "some-random-uuid-f00-b4r", 103.0))
+            utils.get_datasets_list_by_uuid(genome_conn, "some-random-uuid-f00-b4r", 103.0))
         output = json.loads(output)
         expected_output = {}
         assert output == expected_output
 
-    def test_get_dataset_by_genome_and_dataset_type(self, genome_db_conn):
+    def test_get_dataset_by_genome_and_dataset_type(self, genome_conn):
         output = json_format.MessageToJson(
-            utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
+            utils.get_dataset_by_genome_and_dataset_type(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
                                                          "assembly")
         )
         output = json.loads(output)
@@ -1026,9 +1026,9 @@ class TestUtils:
             'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'
         }
 
-    def test_get_dataset_by_genome_id_no_results(self, genome_db_conn):
+    def test_get_dataset_by_genome_id_no_results(self, genome_conn):
         output = json_format.MessageToJson(
-            utils.get_dataset_by_genome_and_dataset_type(genome_db_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
+            utils.get_dataset_by_genome_and_dataset_type(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
                                                          "blah blah blah"))
         output = json.loads(output)
         assert output == {}
@@ -1043,20 +1043,20 @@ class TestUtils:
             ("random_production_name", "random_assembly_name", False, {}),
         ]
     )
-    def test_get_genome_uuid(self, genome_db_conn, production_name, assembly_name, use_default, expected_output):
+    def test_get_genome_uuid(self, genome_conn, production_name, assembly_name, use_default, expected_output):
         output = json_format.MessageToJson(
             utils.get_genome_uuid(
-                db_conn=genome_db_conn,
+                db_conn=genome_conn,
                 production_name=production_name,
                 assembly_name=assembly_name,
                 use_default=use_default
             ))
         assert json.loads(output) == expected_output
 
-    def test_get_genome_by_uuid(self, genome_db_conn):
+    def test_get_genome_by_uuid(self, genome_conn):
         output = json_format.MessageToJson(
             utils.get_genome_by_uuid(
-                db_conn=genome_db_conn,
+                db_conn=genome_conn,
                 genome_uuid="a73357ab-93e7-11ec-a39d-005056b38ce3",
                 release_version=110.1
             ))
@@ -1123,10 +1123,10 @@ class TestUtils:
         }
         assert json.loads(output) == expected_output
 
-    def test_genome_by_uuid_release_version_unspecified(self, genome_db_conn):
+    def test_genome_by_uuid_release_version_unspecified(self, genome_conn):
         output = json_format.MessageToJson(
             utils.get_genome_by_uuid(
-                db_conn=genome_db_conn,
+                db_conn=genome_conn,
                 genome_uuid="a73357ab-93e7-11ec-a39d-005056b38ce3",
                 release_version=None
             ))
@@ -1193,13 +1193,13 @@ class TestUtils:
         }
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_by_uuid_null(self, genome_db_conn):
-        output = utils.get_genome_by_uuid(genome_db_conn, None, 0)
+    def test_get_genomes_by_uuid_null(self, genome_conn):
+        output = utils.get_genome_by_uuid(genome_conn, None, 0)
         assert output == ensembl_metadata_pb2.Genome()
 
-    def test_get_genomes_by_keyword(self, genome_db_conn):
+    def test_get_genomes_by_keyword(self, genome_conn):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_by_keyword_iterator(genome_db_conn, "Human", 110.1)]
+                  utils.get_genomes_by_keyword_iterator(genome_conn, "Human", 110.1)]
 
         assert len(output) == 50
         assert all(genome['organism']['commonName'].lower() == 'human' for genome in output)
@@ -1209,26 +1209,26 @@ class TestUtils:
                       utils.get_genomes_by_keyword_iterator(genome_db_conn_unreleased, "Human")]
         assert len(unreleased) == 99
 
-    def test_get_genomes_by_keyword_release_unspecified(self, genome_db_conn):
+    def test_get_genomes_by_keyword_release_unspecified(self, genome_conn):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_by_keyword_iterator(genome_db_conn, "Homo Sapiens", 0.0)]
+                  utils.get_genomes_by_keyword_iterator(genome_conn, "Homo Sapiens", 0.0)]
         assert len(output) == 50
         assert all(genome['taxon']['scientificName'] == 'Homo sapiens' for genome in output)
 
-    def test_get_genomes_by_keyword_null(self, genome_db_conn):
+    def test_get_genomes_by_keyword_null(self, genome_conn):
         output = list(
-            utils.get_genomes_by_keyword_iterator(genome_db_conn, None, 0))
+            utils.get_genomes_by_keyword_iterator(genome_conn, None, 0))
         assert output == []
 
-    def test_get_genomes_by_keyword_no_matches(self, genome_db_conn):
+    def test_get_genomes_by_keyword_no_matches(self, genome_conn):
         output = list(
-            utils.get_genomes_by_keyword_iterator(genome_db_conn, "bigfoot",
+            utils.get_genomes_by_keyword_iterator(genome_conn, "bigfoot",
                                                   1))
         assert output == []
 
-    def test_get_genomes_by_name(self, genome_db_conn):
+    def test_get_genomes_by_name(self, genome_conn):
         output = json_format.MessageToJson(utils.get_genome_by_name(
-            db_conn=genome_db_conn,
+            db_conn=genome_conn,
             site_name="Ensembl",
             ensembl_name="SAMEA7089058",
             release_version=110.1
@@ -1294,12 +1294,12 @@ class TestUtils:
         }
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_by_name_release_unspecified(self, genome_db_conn):
+    def test_get_genomes_by_name_release_unspecified(self, genome_conn):
         # We are expecting the same result as test_get_genomes_by_name() above
         # because no release is specified get_genome_by_name() -> fetch_genomes
         # checks if the fetched genome is released and picks it up
         output = json_format.MessageToJson(utils.get_genome_by_name(
-            db_conn=genome_db_conn,
+            db_conn=genome_conn,
             site_name="Ensembl",
             ensembl_name="SAMEA7089058",
             release_version=None
@@ -1365,10 +1365,10 @@ class TestUtils:
         }
         assert json.loads(output) == expected_output
 
-    def test_get_organisms_group_count(self, genome_db_conn):
+    def test_get_organisms_group_count(self, genome_conn):
         output = json_format.MessageToJson(
             utils.get_organisms_group_count(
-                db_conn=genome_db_conn,
+                db_conn=genome_conn,
                 release_version=None
             )
         )
@@ -1399,10 +1399,10 @@ class TestUtils:
             ("iDontExist", {}),
         ]
     )
-    def test_get_genome_uuid_by_tag(self, genome_db_conn, genome_tag, expected_output):
+    def test_get_genome_uuid_by_tag(self, genome_conn, genome_tag, expected_output):
         output = json_format.MessageToJson(
             utils.get_genome_uuid_by_tag(
-                db_conn=genome_db_conn,
+                db_conn=genome_conn,
                 genome_tag=genome_tag,
             ))
         assert json.loads(output) == expected_output
@@ -1439,10 +1439,10 @@ class TestUtils:
             (None, "test_dataset", None, {})
         ]
     )
-    def test_ftp_links(self, genome_db_conn, genome_uuid, dataset_type, release_version, expected_output):
+    def test_ftp_links(self, genome_conn, genome_uuid, dataset_type, release_version, expected_output):
         output = json_format.MessageToJson(
             utils.get_ftp_links(
-                db_conn=genome_db_conn,
+                db_conn=genome_conn,
                 genome_uuid=genome_uuid,
                 dataset_type=dataset_type,
                 release_version=release_version
@@ -1475,11 +1475,11 @@ class TestUtils:
             (None, None, None, {}),
         ]
     )
-    def test_get_release_version_by_uuid(self, genome_db_conn, genome_uuid, dataset_type, release_version,
+    def test_get_release_version_by_uuid(self, genome_conn, genome_uuid, dataset_type, release_version,
                                          expected_output):
         output = json_format.MessageToJson(
             utils.get_release_version_by_uuid(
-                db_conn=genome_db_conn,
+                db_conn=genome_conn,
                 genome_uuid=genome_uuid,
                 dataset_type=dataset_type,
                 release_version=release_version

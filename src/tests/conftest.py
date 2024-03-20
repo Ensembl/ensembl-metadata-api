@@ -30,7 +30,7 @@ from grpc_reflection.v1alpha import reflection
 
 
 def pytest_configure(config: Config) -> None:
-    pytest.dbs_dir = Path(__file__).parent / 'src' / 'ensembl' / 'production' / 'metadata' / 'api' / 'sample'
+    pytest.dbs_dir = Path(__file__).parent / 'databases'
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -50,12 +50,11 @@ def genome_conn(multi_dbs):
 
 
 @pytest.fixture(scope="function")
-def allow_unreleased():
-    """Set MY_VARIABLE environment variable, this fixture must be used with `parametrize`"""
+def allow_unreleased(request):
+    """Set ALLOWED_UNRELEASED environment variable, this fixture must be used with `parametrize`"""
     from ensembl.production.metadata.grpc.config import cfg
-    cfg.allow_unreleased = True
+    cfg.allow_unreleased = request.param
     yield cfg
-    cfg.allow_unreleased = False
 
 
 @pytest.fixture(scope="class")
