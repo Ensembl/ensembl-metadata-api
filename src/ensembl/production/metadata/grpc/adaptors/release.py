@@ -16,7 +16,7 @@ from typing import List
 
 import sqlalchemy as db
 
-from ensembl.production.metadata.grpc.adaptors.base import check_parameter, BaseAdaptor
+from ensembl.production.metadata.grpc.adaptors.base import check_parameter, BaseAdaptor, cfg
 from ensembl.production.metadata.api.models import EnsemblRelease, EnsemblSite, GenomeRelease, Genome, GenomeDataset, \
     Dataset, ReleaseStatus
 
@@ -70,11 +70,11 @@ class ReleaseAdaptor(BaseAdaptor):
             )
 
         release_select = release_select.filter(
-            EnsemblSite.site_id == self.config.ensembl_site_id
+            EnsemblSite.site_id == cfg.ensembl_site_id
         )
         logger.debug("Query: %s ", release_select)
-        logger.debug(f"Allowed unreleased {self.config.allow_unreleased}")
-        if not self.config.allow_unreleased:
+        logger.debug(f"Allowed unreleased {cfg.allow_unreleased}")
+        if not cfg.allow_unreleased:
             release_select = release_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
@@ -86,7 +86,7 @@ class ReleaseAdaptor(BaseAdaptor):
             .join(Genome) \
             .join(EnsemblSite) \
             .where(Genome.genome_uuid == genome_uuid)
-        if not self.config.allow_unreleased:
+        if not cfg.allow_unreleased:
             select_released = select_released.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
@@ -95,58 +95,14 @@ class ReleaseAdaptor(BaseAdaptor):
 
     def fetch_releases_for_dataset(self, dataset_uuid):
         select_released = db.select(EnsemblRelease, EnsemblSite) \
+            .select_from(Dataset) \
             .join(GenomeDataset) \
-            .join(Dataset) \
-            .join(EnsemblSite) \
+            .outerjoin(EnsemblRelease) \
+            .outerjoin(EnsemblSite) \
             .where(Dataset.dataset_uuid == dataset_uuid)
-        if not self.config.allow_unreleased:
+        if not cfg.allow_unreleased:
             select_released = select_released.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             releases = session.execute(select_released).all()
             return releases
-
-
-class NewReleaseAdaptor(BaseAdaptor):
-
-    def __init__(self, metadata_uri=None):
-        super().__init__(metadata_uri)
-        # Get current release ID from ensembl_release
-        with self.metadata_db.session_scope() as session:
-            self.current_release_id = (
-                session.execute(db.select(EnsemblRelease.release_id).filter(EnsemblRelease.is_current == 1)).one()[0])
-        if self.current_release_id == "":
-            raise Exception("Current release not found")
-        logger.debug(f'Release ID: {self.current_release_id}')
-
-        # Get last release ID from ensembl_release
-        with self.metadata_db.session_scope() as session:
-            ############### Refactor this once done. It is messy.
-            current_version = int(session.execute(
-                db.select(EnsemblRelease.version).filter(EnsemblRelease.release_id == self.current_release_id)).one()[
-                                      0])
-            past_versions = session.execute(
-                db.select(EnsemblRelease.version).filter(EnsemblRelease.version < current_version)).all()
-            sorted_versions = []
-            # Do I have to account for 1.12 and 1.2
-            for version in past_versions:
-                sorted_versions.append(float(version[0]))
-            sorted_versions.sort()
-            self.previous_release_id = (session.execute(
-                db.select(EnsemblRelease.release_id).filter(EnsemblRelease.version == sorted_versions[-1])).one()[0])
-            if self.previous_release_id == "":
-                raise Exception("Previous release not found")
-
-    #     new_genomes (list of new genomes in the new release)
-    def fetch_new_genomes(self):
-        # TODO: this code must be never called yet, because it would never work!!!!
-        with self.metadata_db.session_scope() as session:
-            genome_selector = db.select(
-                EnsemblRelease, EnsemblSite
-            ).join(EnsemblRelease.ensembl_site)
-            old_genomes = session.execute(
-                db.select(EnsemblRelease.version).filter(EnsemblRelease.version < current_version)).all()
-            new_genomes = []
-            novel_old_genomes = []
-            novel_new_genomes = []
-            return session.execute(release_select).all()

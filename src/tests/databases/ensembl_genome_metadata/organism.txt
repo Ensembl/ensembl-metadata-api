@@ -1,0 +1,7 @@
+83	9606	9606	Human	\N	Homo sapiens	SAMN12121739	Human	1d336185-affe-4a91-85bb-04ebd73cbb56	\N	999	SAMN12121739
+1	511145	562	Escherichia coli K-12	K-12 substr. MG1655	Escherichia coli str. K-12 substr. MG1655 str. K12	SAMN02604091	E coli K 12	1e579f8d-3880-424e-9b4f-190eb69280d9	strain	0	SAMN02604091
+175	6239	6239	Roundworm	N2	Caenorhabditis elegans	SAMN04256190	Roundworm	b181947a-a725-4866-ada4-5433e5dfdcac	strain	0	SAMN04256190
+83	9606	9606	Human	\N	Homo sapiens	SAMN12121739	Human	1d336185-affe-4a91-85bb-04ebd73cbb56	\N	999	SAMN12121739
+14	36329	5833	Malaria parasite	\N	Plasmodium falciparum 3D7	SAMN00102897	\N	c867d142-85c4-4a5d-8361-b3f7f5fa3544	\N	0	SAMN00102897
+172	559292	4932	Baker's yeast	S288C	Saccharomyces cerevisiae S288c	SAMEA3184125	Bakers yeast	ae962453-0287-4201-83b8-3847c7d8027d	strain	0	SAMEA3184125
+72	4565	4565	Bread wheat	Chinese Spring	Triticum aestivum	SAMEA4791365	Wheat	86dd50f1-421e-4829-aca5-13ccc9a459f6	cultivar	0	SAMEA4791365

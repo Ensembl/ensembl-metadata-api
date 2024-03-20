@@ -41,7 +41,7 @@ def engine(multi_dbs):
 
 
 @pytest.fixture(scope="function")
-def genome_db_conn(multi_dbs):
+def genome_conn(multi_dbs):
     genome_conn = GenomeAdaptor(
         metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
         taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
@@ -50,36 +50,16 @@ def genome_db_conn(multi_dbs):
 
 
 @pytest.fixture(scope="function")
-def genome_db_conn_unreleased(multi_dbs):
-    os.environ["ALLOW_UNRELEASED"] = 'True'
-    genome_conn = GenomeAdaptor(
-        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
-        taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
-    )
-    yield genome_conn
-    os.environ["ALLOW_UNRELEASED"] = 'False'
-
-
-@pytest.fixture(scope="function")
-def release_db_conn_unreleased(multi_dbs):
-    os.environ["ALLOW_UNRELEASED"] = 'True'
-    release_conn = ReleaseAdaptor(
-        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url
-    )
-    yield release_conn
-    os.environ["ALLOW_UNRELEASED"] = 'False'
-
-
-@pytest.fixture(scope="function")
-def release_db_conn(multi_dbs):
-    release_conn = ReleaseAdaptor(
-        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
-    )
-    yield release_conn
+def allow_unreleased():
+    """Set MY_VARIABLE environment variable, this fixture must be used with `parametrize`"""
+    from ensembl.production.metadata.grpc.config import cfg
+    cfg.allow_unreleased = True
+    yield cfg
+    cfg.allow_unreleased = False
 
 
 @pytest.fixture(scope="class")
-def release_db_conn(multi_dbs):
+def release_conn(multi_dbs):
     release_conn = ReleaseAdaptor(
         metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url
     )

@@ -11,6 +11,9 @@
 #  limitations under the License.
 import os
 import warnings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def parse_boolean_var(var):
@@ -61,3 +64,5 @@ class MetadataConfig:
         self.ensembl_site_id = os.environ.get("ENSEMBL_SITE", 1)
         self.debug_mode = parse_boolean_var(os.environ.get("DEBUG", False))
         self.service_port = int(os.environ.get("SERVICE_PORT", 50051))
+
+cfg = MetadataConfig()

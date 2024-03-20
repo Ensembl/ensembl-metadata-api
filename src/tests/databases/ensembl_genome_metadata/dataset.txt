@@ -1,0 +1,39 @@
+61	3474e0d6-d031-40bc-a4ae-230236886568	assembly	\N	2023-09-22 15:03:22.000000	GCA_000001405.14	40	1	Released	\N
+62	e456d1c2-eea2-40f1-83ee-31912905b695	genebuild	GENCODE19	2023-09-22 15:03:22.000000	GCA_000001405.14_GENCODE19	40	2	Released	\N
+1392	5b869bbb-098f-4827-afc0-532a2bc88903	variation	1.0	2023-11-09 12:49:25.797822	GRCh37	674	3	Released	\N
+1394	e0202b0e-578d-493f-aeb4-464f5d2e233a	evidence	1.0	2023-11-09 12:49:26.756909	GRCh37	674	4	Released	\N
+2291	4b02b11e-397c-4a4f-8c13-8b65efb87030	compara_homologies	1.0	2023-11-14 16:50:13.529466	Compara homologies	266	6	Released	\N
+6623	60fae37a-afe2-4bb1-9da0-321911dd2856	compara_homologies	1.0	2024-02-06 21:29:21.311224	Compara homologies	266	6	Processing	\N
+1	02104faf-3fee-4f28-b53c-605843dac941	assembly	\N	2023-09-22 15:01:44.000000	GCA_000005845.2	1	1	Released	\N
+2	cc3c7f95-b5dc-4cc1-aa15-2817c89bd1e2	genebuild	EXT01	2023-09-22 15:01:44.000000	GCA_000005845.2_EXT01	1	2	Released	\N
+2458	58df568e-48c1-4a3b-838b-448540392f9c	compara_homologies	1.0	2023-11-14 16:52:38.647877	Compara homologies	433	6	Released	\N
+8392	b6472939-9e49-4d46-b93e-304910acabf3	compara_homologies	1.0	2024-02-06 21:44:00.982498	Compara homologies	4352	6	Processing	\N
+405	6c1896f9-10dd-423e-a1ff-db8b5815cb66	assembly	\N	2023-09-22 15:06:58.000000	GCA_000002985.3	217	1	Released	\N
+406	ea69f164-cc77-4671-bf97-c7f537dc400e	genebuild	EXT01	2023-09-22 15:06:58.000000	GCA_000002985.3_EXT01	217	2	Released	\N
+2394	b67e1761-3341-4965-9a5b-041cb8230cb3	compara_homologies	1.0	2023-11-14 16:51:42.824153	Compara homologies	369	6	Released	\N
+7069	9681f4c2-afb4-4a08-8e4d-f26363f65ddf	compara_homologies	1.0	2024-02-06 21:33:02.240258	Compara homologies	369	6	Processing	\N
+171	c813f7b7-645c-45ac-8536-08190fd7daa0	assembly	\N	2023-09-22 15:04:45.000000	GCA_000001405.29	92	1	Released	\N
+172	949defef-c4d2-4ab1-8a73-f41d2b3c7719	genebuild	GENCODE44	2023-09-22 15:04:45.000000	GCA_000001405.29_GENCODE44	92	2	Released	\N
+1391	bf1f5064-8520-4f19-84e4-449aa6c1c1e2	variation	1.0	2023-11-09 12:49:25.273751	GRCh38	673	3	Released	\N
+1393	5717d47e-dad9-4c2d-b015-c055bc93e831	evidence	1.0	2023-11-09 12:49:26.267728	GRCh38	673	4	Released	\N
+2449	e6df4d05-8567-4143-8ea0-c6ad1b5a3fc2	compara_homologies	1.0	2023-11-14 16:52:30.671955	Compara homologies	424	6	Released	\N
+2518	679d6452-799c-4a2f-8906-0db6c639e498	regulatory_features	1.0	2023-11-15 15:07:12.410801	Regulatory Annotation	670	7	Released	\N
+7177	d57040b6-0ef5-4e6b-97ef-be0ad94d3a61	compara_homologies	1.0	2024-02-06 21:33:55.672317	Compara homologies	424	6	Processing	\N
+23	06b4892b-8e34-49bc-be84-8126e5a7cf93	assembly	\N	2023-09-22 15:03:01.000000	GCA_000002765.2	14	1	Released	\N
+24	f202cd36-d0dc-40df-9dd6-a8218e0d1366	genebuild	EXT01	2023-09-22 15:03:01.000000	GCA_000002765.2_EXT01	14	2	Released	\N
+1414	c9d18d30-f7ad-44f4-becf-9b2c3606ac4f	evidence	1.0	2023-11-09 12:49:34.817886	ASM276v2	653	4	Released	\N
+1537	ff7cb333-fc39-4f00-93e0-65a0d5eb596b	variation	1.0	2023-11-09 12:50:36.212197	ASM276v2	653	3	Released	\N
+2348	aebf0b81-4234-4aa9-85cc-abfe91f5eac2	compara_homologies	1.0	2023-11-14 16:51:03.416326	Compara homologies	323	6	Released	\N
+6699	06debe4a-2b3e-4fab-991e-26863dbe8af8	compara_homologies	1.0	2024-02-06 21:29:59.006535	Compara homologies	323	6	Processing	\N
+401	3b58ee8a-8f8d-4dfe-bb58-44c2ed57f229	assembly	\N	2023-09-22 15:06:55.000000	GCA_000146045.2	214	1	Released	\N
+402	cfef61f8-7e24-4ed6-945f-baca1b2664a3	genebuild	EXT01	2023-09-22 15:06:55.000000	GCA_000146045.2_EXT01	214	2	Released	\N
+1405	bfa00db1-7925-4caa-8c7c-fa48bc5701a5	evidence	1.0	2023-11-09 12:49:31.245732	R64-1-1	644	4	Released	\N
+1528	0a0bed83-72c7-4f8a-a1cb-97450ef82495	variation	1.0	2023-11-09 12:50:31.531084	R64-1-1	644	3	Released	\N
+2357	caac6097-4921-4c10-bfc0-1c3e9b2604dc	compara_homologies	1.0	2023-11-14 16:51:11.265120	Compara homologies	332	6	Released	\N
+7847	d78259af-f491-42de-9cbf-de744b09efee	compara_homologies	1.0	2024-02-06 21:39:26.897641	Compara homologies	332	6	Processing	\N
+147	999315f6-6d25-481f-a017-297f7e1490c8	assembly	\N	2023-09-22 15:04:29.000000	GCA_900519105.1	79	1	Released	\N
+148	287a5483-55a4-46e6-a58b-a84ba0ddacd6	genebuild	EXT01	2023-09-22 15:04:29.000000	GCA_900519105.1_EXT01	79	2	Released	\N
+1421	80babe97-b289-407d-af70-b46ff5478f2e	evidence	1.0	2023-11-09 12:49:37.663593	IWGSC	660	4	Released	\N
+1544	e659bef9-22f7-4ad2-8215-4a48ecd228df	variation	1.0	2023-11-09 12:50:39.743563	IWGSC	660	3	Released	\N
+2384	9f45f1a6-d4d0-4c02-9509-dec5a0d523fb	compara_homologies	1.0	2023-11-14 16:51:33.936250	Compara homologies	359	6	Released	\N
+7603	254a68c7-f512-446d-a958-983a2713daf2	compara_homologies	1.0	2024-02-06 21:37:25.921259	Compara homologies	359	6	Processing	\N
