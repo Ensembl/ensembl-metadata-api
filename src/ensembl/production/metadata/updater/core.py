@@ -290,8 +290,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
         common_name = self.get_meta_single_meta_key(species_id, "species.common_name")
+        taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
         if common_name is None:
-            taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
 
             with self.taxonomy_db.session_scope() as session:
                 common_name = session.query(NCBITaxaName).filter(
