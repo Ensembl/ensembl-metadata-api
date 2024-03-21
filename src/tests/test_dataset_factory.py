@@ -22,20 +22,23 @@ from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, A
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_genome_metadata'},
-                                        {'src': 'ncbi_taxonomy'},
+@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
                                         ]], indirect=True)
 class TestDatasetFactory:
-    dbc = None  # type: UnitTestDB
+    dbc: UnitTestDB = None
 
     def test_update_dataset_attributes(self, multi_dbs, dataset_factory):
-        # Test that  the dataset attribute creation works fine and that the dataset_factory works with a session or a url
-        test_uuid = 'fc5d3e13-340c-4e2a-9f49-256fc319331e'
-        test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
-        dataset_factory.update_dataset_attributes(test_uuid, test_attributes,
-                                                  metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url)
+        """
+        Test that  the dataset attribute creation works fine and that the dataset_factory works with a session or a url
+        """
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
+            test_uuid = session.query(Dataset.dataset_uuid).filter(Dataset.dataset_id == 1).scalar()
+            test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
+            dataset_factory.update_dataset_attributes(test_uuid, test_attributes,
+                                                      metadata_uri=multi_dbs['ensembl_genome_metadata'].dbc.url)
+            session.commit()
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
             dataset_attribute = session.query(DatasetAttribute) \
                 .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
@@ -60,9 +63,9 @@ class TestDatasetFactory:
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
-            test_genome_uuid = '48b1b849-3b73-4242-ae83-af2290aeb071'
+            test_genome_uuid = session.query(Genome.genome_uuid).filter(Genome.genome_id == 4).scalar()  # one human
             test_dataset_source = session.query(DatasetSource).filter(
-                DatasetSource.name == 'mus_musculus_nodshiltj_core_110_1').one()
+                DatasetSource.name == 'homo_sapiens_gca018473315v1_core_110_1').one()
             test_dataset_type = session.query(DatasetType).filter(DatasetType.name == 'regulatory_features').one()
             test_name = 'test_name'
             test_label = 'test_label'
@@ -93,14 +96,16 @@ class TestDatasetFactory:
                 .all()
             assert test_attribute is not None
 
-    def test_create_genebuild_children(self, multi_dbs, dataset_factory):
+    def test_genebuild_workflow(self, multi_dbs, dataset_factory):
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        with metadata_db.session_scope() as session:
-            genebuild_uuid = '53936715-1371-4343-95af-f39d06943db7'
-            genebuild_ds = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
-            dataset_factory.create_all_child_datasets(genebuild_uuid, session)
+        genebuild_uuid = 'bd63a676-45ff-494a-b26f-2b779cb6c180' # Only Submitted dataset
 
+        # Test children creation
         with metadata_db.session_scope() as session:
+            genebuild_ds = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
+            assert genebuild_ds.name == 'genebuild'
+            dataset_factory.create_all_child_datasets(genebuild_uuid, session)
+            session.commit()
             data = session.query(Dataset).join(DatasetType).filter(
                 DatasetType.name == 'web_gb_content' and Dataset.parent == genebuild_ds).one()
             sdata = session.query(Dataset).join(DatasetType).filter(
@@ -116,10 +121,8 @@ class TestDatasetFactory:
             assert any(x for x in data.children if x.name == 'gb_browser_files')
             assert any(x for x in data.children if x.name == 'gb_track_api')
 
-    def test_update_dataset_status(self, multi_dbs, dataset_factory):
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        # Genebuild child datasets are now created, test updating status
         with metadata_db.session_scope() as session:
-            genebuild_uuid = '9a3fc0ba-58da-4919-b33f-7da46aa046a8'
             genebuild_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
             # Get the genome for this one
             genome_uuid = genebuild_dataset.genome_datasets[0].genome.genome_uuid
@@ -143,6 +146,16 @@ class TestDatasetFactory:
             temp, failed_status = dataset_factory.update_dataset_status(protfeat_uuid, DatasetStatus.PROCESSING,
                                                                         session=session)
             session.commit()
+            # Check str / DatasetSetStatus get the same result
+            datasets = dataset_factory.get_genomes_by_status_and_type(DatasetStatus.SUBMITTED, dataset_type='genebuild',
+                                                                      session=session)
+            datasets_2 = dataset_factory.get_genomes_by_status_and_type('Submitted', 'genebuild', session=session)
+            assert datasets == datasets_2
+            temp, succeed_status = dataset_factory.update_dataset_status(xref_uuid, 'Processing', session=session)
+            session.commit()
+            succeed_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == xref_uuid).one()
+            assert succeed_status == succeed_status_check[0]
+
             failed_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
             assert failed_status == DatasetStatus.SUBMITTED  # "Submitted"
             assert failed_status_check[0] == DatasetStatus.SUBMITTED  # "Submitted"
@@ -195,15 +208,3 @@ class TestDatasetFactory:
             submitted_status = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
             assert submitted_status[0] == DatasetStatus.SUBMITTED  # "Submitted"
 
-    def test_str_status(self, multi_dbs, dataset_factory):
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        with metadata_db.session_scope() as session:
-            datasets = dataset_factory.get_genomes_by_status_and_type(DatasetStatus.SUBMITTED, dataset_type='genebuild',
-                                                                      session=session)
-            datasets_2 = dataset_factory.get_genomes_by_status_and_type('Submitted', 'genebuild', session=session)
-            assert datasets == datasets_2
-            xref_uuid = '747e14d7-4b82-4190-9899-d196e489ee20'
-            temp, succeed_status = dataset_factory.update_dataset_status(xref_uuid, 'Processing', session=session)
-            session.commit()
-            succeed_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == xref_uuid).one()
-            assert succeed_status == succeed_status_check[0]

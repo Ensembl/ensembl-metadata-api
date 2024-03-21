@@ -60,7 +60,8 @@ class DatasetFactory:
         elif genome_input is None:
             genome = None
         else:
-            raise ValueError("Invalid genome input. Must be either a UUID string or a Genome object.")
+            raise ValueError("Invalid genome input. Must be either a UUID string or a Genome object. "
+                             f"Got {genome_input}/{genome_input.__class__}")
 
         new_dataset = Dataset(
             dataset_uuid=str(uuid.uuid4()),

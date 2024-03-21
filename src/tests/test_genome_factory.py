@@ -18,9 +18,6 @@ from sqlalchemy import func
 from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_genome_metadata'},
-                                        {'src': 'ncbi_taxonomy'},
-                                        ]], indirect=True)
 @pytest.fixture(scope="class")
 def metadata_db(multi_dbs):
     return DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
@@ -31,8 +28,8 @@ def genome_factory():
     return GenomeFactory()
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_genome_metadata'},
-                                        {'src': sample_path / 'ncbi_taxonomy'},
+@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
                                         ]], indirect=True)
 @pytest.fixture(scope="function")
 def genome_filters(multi_dbs):
@@ -61,8 +58,8 @@ def expected_columns():
             ]
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_genome_metadata'},
-                                        {'src': sample_path / 'ncbi_taxonomy'},
+@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
                                         ]], indirect=True)
 class TestGenomeFactory:
     dbc = None  # type: UnitTestDB

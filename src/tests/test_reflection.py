@@ -23,8 +23,8 @@ from yagrc import reflector as yagrc_reflector
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{"src": "ensembl_genome_metadata"},
-                                        {"src": "ncbi_taxonomy"}]],
+@pytest.mark.parametrize("multi_dbs", [[{"src": Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                        {"src": Path(__file__).parent / "databases/ncbi_taxonomy"}]],
                          indirect=True)
 class TestGRPCReflection:
     dbc = None

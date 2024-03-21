@@ -25,13 +25,17 @@ db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': 'ensembl_genome_metadata'},
-                                        {'src': 'ncbi_taxonomy'},
-                                        {'src': 'core_1'}, {'src': 'core_2'},
-                                        {'src': 'core_3'}, {'src': 'core_4'},
-                                        {'src': 'core_5'}, {'src': 'core_6'},
-                                        {'src': 'core_7'}, {'src': 'core_8'},
-                                        {'src': 'core_9'}
+@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                        {'src': Path(__file__).parent / "databases/core_1"},
+                                        {'src': Path(__file__).parent / "databases/core_2"},
+                                        {'src': Path(__file__).parent / "databases/core_3"},
+                                        {'src': Path(__file__).parent / "databases/core_4"},
+                                        {'src': Path(__file__).parent / "databases/core_5"},
+                                        {'src': Path(__file__).parent / "databases/core_6"},
+                                        {'src': Path(__file__).parent / "databases/core_7"},
+                                        {'src': Path(__file__).parent / "databases/core_8"},
+                                        {'src': Path(__file__).parent / "databases/core_9"}
                                         ]],
                          indirect=True)
 class TestUpdater:
