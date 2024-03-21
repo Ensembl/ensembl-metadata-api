@@ -267,11 +267,11 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version=None):
     return msg_factory.create_genome()
 
 
-def get_genome_by_name(db_conn, ensembl_name, site_name, release_version):
-    if not ensembl_name and not site_name:
+def get_genome_by_name(db_conn, biosample_id, site_name, release_version):
+    if not biosample_id and not site_name:
         logger.warning("Missing or Empty ensembl_name and site_name field.")
         return msg_factory.create_genome()
-    genome_results = db_conn.fetch_genomes(biosample_id=ensembl_name, site_name=site_name,
+    genome_results = db_conn.fetch_genomes(biosample_id=biosample_id, site_name=site_name,
                                            release_version=release_version)
     if len(genome_results) == 1:
         response_data = create_genome_with_attributes_and_count(

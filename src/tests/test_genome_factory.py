@@ -72,7 +72,7 @@ class TestGenomeFactory:
         [
             (10, 'Submitted', 3),
             (40, 'Released', 10),
-            (50, 'Processed', 10),
+            (50, 'Processed', 6),
         ]
     )
     def test_fetch_genomes_by_default_params(self, genome_factory, genome_filters, status, batch_size, expected_count):

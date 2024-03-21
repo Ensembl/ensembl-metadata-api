@@ -295,16 +295,20 @@ class GenomeAdaptor(BaseAdaptor):
             .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
         if cfg.allow_unreleased:
             logger.debug("Allowed Unreleased No more filtering")
-            genome_query = genome_query.outerjoin(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
+            genome_query = genome_query.add_columns(EnsemblSite) \
+                .outerjoin(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
                 .outerjoin(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
-                .outerjoin(EnsemblSite)
+                .outerjoin(EnsemblSite,
+                           EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
             if release_version is not None and release_version > 0:
                 genome_query = genome_query.where(EnsemblRelease.version <= release_version)
         else:
             logger.debug("NOT Allowed Unreleased")
-            genome_query = genome_query.join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
+            genome_query = genome_query.add_columns(EnsemblSite) \
+                .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
                 .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
-                .join(EnsemblSite)
+                .join(EnsemblSite,
+                      EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
             subquery = db.select(EnsemblRelease.version).filter(
                 and_(EnsemblRelease.status == ReleaseStatus.RELEASED, EnsemblRelease.is_current == 1))
             if release_version is not None and release_version > 0:
@@ -447,7 +451,7 @@ class GenomeAdaptor(BaseAdaptor):
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
                 .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id).order_by(
-                Genome.genome_uuid, Dataset.dataset_uuid).distinct()
+                Genome.genome_uuid, Dataset.name).distinct()
 
             if genome_id is not None:
                 logger.debug(f"Filter on genome_id {genome_id}")
@@ -497,7 +501,8 @@ class GenomeAdaptor(BaseAdaptor):
             if dataset_attributes:
                 genome_select = genome_select.add_columns(DatasetAttribute, Attribute) \
                     .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
-                    .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id).order_by(Attribute.name)
+                    .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id).order_by(
+                    Genome.genome_uuid, Dataset.name, Attribute.name)
 
             if cfg.allow_unreleased:
                 genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \

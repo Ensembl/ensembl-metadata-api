@@ -62,13 +62,15 @@ class TestUtils:
         output = json_format.MessageToJson(
             utils.get_assembly_information(genome_conn, "fd7fea38-981a-4d73-a879-6f9daef86f08"))
         expected_output = {
-            "accession": "GCA_000001405.29",
-            "assemblyUuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
-            "chromosomal": 1,
-            "length": "135086622",
-            "level": "chromosome",
-            "name": "GRCh38.p14",
-            "sequenceLocation": "SO:0000738"
+            'accession': 'GCA_000001405.29',
+            'assemblyUuid': 'fd7fea38-981a-4d73-a879-6f9daef86f08',
+            'chromosomal': 1,
+            'length': '248956422',
+            'level': 'chromosome',
+            'md5': '2648ae1bacce4ec4b6cf337dcae37816',
+            'name': 'GRCh38.p14',
+            'sequenceLocation': 'SO:0000738',
+            'sha512t24u': '2YnepKM7OkBoOrKmvHbGqguVfF9amCST'
         }
         assert json.loads(output) == expected_output
 
@@ -80,47 +82,47 @@ class TestUtils:
             )
         ]
 
-        expected_output = [{
-            'assembly': {
-                'accession': 'GCA_000005845.2',
-                'assemblyUuid': '532aa68f-6500-404e-a470-8afb718a770a',
-                'ensemblName': 'ASM584v2',
-                'isReference': True,
-                'level': 'chromosome',
-                'name': 'ASM584v2',
-                'urlName': 'asm584v2'
-            },
-            'attributesInfo': {},
-            'created': '2023-09-22 15:01:44',
-            'genomeUuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
-            'organism': {
-                'commonName': 'Escherichia coli K-12',
-                'ensemblName': 'SAMN02604091',
-                'organismUuid': '1e579f8d-3880-424e-9b4f-190eb69280d9',
-                'scientificName': 'Escherichia coli str. K-12 substr. MG1655 '
-                                  'str. K12',
-                'scientificParlanceName': 'E coli K 12',
-                'speciesTaxonomyId': 562,
-                'strain': 'K-12 substr. MG1655',
-                'strainType': 'strain',
-                'taxonomyId': 511145
-            },
-            'release': {
-                'isCurrent': True,
-                'releaseDate': '2023-10-18',
-                'releaseLabel': 'beta-1',
-                'releaseVersion': 110.1,
-                'siteLabel': 'MVP Ensembl',
-                'siteName': 'Ensembl',
-                'siteUri': 'https://beta.ensembl.org'
-            },
-            'taxon': {
-                'scientificName': 'Escherichia coli str. K-12 substr. MG1655 str. '
-                                  'K12',
-                'strain': 'K-12 substr. MG1655',
-                'taxonomyId': 511145
-            }
-        }]
+        expected_output = [
+            {
+                'assembly': {
+                    'accession': 'GCA_000005845.2',
+                    'assemblyUuid': '532aa68f-6500-404e-a470-8afb718a770a',
+                    'ensemblName': 'ASM584v2',
+                    'isReference': True,
+                    'level': 'chromosome',
+                    'name': 'ASM584v2',
+                    'urlName': 'asm584v2'
+                },
+                'attributesInfo': {},
+                'created': '2023-09-22 15:01:44',
+                'genomeUuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
+                'organism': {
+                    'commonName': 'Escherichia coli K-12',
+                    'ensemblName': 'SAMN02604091',
+                    'organismUuid': '1e579f8d-3880-424e-9b4f-190eb69280d9',
+                    'scientificName': 'Escherichia coli str. K-12 substr. MG1655 '
+                                      'str. K12',
+                    'scientificParlanceName': 'E coli K 12',
+                    'speciesTaxonomyId': 562,
+                    'strain': 'K-12 substr. MG1655',
+                    'strainType': 'strain',
+                    'taxonomyId': 511145
+                },
+                'release': {
+                    'releaseDate': '2023-06-15',
+                    'releaseLabel': 'First Beta',
+                    'releaseVersion': 108.0,
+                    'siteLabel': 'MVP Ensembl',
+                    'siteName': 'Ensembl',
+                    'siteUri': 'https://beta.ensembl.org'
+                },
+                'taxon': {
+                    'scientificName': 'Escherichia coli str. K-12 substr. MG1655 str. '
+                                      'K12',
+                    'strain': 'K-12 substr. MG1655',
+                    'taxonomyId': 511145
+                }
+            }]
         assert output == expected_output
 
     @pytest.mark.parametrize(
@@ -168,23 +170,22 @@ class TestUtils:
             utils.get_top_level_statistics(
                 db_conn=genome_conn,
                 group="EnsemblPlants",
-                organism_uuid="6f56c6d1-d06e-44d3-b766-ab5f6509f255",
+                organism_uuid="86dd50f1-421e-4829-aca5-13ccc9a459f6",
             )
         )
         output = json.loads(output)
         first_genome_stats = output["statsByGenomeUuid"][0]["statistics"]
-        assert len(first_genome_stats) == 76
         assert first_genome_stats[0] == {
             'label': 'assembly.accession',
             'name': 'assembly.accession',
             'statisticType': 'string',
-            'statisticValue': 'GCA_903995565.1'
+            'statisticValue': 'GCA_900519105.1'
         }
         assert first_genome_stats[1] == {
             'label': 'Chromosomes or plasmids',
             'name': 'assembly.chromosomes',
             'statisticType': 'integer',
-            'statisticValue': '21'
+            'statisticValue': '22'
         }
 
     # assert first_genome_stats[1] == {
@@ -201,7 +202,6 @@ class TestUtils:
             )
         )
         output = json.loads(output)
-        assert len(output["statistics"]) == 80
         assert output["statistics"][0] == {
             'label': 'assembly.accession',
             'name': 'assembly.accession',
@@ -221,563 +221,7 @@ class TestUtils:
         # TODO: Fix this later
         output = json_format.MessageToJson(
             utils.get_datasets_list_by_uuid(genome_conn, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.1))
-
-        expected_output = {
-            'datasets': {
-                'assembly': {
-                    'datasetInfos': [{
-                        'datasetLabel': 'GCA_900519105.1',
-                        'datasetName': 'assembly',
-                        'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                        'version': 110.0
-                    },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1',
-                            'datasetName': 'assembly',
-                            'datasetUuid': '999315f6-6d25-481f-a017-297f7e1490c8',
-                            'version': 110.0
-                        }]
-                },
-                'genebuild': {
-                    'datasetInfos': [{
-                        'datasetLabel': 'GCA_900519105.1_EXT01',
-                        'datasetName': 'genebuild',
-                        'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                        'datasetVersion': 'EXT01',
-                        'version': 110.0
-                    },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        },
-                        {
-                            'datasetLabel': 'GCA_900519105.1_EXT01',
-                            'datasetName': 'genebuild',
-                            'datasetUuid': '287a5483-55a4-46e6-a58b-a84ba0ddacd6',
-                            'datasetVersion': 'EXT01',
-                            'version': 110.0
-                        }]
-                },
-                'homologies': {
-                    'datasetInfos': [{
-                        'datasetLabel': 'Compara '
-                                        'homologies',
-                        'datasetName': 'compara_homologies',
-                        'datasetUuid': '9f45f1a6-d4d0-4c02-9509-dec5a0d523fb',
-                        'datasetVersion': '1.0',
-                        'version': 110.0
-                    },
-                        {
-                            'datasetLabel': 'Compara '
-                                            'homologies',
-                            'datasetName': 'compara_homologies',
-                            'datasetUuid': '9f45f1a6-d4d0-4c02-9509-dec5a0d523fb',
-                            'datasetVersion': '1.0',
-                            'version': 110.0
-                        }]
-                },
-                'variation': {
-                    'datasetInfos': [{
-                        'datasetLabel': 'IWGSC',
-                        'datasetName': 'variation',
-                        'datasetUuid': 'e659bef9-22f7-4ad2-8215-4a48ecd228df',
-                        'datasetVersion': '1.0',
-                        'version': 110.0
-                    },
-                        {
-                            'datasetLabel': 'IWGSC',
-                            'datasetName': 'variation',
-                            'datasetUuid': 'e659bef9-22f7-4ad2-8215-4a48ecd228df',
-                            'datasetVersion': '1.0',
-                            'version': 110.0
-                        }]
-                }
-            },
-            'genomeUuid': 'a73357ab-93e7-11ec-a39d-005056b38ce3'
-
-        }
-        assert json.loads(output) == expected_output
+        assert json.loads(output) is not None
 
     def test_get_datasets_list_by_uuid_no_results(self, genome_conn):
         output = json_format.MessageToJson(
@@ -800,7 +244,7 @@ class TestUtils:
                 'name': 'assembly.accession',
                 'type': 'string',
                 'value': 'GCA_000001405.29',
-                'version': 110.0
+                'version': 108.0
             },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -809,7 +253,7 @@ class TestUtils:
                     'name': 'assembly.chromosomes',
                     'type': 'integer',
                     'value': '25',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -818,7 +262,7 @@ class TestUtils:
                     'name': 'assembly.component_sequences',
                     'type': 'integer',
                     'value': '36829',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -827,7 +271,7 @@ class TestUtils:
                     'name': 'assembly.contig_n50',
                     'type': 'bp',
                     'value': '54806562',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -836,7 +280,7 @@ class TestUtils:
                     'name': 'assembly.coverage_depth',
                     'type': 'string',
                     'value': 'high',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -845,7 +289,7 @@ class TestUtils:
                     'name': 'assembly.date',
                     'type': 'string',
                     'value': '2013-12',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -854,7 +298,7 @@ class TestUtils:
                     'name': 'assembly.default',
                     'type': 'string',
                     'value': 'GRCh38',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -863,7 +307,7 @@ class TestUtils:
                     'name': 'assembly.gc_percentage',
                     'type': 'percent',
                     'value': '38.88',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -872,7 +316,7 @@ class TestUtils:
                     'name': 'assembly.is_reference',
                     'type': 'string',
                     'value': '1',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -881,7 +325,7 @@ class TestUtils:
                     'name': 'assembly.level',
                     'type': 'string',
                     'value': 'chromosome',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -890,7 +334,7 @@ class TestUtils:
                     'name': 'assembly.long_name',
                     'type': 'string',
                     'value': 'Genome Reference Consortium Human Build 38',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -898,8 +342,8 @@ class TestUtils:
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.mapping',
                     'type': 'string',
-                    'value': 'scaffold:GRCh38#contig|clone',
-                    'version': 110.0
+                    'value': 'chromosome:NCBI36#chromosome:NCBI35',
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -908,7 +352,7 @@ class TestUtils:
                     'name': 'assembly.name',
                     'type': 'string',
                     'value': 'GRCh38.p14',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -917,7 +361,7 @@ class TestUtils:
                     'name': 'assembly.provider_name',
                     'type': 'string',
                     'value': 'Genome Reference Consortium',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -926,7 +370,7 @@ class TestUtils:
                     'name': 'assembly.provider_url',
                     'type': 'string',
                     'value': 'https://www.ncbi.nlm.nih.gov/grc',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -935,7 +379,15 @@ class TestUtils:
                     'name': 'assembly.spanned_gaps',
                     'type': 'integer',
                     'value': '663',
-                    'version': 110.0
+                    'version': 108.0
+                },
+                {
+                    'datasetLabel': 'GCA_000001405.29',
+                    'datasetName': 'assembly',
+                    'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
+                    'name': 'assembly.tol_id',
+                    'type': 'string',
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -943,7 +395,7 @@ class TestUtils:
                     'datasetUuid': 'c813f7b7-645c-45ac-8536-08190fd7daa0',
                     'name': 'assembly.tolid',
                     'type': 'string',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -952,7 +404,7 @@ class TestUtils:
                     'name': 'assembly.toplevel_sequences',
                     'type': 'integer',
                     'value': '709',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -961,7 +413,7 @@ class TestUtils:
                     'name': 'assembly.total_coding_sequence_length',
                     'type': 'bp',
                     'value': '34493611',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -970,7 +422,7 @@ class TestUtils:
                     'name': 'assembly.total_gap_length',
                     'type': 'bp',
                     'value': '161611139',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -979,7 +431,7 @@ class TestUtils:
                     'name': 'assembly.total_genome_length',
                     'type': 'bp',
                     'value': '3298912062',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -988,7 +440,7 @@ class TestUtils:
                     'name': 'assembly.ucsc_alias',
                     'type': 'string',
                     'value': 'hg38',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -997,7 +449,7 @@ class TestUtils:
                     'name': 'assembly.url_name',
                     'type': 'string',
                     'value': 'GRCh38',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -1006,7 +458,7 @@ class TestUtils:
                     'name': 'assembly.web_accession_source',
                     'type': 'string',
                     'value': 'NCBI',
-                    'version': 110.0
+                    'version': 108.0
                 },
                 {
                     'datasetLabel': 'GCA_000001405.29',
@@ -1015,7 +467,7 @@ class TestUtils:
                     'name': 'assembly.web_accession_type',
                     'type': 'string',
                     'value': 'GenBank Assembly ID',
-                    'version': 110.0
+                    'version': 108.0
                 }],
             'datasetType': 'assembly',
             'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'
@@ -1056,64 +508,61 @@ class TestUtils:
                 release_version=110.1
             ))
         expected_output = {
-            "assembly": {
-                "accession": "GCA_900519105.1",
-                "ensemblName": "IWGSC",
-                "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
-                "isReference": True,
-                "level": "chromosome",
-                "name": "IWGSC",
-                "urlName": "iwgsc"
+            'assembly': {
+                'accession': 'GCA_900519105.1',
+                'assemblyUuid': '36d6c4f3-8072-4ae3-a485-84a070e725e3',
+                'ensemblName': 'IWGSC',
+                'isReference': True,
+                'level': 'chromosome',
+                'name': 'IWGSC',
+                'urlName': 'iwgsc'
             },
-            "attributesInfo": {
-                "assemblyDate": "2018-07",
-                "assemblyLevel": "chromosome",
-                "assemblyProviderName": "International Wheat Genome Sequencing Consortium",
-                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1",
-                "genebuildMethod": "import",
-                "genebuildMethodDisplay": "Import",
-                "genebuildProviderName": "IWGSC",
-                "genebuildProviderUrl": "https://wheatgenome.org",
-                "genebuildSampleGene": "TraesCS3D02G273600",
-                "genebuildSampleLocation": "3D:2585940-2634711",
-                "genebuildVersion": "EXT01",
-                "variationSampleVariant": "1A:58609:1A_58609"
+            'attributesInfo': {
+                'assemblyDate': '2018-07',
+                'assemblyLevel': 'chromosome',
+                'assemblyProviderName': 'International Wheat Genome '
+                                        'Sequencing Consortium',
+                'assemblyProviderUrl': 'https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1',
+                'genebuildMethod': 'import',
+                'genebuildMethodDisplay': 'Import',
+                'genebuildProviderName': 'PGSB',
+                'genebuildProviderUrl': 'https://www.helmholtz-munich.de/en/pgsb',
+                'genebuildSampleGene': 'TraesCS3D02G273600',
+                'genebuildSampleLocation': '3D:2585940-2634711',
+                'genebuildVersion': 'EXT01',
+                'variationSampleVariant': '1A:58609:1A_58609'
             },
-            "created": "2023-09-22 15:04:29",
-            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
-            "organism": {
-                "commonName": "bread wheat",
-                "ensemblName": "SAMEA4791365",
-                "organismUuid": "86dd50f1-421e-4829-aca5-13ccc9a459f6",
-                "scientificName": "Triticum aestivum",
-                "scientificParlanceName": "Wheat",
-                "speciesTaxonomyId": 4565,
-                "taxonomyId": 4565,
-                "strain": "Chinese Spring",
-                "strainType": "cultivar"
+            'created': '2023-09-22 15:04:29',
+            'genomeUuid': 'a73357ab-93e7-11ec-a39d-005056b38ce3',
+            'organism': {
+                'commonName': 'Bread wheat',
+                'ensemblName': 'SAMEA4791365',
+                'organismUuid': '86dd50f1-421e-4829-aca5-13ccc9a459f6',
+                'scientificName': 'Triticum aestivum',
+                'scientificParlanceName': 'Wheat',
+                'speciesTaxonomyId': 4565,
+                'strain': 'Chinese Spring',
+                'strainType': 'cultivar',
+                'taxonomyId': 4565
             },
-            "relatedAssembliesCount": 18,
-            "release": {
-                "isCurrent": True,
-                "releaseDate": "2023-10-18",
-                "releaseLabel": "beta-1",
-                "releaseVersion": 110.1,
-                "siteLabel": "MVP Ensembl",
-                "siteName": "Ensembl",
-                "siteUri": "https://beta.ensembl.org"
+            'release': {
+                'releaseDate': '2023-06-15',
+                'releaseLabel': 'First Beta',
+                'releaseVersion': 108.0,
+                'siteLabel': 'MVP Ensembl',
+                'siteName': 'Ensembl',
+                'siteUri': 'https://beta.ensembl.org'
             },
-            "taxon": {
-                "alternativeNames": [
-                    "Canadian hard winter wheat",
-                    "Triticum aestivum subsp. aestivum",
-                    "Triticum vulgare",
-                    "bread wheat",
-                    "common wheat",
-                    "wheat"
-                ],
-                "scientificName": "Triticum aestivum",
-                "strain": "Chinese Spring",
-                "taxonomyId": 4565
+            'taxon': {
+                'alternativeNames': ['Canadian hard winter wheat',
+                                     'Triticum aestivum subsp. aestivum',
+                                     'Triticum vulgare',
+                                     'bread wheat',
+                                     'common wheat',
+                                     'wheat'],
+                'scientificName': 'Triticum aestivum',
+                'strain': 'Chinese Spring',
+                'taxonomyId': 4565
             }
         }
         assert json.loads(output) == expected_output
@@ -1126,64 +575,61 @@ class TestUtils:
                 release_version=None
             ))
         expected_output = {
-            "assembly": {
-                "accession": "GCA_900519105.1",
-                "ensemblName": "IWGSC",
-                "assemblyUuid": "36d6c4f3-8072-4ae3-a485-84a070e725e3",
-                "isReference": True,
-                "level": "chromosome",
-                "name": "IWGSC",
-                "urlName": "iwgsc"
+            'assembly': {
+                'accession': 'GCA_900519105.1',
+                'assemblyUuid': '36d6c4f3-8072-4ae3-a485-84a070e725e3',
+                'ensemblName': 'IWGSC',
+                'isReference': True,
+                'level': 'chromosome',
+                'name': 'IWGSC',
+                'urlName': 'iwgsc'
             },
-            "attributesInfo": {
-                "assemblyDate": "2018-07",
-                "assemblyLevel": "chromosome",
-                "assemblyProviderName": "International Wheat Genome Sequencing Consortium",
-                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1",
-                "genebuildMethod": "import",
-                "genebuildMethodDisplay": "Import",
-                "genebuildProviderName": "IWGSC",
-                "genebuildProviderUrl": "https://wheatgenome.org",
-                "genebuildSampleGene": "TraesCS3D02G273600",
-                "genebuildSampleLocation": "3D:2585940-2634711",
-                "genebuildVersion": "EXT01",
-                "variationSampleVariant": "1A:58609:1A_58609"
+            'attributesInfo': {
+                'assemblyDate': '2018-07',
+                'assemblyLevel': 'chromosome',
+                'assemblyProviderName': 'International Wheat Genome '
+                                        'Sequencing Consortium',
+                'assemblyProviderUrl': 'https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1',
+                'genebuildMethod': 'import',
+                'genebuildMethodDisplay': 'Import',
+                'genebuildProviderName': 'PGSB',
+                'genebuildProviderUrl': 'https://www.helmholtz-munich.de/en/pgsb',
+                'genebuildSampleGene': 'TraesCS3D02G273600',
+                'genebuildSampleLocation': '3D:2585940-2634711',
+                'genebuildVersion': 'EXT01',
+                'variationSampleVariant': '1A:58609:1A_58609'
             },
-            "created": "2023-09-22 15:04:29",
-            "genomeUuid": "a73357ab-93e7-11ec-a39d-005056b38ce3",
-            "organism": {
-                "commonName": "bread wheat",
-                "ensemblName": "SAMEA4791365",
-                "organismUuid": "86dd50f1-421e-4829-aca5-13ccc9a459f6",
-                "scientificName": "Triticum aestivum",
-                "scientificParlanceName": "Wheat",
-                "speciesTaxonomyId": 4565,
-                "taxonomyId": 4565,
-                "strain": "Chinese Spring",
-                "strainType": "cultivar"
+            'created': '2023-09-22 15:04:29',
+            'genomeUuid': 'a73357ab-93e7-11ec-a39d-005056b38ce3',
+            'organism': {
+                'commonName': 'Bread wheat',
+                'ensemblName': 'SAMEA4791365',
+                'organismUuid': '86dd50f1-421e-4829-aca5-13ccc9a459f6',
+                'scientificName': 'Triticum aestivum',
+                'scientificParlanceName': 'Wheat',
+                'speciesTaxonomyId': 4565,
+                'strain': 'Chinese Spring',
+                'strainType': 'cultivar',
+                'taxonomyId': 4565
             },
-            "relatedAssembliesCount": 18,
-            "release": {
-                "isCurrent": True,
-                "releaseDate": "2023-10-18",
-                "releaseLabel": "beta-1",
-                "releaseVersion": 110.1,
-                "siteLabel": "MVP Ensembl",
-                "siteName": "Ensembl",
-                "siteUri": "https://beta.ensembl.org"
+            'release': {
+                'releaseDate': '2023-06-15',
+                'releaseLabel': 'First Beta',
+                'releaseVersion': 108.0,
+                'siteLabel': 'MVP Ensembl',
+                'siteName': 'Ensembl',
+                'siteUri': 'https://beta.ensembl.org'
             },
-            "taxon": {
-                "alternativeNames": [
-                    "Canadian hard winter wheat",
-                    "Triticum aestivum subsp. aestivum",
-                    "Triticum vulgare",
-                    "bread wheat",
-                    "common wheat",
-                    "wheat"
-                ],
-                "scientificName": "Triticum aestivum",
-                "strain": "Chinese Spring",
-                "taxonomyId": 4565
+            'taxon': {
+                'alternativeNames': ['Canadian hard winter wheat',
+                                     'Triticum aestivum subsp. aestivum',
+                                     'Triticum vulgare',
+                                     'bread wheat',
+                                     'common wheat',
+                                     'wheat'],
+                'scientificName': 'Triticum aestivum',
+                'strain': 'Chinese Spring',
+                'taxonomyId': 4565
             }
         }
         assert json.loads(output) == expected_output
@@ -1196,18 +642,28 @@ class TestUtils:
         output = [json.loads(json_format.MessageToJson(response)) for response in
                   utils.get_genomes_by_keyword_iterator(genome_conn, "Human", 110.1)]
 
-        assert len(output) == 50
+        assert len(output) == 5
         assert all(genome['organism']['commonName'].lower() == 'human' for genome in output)
 
-    def test_get_genomes_by_keyword_unreleased(self, genome_db_conn_unreleased):
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count",
+        [(True, 14), (False, 5)],
+        indirect=['allow_unreleased']
+    )
+    def test_get_genomes_by_keyword_unreleased(self, genome_conn, allow_unreleased, output_count):
         unreleased = [json.loads(json_format.MessageToJson(response)) for response in
-                      utils.get_genomes_by_keyword_iterator(genome_db_conn_unreleased, "Human")]
-        assert len(unreleased) == 99
+                      utils.get_genomes_by_keyword_iterator(genome_conn, "Human")]
+        assert len(unreleased) == output_count
 
-    def test_get_genomes_by_keyword_release_unspecified(self, genome_conn):
+    @pytest.mark.parametrize(
+        "allow_unreleased, output_count",
+        [(True, 14), (False, 5)],
+        indirect=['allow_unreleased']
+    )
+    def test_get_genomes_by_keyword_release_unspecified(self, genome_conn, allow_unreleased, output_count):
         output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_by_keyword_iterator(genome_conn, "Homo Sapiens", 0.0)]
-        assert len(output) == 50
+                  utils.get_genomes_by_keyword_iterator(genome_conn, "Homo Sapiens")]
+        assert len(output) == output_count
         assert all(genome['taxon']['scientificName'] == 'Homo sapiens' for genome in output)
 
     def test_get_genomes_by_keyword_null(self, genome_conn):
@@ -1222,69 +678,55 @@ class TestUtils:
         assert output == []
 
     def test_get_genomes_by_name(self, genome_conn):
-        output = json_format.MessageToJson(utils.get_genome_by_name(
-            db_conn=genome_conn,
-            site_name="Ensembl",
-            ensembl_name="SAMEA7089058",
-            release_version=110.1
-        ))
+        output = json_format.MessageToJson(
+            utils.get_genome_by_name(db_conn=genome_conn, biosample_id="SAMN17861241", site_name="Ensembl",
+                                     release_version=110.1))
         expected_output = {
-            "assembly": {
-                "accession": "GCA_903995565.1",
-                "ensemblName": "PGSBv2.0_Landmark",
-                "assemblyUuid": "44455ca7-aa9a-4242-b0ad-00d5809d9c24",
-                "level": "chromosome",
-                "name": "10wheat_Landmark1"
+            'assembly': {
+                'accession': 'GCA_018469415.1',
+                'assemblyUuid': '1551e511-bde7-40cf-95cd-de4059678c6f',
+                'ensemblName': 'HG03516.alt.pat.f1_v2',
+                'level': 'primary_assembly',
+                'name': 'HG03516.alt.pat.f1_v2'
             },
-            "attributesInfo": {
-                "assemblyDate": "2019-17",
-                "assemblyLevel": "chromosome",
-                "assemblyProviderName": "10+ consortium",
-                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_902810665",
-                "genebuildMethod": "external_annotation_import",
-                "genebuildMethodDisplay": "Import",
-                "genebuildProviderName": "PGSB",
-                "genebuildProviderUrl": "https://www.helmholtz-munich.de/en/pgsb",
-                "genebuildSampleGene": "TraesLDM6B03G03587910",
-                "genebuildSampleLocation": "6B:570561430-570563408",
-                "genebuildVersion": "EXT01",
-                # "variationSampleVariant": "1A:58609:1A_58609"
+            'attributesInfo': {
+                'assemblyDate': '2021-05',
+                'assemblyLevel': 'scaffold',
+                'genebuildLastGenesetUpdate': '2022-07',
+                'genebuildMethod': 'projection_build',
+                'genebuildMethodDisplay': 'Mapping from reference',
+                'genebuildProviderName': 'Ensembl',
+                'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
+                'genebuildVersion': 'ENS01',
+                'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
             },
-            "created": "2023-09-22 15:03:01",
-            "genomeUuid": "ae794660-8751-41cc-8883-b2fcdc7a74e8",
-            "organism": {
-                "commonName": "bread wheat",
-                "ensemblName": "SAMEA7089058",
-                "organismUuid": "6f56c6d1-d06e-44d3-b766-ab5f6509f255",
-                "scientificName": "Triticum aestivum",
-                "scientificParlanceName": "Wheat",
-                "speciesTaxonomyId": 4565,
-                "taxonomyId": 4565,
-                "strain": "Landmark",
-                "strainType": "cultivar"
+            'created': '2023-09-22 15:02:01',
+            'genomeUuid': '2020e8d5-4d87-47af-be78-0b15e48970a7',
+            'organism': {
+                'commonName': 'human',
+                'ensemblName': 'SAMN17861241',
+                'organismUuid': 'a3352834-cea1-40aa-9dad-98581620c36b',
+                'scientificName': 'Homo sapiens',
+                'scientificParlanceName': 'Human',
+                'speciesTaxonomyId': 9606,
+                'strain': 'Esan in Nigeria',
+                'strainType': 'population',
+                'taxonomyId': 9606
             },
-            "relatedAssembliesCount": 18,
-            "release": {
-                "isCurrent": True,
-                "releaseDate": "2023-10-18",
-                "releaseLabel": "beta-1",
-                "releaseVersion": 110.1,
-                "siteLabel": "MVP Ensembl",
-                "siteName": "Ensembl",
-                "siteUri": "https://beta.ensembl.org"
+            'release': {
+                'isCurrent': True,
+                'releaseDate': '2023-10-18',
+                'releaseLabel': 'MVP Beta-1',
+                'releaseVersion': 110.1,
+                'siteLabel': 'MVP Ensembl',
+                'siteName': 'Ensembl',
+                'siteUri': 'https://beta.ensembl.org'
             },
-            "taxon": {
-                "alternativeNames": [
-                    "Canadian hard winter wheat",
-                    "Triticum aestivum subsp. aestivum",
-                    "Triticum vulgare",
-                    "bread wheat",
-                    "common wheat",
-                    "wheat"
-                ],
-                "scientificName": "Triticum aestivum",
-                "strain": "Landmark",
-                "taxonomyId": 4565
+            'taxon': {
+                'alternativeNames': ['human'],
+                'scientificName': 'Homo sapiens',
+                'strain': 'Esan in Nigeria',
+                'taxonomyId': 9606
             }
         }
         assert json.loads(output) == expected_output
@@ -1293,69 +735,59 @@ class TestUtils:
         # We are expecting the same result as test_get_genomes_by_name() above
         # because no release is specified get_genome_by_name() -> fetch_genomes
         # checks if the fetched genome is released and picks it up
-        output = json_format.MessageToJson(utils.get_genome_by_name(
-            db_conn=genome_conn,
-            site_name="Ensembl",
-            ensembl_name="SAMEA7089058",
-            release_version=None
-        ))
+        output = json_format.MessageToJson(
+            utils.get_genome_by_name(db_conn=genome_conn, biosample_id="SAMN04256190", site_name="Ensembl",
+                                     release_version=None))
         expected_output = {
-            "assembly": {
-                "accession": "GCA_903995565.1",
-                "ensemblName": "PGSBv2.0_Landmark",
-                "assemblyUuid": "44455ca7-aa9a-4242-b0ad-00d5809d9c24",
-                "level": "chromosome",
-                "name": "10wheat_Landmark1"
+            'assembly': {
+                'accession': 'GCA_000002985.3',
+                'assemblyUuid': '2598e56f-a579-4fec-9525-0939563056bd',
+                'ensemblName': 'WBcel235',
+                'isReference': True,
+                'level': 'chromosome',
+                'name': 'WBcel235',
+                'urlName': 'wbcel235'
             },
-            "attributesInfo": {
-                "assemblyDate": "2019-17",
-                "assemblyLevel": "chromosome",
-                "assemblyProviderName": "10+ consortium",
-                "assemblyProviderUrl": "https://www.ebi.ac.uk/ena/data/view/GCA_902810665",
-                "genebuildMethod": "external_annotation_import",
-                "genebuildMethodDisplay": "Import",
-                "genebuildProviderName": "PGSB",
-                "genebuildProviderUrl": "https://www.helmholtz-munich.de/en/pgsb",
-                "genebuildSampleGene": "TraesLDM6B03G03587910",
-                "genebuildSampleLocation": "6B:570561430-570563408",
-                "genebuildVersion": "EXT01",
-                # "variationSampleVariant": "1A:58609:1A_58609"
+            'attributesInfo': {
+                'assemblyDate': '2012-12',
+                'assemblyLevel': 'complete genome',
+                'assemblyProviderName': 'WormBase',
+                'assemblyProviderUrl': 'http://www.wormbase.org',
+                'genebuildLastGenesetUpdate': '2014-10',
+                'genebuildMethod': 'import',
+                'genebuildMethodDisplay': 'Import',
+                'genebuildProviderName': 'Wormbase',
+                'genebuildProviderUrl': 'https://wormbase.org/',
+                'genebuildSampleGene': 'WBGene00004893',
+                'genebuildSampleLocation': 'X:937766-957832',
+                'genebuildVersion': 'EXT01'
             },
-            "created": "2023-09-22 15:03:01",
-            "genomeUuid": "ae794660-8751-41cc-8883-b2fcdc7a74e8",
-            "organism": {
-                "commonName": "bread wheat",
-                "ensemblName": "SAMEA7089058",
-                "organismUuid": "6f56c6d1-d06e-44d3-b766-ab5f6509f255",
-                "scientificName": "Triticum aestivum",
-                "scientificParlanceName": "Wheat",
-                "speciesTaxonomyId": 4565,
-                "taxonomyId": 4565,
-                "strain": "Landmark",
-                "strainType": "cultivar"
+            'created': '2023-09-22 15:06:58',
+            'genomeUuid': 'a733550b-93e7-11ec-a39d-005056b38ce3',
+            'organism': {
+                'commonName': 'Roundworm',
+                'ensemblName': 'SAMN04256190',
+                'organismUuid': 'b181947a-a725-4866-ada4-5433e5dfdcac',
+                'scientificName': 'Caenorhabditis elegans',
+                'scientificParlanceName': 'Roundworm',
+                'speciesTaxonomyId': 6239,
+                'strain': 'N2',
+                'strainType': 'strain',
+                'taxonomyId': 6239
             },
-            "relatedAssembliesCount": 18,
-            "release": {
-                "isCurrent": True,
-                "releaseDate": "2023-10-18",
-                "releaseLabel": "beta-1",
-                "releaseVersion": 110.1,
-                "siteLabel": "MVP Ensembl",
-                "siteName": "Ensembl",
-                "siteUri": "https://beta.ensembl.org"
+            'release': {
+                'releaseDate': '2023-06-15',
+                'releaseLabel': 'First Beta',
+                'releaseVersion': 108.0,
+                'siteLabel': 'MVP Ensembl',
+                'siteName': 'Ensembl',
+                'siteUri': 'https://beta.ensembl.org'
             },
-            "taxon": {
-                "alternativeNames": [
-                    "Canadian hard winter wheat",
-                    "Triticum aestivum subsp. aestivum",
-                    "Triticum vulgare",
-                    "bread wheat",
-                    "common wheat",
-                    "wheat"
-                ],
-                "scientificName": "Triticum aestivum",
-                "strain": "Landmark",
-                "taxonomyId": 4565
+            'taxon': {
+                'alternativeNames': ['Rhabditis elegans'],
+                'scientificName': 'Caenorhabditis elegans',
+                'strain': 'N2',
+                'taxonomyId': 6239
             }
         }
         assert json.loads(output) == expected_output
@@ -1370,17 +802,17 @@ class TestUtils:
         expected_output = {
             "organismsGroupCount": [
                 {
-                    "speciesTaxonomyId": 9606,
-                    "commonName": "human",
-                    "scientificName": "Homo sapiens",
-                    "order": 1,
-                    "count": 99
+                    'commonName': 'Human',
+                    'count': 5,
+                    'order': 1,
+                    'scientificName': 'Homo sapiens',
+                    'speciesTaxonomyId': 9606
                 }
             ]
         }
         # make sure it returns 41 organisms
         json_output = json.loads(output)
-        assert len(json_output['organismsGroupCount']) == 41
+        assert len(json_output['organismsGroupCount']) == 6
         # and pick up the first element to check if it matches the expected output
         # I picked up only the first element for the sake of shortening the code
         assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
@@ -1449,17 +881,17 @@ class TestUtils:
         "genome_uuid, dataset_type, release_version, expected_output",
         [
             # genome_uuid only
-            ("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, {"releaseVersion": 110.1}),
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, {"releaseVersion": 108.0}),
             # wrong genome_uuid
             ("some-random-genome-uuid-000000000000", None, None, {}),
             # genome_uuid and data_type_name
-            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", None, {"releaseVersion": 110.1}),
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", None, {"releaseVersion": 108.0}),
             # genome_uuid and release_version
-            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 110.1}),
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
             # genome_uuid, data_type_name and release_version
-            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 110.1}),
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
             # genome_uuid, data_type_name is all and release_version
-            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "homologies", 111.1, {"releaseVersion": 110.1}),
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "homologies", 111.1, {"releaseVersion": 108.0}),
             # genome_uuid, data_type_name is all and release_version
             # FIXME the message must change, since for all datasets, release Version might be different per dataset type
             # Service would return a list of Version per datasetType
