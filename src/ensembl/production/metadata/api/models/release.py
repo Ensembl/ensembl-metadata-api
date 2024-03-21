@@ -22,8 +22,8 @@ from ensembl.production.metadata.grpc.config import cfg
 
 class ReleaseStatus(enum.Enum):
     PLANNED = "Planned"
-    PROCESSING = "Processing"
-    PROCESSED = "Processed"
+    PREPARING = "Preparing"
+    PREPARED = "Prepared"
     RELEASED = "Released"
 
 

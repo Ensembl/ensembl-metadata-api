@@ -23,13 +23,25 @@ from ensembl.production.metadata.api.models import EnsemblRelease, EnsemblSite, 
 logger = logging.getLogger(__name__)
 
 
+def filter_release_status(query,
+                          release_status: str | ReleaseStatus = None):
+    logger.debug(f"Allowed unreleased {cfg.allow_unreleased}")
+    if not cfg.allow_unreleased:
+        query = query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+    elif release_status:
+        # Release status filter only work when unreleased are allowed
+        query = query.filter(EnsemblRelease.status == release_status)
+    return query
+
+
 class ReleaseAdaptor(BaseAdaptor):
 
     def fetch_releases(self,
                        release_id: int | List[int] = None,
                        release_version: float | List[float] = None,
                        current_only: bool = False,
-                       release_type: str = None):
+                       release_type: str = None,
+                       release_status: str | ReleaseStatus = None):
         """
         Fetches releases based on the provided parameters.
 
@@ -38,12 +50,12 @@ class ReleaseAdaptor(BaseAdaptor):
             release_version (float or list or None): Release version(s) to filter by.
             current_only (bool): Flag indicating whether to fetch only current releases.
             release_type (str): Release type to filter by.
+            release_status: whether to filter particular release status
 
         Returns:
             list: A list of fetched releases.
         """
-        release_select = db.select(EnsemblRelease, EnsemblSite).join(EnsemblRelease.ensembl_site).order_by(
-            EnsemblRelease.version)
+        release_select = db.select(EnsemblRelease, EnsemblSite).order_by(EnsemblRelease.version)
 
         releases_id = check_parameter(release_id)
         if releases_id is not None:
@@ -72,10 +84,8 @@ class ReleaseAdaptor(BaseAdaptor):
         release_select = release_select.filter(
             EnsemblSite.site_id == cfg.ensembl_site_id
         )
+        release_select = filter_release_status(release_select, release_status)
         logger.debug("Query: %s ", release_select)
-        logger.debug(f"Allowed unreleased {cfg.allow_unreleased}")
-        if not cfg.allow_unreleased:
-            release_select = release_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(release_select).all()
@@ -86,8 +96,8 @@ class ReleaseAdaptor(BaseAdaptor):
             .join(Genome) \
             .join(EnsemblSite) \
             .where(Genome.genome_uuid == genome_uuid)
-        if not cfg.allow_unreleased:
-            select_released = select_released.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        release_select = filter_release_status(select_released)
+        logger.debug("Query: %s ", release_select)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             releases = session.execute(select_released).all()
@@ -100,8 +110,8 @@ class ReleaseAdaptor(BaseAdaptor):
             .outerjoin(EnsemblRelease) \
             .outerjoin(EnsemblSite) \
             .where(Dataset.dataset_uuid == dataset_uuid)
-        if not cfg.allow_unreleased:
-            select_released = select_released.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        release_select = filter_release_status(select_released)
+        logger.debug("Query: %s ", release_select)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             releases = session.execute(select_released).all()
