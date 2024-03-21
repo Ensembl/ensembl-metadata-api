@@ -22,6 +22,7 @@ import sqlalchemy as db
 from _pytest.config import Config
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
+from ensembl.production.metadata.api.factories.genomes import GenomeFactory
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 
@@ -63,6 +64,11 @@ def release_conn(multi_dbs):
         metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url
     )
     yield release_conn
+
+
+@pytest.fixture(scope="class")
+def genome_factory():
+    return GenomeFactory()
 
 
 @pytest.fixture(scope="class")
