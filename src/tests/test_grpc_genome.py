@@ -56,7 +56,7 @@ class TestGRPCGenomeAdaptor:
             (False, 108.0, False, 1),  # Released/Unreleased has no effect on released genome FALSE
             (False, 110.1, False, 1),  # Wrong Release specified, not current release only
             (False, 108.0, False, 1),  # Right Release with current False
-            (False, 108.0, True, 0),  # Right Release with only current True
+            (False, 108.0, True, 0),  # Right Release with only_current True
             (False, 110.1, True, 0),  # Wrong Release with only_current True
             (True, 110.1, True, 1)  # Unreleased
         ],
@@ -68,7 +68,7 @@ class TestGRPCGenomeAdaptor:
         celegans = genome_conn.fetch_genomes(genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
                                              assembly_accession="GCA_000002985.3", assembly_name="WBcel235",
                                              biosample_id="SAMN04256190", taxonomy_id="6239", group="EnsemblMetazoa",
-                                             site_name="Ensembl", release_type="integrated",
+                                             site_name="Ensembl", release_type="partial",
                                              release_version=release_version, current_only=current_only)
         assert len(celegans) == output_count
         if output_count == 1:
@@ -232,13 +232,13 @@ class TestGRPCGenomeAdaptor:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "2bc8874e-6672-4293-89d6-0b837005177c", 95),
+            (None, None, True, False, "2bc8874e-6672-4293-89d6-0b837005177c", 86),
             # specifying genome_uuid
-            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "254a68c7-f512-446d-a958-983a2713daf2", 6),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
             # specifying dataset_uuid
             (None, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", False, False, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "0571d77c-5cc6-4819-80bf-34a42acfc3f6", 54),
+            (None, None, False, True, "0571d77c-5cc6-4819-80bf-34a42acfc3f6", 45),
         ],
         indirect=['allow_unreleased']
     )
@@ -256,9 +256,9 @@ class TestGRPCGenomeAdaptor:
         "organism_uuid, expected_count",
         [
             # homo_sapiens_37
-            ("1d336185-affe-4a91-85bb-04ebd73cbb56", 13),
+            ("1d336185-affe-4a91-85bb-04ebd73cbb56", 12),
             # e-coli
-            ("1e579f8d-3880-424e-9b4f-190eb69280d9", 4),
+            ("1e579f8d-3880-424e-9b4f-190eb69280d9", 3),
             # non-existing organism
             ("organism-yet-to-be-discovered", 0),
         ]
