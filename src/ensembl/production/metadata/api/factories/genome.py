@@ -22,7 +22,7 @@ import re
 from dataclasses import dataclass, field
 from ensembl.database import DBConnection
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
-from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource
+from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 from sqlalchemy import select, text
@@ -140,10 +140,10 @@ class GenomeFactory:
                 dataset_uuid = genome_info.get('dataset_uuid', None)
 
                 # TODO: below code required with implementation of datasetstatus enum class in dataset models
-                # #convert status enum object to string value
-                # dataset_status = genome_info.get('dataset_status', None)
-                # if dataset_status and  isinstance(dataset_status, DatasetStatus) :
-                #     genome_info['dataset_status'] = dataset_status.value
+                #convert status enum object to string value
+                dataset_status = genome_info.get('dataset_status', None)
+                if dataset_status and  isinstance(dataset_status, DatasetStatus) :
+                    genome_info['dataset_status'] = dataset_status.value
 
                 if not dataset_uuid:
                     logger.warning(
@@ -153,13 +153,13 @@ class GenomeFactory:
 
                 if filters.update_dataset_status:
                     _, status = DatasetFactory().update_dataset_status(dataset_uuid, filters.update_dataset_status,
-                                                                      session=session)
-                    if filters.update_dataset_status == status:
+                                                                     session=session)
+                    if filters.update_dataset_status == status.value:
 
                         logger.info(
                             f"Updated Dataset status for dataset uuid: {dataset_uuid} from {filters.update_dataset_status} to {status}  for genome {genome_info['genome_uuid']}"
                         )
-                        genome_info['updated_dataset_status'] = status
+                        genome_info['updated_dataset_status'] = status.value
 
                     else:
                         logger.warning(
