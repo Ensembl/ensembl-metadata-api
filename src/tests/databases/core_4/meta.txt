@@ -20,4 +20,4 @@
 20	1	strain.type	test
 23	1	genebuild.provider_name	test
 24	1	genebuild.start_date	2023-07-Ensembl
-25	1	schema_version	110
+25	\N	schema_version	110
