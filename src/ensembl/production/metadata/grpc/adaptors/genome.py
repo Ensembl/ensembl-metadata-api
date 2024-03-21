@@ -594,6 +594,7 @@ class GenomeAdaptor(BaseAdaptor):
             OrganismGroupMember.order
         )
         query = query.order_by(OrganismGroupMember.order)
+        logger.debug("ALLOWED UNRELEASED %s", cfg.allow_unreleased)
         if cfg.allow_unreleased:
             query = query.outerjoin(GenomeRelease).outerjoin(EnsemblRelease)
         else:
@@ -617,7 +618,7 @@ class GenomeAdaptor(BaseAdaptor):
         query = db.select(db.func.count(Assembly.assembly_id)) \
             .join(Genome).join(Organism) \
             .filter(Organism.species_taxonomy_id == species_taxonomy_id)
-        logger.debug("Allowed unreleased: %s", cfg.allow_unreleased)
+        logger.debug("ALLOWED UNRELEASED: %s", cfg.allow_unreleased)
         if cfg.allow_unreleased:
             query = query.outerjoin(GenomeRelease).outerjoin(EnsemblRelease)
         else:

@@ -33,7 +33,6 @@ CREATE TABLE assembly_sequence
     md5                  varchar(32)  null,
     assembly_id          int          not null,
     chromosome_rank      int          null,
-    sha512t4u            varchar(128) null,
     sha512t24u           varchar(128) null,
     is_circular          tinyint(1)   not null,
     type                 varchar(26)  not null,
@@ -143,7 +142,7 @@ CREATE TABLE ensembl_release
 (
     release_id   int auto_increment primary key,
     version      decimal(10, 1) not null,
-    release_date date           not null,
+    release_date date           null,
     label        varchar(64)    null,
     is_current   tinyint(1)     not null,
     release_type varchar(16)    not null,

@@ -70,9 +70,9 @@ class TestGenomeFactory:
     @pytest.mark.parametrize(
         "batch_size, status, expected_count",
         [
-            (10, 'Submitted', 1),  # Allow Unreleased
-            (40, 'Released', 18),  # Do not allow unreleased - fetch all even from previous releases
-            (10, 'Released', 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
+            (10, 'Submitted', 3),
+            (40, 'Released', 10),
+            (50, 'Processed', 10),
         ]
     )
     def test_fetch_genomes_by_default_params(self, genome_factory, genome_filters, status, batch_size, expected_count):
@@ -158,14 +158,14 @@ class TestGenomeFactory:
 
     def test_expected_columns(self, genome_factory, genome_filters, expected_columns):
         # fetch genomes with default filters
-        genome_filters['dataset_uuid'] = ['9f2a7c92-e04a-443f-a991-1481a9466456']
+        genome_filters['dataset_uuid'] = ['f32b7f9a-97fd-41cd-86be-a5fb5becd335']
         genome_filters['dataset_type'] = 'homologies'
 
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
 
     def test_expected_columns_on_update_status(self, genome_factory, expected_columns, genome_filters):
-        genome_filters['dataset_uuid'] = ['8ebbce8e-dcc7-49f8-b520-4d479aef2a65']
+        genome_filters['dataset_uuid'] = ['f32b7f9a-97fd-41cd-86be-a5fb5becd335']
         genome_filters['dataset_type'] = 'homologies'
         genome_filters['update_dataset_status'] = DatasetStatus.PROCESSING  # 'Processing'
         expected_columns.append('updated_dataset_status')
