@@ -42,9 +42,8 @@ class TestClass:
         # 11 attributes
         assert len(attrib_input_data) == 25
 
-        related_assemblies_input_count = genome_conn.fetch_related_assemblies_count(
-            organism_uuid=genome_input_data[0].Organism.organism_uuid
-        )
+        related_assemblies_input_count = genome_conn.fetch_assemblies_count(
+            genome_input_data[0].Organism.species_taxonomy_id)
         # There are three related assemblies
         assert related_assemblies_input_count == 99
 

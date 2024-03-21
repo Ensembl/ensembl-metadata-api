@@ -83,8 +83,8 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None, assembly_uuid=None,
                       assembly_accession=None, assembly_name=None, use_default_assembly=False, biosample_id=None,
-                      production_name=None, taxonomy_id=None, group=None, group_type=None, unreleased_only=False,
-                      site_name=None, release_type=None, release_version=None, current_only=False):
+                      production_name=None, taxonomy_id=None, group=None, unreleased_only=False, site_name=None,
+                      release_type=None, release_version=None, current_only=False):
         """
         Fetches genome information based on the specified parameters.
 
@@ -101,7 +101,6 @@ class GenomeAdaptor(BaseAdaptor):
             production_name (Union[str, List[str]]): The production name(s) of the organism(s) to fetch.
             taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
-            group_type (Union[str, List[str]]): The type(s) of the organism group(s) to filter by.
             unreleased_only (bool): Fetch only unreleased genomes (default: False). allow_unreleased is used by gRPC
                                      to fetch both released and unreleased genomes, while unreleased_only
                                      is used in production pipelines (fetches only unreleased genomes)
@@ -138,7 +137,6 @@ class GenomeAdaptor(BaseAdaptor):
         production_name = check_parameter(production_name)
         taxonomy_id = check_parameter(taxonomy_id)
         group = check_parameter(group)
-        group_type = check_parameter(group_type)
 
         # Construct the initial database query
         genome_select = db.select(
@@ -149,13 +147,12 @@ class GenomeAdaptor(BaseAdaptor):
 
         # Apply group filtering if group parameter is provided
         if group:
-            group_type = group_type if group_type else ['Division']
             genome_select = db.select(
                 Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember
             ).join(Genome.assembly).join(Genome.organism) \
                 .join(Organism.organism_group_members) \
                 .join(OrganismGroupMember.organism_group) \
-                .filter(OrganismGroup.type.in_(group_type)).filter(OrganismGroup.name.in_(group))
+                .filter(OrganismGroup.name.in_(group) | OrganismGroup.code.in_(group))
 
         # Apply additional filters based on the provided parameters
         if genome_id is not None:
@@ -236,7 +233,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         if release_type is not None:
             genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
-        logger.debug(genome_select)
+        logger.debug(f"fetch_genome: {genome_select}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("ensembl_name")).all()
@@ -520,30 +517,11 @@ class GenomeAdaptor(BaseAdaptor):
 
                 # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
                 genome_select = genome_select.filter(GenomeRelease.is_current == 1)
-
                 genome_select = genome_select.filter(GenomeDataset.is_current == 1)
 
-            if 'temp' is None:
-                # Get released datasets only
-                # Check if dataset is released
-                with self.metadata_db.session_scope() as session:
-                    # This is needed in order to ovoid tests throwing:
-                    # sqlalchemy.orm.exc.DetachedInstanceError: Instance <DatasetType at 0x7fc5c05a13d0>
-                    # is not bound to a Session; attribute refresh operation cannot proceed
-                    # (Background on this error at: https://sqlalche.me/e/14/bhk3)
-                    session.expire_on_commit = False
-                    # Check if GenomeDataset HAS an ensembl_release
-                    prep_query = genome_select.filter(GenomeDataset.ensembl_release.has())
-                    is_dataset_released = session.execute(prep_query).first()
-
-                if is_dataset_released:
-                    # Include release related info
-                    genome_select = genome_select.add_columns(EnsemblRelease) \
-                        .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
-
-                    if release_version:
-                        logger.debug(f"Filter on release_version <= {release_version}")
-                        genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+            if release_version:
+                logger.debug(f"Filter on release_version <= {release_version}")
+                genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
 
             logger.debug(genome_select)
             with self.metadata_db.session_scope() as session:
@@ -553,124 +531,101 @@ class GenomeAdaptor(BaseAdaptor):
         except Exception as e:
             raise ValueError(str(e))
 
-    def fetch_genomes_info(self,
-                           genome_id=None,
-                           genome_uuid=None,
-                           allow_unreleased_genomes=False,
-                           ensembl_name=None,
-                           group=None,
-                           group_type=None,
-                           allow_unreleased_datasets=False,
-                           dataset_type_name=None,
-                           dataset_source=None,
-                           dataset_attributes=True):
+    def fetch_genomes_info(self, genome_id=None, genome_uuid=None, biosample_id=None, group=None,
+                           dataset_type_name=None, dataset_source=None, dataset_attributes=True,
+                           release_version=None):
         try:
-            # genome_id = check_parameter(genome_id)
-            # genome_uuid = check_parameter(genome_uuid)
-            ensembl_name = check_parameter(ensembl_name)
-            group = check_parameter(group)
-            group_type = check_parameter(group_type)
-            # dataset_type_name = check_parameter(dataset_type_name)
-            # dataset_source = check_parameter(dataset_source)
-
-            if group is None:
-                group_type = group_type if group_type else ['Division']
-                with self.metadata_db.session_scope() as session:
-                    session.expire_on_commit = False
-                    group = [org_type[0] for org_type in session.execute(
-                        db.select(OrganismGroup.name).filter(OrganismGroup.type.in_(group_type))).all()]
-
             # get genome, assembly and organism information
-            genomes = self.fetch_genomes(genome_id=genome_id, genome_uuid=genome_uuid, biosample_id=ensembl_name,
-                                         group=group, group_type=group_type)
+            genomes: List[Tuple[Genome, Organism, Assembly, EnsemblRelease]] = \
+                self.fetch_genomes(genome_id=genome_id,
+                                   genome_uuid=genome_uuid,
+                                   biosample_id=biosample_id,
+                                   group=group,
+                                   release_version=release_version)
             genomes_uuids = [genome[0].genome_uuid for genome in genomes]
-            genomes_datasets = self.fetch_genome_datasets(genome_uuid=genomes_uuids, dataset_source=dataset_source,
+            logger.debug(f"genomes uuids: {genomes_uuids}")
+            genomes_datasets = self.fetch_genome_datasets(genome_uuid=genomes_uuids,
+                                                          dataset_source=dataset_source,
                                                           dataset_type_name=dataset_type_name,
-                                                          dataset_attributes=dataset_attributes)
-            agglo = {}
+                                                          dataset_attributes=dataset_attributes,
+                                                          release_version=release_version)
+            indexed_genomes = {}
+            # Agglomerated both lists
             logger.debug(f'genome datasets {genomes_datasets[0]}')
             for genome_infos in genomes_datasets:
-                if genome_infos[0].genome_uuid not in agglo.keys():
-                    agglo[genome_infos[0].genome_uuid] = {'genome': genome_infos[0], 'datasets': []}
-                if genome_infos[2] not in agglo[genome_infos[0].genome_uuid]['datasets']:
-                    agglo[genome_infos[0].genome_uuid]['datasets'].append(genome_infos[2])
-            for genome_uuid, data in agglo.items():
+                genome = next(gen for gen in genomes if gen[0].genome_uuid == genome_infos[0].genome_uuid)
+                if genome_infos[0].genome_uuid not in indexed_genomes.keys():
+                    indexed_genomes[genome_infos[0].genome_uuid] = {'genome': genome, 'datasets': []}
+                if genome_infos[2] not in indexed_genomes[genome_infos[0].genome_uuid]['datasets']:
+                    indexed_genomes[genome_infos[0].genome_uuid]['datasets'].append(genome_infos[2])
+            res = []
+            for genome_uuid, data in indexed_genomes.items():
                 logger.debug(f'genome_uuid: {genome_uuid}, datasets {data["datasets"]}')
-                res = [{'genome': data['genome'], 'datasets': data['datasets']}]
-                yield res
+                res.append({'genome': data['genome'], 'datasets': data['datasets']})
+            return res
         except Exception as e:
             raise ValueError(str(e))
 
-    def fetch_organisms_group_counts(self, release_version=None, group_code='popular'):
+    def fetch_organisms_group_counts(self, release_version: float = None, group_code: str = 'popular'):
+        import re
+        group_code = re.sub('Ensembl', '', group_code).lower()
         o_species = aliased(Organism)
         o = aliased(Organism)
-        if not release_version:
-            # Get latest released organisms
-            query = db.select(
-                o_species.species_taxonomy_id,
-                o_species.common_name,
-                o_species.scientific_name,
-                OrganismGroupMember.order.label('order'),
-                db.func.count().label('count')
-            )
+        query = db.select(
+            o_species.species_taxonomy_id,
+            o_species.common_name,
+            o_species.scientific_name,
+            OrganismGroupMember.order.label('order'),
+            db.func.count().label('count')
+        )
 
-            query = query.join(o, o_species.species_taxonomy_id == o.species_taxonomy_id)
-            query = query.join(Genome, o.organism_id == Genome.organism_id)
-            query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
-            query = query.join(OrganismGroupMember, o_species.organism_id == OrganismGroupMember.organism_id)
-            query = query.join(OrganismGroup,
-                               OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
-            query = query.filter(OrganismGroup.code == group_code)
+        query = query.join(o, o_species.species_taxonomy_id == o.species_taxonomy_id)
+        query = query.join(Genome, o.organism_id == Genome.organism_id)
+        query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+        query = query.join(OrganismGroupMember, o_species.organism_id == OrganismGroupMember.organism_id)
+        query = query.join(OrganismGroup,
+                           OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
+        query = query.filter(OrganismGroup.code == group_code)
 
-            query = query.group_by(
-                o_species.species_taxonomy_id,
-                o_species.common_name,
-                o_species.scientific_name,
-                OrganismGroupMember.order
-            )
-            query = query.order_by(OrganismGroupMember.order)
+        query = query.group_by(
+            o_species.species_taxonomy_id,
+            o_species.common_name,
+            o_species.scientific_name,
+            OrganismGroupMember.order
+        )
+        query = query.order_by(OrganismGroupMember.order)
+        if cfg.allow_unreleased:
+            query = query.outerjoin(GenomeRelease).outerjoin(EnsemblRelease)
         else:
-            # change group to release_version_state and related genomes
-            raise NotImplementedError('Not implemented yet')
-            pass
-
+            query = query.join(GenomeRelease).join(EnsemblRelease) \
+                .where(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        if release_version:
+            query = query.filter(EnsemblRelease.version <= release_version)
+        logger.debug(query)
         with self.metadata_db.session_scope() as session:
             # TODO check if we should return a dictionary instead
             return session.execute(query).all()
 
-    def fetch_related_assemblies_count(self, organism_uuid, release_version=None):
+    def fetch_assemblies_count(self, species_taxonomy_id: int, release_version: float = None):
         """
-        Fetch all related assemblies for the same organism and all the ones sharing the same species_taxon_id
-        release_version is to return only the ones which were available until this release_version (not implemented yet)
+        Fetch all assemblies for the same species_taxonomy_id
+        release_version is to return only the ones which were available until this release_version
+        Args:
+            species_taxonomy_id: int The species taxon_id as per ncbi taxonomy
+            release_version: float The EnsemblRelease to filter on
         """
-        o_species = aliased(Organism)
-        o_related = aliased(Organism)
-        g_species = aliased(Genome)
-        g_related = aliased(Genome)
-        gm_species = aliased(GenomeRelease)
-        gm_related = aliased(GenomeRelease)
-        r_species = aliased(EnsemblRelease)
-        r_related = aliased(EnsemblRelease)
-        if not release_version:
-            # Get latest released organisms
-            query = db.select(db.func.count(o_species.ensembl_name))
-            query = query.join(o_related, o_species.species_taxonomy_id == o_related.species_taxonomy_id)
-            query = query.join(g_species, g_species.organism_id == o_species.organism_id)
-            query = query.join(g_related, g_related.organism_id == o_related.organism_id)
-            query = query.join(Assembly, g_species.assembly_id == Assembly.assembly_id)
-            query = query.filter(o_species.organism_uuid == organism_uuid)
-            if not cfg.allow_unreleased:
-                query = query.join(gm_species, gm_species.genome_id == g_species.genome_id)
-                query = query.join(r_species, r_species.release_id == gm_species.release_id)
-                query = query.where(r_species.status == ReleaseStatus.RELEASED)
-                query = query.join(gm_related, gm_related.genome_id == g_related.genome_id)
-                query = query.join(r_related, r_related.release_id == gm_related.release_id)
-                query = query.where(r_related.status == ReleaseStatus.RELEASED)
-            else:
-                # change group to release_version_state and related genomes
-                raise NotImplementedError('Not implemented yet')
-                pass
+        query = db.select(db.func.count(Assembly.assembly_id)) \
+            .join(Genome).join(Organism) \
+            .filter(Organism.species_taxonomy_id == species_taxonomy_id)
+        logger.debug("Allowed unreleased: %s", cfg.allow_unreleased)
+        if cfg.allow_unreleased:
+            query = query.outerjoin(GenomeRelease).outerjoin(EnsemblRelease)
+        else:
+            query = query.join(GenomeRelease).join(EnsemblRelease) \
+                .where(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        if release_version:
+            query = query.filter(EnsemblRelease.version <= release_version)
 
-            logger.debug(query)
-            with self.metadata_db.session_scope() as session:
-                return session.execute(query).scalar()
+        logger.debug(query)
+        with self.metadata_db.session_scope() as session:
+            return session.execute(query).scalar()
