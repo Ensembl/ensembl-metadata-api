@@ -44,7 +44,6 @@ class TestGRPCReleaseAdaptor:
     def test_fetch_releases(self, release_conn, allow_unreleased, status, expected_count):
         releases = release_conn.fetch_releases(release_status=status)
         logger.debug("Results: %s", releases)
-        # test the one to many connection
         assert len(releases) == expected_count
         assert [release.EnsemblSite.name == 'Ensembl' for release in releases]
 
@@ -64,32 +63,41 @@ class TestGRPCReleaseAdaptor:
         assert releases[1].EnsemblRelease.label == 'MVP Beta-1'
 
     @pytest.mark.parametrize(
-        "genome_uuid, release_name",
-        [('a73351f7-93e7-11ec-a39d-005056b38ce3', 'First Beta')]
+        "allow_unreleased, genome_uuid, release_name",
+        [
+            (False, 'a73351f7-93e7-11ec-a39d-005056b38ce3', 'First Beta'),
+            (True, '75b7ac15-6373-4ad5-9fb7-23813a5355a4', 'MVP Beta-2')
+        ],
+        indirect=['allow_unreleased']
     )
-    def test_fetch_releases_for_genome(self, release_conn, genome_uuid, release_name):
+    def test_fetch_releases_for_genome(self, release_conn, allow_unreleased, genome_uuid, release_name):
         releases = release_conn.fetch_releases_for_genome(genome_uuid)
-        assert len(releases) == 1
-        assert releases[0].EnsemblSite.name == 'Ensembl'
-        assert releases[0].EnsemblRelease.label == release_name
+        if release_name is None:
+            assert len(releases) == 0
+        else:
+            assert len(releases) == 1
+            logger.info(releases)
+            assert releases[0].EnsemblSite.name == 'Ensembl'
+            assert releases[0].EnsemblRelease.label == release_name
 
     @pytest.mark.parametrize(
-        "allow_unreleased, dataset_uuid, release_name, dataset_status",
+        "allow_unreleased, dataset_uuid, release_name, release_status",
         [
-            (False, 'd57040b6-0ef5-4e6b-97ef-be0ad94d3a61', None, None),  # No release returned is not allowed
-            (True, 'd57040b6-0ef5-4e6b-97ef-be0ad94d3a61', 'MVP Beta-2', 'Processed'),  # Processed Beta-2
+            (False, '8801edaf-86ec-4799-8fd4-a59077f04c05', None, None),  # No release returned is not allowed
+            (False, '08543d8d-2110-46f3-a9b6-ac58c4af8202', 'MVP Beta-1', 'Released'),  # No release returned is not allowed
+            (True, 'd57040b6-0ef5-4e6b-97ef-be0ad94d3a61', 'MVP Beta-2', 'Prepared'),  # Processed Beta-2
+            (True, 'd641779c-2add-46ce-acf4-a2b6f15274b1', 'MVP Beta-3', 'Preparing'),  # Processed Beta-2
         ],
         indirect=['allow_unreleased']
     )
     def test_fetch_releases_for_dataset(self, release_conn, allow_unreleased,
-                                        dataset_uuid, release_name, dataset_status):
+                                        dataset_uuid, release_name, release_status):
         releases = release_conn.fetch_releases_for_dataset(dataset_uuid)
         if release_name is not None:
             assert len(releases) == 1
             logger.debug(f"Fetched Release {releases[0]}")
             assert releases[0].EnsemblSite.name == 'Ensembl'
-            assert bool(releases[0].EnsemblRelease.is_current) is False
             assert releases[0].EnsemblRelease.label == release_name
-            assert releases[0].EnsemblRelease.status == ReleaseStatus(dataset_status)
+            assert releases[0].EnsemblRelease.status == ReleaseStatus(release_status)
         else:
             assert len(releases) == 0

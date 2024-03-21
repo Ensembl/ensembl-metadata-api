@@ -2,4 +2,4 @@
 2	110.2	2024-01-30	MVP Beta-2	0	partial	1	Prepared
 3	110.3	2024-05-05	MVP Beta-3	0	partial	1	Preparing
 4	112.0	2024-08-15	MVP Rel-1	0	integrated	1	Planned
-5	108.0	2023-06-15	First Beta	0	integrated	1	Released
+5	108.0	2023-06-15	First Beta	0	partial	1	Released
