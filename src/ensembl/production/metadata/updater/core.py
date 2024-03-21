@@ -585,9 +585,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
     def new_homology(self, meta_session, species_id, genome=None, source=None, dataset_attributes=None, version="1.0"):
         if source is None:
             production_name = self.get_meta_single_meta_key(species_id, "species.production_name")
-            db_version = self.get_meta_single_meta_key(species_id, "schema_version")
+            db_version = self.get_meta_single_meta_key(None, "schema_version")
             compara_name = production_name + "_compara_" + db_version
-            dataset_source = self.get_or_new_source(meta_session, "compara", name="compara_name")
+            dataset_source = self.get_or_new_source(meta_session, "compara", name=compara_name)
         else:
             dataset_source = source
         dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "homologies").first()
