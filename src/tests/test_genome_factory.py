@@ -113,10 +113,10 @@ class TestGenomeFactory:
         genome_factory_result = next(genome_factory.get_genomes(**genome_filters))
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
+            dataset: Dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
             assert genome_factory_result['dataset_uuid'] == genome_filters['dataset_uuid'][0]
             assert dataset.dataset_uuid == genome_filters['dataset_uuid'][0]
-            assert dataset.status == genome_factory_result['dataset_status']
+            assert dataset.status.value == genome_factory_result['dataset_status']
 
     def test_update_dataset_status_submitted_processing_processed_released(self, multi_dbs, genome_factory,
                                                                            genome_filters):
@@ -125,17 +125,17 @@ class TestGenomeFactory:
         genome_filters['dataset_uuid'] = ['bd63a676-45ff-494a-b26f-2b779cb6c180']
 
         # update dataset status to processing
-        genome_filters['update_dataset_status'] = DatasetStatus.PROCESSING  # 'Processing'
+        genome_filters['update_dataset_status'] = 'Processing'
 
         # fetch genomes by status submitted and update to processing
         genome_factory_result = [genome for genome in genome_factory.get_genomes(**genome_filters)][0]
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
-            assert genome_factory_result['updated_dataset_status'] == dataset.status
+            dataset: Dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
+            assert genome_factory_result['updated_dataset_status'] == dataset.status.value
 
         # update dataset status to processed
-        genome_filters['update_dataset_status'] = DatasetStatus.PROCESSED  # 'Processed'
+        genome_filters['update_dataset_status'] = DatasetStatus.PROCESSED.value  # 'Processed'
         genome_filters['dataset_status'] = [DatasetStatus.PROCESSING.value]  # 'Processing']
 
         # fetch genomes by status processing and update to processed
@@ -143,10 +143,10 @@ class TestGenomeFactory:
 
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
-            assert genome_factory_result['updated_dataset_status'] == dataset.status
+            assert genome_factory_result['updated_dataset_status'] == dataset.status.value
 
         # update dataset status to processed
-        genome_filters['update_dataset_status'] = DatasetStatus.RELEASED  # 'Released'
+        genome_filters['update_dataset_status'] = DatasetStatus.RELEASED.value  # 'Released'
         genome_filters['dataset_status'] = [DatasetStatus.PROCESSED.value]  # 'Processed']
 
         # fetch genomes by status processed and update to released
@@ -154,7 +154,7 @@ class TestGenomeFactory:
 
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
-            assert genome_factory_result['updated_dataset_status'] == dataset.status
+            assert genome_factory_result['updated_dataset_status'] == dataset.status.value
 
     def test_expected_columns(self, genome_factory, genome_filters, expected_columns):
         # fetch genomes with default filters
@@ -167,7 +167,7 @@ class TestGenomeFactory:
     def test_expected_columns_on_update_status(self, genome_factory, expected_columns, genome_filters):
         genome_filters['dataset_uuid'] = ['f32b7f9a-97fd-41cd-86be-a5fb5becd335']
         genome_filters['dataset_type'] = 'homologies'
-        genome_filters['update_dataset_status'] = DatasetStatus.PROCESSING  # 'Processing'
+        genome_filters['update_dataset_status'] = DatasetStatus.PROCESSING.value  # 'Processing'
         expected_columns.append('updated_dataset_status')
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
