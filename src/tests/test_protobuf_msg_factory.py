@@ -31,14 +31,16 @@ class TestClass:
     dbc = None  # type: UnitTestDB
 
     @pytest.mark.parametrize(
-        "allow_unreleased, genome_uuid, expected_ds_count, expected_assembly_count, ensembl_name",
+        "allow_unreleased, genome_uuid, ds_type_name,  expected_ds_count, expected_assembly_count, ensembl_name",
         [
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 26, 5, 'SAMN12121739'),
-            (True, '63b4ffbf-0147-4aa7-b0af-7575bb822740', 22, 14, 'SAMN03283347')
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 5, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 14, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 5, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 4, 14, 'SAMN12121739'),
         ],
         indirect=['allow_unreleased']
     )
-    def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, expected_ds_count,
+    def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, ds_type_name, expected_ds_count,
                            expected_assembly_count,
                            ensembl_name):
         """Test service.create_genome function"""
@@ -47,7 +49,8 @@ class TestClass:
         assert len(genome_input_data) == 1
 
         attrib_input_data = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
-                                                              dataset_attributes=True)
+                                                              dataset_attributes=True,
+                                                              dataset_type_name=ds_type_name)
         # 11 attributes
         assert len(attrib_input_data) == expected_ds_count
 

@@ -182,7 +182,6 @@ def create_attributes_info(data=None):
     for attrib_data in data:
         attrib_name = attrib_data.Attribute.name
         if attrib_name in list(required_attributes.keys()):
-            # print(f"%%%%%% {attrib_name} => {attrib_data.DatasetAttribute.value}")
             required_attributes[attrib_name] = attrib_data.DatasetAttribute.value
 
     return ensembl_metadata_pb2.AttributesInfo(
@@ -301,7 +300,6 @@ def create_genome_assembly_sequence_region(data=None):
 def create_release(data=None):
     if data is None or data.EnsemblRelease is None:
         return ensembl_metadata_pb2.Release()
-    print("Release is current , ", bool(data.EnsemblRelease.is_current))
     release = ensembl_metadata_pb2.Release(
         release_version=data.EnsemblRelease.version,
         release_date=str(data.EnsemblRelease.release_date) if data.EnsemblRelease.release_date else "Unreleased",
@@ -361,7 +359,7 @@ def create_dataset_info(data=None):
         type=data.Attribute.type,
         dataset_version=data.Dataset.version,
         dataset_label=data.Dataset.label,
-        version=int(data.EnsemblRelease.version) if hasattr(data, 'EnsemblRelease') else None,
+        version=data.DSRelease.version if data.DSRelease else None,
         value=data.DatasetAttribute.value,
     )
 

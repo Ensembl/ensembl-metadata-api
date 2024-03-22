@@ -413,8 +413,8 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
 
     dataset_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name=requested_dataset_type,
                                                     dataset_attributes=True)
+    logger.debug("dataset Results %s" , dataset_results)
     response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
-    logger.debug(f"Response data: \n{response_data}")
     return response_data
 
 

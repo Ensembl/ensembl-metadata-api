@@ -238,7 +238,8 @@ class TestGRPCGenomeAdaptor:
             # specifying dataset_uuid
             (None, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", False, False, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "45aec801-4fe7-4ac2-9afa-19aea2a8409e", 45),
+            (None, None, False, True, "45aec801-4fe7-4ac2-9afa-19aea2a8409e", 44),
+            (None, None, True, True, "6f8bd121-0345-4b77-9dc1-d567ac13447d", 9),
         ],
         indirect=['allow_unreleased']
     )
@@ -253,17 +254,20 @@ class TestGRPCGenomeAdaptor:
         assert len(genome_datasets) == expected_count
 
     @pytest.mark.parametrize(
-        "organism_uuid, expected_count",
+        "allow_unreleased, organism_uuid, expected_count",
         [
             # homo_sapiens_37
-            ("1d336185-affe-4a91-85bb-04ebd73cbb56", 12),
+            (False, "1d336185-affe-4a91-85bb-04ebd73cbb56", 11),
+            (True, "1d336185-affe-4a91-85bb-04ebd73cbb56", 13),
             # e-coli
-            ("1e579f8d-3880-424e-9b4f-190eb69280d9", 3),
+            (False, "1e579f8d-3880-424e-9b4f-190eb69280d9", 3),
+            (True, "1e579f8d-3880-424e-9b4f-190eb69280d9", 4),
             # non-existing organism
-            ("organism-yet-to-be-discovered", 0),
-        ]
+            (False, "organism-yet-to-be-discovered", 0),
+        ],
+        indirect=['allow_unreleased']
     )
-    def test_fetch_genome_dataset_by_organism_uuid(self, genome_conn, organism_uuid, expected_count):
+    def test_fetch_genome_dataset_by_organism_uuid(self, genome_conn, allow_unreleased, organism_uuid, expected_count):
         genomes = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all")
         assert len(genomes) == expected_count
 

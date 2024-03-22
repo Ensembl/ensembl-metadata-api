@@ -503,23 +503,28 @@ class GenomeAdaptor(BaseAdaptor):
                     .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
                     .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id).order_by(
                     Genome.genome_uuid, Dataset.name, Attribute.name)
-
+            logger.debug("ALLOWED UNRELEASED %s", cfg.allow_unreleased)
+            DSRelease: EnsemblRelease = aliased(EnsemblRelease, name="DSRelease")
             if cfg.allow_unreleased:
-                genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
+                # Filter the genomes
+                genome_select = genome_select.add_columns(EnsemblRelease, DSRelease, EnsemblSite) \
                     .outerjoin(GenomeRelease) \
                     .outerjoin(EnsemblRelease) \
-                    .outerjoin(EnsemblSite)
+                    .outerjoin(EnsemblSite) \
+                    .outerjoin(DSRelease, (DSRelease.release_id == GenomeDataset.release_id))
                 if unreleased_only:
                     # fetch only unreleased ones
                     genome_select = genome_select.filter(~Genome.genome_releases.any())
             else:
                 # Include release related info if released_only is True
-                genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
+                genome_select = genome_select.add_columns(EnsemblRelease, DSRelease, EnsemblSite) \
                     .join(GenomeRelease) \
                     .join(EnsemblRelease) \
                     .join(EnsemblSite) \
                     .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-
+                genome_select = genome_select.filter(GenomeDataset.release_id is not None) \
+                    .join(DSRelease, (DSRelease.release_id == GenomeDataset.release_id) &
+                          (DSRelease.status == ReleaseStatus.RELEASED))
                 # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
                 genome_select = genome_select.filter(GenomeRelease.is_current == 1)
                 genome_select = genome_select.filter(GenomeDataset.is_current == 1)

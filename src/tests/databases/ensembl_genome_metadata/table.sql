@@ -194,11 +194,12 @@ CREATE TABLE genome
 
 CREATE TABLE genome_dataset
 (
-    genome_dataset_id int auto_increment primary key,
+    # genome_dataset_id int auto_increment primary key,
     is_current        tinyint(1) not null,
     dataset_id        int        not null,
     genome_id         int        not null,
     release_id        int        null,
+    constraint pk_genome_dataset PRIMARY KEY (dataset_id, genome_id),
     constraint genome_dataset_dataset_id_0e9b7c99_fk_dataset_dataset_id
         foreign key (dataset_id) references dataset (dataset_id)
             on delete cascade,
@@ -212,10 +213,10 @@ CREATE TABLE genome_dataset
 
 CREATE TABLE genome_release
 (
-    genome_release_id int auto_increment primary key,
     is_current        tinyint(1) not null,
     genome_id         int        not null,
     release_id        int        not null,
+    constraint pk_genome_dataset PRIMARY KEY (release_id, genome_id),
     constraint genome_release_genome_id_3e45dc04_fk_genome_genome_id
         foreign key (genome_id) references genome (genome_id),
     constraint genome_release_release_id_bca7e1e5_fk_ensembl_release_release_id
