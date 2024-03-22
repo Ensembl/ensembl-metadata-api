@@ -232,13 +232,13 @@ class TestGRPCGenomeAdaptor:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "2bc8874e-6672-4293-89d6-0b837005177c", 86),
+            (None, None, True, False, "786344d1-a71f-4bab-aa37-6ee315ed60a4", 86),
             # specifying genome_uuid
-            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "287a5483-55a4-46e6-a58b-a84ba0ddacd6", 5),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "999315f6-6d25-481f-a017-297f7e1490c8", 5),
             # specifying dataset_uuid
             (None, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", False, False, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "0571d77c-5cc6-4819-80bf-34a42acfc3f6", 45),
+            (None, None, False, True, "45aec801-4fe7-4ac2-9afa-19aea2a8409e", 45),
         ],
         indirect=['allow_unreleased']
     )

@@ -209,8 +209,7 @@ class TestUpdater:
             test.process_core()
             assert ("Existing Organism, Assembly, and Datasets within a release. "
                     "To update released data set force=True. "
-                    "This will force assembly and genebuilddataset updates and assembly sequences." in str(
-                exif.value))
+                    "This will force assembly and genebuilddataset updates and assembly sequences." in str(exif.value))
 
     def test_update_released_force(self, multi_dbs):
         test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
@@ -223,7 +222,7 @@ class TestUpdater:
                 (AssemblySequence.name == 'TEST1_seq_BAD')).first()
             assert new_seq is None
             old_seq = session.query(AssemblySequence).where(
-                (AssemblySequence.accession == 'BX284601.5')).first()
+                (AssemblySequence.accession == 'MtDNA')).first()
             assert old_seq is not None
             # Check that the old datasets have been removed
 
