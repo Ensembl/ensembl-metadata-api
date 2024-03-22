@@ -1,5 +1,5 @@
-from .base import *
 from .assembly import *
+from .base import *
 from .dataset import *
 from .genome import *
 from .organism import *

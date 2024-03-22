@@ -19,8 +19,6 @@ from pathlib import Path
 import pytest
 from ensembl.database import UnitTestDB
 
-from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
-
 logger = logging.getLogger(__name__)
 
 

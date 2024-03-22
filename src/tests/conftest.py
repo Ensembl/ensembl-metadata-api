@@ -20,14 +20,13 @@ from pathlib import Path
 import pytest
 import sqlalchemy as db
 from _pytest.config import Config
+from grpc_reflection.v1alpha import reflection
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.factories.genomes import GenomeFactory
+from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
-
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-from grpc_reflection.v1alpha import reflection
 
 
 def pytest_configure(config: Config) -> None:

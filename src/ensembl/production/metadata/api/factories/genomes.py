@@ -20,13 +20,15 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
+from typing import List
+
 from ensembl.database import DBConnection
+from sqlalchemy import select
+
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
-from sqlalchemy import select, text
-from typing import List
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

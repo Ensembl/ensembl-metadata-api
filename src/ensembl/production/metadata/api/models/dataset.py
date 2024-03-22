@@ -10,12 +10,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import datetime
+import enum
 import logging
 import uuid
-import enum
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index, JSON
+from sqlalchemy import Column, Integer, String, text, ForeignKey, Index, JSON
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
@@ -24,6 +24,7 @@ from sqlalchemy.types import Enum
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
+__all__ = ['Dataset', 'DatasetType', 'DatasetAttribute', 'DatasetSource', 'DatasetStatus', 'Attribute', ]
 logger = logging.getLogger(__name__)
 
 

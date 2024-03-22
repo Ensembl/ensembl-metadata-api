@@ -16,7 +16,6 @@ import json
 import logging
 from pathlib import Path
 
-import pkg_resources
 import pytest
 from ensembl.database import UnitTestDB
 from google.protobuf import json_format
@@ -227,7 +226,6 @@ class TestClass:
     )
     def test_create_release(self, release_conn, allow_unreleased, version, output):
         input_data = release_conn.fetch_releases(release_version=version)
-        logging.warning(f"{input_data[0]}")
         actual = json_format.MessageToJson(msg_factory.create_release(input_data[-1]),
                                            including_default_value_fields=True)
         assert json.loads(actual) == output

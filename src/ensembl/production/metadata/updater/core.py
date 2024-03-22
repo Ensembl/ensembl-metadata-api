@@ -13,6 +13,7 @@ from collections import defaultdict
 
 import sqlalchemy as db
 import sqlalchemy.exc
+import logging
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
     SeqRegionSynonym, AttribType
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
@@ -27,12 +28,15 @@ from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
+
 
 class CoreMetaUpdater(BaseMetaUpdater):
     def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None, force=None):
         super().__init__(db_uri, metadata_uri, taxonomy_uri, release, force)
         self.db_type = 'core'
-        logging.basicConfig(level=logging.INFO)
         # Single query to get all of the metadata information.
         self.meta_dict = {}
         with self.db.session_scope() as session:
@@ -117,7 +121,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                         "the meta table. Please remove it from the meta key and resubmit")
 
             if self.is_object_new(organism):
-                logging.info('New organism')
+                logger.info('New organism')
                 # ###############################Checks that dataset is new ##################
                 if not self.is_object_new(genebuild_dataset):
                     raise MetadataUpdateException(
@@ -133,7 +137,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
 
             elif self.is_object_new(assembly):
-                logging.info('New assembly')
+                logger.info('New assembly')
 
                 # ###############################Checks that dataset and update are new ##################
                 if not self.is_object_new(genebuild_dataset):
@@ -179,7 +183,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     raise MetadataUpdateException(
                         "genebuild.provider_name or genebuild.last_geneset_update must be updated.")
 
-                logging.info('New genebuild')
+                logger.info('New genebuild')
                 # Create genome and populate the database with genebuild dataset
                 new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
                                                                                                 species_id,
@@ -197,7 +201,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                 "and genebuild"
                                                 "dataset updates and assembly sequences.")
                 else:
-                    logging.info('Rewrite of existing datasets. Only assembly dataset attributes, genebuild '
+                    logger.info('Rewrite of existing datasets. Only assembly dataset attributes, genebuild '
                                  'dataset, dataset attributes, and assembly sequences are modified.')
                     # TODO: We need to review this process, because if some Variation / Regulation / Compara datasets
                     #  exists we'll expect either to refuse the updates - imagine this was a fix in sequences! OR we
@@ -344,7 +348,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
             assembly_test = meta_session.query(Assembly).filter(Assembly.accession == accession).one_or_none()
             if assembly_test is not None:
-                logging.info("Assembly Accession already exists for a different organism.")
+                logger.info("Assembly Accession already exists for a different organism.")
 
             # Fetch the division name of the new organism from metadata.
             if division_name is None:

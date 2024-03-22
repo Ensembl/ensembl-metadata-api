@@ -16,9 +16,9 @@ Unit tests for api module
 from pathlib import Path
 
 import pytest
-
 from ensembl.database import DBConnection
 from ensembl.database import UnitTestDB
+
 from ensembl.production.metadata.api.exceptions import TypeNotFoundException
 from ensembl.production.metadata.api.models import Organism, Genome
 

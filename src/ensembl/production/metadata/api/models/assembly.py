@@ -17,6 +17,8 @@ from sqlalchemy.orm import relationship
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
+__all__ = ['Assembly', 'AssemblySequence']
+
 
 class Assembly(LoadAble, Base):
     __tablename__ = 'assembly'

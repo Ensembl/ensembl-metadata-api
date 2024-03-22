@@ -11,9 +11,8 @@
 #  limitations under the License.
 import logging
 
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc
-
 import ensembl.production.metadata.grpc.utils as utils
+from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc
 
 logger = logging.getLogger(__name__)
 

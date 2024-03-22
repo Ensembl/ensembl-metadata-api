@@ -12,12 +12,12 @@
 import itertools
 import logging
 
+import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-from ensembl.production.metadata.grpc.config import MetadataConfig
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
-import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
+from ensembl.production.metadata.grpc.config import MetadataConfig
 
 logger = logging.getLogger(__name__)
 
@@ -134,17 +134,16 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
 
 def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, release_version):
     if not assembly_accession:
-        logging.warning("Missing or Empty Assembly accession field.")
+        logger.warning("Missing or Empty Assembly accession field.")
         return msg_factory.create_genome()
     # TODO: Add try except to the other functions as well
     try:
         genome_results = db_conn.fetch_genomes(assembly_accession=assembly_accession)
     except Exception as e:
-        logging.error(f"Error fetching genomes: {e}")
+        logger.error(f"Error fetching genomes: {e}")
         raise
 
     for genome in genome_results:
-        logging.debug(f"Processing genome: {genome.Genome.genome_uuid}")
         yield msg_factory.create_genome(data=genome)
 
     return msg_factory.create_genome()
@@ -336,7 +335,7 @@ def genome_sequence_iterator(db_conn, genome_uuid, chromosomal_only):
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
-        logging.debug(f"Processing assembly: {result.AssemblySequence.name}")
+        logger.debug(f"Processing assembly: {result.AssemblySequence.name}")
         yield msg_factory.create_genome_sequence(result)
 
 
@@ -350,7 +349,7 @@ def assembly_region_iterator(db_conn, genome_uuid, chromosomal_only):
         chromosomal_only=chromosomal_only,
     )
     for result in assembly_sequence_results:
-        logging.debug(f"Processing assembly: {result.AssemblySequence.name}")
+        logger.debug(f"Processing assembly: {result.AssemblySequence.name}")
         yield msg_factory.create_assembly_region(result)
 
 
@@ -386,7 +385,7 @@ def release_iterator(metadata_db, site_name, release_version, current_only):
                                           site_name=site_name)
 
     for result in release_results:
-        logging.debug(
+        logger.debug(
             f"Processing release: {result.EnsemblRelease.version if hasattr(result, 'EnsemblRelease') else None}")
         yield msg_factory.create_release(result)
 
@@ -401,7 +400,7 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
     )
 
     for result in release_results:
-        logging.debug(
+        logger.debug(
             f"Processing release: {result.EnsemblRelease.version if hasattr(result, 'EnsemblRelease') else None}")
         yield msg_factory.create_release(result)
 
@@ -472,7 +471,7 @@ def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
             links = genome.get_public_path(dataset_type=dataset_type, release=release_version)
         except (ValueError, RuntimeError) as error:
             # log the errors to error log and return empty list of links
-            logging.error(f"Error fetching links: {error}")
+            logger.error(f"Error fetching links: {error}")
             return msg_factory.create_paths()
 
     if len(links) > 0:

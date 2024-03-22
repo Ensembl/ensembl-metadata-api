@@ -16,9 +16,9 @@ from typing import List
 
 import sqlalchemy as db
 
-from ensembl.production.metadata.grpc.adaptors.base import check_parameter, BaseAdaptor, cfg
 from ensembl.production.metadata.api.models import EnsemblRelease, EnsemblSite, GenomeRelease, Genome, GenomeDataset, \
     Dataset, ReleaseStatus
+from ensembl.production.metadata.grpc.adaptors.base import check_parameter, BaseAdaptor, cfg
 
 logger = logging.getLogger(__name__)
 

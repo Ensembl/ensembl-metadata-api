@@ -23,14 +23,15 @@ from google.protobuf import json_format
 
 from ensembl.production.metadata.api.models import Genome, Dataset
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
-from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                         {'src': Path(__file__).parent / "databases/ncbi_taxonomy"}]],
                          indirect=True)
 class TestUtils:
-    dbc = None  # type: UnitTestDB
+    dbc: UnitTestDB = None
 
     @pytest.mark.parametrize(
         "taxon_id, expected_output",
@@ -239,20 +240,19 @@ class TestUtils:
     def test_get_dataset_by_genome_and_dataset_type(self, multi_dbs, genome_conn, allow_unreleased, genome_uuid,
                                                     dataset_type, count):
         genome_datasets = utils.get_dataset_by_genome_and_dataset_type(genome_conn, genome_uuid, dataset_type)
-        logging.debug(genome_datasets)
+        logger.debug(genome_datasets)
         output = json_format.MessageToJson(genome_datasets, including_default_value_fields=True)
         output = json.loads(output)
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             genome: Genome = session.query(Genome).filter(Genome.genome_uuid == genome_uuid).one()
-            logging.warning(genome.genome_datasets)
             datasets: List[Dataset] = [ds.dataset for ds in genome.genome_datasets if
                                        ds.dataset.dataset_type.name == dataset_type]
             datasets_uuids = set([dataset['datasetUuid'] for dataset in output['datasetInfos']])
-            logging.debug(datasets_uuids)
-            logging.debug(output['datasetInfos'])
+            logger.debug(datasets_uuids)
+            logger.debug(output['datasetInfos'])
             assert len(datasets_uuids) == count
-            logging.debug(datasets[0].dataset_attributes)
+            logger.debug(datasets[0].dataset_attributes)
             if dataset_type == 'genebuild':
                 assert datasets[0].version is not None
                 assert datasets[0].label == 'GCA_018473315.1_ENS01'

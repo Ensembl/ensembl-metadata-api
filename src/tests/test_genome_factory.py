@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 from ensembl.database import UnitTestDB, DBConnection
-from ensembl.production.metadata.api.factories.genomes import GenomeFactory, GenomeInputFilters
-from sqlalchemy import func
+
+from ensembl.production.metadata.api.factories.genomes import GenomeInputFilters
 from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus
 
 

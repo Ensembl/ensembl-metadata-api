@@ -19,6 +19,8 @@ from sqlalchemy.orm import relationship
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 from ensembl.production.metadata.grpc.config import cfg
 
+__all__ = ['ReleaseStatus', 'EnsemblRelease', 'EnsemblSite']
+
 
 class ReleaseStatus(enum.Enum):
     PLANNED = "Planned"

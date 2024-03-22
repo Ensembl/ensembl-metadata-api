@@ -9,13 +9,12 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import logging
 from pathlib import Path
 
 import pytest
-import logging
 from ensembl.database import UnitTestDB, DBConnection
 
-from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
                                                     GenomeDataset, Genome, DatasetStatus)
 
