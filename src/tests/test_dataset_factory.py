@@ -97,7 +97,7 @@ class TestDatasetFactory:
 
     def test_genebuild_workflow(self, multi_dbs, dataset_factory):
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        genebuild_uuid = 'bd63a676-45ff-494a-b26f-2b779cb6c180' # Only Submitted dataset
+        genebuild_uuid = '11a0be7f-99ae-45d3-a004-dc19bb562330' # Only Submitted dataset
 
         # Test children creation
         with metadata_db.session_scope() as session:

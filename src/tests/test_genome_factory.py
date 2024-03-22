@@ -70,8 +70,8 @@ class TestGenomeFactory:
     @pytest.mark.parametrize(
         "batch_size, status, expected_count",
         [
-            (10, 'Submitted', 3),
-            (40, 'Released', 10),
+            (10, 'Submitted', 2),
+            (40, 'Released', 11),
             (50, 'Processed', 6),
         ]
     )
@@ -97,7 +97,7 @@ class TestGenomeFactory:
             assert genome.production_name == genome_factory_result['species']
 
     def test_fetch_genomes_by_dataset_uuid(self, multi_dbs, genome_factory, genome_filters):
-        genome_filters['dataset_uuid'] = ['bd63a676-45ff-494a-b26f-2b779cb6c180']
+        genome_filters['dataset_uuid'] = ['11a0be7f-99ae-45d3-a004-dc19bb562330']
         # fetch genome using genome factory with dataset uuid
         genome_factory_result = next(genome_factory.get_genomes(**genome_filters))
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
@@ -122,7 +122,7 @@ class TestGenomeFactory:
                                                                            genome_filters):
         # fetch genome using genome factory with dataset uuid
         genome_filters['genome_uuid'] = []
-        genome_filters['dataset_uuid'] = ['bd63a676-45ff-494a-b26f-2b779cb6c180']
+        genome_filters['dataset_uuid'] = ['2ef7c056-847e-4742-a68b-18c3ece068aa']
 
         # update dataset status to processing
         genome_filters['update_dataset_status'] = 'Processing'
