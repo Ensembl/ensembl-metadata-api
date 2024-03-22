@@ -22,4 +22,4 @@
 24	1	genebuild.havana_datafreeze_date	test2
 25	1	assembly.total_genome_length	546
 26	1	genebuild.start_date	2023-07-Ensembl
-27	1	schema_version	110
+27	\N	schema_version	110

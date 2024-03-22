@@ -21,5 +21,5 @@
 23	1	genebuild.provider_name	testfornamenew
 24	1	genebuild.start_date	2023-08-Ensembl
 25	1	genebuild.havana_datafreeze_date	test2
-26	1	schema_version	110
+26	\N	schema_version	110
 27	1	assembly.total_coding_sequence_length	8989
