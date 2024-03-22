@@ -2,7 +2,6 @@
 2	genebuild	Genomic Build	core_annotation	Genomic annotations for an assembly	\N	\N	\N	\N
 3	variation	mRatBN7.2	variation_annotation	Short variant data	\N	\N	\N	\N
 4	evidence	Variation Evidence	variation_annotation	Variation evidence annotation	\N	\N	\N	\N
-5	core_compute	Core Database Computation	production_process	Core Database initial Compute	\N	1	\N	\N
 6	homologies	Comparative homologies	compara_annotation	Comparative Genomics annotation	\N	\N	2	\N
 7	regulatory_features	Regulatory Annotation	regulation_annotation	Regulatory annotation for an assembly	\N	\N	\N	\N
 8	core_compute	External References	production_process	Xref genome annotation for Genebuild	\N	2	\N	\N
@@ -25,7 +24,6 @@
 26	homology_load	Homology dataload	production_preparation	Load homology data onto Compara Service (MongoDB)	\N	6	25	\N
 27	homology_dumps	Homology tsv public files	production_preparation	Dump and sync public TSV homology files	\N	6	25	\N
 28	vcf	VCF FileSet	production_process	VCF annotation file for geneset	\N	3	\N	\N
-29	evidence	Evidence VCF file	production_process	VCF evidence file for geneset	\N	3	\N	\N
 30	web_var_content	WebBrowser variation data	production_process	Variation GenomeBrowser files	\N	3	3	\N
 31	var_browser_files	Variation Browser files	production_process	Variation track browser file	\N	30	\N	\N
 32	var_track_api	Variation Track	production_preparation	Variation Track API	\N	30	31	\N
