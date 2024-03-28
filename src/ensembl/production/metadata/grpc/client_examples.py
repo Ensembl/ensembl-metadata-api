@@ -9,9 +9,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import grpc
 import logging
 
+import grpc
+
+import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 from ensembl_metadata_pb2 import (
     GenomeUUIDRequest,
     GenomeNameRequest,
@@ -31,8 +33,6 @@ from ensembl_metadata_pb2 import (
     FTPLinksRequest,
     ReleaseVersionRequest
 )
-
-import ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc as ensembl_metadata_pb2_grpc
 
 
 def get_genome(stub, genome_request):

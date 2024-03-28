@@ -20,16 +20,17 @@ from pathlib import Path
 import pytest
 import sqlalchemy as db
 from _pytest.config import Config
+from grpc_reflection.v1alpha import reflection
 
+from ensembl.production.metadata.api.factories.datasets import DatasetFactory
+from ensembl.production.metadata.api.factories.genomes import GenomeFactory
+from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
 
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-from grpc_reflection.v1alpha import reflection
-
 
 def pytest_configure(config: Config) -> None:
-    pytest.dbs_dir = Path(__file__).parent / 'src' / 'ensembl' / 'production' / 'metadata' / 'api' / 'sample'
+    pytest.dbs_dir = Path(__file__).parent / 'databases'
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -39,8 +40,8 @@ def engine(multi_dbs):
     yield db.create_engine(multi_dbs["ensembl_genome_metadata"].dbc.url)
 
 
-@pytest.fixture(scope="class")
-def genome_db_conn(multi_dbs):
+@pytest.fixture(scope="function")
+def genome_conn(multi_dbs):
     genome_conn = GenomeAdaptor(
         metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
         taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
@@ -48,12 +49,30 @@ def genome_db_conn(multi_dbs):
     yield genome_conn
 
 
+@pytest.fixture(scope="function")
+def allow_unreleased(request):
+    """Set ALLOWED_UNRELEASED environment variable, this fixture must be used with `parametrize`"""
+    from ensembl.production.metadata.grpc.config import cfg
+    cfg.allow_unreleased = request.param
+    yield cfg
+
+
 @pytest.fixture(scope="class")
-def release_db_conn(multi_dbs):
+def release_conn(multi_dbs):
     release_conn = ReleaseAdaptor(
         metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url
     )
     yield release_conn
+
+
+@pytest.fixture(scope="class")
+def genome_factory():
+    return GenomeFactory()
+
+
+@pytest.fixture(scope="class")
+def dataset_factory(multi_dbs):
+    yield DatasetFactory(multi_dbs["ensembl_genome_metadata"].dbc.url)
 
 
 @pytest.fixture(scope='module')

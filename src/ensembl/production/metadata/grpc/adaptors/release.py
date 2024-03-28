@@ -9,61 +9,78 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+from __future__ import annotations
+
 import logging
+from typing import List
 
 import sqlalchemy as db
 
-from ensembl.production.metadata.grpc.adaptors.base import check_parameter, BaseAdaptor
 from ensembl.production.metadata.api.models import EnsemblRelease, EnsemblSite, GenomeRelease, Genome, GenomeDataset, \
-    Dataset
+    Dataset, ReleaseStatus
+from ensembl.production.metadata.grpc.adaptors.base import check_parameter, BaseAdaptor, cfg
 
 logger = logging.getLogger(__name__)
 
 
+def filter_release_status(query,
+                          release_status: str | ReleaseStatus = None):
+    logger.debug(f"Allowed unreleased {cfg.allow_unreleased}")
+    query = query.add_columns(EnsemblSite)
+    if not cfg.allow_unreleased:
+        query = query.join(EnsemblSite,
+                           EnsemblSite.site_id == EnsemblRelease.site_id &
+                           EnsemblSite.site_id == cfg.ensembl_site_id) \
+            .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+    else:
+        query = query.outerjoin(EnsemblSite,
+                                EnsemblSite.site_id == EnsemblRelease.site_id &
+                                EnsemblSite.site_id == cfg.ensembl_site_id)
+        # Release status filter only work when unreleased are allowed
+        if release_status:
+            if isinstance(release_status, str):
+                release_status = ReleaseStatus(release_status)
+            query = query.filter(EnsemblRelease.status == release_status)
+    return query
+
+
 class ReleaseAdaptor(BaseAdaptor):
 
-    def fetch_releases(
-            self,
-            release_id=None,
-            release_version=None,
-            current_only=True,
-            release_type=None,
-            site_name=None,
-    ):
+    def fetch_releases(self,
+                       release_id: int | List[int] = None,
+                       release_version: float | List[float] = None,
+                       current_only: bool = False,
+                       release_type: str = None,
+                       release_status: str | ReleaseStatus = None):
         """
         Fetches releases based on the provided parameters.
 
         Args:
-            release_id (int or list or None): Release ID(s) to filter by.
-            release_version (str or list or None): Release version(s) to filter by.
+            release_id: release internal id (int or list[int])
+            release_version (float or list or None): Release version(s) to filter by.
             current_only (bool): Flag indicating whether to fetch only current releases.
-            release_type (str or list or None): Release type(s) to filter by.
-            site_name (str or list or None): Name(s) of the Ensembl site to filter by.
+            release_type (str): Release type to filter by.
+            release_status: whether to filter particular release status
 
         Returns:
             list: A list of fetched releases.
         """
-        release_id = check_parameter(release_id)
-        release_version = check_parameter(release_version)
-        release_type = check_parameter(release_type)
-        site_name = check_parameter(site_name)
+        release_select = db.select(EnsemblRelease).order_by(EnsemblRelease.version)
 
-        release_select = db.select(
-            EnsemblRelease, EnsemblSite
-        ).join(EnsemblRelease.ensembl_site)
-
-        # WHERE ensembl_release.release_id = :release_id_1
-        if release_id is not None:
+        releases_id = check_parameter(release_id)
+        if releases_id is not None:
             release_select = release_select.filter(
-                EnsemblRelease.release_id.in_(release_id)
+                EnsemblRelease.release_id.in_(releases_id)
             )
-        # WHERE ensembl_release.version = :version_1
-        elif release_version is not None:
+
+        release_version = check_parameter(release_version)
+        # WHERE ensembl_release.version < version
+        if release_version is not None:
             release_select = release_select.filter(
-                EnsemblRelease.version.in_(release_version)
+                EnsemblRelease.version <= release_version
             )
         # WHERE ensembl_release.is_current =:is_current_1
-        elif current_only:
+        if current_only:
             release_select = release_select.filter(
                 EnsemblRelease.is_current == 1
             )
@@ -74,101 +91,44 @@ class ReleaseAdaptor(BaseAdaptor):
                 EnsemblRelease.release_type.in_(release_type)
             )
 
-        # WHERE ensembl_site.name = :name_1
-        if site_name is not None:
-            release_select = release_select.filter(
-                EnsemblSite.name.in_(site_name)
-            )
-        logger.debug(f"Query: {release_select}")
+        release_select = release_select.filter(
+            EnsemblSite.site_id == cfg.ensembl_site_id
+        )
+        release_select = filter_release_status(release_select, release_status)
+        logger.debug("Query: %s ", release_select)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(release_select).all()
 
-    def fetch_releases_for_genome(self, genome_uuid, site_name=None):
+    def fetch_releases_for_genome(self, genome_uuid):
+        select_released = db.select(EnsemblRelease)
+        if cfg.allow_unreleased:
+            select_released = select_released.outerjoin(GenomeRelease)
+        else:
+            select_released = select_released.join(GenomeRelease)
+        select_released = select_released.join(Genome) \
+            .where(Genome.genome_uuid == genome_uuid)
+        select_released = filter_release_status(select_released)
 
-        # SELECT genome_release.release_id
-        # FROM genome_release
-        # JOIN genome ON genome.genome_id = genome_release.genome_id
-        # WHERE genome.genome_uuid =:genome_uuid_1
-        release_id_select = db.select(
-            GenomeRelease.release_id
-        ).filter(
-            Genome.genome_uuid == genome_uuid
-        ).join(
-            GenomeRelease.genome
-        )
-
-        release_ids = []
+        logger.debug("Query: %s ", select_released)
         with self.metadata_db.session_scope() as session:
-            release_objects = session.execute(release_id_select).all()
-            for rid in release_objects:
-                release_ids.append(rid[0])
-            release_ids = list(dict.fromkeys(release_ids))
-        return self.fetch_releases(release_id=release_ids, site_name=site_name)
+            session.expire_on_commit = False
+            releases = session.execute(select_released).all()
+            return releases
 
-    def fetch_releases_for_dataset(self, dataset_uuid, site_name=None):
+    def fetch_releases_for_dataset(self, dataset_uuid):
+        select_released = db.select(EnsemblRelease) \
+            .select_from(Dataset) \
+            .join(GenomeDataset) \
+            .where(Dataset.dataset_uuid == dataset_uuid)
 
-        # SELECT genome_release.release_id
-        # FROM genome_dataset
-        # JOIN dataset ON dataset.dataset_id = genome_dataset.dataset_id
-        # WHERE dataset.dataset_uuid = :dataset_uuid_1
-        release_id_select = db.select(
-            GenomeDataset.release_id
-        ).filter(
-            Dataset.dataset_uuid == dataset_uuid
-        ).join(
-            GenomeDataset.dataset
-        )
-
-        release_ids = []
+        if cfg.allow_unreleased:
+            select_released = select_released.outerjoin(EnsemblRelease)
+        else:
+            select_released = select_released.join(EnsemblRelease)
+        select_released = filter_release_status(select_released)
+        logger.debug("Query: %s ", select_released)
         with self.metadata_db.session_scope() as session:
-            release_objects = session.execute(release_id_select).all()
-            for rid in release_objects:
-                release_ids.append(rid[0])
-            release_ids = list(dict.fromkeys(release_ids))
-        return self.fetch_releases(release_id=release_ids, site_name=site_name)
-
-
-class NewReleaseAdaptor(BaseAdaptor):
-
-    def __init__(self, metadata_uri=None):
-        super().__init__(metadata_uri)
-        # Get current release ID from ensembl_release
-        with self.metadata_db.session_scope() as session:
-            self.current_release_id = (
-                session.execute(db.select(EnsemblRelease.release_id).filter(EnsemblRelease.is_current == 1)).one()[0])
-        if self.current_release_id == "":
-            raise Exception("Current release not found")
-        logger.debug(f'Release ID: {self.current_release_id}')
-
-        # Get last release ID from ensembl_release
-        with self.metadata_db.session_scope() as session:
-            ############### Refactor this once done. It is messy.
-            current_version = int(session.execute(
-                db.select(EnsemblRelease.version).filter(EnsemblRelease.release_id == self.current_release_id)).one()[
-                                      0])
-            past_versions = session.execute(
-                db.select(EnsemblRelease.version).filter(EnsemblRelease.version < current_version)).all()
-            sorted_versions = []
-            # Do I have to account for 1.12 and 1.2
-            for version in past_versions:
-                sorted_versions.append(float(version[0]))
-            sorted_versions.sort()
-            self.previous_release_id = (session.execute(
-                db.select(EnsemblRelease.release_id).filter(EnsemblRelease.version == sorted_versions[-1])).one()[0])
-            if self.previous_release_id == "":
-                raise Exception("Previous release not found")
-
-    #     new_genomes (list of new genomes in the new release)
-    def fetch_new_genomes(self):
-        # TODO: this code must be never called yet, because it would never work!!!!
-        with self.metadata_db.session_scope() as session:
-            genome_selector = db.select(
-                EnsemblRelease, EnsemblSite
-            ).join(EnsemblRelease.ensembl_site)
-            old_genomes = session.execute(
-                db.select(EnsemblRelease.version).filter(EnsemblRelease.version < current_version)).all()
-            new_genomes = []
-            novel_old_genomes = []
-            novel_new_genomes = []
-            return session.execute(release_select).all()
+            session.expire_on_commit = False
+            releases = session.execute(select_released).all()
+            return releases

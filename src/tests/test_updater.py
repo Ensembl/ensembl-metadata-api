@@ -16,6 +16,7 @@ import pytest
 from ensembl.core.models import Meta
 from ensembl.database import UnitTestDB, DBConnection
 
+from ensembl.production.metadata.api.exceptions import MetadataUpdateException
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence, DatasetAttribute, \
     DatasetSource, DatasetType, Attribute
@@ -23,18 +24,19 @@ from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
 
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
-
-@pytest.mark.parametrize("multi_dbs", [[{'src': sample_path / 'ensembl_genome_metadata'},
-                                        {'src': sample_path / 'ncbi_taxonomy'},
-                                        {'src': db_directory / 'core_1'}, {'src': db_directory / 'core_2'},
-                                        {'src': db_directory / 'core_3'}, {'src': db_directory / 'core_4'},
-                                        {'src': db_directory / 'core_5'}, {'src': db_directory / 'core_6'},
-                                        {'src': db_directory / 'core_7'}, {'src': db_directory / 'core_8'},
-                                        {'src': db_directory / 'core_9'}
+@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                        {'src': Path(__file__).parent / "databases/core_1"},
+                                        {'src': Path(__file__).parent / "databases/core_2"},
+                                        {'src': Path(__file__).parent / "databases/core_3"},
+                                        {'src': Path(__file__).parent / "databases/core_4"},
+                                        {'src': Path(__file__).parent / "databases/core_5"},
+                                        {'src': Path(__file__).parent / "databases/core_6"},
+                                        {'src': Path(__file__).parent / "databases/core_7"},
+                                        {'src': Path(__file__).parent / "databases/core_8"},
+                                        {'src': Path(__file__).parent / "databases/core_9"}
                                         ]],
-
                          indirect=True)
 class TestUpdater:
     dbc = None  # type: UnitTestDB
@@ -90,13 +92,14 @@ class TestUpdater:
             assert sequence3 is not None
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
                 DatasetSource.name.like('%compara%'),
-                DatasetType.name == 'compara_dumps'
+                DatasetType.name == 'homology_dumps'
             ).count()
             assert count == 1
+
     def test_fail_existing_genome_uuid_no_data(self, multi_dbs):
         test = meta_factory(multi_dbs['core_2'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
-        with pytest.raises(Exception) as exif:
+        with pytest.raises(MetadataUpdateException) as exif:
             test.process_core()
             assert ("Database contains a Genome.genome_uuid, "
                     "but the corresponding data is not in the meta table. "
@@ -139,7 +142,7 @@ class TestUpdater:
     def test_fail_existing_genome_uuid_data_not_match(self, multi_dbs):
         test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url)
-        with pytest.raises(Exception) as exif:
+        with pytest.raises(MetadataUpdateException) as exif:
             test.process_core()
             assert ("Core database contains a genome.genome_uuid which matches an entry in the meta table. "
                     "The force flag was not specified so the core was not updated." in str(exif.value))
@@ -206,13 +209,11 @@ class TestUpdater:
             test.process_core()
             assert ("Existing Organism, Assembly, and Datasets within a release. "
                     "To update released data set force=True. "
-                    "This will force assembly and genebuilddataset updates and assembly sequences." in str(
-                exif.value))
+                    "This will force assembly and genebuilddataset updates and assembly sequences." in str(exif.value))
 
     def test_update_released_force(self, multi_dbs):
         test = meta_factory(multi_dbs['core_9'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
                             multi_dbs['ncbi_taxonomy'].dbc.url, force=True)
-        # FIXME Should be run
         test.process_core()
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
@@ -221,7 +222,7 @@ class TestUpdater:
                 (AssemblySequence.name == 'TEST1_seq_BAD')).first()
             assert new_seq is None
             old_seq = session.query(AssemblySequence).where(
-                (AssemblySequence.accession == 'BX284601.5')).first()
+                (AssemblySequence.accession == 'MtDNA')).first()
             assert old_seq is not None
             # Check that the old datasets have been removed
 

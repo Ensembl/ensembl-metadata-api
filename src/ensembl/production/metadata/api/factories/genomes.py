@@ -20,13 +20,15 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
+from typing import List
+
 from ensembl.database import DBConnection
+from sqlalchemy import select
+
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
-from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource
+from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
-from sqlalchemy import select, text
-from typing import List
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -34,7 +36,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class GenomeInputFilters:
-
     metadata_db_uri: str
     genome_uuid: List[str] = field(default_factory=list)
     dataset_uuid: List[str] = field(default_factory=list)
@@ -56,6 +57,8 @@ class GenomeInputFilters:
                                                    DatasetSource.name.label('dataset_source'),
                                                    DatasetType.name.label('dataset_type'),
                                                    ])
+
+
 @dataclass
 class GenomeFactory:
     @staticmethod
@@ -65,13 +68,13 @@ class GenomeFactory:
 
         if filters.run_all:
             filters.division = [
-                                'EnsemblBacteria',
-                                'EnsemblVertebrates',
-                                'EnsemblPlants',
-                                'EnsemblProtists',
-                                'EnsemblMetazoa',
-                                'EnsemblFungi',
-                            ]
+                'EnsemblBacteria',
+                'EnsemblVertebrates',
+                'EnsemblPlants',
+                'EnsemblProtists',
+                'EnsemblMetazoa',
+                'EnsemblFungi',
+            ]
 
         if filters.genome_uuid:
             query = query.filter(Genome.genome_uuid.in_(filters.genome_uuid))
@@ -140,10 +143,10 @@ class GenomeFactory:
                 dataset_uuid = genome_info.get('dataset_uuid', None)
 
                 # TODO: below code required with implementation of datasetstatus enum class in dataset models
-                # #convert status enum object to string value
-                # dataset_status = genome_info.get('dataset_status', None)
-                # if dataset_status and  isinstance(dataset_status, DatasetStatus) :
-                #     genome_info['dataset_status'] = dataset_status.value
+                # convert status enum object to string value
+                dataset_status = genome_info.get('dataset_status', None)
+                if dataset_status and isinstance(dataset_status, DatasetStatus):
+                    genome_info['dataset_status'] = dataset_status.value
 
                 if not dataset_uuid:
                     logger.warning(
@@ -152,28 +155,30 @@ class GenomeFactory:
                     continue
 
                 if filters.update_dataset_status:
-                    _, status = DatasetFactory().update_dataset_status(dataset_uuid, filters.update_dataset_status,
-                                                                      session=session)
-                    if filters.update_dataset_status == status:
-
+                    _, status = DatasetFactory(filters.metadata_db_uri) \
+                        .update_dataset_status(dataset_uuid,
+                                               filters.update_dataset_status,
+                                               session=session)
+                    if filters.update_dataset_status == status.value:
                         logger.info(
-                            f"Updated Dataset status for dataset uuid: {dataset_uuid} from {filters.update_dataset_status} to {status}  for genome {genome_info['genome_uuid']}"
+                            f"Updated Dataset status for dataset uuid: {dataset_uuid} from "
+                            f"{filters.update_dataset_status} to {status} for genome {genome_info['genome_uuid']}"
                         )
-                        genome_info['updated_dataset_status'] = status
+                        genome_info['updated_dataset_status'] = status.value
 
                     else:
                         logger.warning(
-                            f"Cannot update status for dataset uuid: {dataset_uuid} {filters.update_dataset_status} to {status}  for genome {genome['genome_uuid']}"
+                            f"Cannot update status for dataset uuid: {dataset_uuid} "
+                            f"{filters.update_dataset_status} to {status}  for genome {genome['genome_uuid']}"
                         )
                         genome_info['updated_dataset_status'] = None
 
                 yield genome_info
 
 
-
 def main():
     parser = argparse.ArgumentParser(
-        prog='genome.py',
+        prog='genomes.py',
         description='Fetch Ensembl genome info from the new metadata database'
     )
     parser.add_argument('--genome_uuid', type=str, nargs='*', default=[], required=False,
@@ -198,8 +203,9 @@ def main():
                         help='Update the status of the selected datasets to the specified value. ')
     parser.add_argument('--batch_size', type=int, default=50, required=False,
                         help='Number of results to retrieve per batch. Default is 50.')
-    parser.add_argument('--page',  default=1, required=False,
-                        type=lambda x: int(x) if int(x) > 0 else argparse.ArgumentTypeError("{x} is not a positive integer"),
+    parser.add_argument('--page', default=1, required=False,
+                        type=lambda x: int(x) if int(x) > 0 else argparse.ArgumentTypeError(
+                            "{x} is not a positive integer"),
                         help='The page number for pagination. Default is 1.')
     parser.add_argument('--metadata_db_uri', type=str, required=True,
                         help='metadata db mysql uri, ex: mysql://ensro@localhost:3366/ensembl_genome_metadata')

@@ -86,10 +86,9 @@
 118	production.production_name	Internal Production Name	Backward compatibility for registry production Name	string
 119	variation.short_variants	Short variants	Small-scale genetic variations	integer
 120	variation.sample_variant	variation.sample_variant	variation.sample_variant	string
-123	variation.short_variants_with_phenotype_assertions	Short variants
-With phenotype assertions	Short variants with phenotypic evidence	integer
-124	variation.short_variants_frequency_studies	Short variants
-Frequency studies	Short variants studied for frequency	integer
+123	variation.short_variants_with_phenotype_assertions	Short variants	\N	
+124	Short variants with phenotypic evidence	integer	\N	
+125	Short variants studied for frequency	integer	\N	
 161	compara.homology_coverage	compara.homology_coverage	compara.homology_coverage	float
 162	compara.homology_reference_species	compara.homology_reference_species	compara.homology_reference_species	string
 163	regulation.open_chromatin_count	regulation.open_chromatin_count	Number of open chromatin regions	integer

@@ -10,7 +10,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ensembl.database import DBConnection
-from ensembl.production.metadata.grpc.config import MetadataConfig
+
+from ensembl.production.metadata.grpc.config import cfg
 
 
 ##Todo: Add in OrganismAdapator. Subfunction fetches all organism in popular group. and # of genomes from distinct assemblies.
@@ -20,9 +21,7 @@ from ensembl.production.metadata.grpc.config import MetadataConfig
 
 class BaseAdaptor:
     def __init__(self, metadata_uri):
-        self.config = MetadataConfig()
-        self.metadata_db = DBConnection(metadata_uri, pool_size=self.config.pool_size,
-                                        pool_recycle=self.config.pool_recycle)
+        self.metadata_db = DBConnection(metadata_uri, pool_size=cfg.pool_size, pool_recycle=cfg.pool_recycle)
 
 
 def check_parameter(param):

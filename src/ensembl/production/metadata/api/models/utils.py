@@ -12,6 +12,7 @@
 from .dataset import Dataset
 from .genome import GenomeDataset
 
+
 def check_release_status(meta_dbc, dataset_uuid):
     with meta_dbc.session_scope() as session:
         # Query to check if a release_id exists for the given genome_uuid

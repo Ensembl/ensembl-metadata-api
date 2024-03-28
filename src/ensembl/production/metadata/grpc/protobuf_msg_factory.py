@@ -22,7 +22,7 @@ def create_species(species_data=None, taxo_info=None):
         scientific_name=species_data.Organism.scientific_name,
         scientific_parlance_name=species_data.Organism.scientific_parlance_name,
         genbank_common_name=taxo_info["genbank_common_name"],
-        synonym=taxo_info["synonym"],
+        synonym=taxo_info["synonym"]
     )
     return species
 
@@ -182,7 +182,6 @@ def create_attributes_info(data=None):
     for attrib_data in data:
         attrib_name = attrib_data.Attribute.name
         if attrib_name in list(required_attributes.keys()):
-            # print(f"%%%%%% {attrib_name} => {attrib_data.DatasetAttribute.value}")
             required_attributes[attrib_name] = attrib_data.DatasetAttribute.value
 
     return ensembl_metadata_pb2.AttributesInfo(
@@ -299,17 +298,16 @@ def create_genome_assembly_sequence_region(data=None):
 
 
 def create_release(data=None):
-    if data is None:
+    if data is None or data.EnsemblRelease is None:
         return ensembl_metadata_pb2.Release()
-
     release = ensembl_metadata_pb2.Release(
-        release_version=data.EnsemblRelease.version if hasattr(data, 'EnsemblRelease') else None,
-        release_date=str(data.EnsemblRelease.release_date) if hasattr(data, 'EnsemblRelease') else "Unreleased",
-        release_label=data.EnsemblRelease.label if hasattr(data, 'EnsemblRelease') else "Unreleased",
-        is_current=data.EnsemblRelease.is_current if hasattr(data, 'EnsemblRelease') else False,
-        site_name=data.EnsemblSite.name if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
-        site_label=data.EnsemblSite.label if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
-        site_uri=data.EnsemblSite.uri if hasattr(data, 'EnsemblSite') else "Unknown (not released yet)",
+        release_version=data.EnsemblRelease.version,
+        release_date=str(data.EnsemblRelease.release_date) if data.EnsemblRelease.release_date else "Unreleased",
+        release_label=data.EnsemblRelease.label,
+        is_current=data.EnsemblRelease.is_current,
+        site_name=data.EnsemblSite.name,
+        site_label=data.EnsemblSite.label,
+        site_uri=data.EnsemblSite.uri
     )
     return release
 
@@ -361,7 +359,7 @@ def create_dataset_info(data=None):
         type=data.Attribute.type,
         dataset_version=data.Dataset.version,
         dataset_label=data.Dataset.label,
-        version=int(data.EnsemblRelease.version) if hasattr(data, 'EnsemblRelease') else None,
+        version=data.DSRelease.version if data.DSRelease else None,
         value=data.DatasetAttribute.value,
     )
 

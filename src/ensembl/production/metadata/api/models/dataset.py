@@ -10,20 +10,21 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import datetime
+import enum
 import logging
 import uuid
-import enum
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, Enum, text, ForeignKey, Index, JSON
+from sqlalchemy import Column, Integer, String, text, ForeignKey, Index, JSON
 from sqlalchemy.dialects.mysql import DATETIME
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from sqlalchemy.types import Enum
 
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
+__all__ = ['Dataset', 'DatasetType', 'DatasetAttribute', 'DatasetSource', 'DatasetStatus', 'Attribute', ]
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +60,7 @@ class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
 
     dataset_id = Column(Integer, primary_key=True)
-    dataset_uuid = Column(String(128), nullable=False, unique=True, default=str(uuid.uuid4))
+    dataset_uuid = Column(String(32), nullable=False, unique=True, default=str(uuid.uuid4))
     dataset_type_id = Column(ForeignKey('dataset_type.dataset_type_id'), nullable=False, index=True)
     name = Column(String(128), nullable=False)
     version = Column(String(128))
@@ -79,7 +80,8 @@ class Dataset(LoadAble, Base):
     # dataset_source_id to dataset source
     dataset_source = relationship('DatasetSource', back_populates="datasets")
     # parent dataset when created
-    parent = Column(ForeignKey('dataset.dataset_id'), name='parent_id', nullable=True, index=True)
+    parent_id = Column(Integer, ForeignKey('dataset.dataset_id'), nullable=True, index=True)
+    children = relationship('Dataset', backref=backref("parent", remote_side=[dataset_id]))
 
     @property
     def genebuild_version(self):

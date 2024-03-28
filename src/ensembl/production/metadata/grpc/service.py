@@ -9,14 +9,14 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from concurrent import futures
-import grpc
 import logging
+from concurrent import futures
 
+import grpc
 from grpc_reflection.v1alpha import reflection
 
-from ensembl.production.metadata.grpc.config import MetadataConfig
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2_grpc, ensembl_metadata_pb2
+from ensembl.production.metadata.grpc.config import MetadataConfig
 from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
 
 logger = logging.getLogger(__name__)

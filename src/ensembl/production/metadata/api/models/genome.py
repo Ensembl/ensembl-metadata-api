@@ -9,15 +9,18 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import logging
 import re
 import uuid
 
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship
+
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models.base import Base, LoadAble
-import logging
+
+__all__ = ['Genome', 'GenomeDataset', 'GenomeRelease']
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +29,7 @@ class Genome(LoadAble, Base):
     __tablename__ = "genome"
 
     genome_id = Column(Integer, primary_key=True)
-    genome_uuid = Column(String(128), nullable=False, unique=True, default=str(uuid.uuid4))
+    genome_uuid = Column(String(32), nullable=False, unique=True, default=str(uuid.uuid4))
     assembly_id = Column(ForeignKey("assembly.assembly_id"), nullable=False, index=True)
     organism_id = Column(ForeignKey("organism.organism_id"), nullable=False, index=True)
     created = Column(DATETIME(fsp=6), nullable=False)
@@ -111,17 +114,14 @@ class Genome(LoadAble, Base):
 class GenomeDataset(LoadAble, Base):
     __tablename__ = "genome_dataset"
 
-    genome_dataset_id = Column(Integer, primary_key=True)
-    dataset_id = Column(ForeignKey("dataset.dataset_id"), nullable=False, index=True)
-    genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
+    # genome_dataset_id = Column(Integer, primary_key=True)
+    dataset_id = Column(ForeignKey("dataset.dataset_id"), nullable=False, primary_key=True)
+    genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, primary_key=True)
     release_id = Column(ForeignKey("ensembl_release.release_id"), index=True)
     is_current = Column(TINYINT(1), nullable=False, default=0)
 
-    # One to many relationships
-    # none
-    # many to one relationships
     # genome_dataset_id to genome
-    dataset = relationship("Dataset", back_populates="genome_datasets")
+    dataset = relationship("Dataset", back_populates="genome_datasets", )
     # genome_id to genome
     genome = relationship("Genome", back_populates="genome_datasets")
     # release_id to release
@@ -131,9 +131,8 @@ class GenomeDataset(LoadAble, Base):
 class GenomeRelease(LoadAble, Base):
     __tablename__ = "genome_release"
 
-    genome_release_id = Column(Integer, primary_key=True)
-    genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
-    release_id = Column(ForeignKey("ensembl_release.release_id"), nullable=False, index=True)
+    genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, primary_key=True)
+    release_id = Column(ForeignKey("ensembl_release.release_id"), nullable=False, primary_key=True)
     is_current = Column(TINYINT(1), nullable=False, default=0)
     # One to many relationships
     # none

@@ -16,17 +16,15 @@ Unit tests for api module
 from pathlib import Path
 
 import pytest
-
 from ensembl.database import DBConnection
 from ensembl.database import UnitTestDB
+
 from ensembl.production.metadata.api.exceptions import TypeNotFoundException
 from ensembl.production.metadata.api.models import Organism, Genome
 
-sample_path = Path(__file__).parent.parent / "ensembl" / "production" / "metadata" / "api" / "sample"
 
-
-@pytest.mark.parametrize("multi_dbs", [[{"src": sample_path / "ensembl_genome_metadata"},
-                                        {"src": sample_path / "ncbi_taxonomy"}]], indirect=True)
+@pytest.mark.parametrize("multi_dbs", [[{"src": Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                        {"src": Path(__file__).parent / "databases/ncbi_taxonomy"}]], indirect=True)
 class TestApi:
     dbc = None  # type: UnitTestDB
 
@@ -38,13 +36,13 @@ class TestApi:
             assert len(paths) == 4
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/geneset/2018_10'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/community/geneset/2018_10'
             path = genome.get_public_path(dataset_type='assembly')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/genome'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/community/genome'
             path = genome.get_public_path(dataset_type='variation')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/variation/2018_10'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/community/variation/2018_10'
             path = genome.get_public_path(dataset_type='homologies')
-            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/homology/2018_10'
+            assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/community/homology/2018_10'
             with pytest.raises(TypeNotFoundException):
                 genome.get_public_path(dataset_type='regulatory_features')
                 # assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/regulation'

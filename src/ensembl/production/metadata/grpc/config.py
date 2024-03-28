@@ -9,8 +9,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import logging
 import os
 import warnings
+
+logger = logging.getLogger(__name__)
 
 
 def parse_boolean_var(var):
@@ -58,5 +61,8 @@ class MetadataConfig:
         self.max_overflow = os.environ.get("MAX_OVERFLOW", 0)
         self.pool_recycle = os.environ.get("POOL_RECYCLE", 50)
         self.allow_unreleased = parse_boolean_var(os.environ.get("ALLOW_UNRELEASED", False))
+        self.ensembl_site_id = os.environ.get("ENSEMBL_SITE", 1)
         self.debug_mode = parse_boolean_var(os.environ.get("DEBUG", False))
         self.service_port = int(os.environ.get("SERVICE_PORT", 50051))
+
+cfg = MetadataConfig()

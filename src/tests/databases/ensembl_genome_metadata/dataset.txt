@@ -1,0 +1,86 @@
+1	02104faf-3fee-4f28-b53c-605843dac941	assembly	\N	2023-09-22 15:01:44.000000	GCA_000005845.2	1	1	Released	\N
+2	cc3c7f95-b5dc-4cc1-aa15-2817c89bd1e2	genebuild	EXT01	2023-09-22 15:01:44.000000	GCA_000005845.2_EXT01	1	2	Released	\N
+7	dc1b508e-f148-4a6f-b051-1a0c53142cf5	assembly	\N	2023-09-22 15:02:00.000000	GCA_018473315.1	4	1	Released	\N
+9	45aec801-4fe7-4ac2-9afa-19aea2a8409e	assembly	\N	2023-09-22 15:02:01.000000	GCA_018469415.1	5	1	Released	\N
+11	5cda83f4-521c-4713-b2fe-b3ede2f1a51e	assembly	\N	2023-09-22 15:02:02.000000	GCA_018469875.1	6	1	Processed	\N
+13	3f9bf8d6-1514-4657-9f73-38a7354a80b8	assembly	\N	2023-09-22 15:02:04.000000	GCA_018505825.1	7	1	Processed	\N
+14	53936715-1371-4343-95af-f39d06943db7	genebuild	ENS01	2023-09-22 15:02:04.000000	GCA_018505825.1_ENS01	7	2	Processed	\N
+17	d641779c-2add-46ce-acf4-a2b6f15274b1	assembly	\N	2023-09-22 15:02:11.000000	GCA_018852615.1	9	1	Processed	\N
+23	06b4892b-8e34-49bc-be84-8126e5a7cf93	assembly	\N	2023-09-22 15:03:01.000000	GCA_000002765.2	14	1	Released	\N
+24	f202cd36-d0dc-40df-9dd6-a8218e0d1366	genebuild	EXT01	2023-09-22 15:03:01.000000	GCA_000002765.2_EXT01	14	2	Released	\N
+37	6f8bd121-0345-4b77-9dc1-d567ac13447d	assembly	\N	2023-09-22 15:03:02.000000	GCA_021950905.1	18	1	Processed	\N
+38	2ef7c056-847e-4742-a68b-18c3ece068aa	genebuild	ENS01	2023-09-22 15:03:02.000000	GCA_021950905.1_ENS01	18	2	Submitted	\N
+61	3474e0d6-d031-40bc-a4ae-230236886568	assembly	\N	2023-09-22 15:03:22.000000	GCA_000001405.14	40	1	Released	\N
+62	e456d1c2-eea2-40f1-83ee-31912905b695	genebuild	GENCODE19	2023-09-22 15:03:22.000000	GCA_000001405.14_GENCODE19	40	2	Released	\N
+147	999315f6-6d25-481f-a017-297f7e1490c8	assembly	\N	2023-09-22 15:04:29.000000	GCA_900519105.1	79	1	Released	\N
+148	287a5483-55a4-46e6-a58b-a84ba0ddacd6	genebuild	EXT01	2023-09-22 15:04:29.000000	GCA_900519105.1_EXT01	79	2	Released	\N
+171	c813f7b7-645c-45ac-8536-08190fd7daa0	assembly	\N	2023-09-22 15:04:45.000000	GCA_000001405.29	92	1	Released	\N
+172	949defef-c4d2-4ab1-8a73-f41d2b3c7719	genebuild	GENCODE44	2023-09-22 15:04:45.000000	GCA_000001405.29_GENCODE44	92	2	Released	\N
+177	3c67123a-e9e1-41ef-9014-2aadc8acf12a	assembly	\N	2023-09-22 15:04:50.000000	GCA_018505865.1	97	1	Processed	\N
+178	ed8ca387-38e3-4bfe-8b85-757a59b95126	genebuild	ENS01	2023-09-22 15:04:50.000000	GCA_018505865.1_ENS01	97	2	Processed	\N
+183	8801edaf-86ec-4799-8fd4-a59077f04c05	assembly	\N	2023-09-22 15:04:53.000000	GCA_018852605.1	100	1	Processed	\N
+184	11a0be7f-99ae-45d3-a004-dc19bb562330	genebuild	ENS01	2023-09-22 15:04:53.000000	GCA_018852605.1_ENS01	100	2	Submitted	\N
+197	fd27883a-e5d3-4502-b774-65d3cc4f4e18	assembly	\N	2023-09-22 15:04:56.000000	GCA_018469925.1	107	1	Processed	\N
+249	786344d1-a71f-4bab-aa37-6ee315ed60a4	assembly	\N	2023-09-22 15:05:37.000000	GCA_018469425.1	135	1	Processed	\N
+250	2bc8874e-6672-4293-89d6-0b837005177c	genebuild	ENS01	2023-09-22 15:05:37.000000	GCA_018469425.1_ENS01	135	2	Processed	\N
+337	eb451e00-7abb-4462-82bf-f29f6ed3dc1b	assembly	\N	2023-09-22 15:06:39.000000	GCA_021951015.1	179	1	Processed	\N
+338	bd63a676-45ff-494a-b26f-2b779cb6c180	genebuild	ENS01	2023-09-22 15:06:39.000000	GCA_021951015.1_ENS01	179	2	Released	\N
+347	6790a2a6-b178-4ab2-a12b-aad3d5511713	assembly	\N	2023-09-22 15:06:43.000000	GCA_018473295.1	185	1	Released	\N
+348	23d52e01-2e3d-495f-b345-df41c605caa9	genebuild	ENS01	2023-09-22 15:06:43.000000	GCA_018473295.1_ENS01	185	2	Released	\N
+401	3b58ee8a-8f8d-4dfe-bb58-44c2ed57f229	assembly	\N	2023-09-22 15:06:55.000000	GCA_000146045.2	214	1	Released	\N
+402	cfef61f8-7e24-4ed6-945f-baca1b2664a3	genebuild	EXT01	2023-09-22 15:06:55.000000	GCA_000146045.2_EXT01	214	2	Released	\N
+405	6c1896f9-10dd-423e-a1ff-db8b5815cb66	assembly	\N	2023-09-22 15:06:58.000000	GCA_000002985.3	217	1	Released	\N
+406	ea69f164-cc77-4671-bf97-c7f537dc400e	genebuild	EXT01	2023-09-22 15:06:58.000000	GCA_000002985.3_EXT01	217	2	Released	\N
+888	9d717ead-ffe0-4fc1-b58c-3c057b754021	genebuild	ENS01	2023-11-07 11:18:55.000000	GCA_018473315.1_ENS01	4	2	Released	\N
+890	1c759aca-63a1-4eea-abe8-ef5f298fe6e2	genebuild	ENS01	2023-11-07 11:18:57.000000	GCA_018469415.1_ENS01	5	2	Released	\N
+892	664088c7-356e-418c-adb2-15945b7ebc4b	genebuild	ENS01	2023-11-07 11:19:00.000000	GCA_018469875.1_ENS01	6	2	Processed	\N
+896	f9690d7e-26c1-459d-8102-0c4a1a468806	genebuild	ENS01	2023-11-07 11:19:16.000000	GCA_018852615.1_ENS01	9	2	Processed	\N
+1006	66db32ae-974f-480c-a60b-63cc49d00f68	genebuild	ENS01	2023-11-07 11:22:53.000000	GCA_018469925.1_ENS01	107	2	Processed	\N
+1391	bf1f5064-8520-4f19-84e4-449aa6c1c1e2	variation	1.0	2023-11-09 12:49:25.273751	GRCh38	673	3	Released	\N
+1392	5b869bbb-098f-4827-afc0-532a2bc88903	variation	1.0	2023-11-09 12:49:25.797822	GRCh37	674	3	Released	\N
+1393	5717d47e-dad9-4c2d-b015-c055bc93e831	evidence	1.0	2023-11-09 12:49:26.267728	GRCh38	673	4	Released	\N
+1394	e0202b0e-578d-493f-aeb4-464f5d2e233a	evidence	1.0	2023-11-09 12:49:26.756909	GRCh37	674	4	Released	\N
+1405	bfa00db1-7925-4caa-8c7c-fa48bc5701a5	evidence	1.0	2023-11-09 12:49:31.245732	R64-1-1	644	4	Released	\N
+1414	c9d18d30-f7ad-44f4-becf-9b2c3606ac4f	evidence	1.0	2023-11-09 12:49:34.817886	ASM276v2	653	4	Released	\N
+1421	80babe97-b289-407d-af70-b46ff5478f2e	evidence	1.0	2023-11-09 12:49:37.663593	IWGSC	660	4	Released	\N
+1464	5c2d6ef7-fe03-4f1a-bcc2-fb72af9ffa46	variation	1.0	2023-11-09 12:49:58.762831	HG03516.pri.mat.f1_v2	565	3	Processed	\N
+1470	69f38cd5-5774-4b29-9ef4-181441ca0eb8	variation	1.0	2023-11-09 12:50:01.822030	HG02622.alt.pat.f1_v2	571	3	Processed	\N
+1475	08543d8d-2110-46f3-a9b6-ac58c4af8202	variation	1.0	2023-11-09 12:50:04.431570	HG03540.alt.pat.f1_v2	576	3	Released	\N
+1491	a4c858c4-2e55-43c9-af8b-7adc7ce24c58	variation	1.0	2023-11-09 12:50:12.565449	HG02622.pri.mat.f1_v2	592	3	Processed	\N
+1494	79e1a7b8-85dc-4bfe-b606-6992ca109ede	variation	1.0	2023-11-09 12:50:14.106939	HG02109.pri.mat.f1_v2	595	3	Processed	\N
+1496	0c1cdfea-cb10-4a08-8f75-4158658d6a02	variation	1.0	2023-11-09 12:50:15.157829	HG02109.alt.pat.f1_v2	597	3	Processed	\N
+1507	dd28ea84-6890-4af8-bd2b-2caa9917f221	variation	1.0	2023-11-09 12:50:20.833289	HG03516.alt.pat.f1_v2	608	3	Released	\N
+1509	b876cb36-6e84-4a2c-8af2-14e096d48df9	variation	1.0	2023-11-09 12:50:21.809661	HG03540.pri.mat.f1_v2	610	3	Released	\N
+1528	0a0bed83-72c7-4f8a-a1cb-97450ef82495	variation	1.0	2023-11-09 12:50:31.531084	R64-1-1	644	3	Released	\N
+1537	ff7cb333-fc39-4f00-93e0-65a0d5eb596b	variation	1.0	2023-11-09 12:50:36.212197	ASM276v2	653	3	Released	\N
+1544	e659bef9-22f7-4ad2-8215-4a48ecd228df	variation	1.0	2023-11-09 12:50:39.743563	IWGSC	660	3	Released	\N
+2276	0bdc7428-6f81-4c96-a8d3-f5d5bff5a9b8	compara_homologies	1.0	2023-11-14 16:49:59.780613	Compara homologies	251	6	Released	\N
+2291	4b02b11e-397c-4a4f-8c13-8b65efb87030	compara_homologies	1.0	2023-11-14 16:50:13.529466	Compara homologies	266	6	Released	\N
+2319	35f56606-9186-432f-b033-6e7204708f3b	compara_homologies	1.0	2023-11-14 16:50:38.690925	Compara homologies	294	6	Processed	\N
+2348	aebf0b81-4234-4aa9-85cc-abfe91f5eac2	compara_homologies	1.0	2023-11-14 16:51:03.416326	Compara homologies	323	6	Released	\N
+2357	caac6097-4921-4c10-bfc0-1c3e9b2604dc	compara_homologies	1.0	2023-11-14 16:51:11.265120	Compara homologies	332	6	Released	\N
+2384	9f45f1a6-d4d0-4c02-9509-dec5a0d523fb	compara_homologies	1.0	2023-11-14 16:51:33.936250	Compara homologies	359	6	Released	\N
+2394	b67e1761-3341-4965-9a5b-041cb8230cb3	compara_homologies	1.0	2023-11-14 16:51:42.824153	Compara homologies	369	6	Released	\N
+2408	0571d77c-5cc6-4819-80bf-34a42acfc3f6	compara_homologies	1.0	2023-11-14 16:51:54.939579	Compara homologies	383	6	Released	\N
+2449	e6df4d05-8567-4143-8ea0-c6ad1b5a3fc2	compara_homologies	1.0	2023-11-14 16:52:30.671955	Compara homologies	424	6	Released	\N
+2454	f2734f34-36a0-4594-871d-f7f6d317d05a	compara_homologies	1.0	2023-11-14 16:52:35.328579	Compara homologies	429	6	Submitted	\N
+2458	58df568e-48c1-4a3b-838b-448540392f9c	compara_homologies	1.0	2023-11-14 16:52:38.647877	Compara homologies	433	6	Released	\N
+2482	832c1885-6b98-4bf0-b4cf-70e317399bd4	compara_homologies	1.0	2023-11-14 16:52:59.648742	Compara homologies	457	6	Released	\N
+2494	f32b7f9a-97fd-41cd-86be-a5fb5becd335	compara_homologies	1.0	2023-11-14 16:53:10.265485	Compara homologies	469	6	Submitted	\N
+2518	679d6452-799c-4a2f-8906-0db6c639e498	regulatory_features	1.0	2023-11-15 15:07:12.410801	Regulatory Annotation	670	7	Released	\N
+6593	8ebbce8e-dcc7-49f8-b520-4d479aef2a65	compara_homologies	1.0	2024-02-06 21:29:06.353565	Compara homologies	457	6	Processed	\N
+6623	60fae37a-afe2-4bb1-9da0-321911dd2856	compara_homologies	1.0	2024-02-06 21:29:21.311224	Compara homologies	266	6	Processed	\N
+6699	06debe4a-2b3e-4fab-991e-26863dbe8af8	compara_homologies	1.0	2024-02-06 21:29:59.006535	Compara homologies	323	6	Processed	\N
+6849	f93d21ca-9a24-4c31-ae11-b0f8d3deab6d	compara_homologies	1.0	2024-02-06 21:31:13.258218	Compara homologies	423	6	Submitted	\N
+6896	f3abf167-6a8f-45cc-b753-22a955123758	compara_homologies	1.0	2024-02-06 21:31:36.368299	Compara homologies	387	6	Processed	\N
+7069	9681f4c2-afb4-4a08-8e4d-f26363f65ddf	compara_homologies	1.0	2024-02-06 21:33:02.240258	Compara homologies	369	6	Processed	\N
+7177	d57040b6-0ef5-4e6b-97ef-be0ad94d3a61	compara_homologies	1.0	2024-02-06 21:33:55.672317	Compara homologies	424	6	Processed	\N
+7320	c4f0eec5-f4b3-4cef-8369-7b13932509e1	compara_homologies	1.0	2024-02-06 21:35:06.396207	Compara homologies	284	6	Processed	\N
+7535	d51ab85a-f037-47a3-ba53-423ad8e42669	compara_homologies	1.0	2024-02-06 21:36:52.499221	Compara homologies	383	6	Processed	\N
+7603	254a68c7-f512-446d-a958-983a2713daf2	compara_homologies	1.0	2024-02-06 21:37:25.921259	Compara homologies	359	6	Processed	\N
+7785	9f2a7c92-e04a-443f-a991-1481a9466456	compara_homologies	1.0	2024-02-06 21:38:56.300529	Compara homologies	313	6	Processed	\N
+7820	681ceca3-3336-4b92-ac11-43b5fcabec62	compara_homologies	1.0	2024-02-06 21:39:13.565274	Compara homologies	251	6	Processed	\N
+7847	d78259af-f491-42de-9cbf-de744b09efee	compara_homologies	1.0	2024-02-06 21:39:26.897641	Compara homologies	332	6	Processed	\N
+8130	5b618784-a5ff-46cc-8102-b082ffb6e447	compara_homologies	1.0	2024-02-06 21:41:47.150011	Compara homologies	368	6	Submitted	\N
+8392	b6472939-9e49-4d46-b93e-304910acabf3	compara_homologies	1.0	2024-02-06 21:44:00.982498	Compara homologies	4352	6	Processed	\N
+8661	a5bf42be-63c1-4616-9af1-bc03aea92643	compara_homologies	1.0	2024-02-06 21:46:14.099319	Compara homologies	443	6	Submitted	\N

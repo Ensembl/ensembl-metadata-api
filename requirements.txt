@@ -37,6 +37,7 @@ pluggy==1.4.0
     # via pytest
 protobuf==4.25.3
     # via
+    #   -r requirements.in
     #   grpcio-reflection
     #   grpcio-tools
 pytest==8.0.2

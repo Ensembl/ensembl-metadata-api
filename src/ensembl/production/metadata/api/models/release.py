@@ -9,11 +9,31 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import enum
+
+import sqlalchemy
 from sqlalchemy import Column, Integer, String, Index, DECIMAL, Date, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
+from ensembl.production.metadata.grpc.config import cfg
+
+__all__ = ['ReleaseStatus', 'EnsemblRelease', 'EnsemblSite']
+
+
+class ReleaseStatus(enum.Enum):
+    PLANNED = "Planned"
+    PREPARING = "Preparing"
+    PREPARED = "Prepared"
+    RELEASED = "Released"
+
+
+ReleaseStatusType = sqlalchemy.types.Enum(
+    ReleaseStatus,
+    name='release_status',
+    values_callable=lambda obj: [e.value for e in obj]
+)
 
 
 class EnsemblSite(LoadAble, Base):
@@ -23,11 +43,7 @@ class EnsemblSite(LoadAble, Base):
     name = Column(String(64), nullable=False)
     label = Column(String(64), nullable=False)
     uri = Column(String(64), nullable=False)
-    # One to many relationships
-    # site_id to ensembl_release
     ensembl_releases = relationship('EnsemblRelease', back_populates='ensembl_site')
-    # many to one relationships
-    # none
 
 
 class EnsemblRelease(LoadAble, Base):
@@ -43,11 +59,14 @@ class EnsemblRelease(LoadAble, Base):
     is_current = Column(TINYINT(1), nullable=False, default=0)
     site_id = Column(ForeignKey('ensembl_site.site_id'), index=True)
     release_type = Column(String(16), nullable=False)
+    status = Column(ReleaseStatusType, nullable=False, default=ReleaseStatus.PLANNED)
     # One to many relationships
     # release_id to genome dataset and genome release
     genome_datasets = relationship('GenomeDataset', back_populates='ensembl_release')
     genome_releases = relationship('GenomeRelease', back_populates='ensembl_release')
     # many to one relationships
-    # site_id to ensembl_site
-    ensembl_site = relationship('EnsemblSite', back_populates='ensembl_releases')
-
+    # Added fileter condition on every join to EnsemblSite for code clarity
+    # No other than configure site data should be returned
+    ensembl_site = relationship('EnsemblSite', back_populates='ensembl_releases',
+                                primaryjoin=f"and_(EnsemblSite.site_id==EnsemblRelease.site_id, "
+                                            f"EnsemblSite.site_id=={cfg.ensembl_site_id})")
