@@ -34,7 +34,9 @@ class Genome(LoadAble, Base):
     organism_id = Column(ForeignKey("organism.organism_id"), nullable=False, index=True)
     created = Column(DATETIME(fsp=6), nullable=False)
     is_best = Column(TINYINT(1), nullable=False, default=0)
-    production_name = Column(String(256), nullable=False, unique=False)
+    production_name = Column(String(255), nullable=False, unique=False)
+    genebuild_version = Column(String(20), nullable=True, unique=False)
+    genebuild_date = Column(String(20), nullable=True, unique=False)
     # One to many relationships
     # genome_id to genome_dataset and genome release
     genome_datasets = relationship("GenomeDataset", back_populates="genome", cascade="all, delete, delete-orphan")

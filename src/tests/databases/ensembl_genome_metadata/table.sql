@@ -172,25 +172,28 @@ CREATE TABLE organism
     constraint organism_uuid
         unique (organism_uuid)
 );
-
 CREATE TABLE genome
 (
-    genome_id       int auto_increment primary key,
-    genome_uuid     char(36)             not null,
-    created         datetime(6)          not null,
-    assembly_id     int                  not null,
-    organism_id     int                  not null,
-    is_best         tinyint(1) default 0 not null,
-    production_name varchar(255)         not null,
+    genome_id         int auto_increment
+        primary key,
+    genome_uuid       char(36)             not null,
+    created           datetime(6)          not null,
+    assembly_id       int                  not null,
+    organism_id       int                  not null,
+    is_best           tinyint(1) default 0 not null,
+    production_name   varchar(255)         not null,
+    genebuild_version varchar(20)          null,
+    genebuild_date    varchar(20)          null,
     constraint genome_genome_uuid_6b62d0ad_uniq
         unique (genome_uuid),
     constraint genome_assembly_id_0a748388_fk_assembly_assembly_id
-        foreign key (assembly_id) references assembly (assembly_id)
+        foreign key (assembly_id) references marco_ensembl_genome_metadata.assembly (assembly_id)
             on delete cascade,
     constraint genome_organism_id_99ad7f35_fk_organism_organism_id
-        foreign key (organism_id) references organism (organism_id)
+        foreign key (organism_id) references marco_ensembl_genome_metadata.organism (organism_id)
             on delete cascade
 );
+
 
 CREATE TABLE genome_dataset
 (

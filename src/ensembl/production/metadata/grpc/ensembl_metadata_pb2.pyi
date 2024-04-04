@@ -1,9 +1,7 @@
-from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, \
-    Union as _Union
-
+from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from google.protobuf.internal import containers as _containers
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -456,14 +454,18 @@ class GenomeDatatypeRequest(_message.Message):
     def __init__(self, genome_uuid: _Optional[str] = ..., dataset_type: _Optional[str] = ...) -> None: ...
 
 class GenomeInfoRequest(_message.Message):
-    __slots__ = ("production_name", "assembly_name", "use_default")
+    __slots__ = ("production_name", "assembly_name", "genebuild_date", "release_version", "use_default")
     PRODUCTION_NAME_FIELD_NUMBER: _ClassVar[int]
     ASSEMBLY_NAME_FIELD_NUMBER: _ClassVar[int]
+    GENEBUILD_DATE_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_VERSION_FIELD_NUMBER: _ClassVar[int]
     USE_DEFAULT_FIELD_NUMBER: _ClassVar[int]
     production_name: str
     assembly_name: str
+    genebuild_date: str
+    release_version: float
     use_default: bool
-    def __init__(self, production_name: _Optional[str] = ..., assembly_name: _Optional[str] = ..., use_default: bool = ...) -> None: ...
+    def __init__(self, production_name: _Optional[str] = ..., assembly_name: _Optional[str] = ..., genebuild_date: _Optional[str] = ..., release_version: _Optional[float] = ..., use_default: bool = ...) -> None: ...
 
 class OrganismsGroupRequest(_message.Message):
     __slots__ = ("release_version",)

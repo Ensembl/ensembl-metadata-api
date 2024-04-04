@@ -195,13 +195,19 @@ def get_sub_species_info(db_conn, organism_uuid, group):
     return msg_factory.create_sub_species()
 
 
-def get_genome_uuid(db_conn, production_name, assembly_name, use_default=False):
+def get_genome_uuid(db_conn: GenomeAdaptor, production_name: str, assembly_name: str,
+                    genebuild_date: str = None,
+                    use_default: bool = False,
+                    release_version: str = None):
     if not production_name or not assembly_name:
         logger.warning("Missing or Empty production_name or assembly_name field.")
         return msg_factory.create_genome_uuid()
 
-    genome_uuid_result = db_conn.fetch_genomes(assembly_name=assembly_name, use_default_assembly=use_default,
-                                               production_name=production_name)
+    genome_uuid_result = db_conn.fetch_genomes_by_assembly_name_genebuild(assembly=assembly_name,
+                                                                          genebuild=genebuild_date,
+                                                                          production_name=production_name,
+                                                                          use_default=use_default,
+                                                                          release_version=release_version)
 
     if len(genome_uuid_result) == 1:
         response_data = msg_factory.create_genome_uuid(
@@ -211,7 +217,8 @@ def get_genome_uuid(db_conn, production_name, assembly_name, use_default=False):
         return response_data
 
     elif len(genome_uuid_result) > 1:
-        logger.debug("Multiple results returned.")
+        logger.warning("Multiple results returned. %s", genome_uuid_result)
+        return msg_factory.create_genome_uuid({"genome_uuid": genome_uuid_result[0].Genome.genome_uuid})
     else:
         logger.debug("No Genome found.")
     return msg_factory.create_genome_uuid()
@@ -253,7 +260,8 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version=None):
         # Group `genome_results` based on the `assembly_accession` field
         for _, genome_release_group in itertools.groupby(genome_results, lambda r: r.Assembly.accession):
             # Sort the genomes in each group based on the `release_version` field in descending order
-            sorted_genomes = sorted(genome_release_group, key=lambda g: g.EnsemblRelease.version if g.EnsemblRelease is not None else g.Genome.genome_uuid, reverse=True)
+            sorted_genomes = sorted(genome_release_group, key=lambda
+                g: g.EnsemblRelease.version if g.EnsemblRelease is not None else g.Genome.genome_uuid, reverse=True)
             # Select the most recent genome from the sorted group (first element)
             most_recent_genome = sorted_genomes[0]
             # Add the most recent genome to the `most_recent_genomes` list
@@ -412,7 +420,7 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
 
     dataset_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name=requested_dataset_type,
                                                     dataset_attributes=True)
-    logger.debug("dataset Results %s" , dataset_results)
+    logger.debug("dataset Results %s", dataset_results)
     response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
     return response_data
 
