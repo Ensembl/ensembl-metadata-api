@@ -217,10 +217,9 @@ def get_genome_uuid(db_conn: GenomeAdaptor, production_name: str, assembly_name:
         return response_data
 
     elif len(genome_uuid_result) > 1:
-        logger.warning("Multiple results returned. %s", genome_uuid_result)
-        return msg_factory.create_genome_uuid({"genome_uuid": genome_uuid_result[0].Genome.genome_uuid})
+        logger.error("Multiple results returned. %s", genome_uuid_result)
     else:
-        logger.debug("No Genome found.")
+        logger.info("No Genome found.")
     return msg_factory.create_genome_uuid()
 
 
