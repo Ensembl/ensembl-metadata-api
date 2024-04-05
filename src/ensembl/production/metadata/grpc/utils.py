@@ -195,31 +195,32 @@ def get_sub_species_info(db_conn, organism_uuid, group):
     return msg_factory.create_sub_species()
 
 
-def get_genome_uuid(db_conn: GenomeAdaptor, production_name: str, assembly_name: str,
+def get_genome_uuid(db_conn: GenomeAdaptor,
+                    production_name: str,
+                    assembly_name: str,
                     genebuild_date: str = None,
                     use_default: bool = False,
                     release_version: str = None):
-    if not production_name or not assembly_name:
-        logger.warning("Missing or Empty production_name or assembly_name field.")
-        return msg_factory.create_genome_uuid()
+    if production_name and assembly_name:
+        genome_uuid_result = db_conn.fetch_genomes_by_assembly_name_genebuild(assembly=assembly_name,
+                                                                              genebuild=genebuild_date,
+                                                                              production_name=production_name,
+                                                                              use_default=use_default,
+                                                                              release_version=release_version)
 
-    genome_uuid_result = db_conn.fetch_genomes_by_assembly_name_genebuild(assembly=assembly_name,
-                                                                          genebuild=genebuild_date,
-                                                                          production_name=production_name,
-                                                                          use_default=use_default,
-                                                                          release_version=release_version)
+        if len(genome_uuid_result) == 1:
+            response_data = msg_factory.create_genome_uuid(
+                {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
+            )
+            logger.debug(f"Response data: \n{response_data}")
+            return response_data
 
-    if len(genome_uuid_result) == 1:
-        response_data = msg_factory.create_genome_uuid(
-            {"genome_uuid": genome_uuid_result[0].Genome.genome_uuid}
-        )
-        logger.debug(f"Response data: \n{response_data}")
-        return response_data
+        elif len(genome_uuid_result) > 1:
+            logger.error("Multiple results returned. %s", genome_uuid_result)
+        else:
+            logger.info("No Genome found.")
 
-    elif len(genome_uuid_result) > 1:
-        logger.error("Multiple results returned. %s", genome_uuid_result)
-    else:
-        logger.info("No Genome found.")
+    logger.warning("Missing or Empty production_name or assembly_name field.")
     return msg_factory.create_genome_uuid()
 
 
