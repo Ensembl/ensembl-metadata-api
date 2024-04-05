@@ -187,10 +187,10 @@ CREATE TABLE genome
     constraint genome_genome_uuid_6b62d0ad_uniq
         unique (genome_uuid),
     constraint genome_assembly_id_0a748388_fk_assembly_assembly_id
-        foreign key (assembly_id) references marco_ensembl_genome_metadata.assembly (assembly_id)
+        foreign key (assembly_id) references assembly (assembly_id)
             on delete cascade,
     constraint genome_organism_id_99ad7f35_fk_organism_organism_id
-        foreign key (organism_id) references marco_ensembl_genome_metadata.organism (organism_id)
+        foreign key (organism_id) references organism (organism_id)
             on delete cascade
 );
 
