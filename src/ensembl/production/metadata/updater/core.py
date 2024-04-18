@@ -9,6 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.`
+import re
 import uuid
 from collections import defaultdict
 
@@ -252,10 +253,22 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def new_genome(self, meta_session, species_id, organism, assembly, assembly_dataset, genebuild_dataset):
         production_name = self.get_meta_single_meta_key(species_id, "species.production_name")
+        genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
+        genebuild_date = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
+        if genebuild_date is None:
+            start_date_str = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
+            match = re.search(r'^(\d{4}-\d{2})', start_date_str)
+            if match:
+                genebuild_date = match.group(0)
+            else:
+                raise exceptions.MetadataUpdateException(f"Unable to parse genebuild.start_date from meta")
+
         new_genome = Genome(
             genome_uuid=str(uuid.uuid4()),
             assembly=assembly,
             organism=organism,
+            genebuild_date=genebuild_date,
+            genebuild_version=genebuild_version,
             created=func.now(),
             is_best=0,
             production_name=production_name,

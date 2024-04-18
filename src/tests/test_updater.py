@@ -64,6 +64,8 @@ class TestUpdater:
             organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
             assembly = session.query(Assembly).where(Assembly.name == 'jaber01').first()
             assert organism.scientific_name == 'carol_jabberwocky'
+            assert organism.genomes[0].genebuild_version == 'ENS01'
+            assert organism.genomes[0].genebuild_date == '2023-07'
             # Test the Assembly
             assert assembly.accession == 'GCF_1111111123.3'
             assert assembly.alt_accession == 'GCA_0000012345.3'
@@ -114,6 +116,8 @@ class TestUpdater:
             organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
             assert organism.scientific_name == 'carol_jabberwocky'
             assert organism.genomes[1].assembly.accession == 'weird02'
+            assert organism.genomes[1].genebuild_version == 'ENS01'
+            assert organism.genomes[1].genebuild_date == '2024-02'
 
     #
     def test_update_geneset(self, multi_dbs):
@@ -129,6 +133,8 @@ class TestUpdater:
             assert re.match(".*_core_4", dataset.dataset_source.name)
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
+            assert dataset.genome_datasets[0].genome.genebuild_version == 'ENS02'
+            assert dataset.genome_datasets[0].genome.genebuild_date == '2023-07'
 
     def test_taxonomy_common_name(self, multi_dbs):
         test = meta_factory(multi_dbs['core_5'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,

@@ -81,6 +81,53 @@ class GenomeAdaptor(BaseAdaptor):
                 taxids.append(taxid[0])
         return taxids
 
+    def fetch_genomes_by_assembly_name_genebuild(self,
+                                                 production_name: str,
+                                                 assembly: str,
+                                                 genebuild: str = None,
+                                                 use_default: bool = False,
+                                                 release_version: float = None):
+        """
+        Fetch genomes according to assembly and genebuild version.
+        Args:
+            assembly: assembly identifier (either assembly_default or just name depending on use_default param)
+            genebuild: genebuild date as from compara_db format YYYY-MM
+            use_default: whether to use Assembly.assembly_default or Assembly.name to filter genomes
+            release_version: whether to return data up to this release version
+
+        Returns:
+            List[Genome]
+
+        """
+        genome_select = db.select(Genome) \
+            .join(Organism, Organism.organism_id == Genome.organism_id) \
+            .join(Assembly, Assembly.assembly_id == Genome.assembly_id)
+        print(f" Use default {use_default}")
+        assembly_field = Assembly.assembly_default if use_default else Assembly.name
+        genome_select = genome_select.filter(assembly_field == assembly).filter(Genome.production_name == production_name)
+        if genebuild:
+            genome_select = genome_select.filter(Genome.genebuild_date == genebuild)
+        if cfg.allow_unreleased:
+            genome_select = genome_select \
+                .outerjoin(GenomeRelease) \
+                .outerjoin(EnsemblRelease) \
+                .outerjoin(EnsemblSite)
+        else:
+            # Include release related info if released_only is True
+            genome_select = genome_select \
+                .join(GenomeRelease) \
+                .join(EnsemblRelease) \
+                .join(EnsemblSite) \
+                .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+
+        if release_version is not None and release_version > 0:
+            # if release is specified
+            genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+        print(genome_select)
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            return session.execute(genome_select).all()
+
     def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None, assembly_uuid=None,
                       assembly_accession=None, assembly_name=None, use_default_assembly=False, biosample_id=None,
                       production_name=None, taxonomy_id=None, group=None, unreleased_only=False, site_name=None,
@@ -236,7 +283,7 @@ class GenomeAdaptor(BaseAdaptor):
         logger.debug(f"fetch_genome: {genome_select}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
-            return session.execute(genome_select.order_by("ensembl_name")).all()
+            return session.execute(genome_select.order_by("production_name")).all()
 
     def fetch_genomes_by_genome_uuid(self, genome_uuid, allow_unreleased=False, site_name=None, release_type=None,
                                      release_version=None, current_only=True):

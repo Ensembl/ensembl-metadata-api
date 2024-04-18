@@ -50,7 +50,11 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetGenomeUUID(self, request, context):
         logger.debug(f"Received RPC for GetGenomeUUID with request: {request}")
-        return utils.get_genome_uuid(self.db, request.production_name, request.assembly_name, request.use_default)
+        return utils.get_genome_uuid(self.db, production_name=request.production_name,
+                                     assembly_name=request.assembly_name,
+                                     use_default=request.use_default,
+                                     genebuild_date=request.genebuild_date,
+                                     release_version=request.release_version)
 
     def GetGenomeByUUID(self, request, context):
         logger.debug(f"Received RPC for GetGenomeByUUID with request: {request}")
