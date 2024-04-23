@@ -13,7 +13,7 @@ import logging
 import re
 import uuid
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship
 
@@ -116,11 +116,12 @@ class Genome(LoadAble, Base):
 class GenomeDataset(LoadAble, Base):
     __tablename__ = "genome_dataset"
 
-    # genome_dataset_id = Column(Integer, primary_key=True)
-    dataset_id = Column(ForeignKey("dataset.dataset_id"), nullable=False, primary_key=True)
-    genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, primary_key=True)
+    genome_dataset_id = Column(Integer, primary_key=True)
+    dataset_id = Column(ForeignKey("dataset.dataset_id"), nullable=False, index=True)
+    genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
     release_id = Column(ForeignKey("ensembl_release.release_id"), index=True)
     is_current = Column(TINYINT(1), nullable=False, default=0)
+    UniqueConstraint("genome_id", "dataset_id", "release_id", name="genome_dataset_release_uidx"),
 
     # genome_dataset_id to genome
     dataset = relationship("Dataset", back_populates="genome_datasets", )
@@ -133,8 +134,10 @@ class GenomeDataset(LoadAble, Base):
 class GenomeRelease(LoadAble, Base):
     __tablename__ = "genome_release"
 
-    genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, primary_key=True)
-    release_id = Column(ForeignKey("ensembl_release.release_id"), nullable=False, primary_key=True)
+    UniqueConstraint("genome_id", "release_id", name="genome_release_uidx"),
+    genome_release_id = Column(Integer, primary_key=True)
+    genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
+    release_id = Column(ForeignKey("ensembl_release.release_id"), nullable=False, index=True)
     is_current = Column(TINYINT(1), nullable=False, default=0)
     # One to many relationships
     # none

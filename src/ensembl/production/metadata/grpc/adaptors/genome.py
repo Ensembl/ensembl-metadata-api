@@ -102,7 +102,6 @@ class GenomeAdaptor(BaseAdaptor):
         genome_select = db.select(Genome) \
             .join(Organism, Organism.organism_id == Genome.organism_id) \
             .join(Assembly, Assembly.assembly_id == Genome.assembly_id)
-        print(f" Use default {use_default}")
         assembly_field = Assembly.assembly_default if use_default else Assembly.name
         genome_select = genome_select.filter(assembly_field == assembly).filter(Genome.production_name == production_name)
         if genebuild:
