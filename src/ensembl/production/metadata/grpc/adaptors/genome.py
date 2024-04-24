@@ -531,7 +531,7 @@ class GenomeAdaptor(BaseAdaptor):
                     genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
                 else:
                     genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
-            dataset_type_name = "assembly" if dataset_type_name is None else dataset_type_name
+            dataset_type_name = "assembly" if not dataset_type_name else dataset_type_name
             if dataset_type_name == "all":
                 # TODO: fetch the list dynamically from the DB
                 # TODO: you can as well simply remove the filter, if you want them all.
