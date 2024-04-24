@@ -38,20 +38,24 @@ class DatasetFactory:
     # TODO: Multiple genomes for a single dataset are not incorporated
     def create_all_child_datasets(self, dataset_uuid: str,
                                   session: sqlalchemy.orm.Session = None,
-                                  topic: str = 'production_process',
-                                  status: DatasetStatus = None):
+                                  topic: str = None,  # = 'production_process',
+                                  status: DatasetStatus = None,
+                                  release: EnsemblRelease = None):
         # Retrieve the top-level dataset
         # Will not work on datasets that are tied to multiple genomes!
         # !!!! WILL CREATE THE DATASETS EVEN IF THEY ALREADY EXIST
         if not session:
             with self.__get_db_connexion().session_scope() as db_session:
-                return self.create_all_child_datasets(dataset_uuid, db_session, topic, status)
+                return self.create_all_child_datasets(dataset_uuid, db_session, topic, status, release)
         top_level_dataset = self.__get_dataset(session, dataset_uuid)
-        self.__create_child_datasets_recursive(session, top_level_dataset, topic, status)
+        self.__create_child_datasets_recursive(session=session, parent_dataset=top_level_dataset,
+                                               topic=topic,
+                                               status=status,
+                                               release=release)
         return self.query_all_child_datasets(dataset_uuid, session)
 
     def create_dataset(self, session, genome_input, dataset_source, dataset_type, dataset_attributes, name, label,
-                       version, status=DatasetStatus.SUBMITTED, parent=None):
+                       version, status=DatasetStatus.SUBMITTED, parent=None, release=None):
         # Check if genome_input is a UUID (string) or a Genome object
         if isinstance(status, str):
             status = DatasetStatus(status)
@@ -89,6 +93,9 @@ class DatasetFactory:
                 dataset=new_dataset,
                 is_current=False,
             )
+            if release is not None:
+                logger.debug(f"Attaching {new_dataset.dataset_uuid} to release {release.release_id}")
+                new_genome_dataset.release_id = release.release_id
             session.add(new_genome_dataset)
             return dataset_uuid, new_dataset, new_dataset_attributes, new_genome_dataset
         else:
@@ -137,14 +144,16 @@ class DatasetFactory:
         genome_data = self.__query_genomes_by_status_and_type(session, status, dataset_type)
         return genome_data
 
-    def __create_child_datasets_recursive(self, session, parent_dataset, topic, status=None):
+    def __create_child_datasets_recursive(self, session, parent_dataset, topic=None, status=None, release=None):
         parent_dataset_type = parent_dataset.dataset_type
 
         # Find child dataset types for the parent dataset type
         child_dataset_types = session.query(DatasetType).filter(
-            DatasetType.parent == parent_dataset_type.dataset_type_id, DatasetType.topic == topic).all()
+            DatasetType.parent == parent_dataset_type.dataset_type_id)
+        if topic is not None:
+            child_dataset_types = child_dataset_types.filter(DatasetType.topic == topic)
         status = status or DatasetStatus.SUBMITTED
-        for child_type in child_dataset_types:
+        for child_type in child_dataset_types.all():
             # Check if a dataset with the same type and genome exists
             existing_datasets = session.query(Dataset).join(GenomeDataset).filter(
                 Dataset.dataset_type_id == child_type.dataset_type_id,
@@ -163,26 +172,33 @@ class DatasetFactory:
             dataset_type = child_type
             dataset_attributes = {}  # Populate with appropriate attributes
             name = dataset_type.name
-            label = f"Child of {parent_dataset.name}"
-            version = None
+            label = f"From {parent_dataset.dataset_uuid}"
+            version = parent_dataset.version
             # Create the child dataset
             if not exist_ds:
-                child_uuid, dataset, attributes, genome_dataset = self.create_dataset(session,
-                                                                                      genome_uuid,
-                                                                                      dataset_source,
-                                                                                      dataset_type,
-                                                                                      dataset_attributes,
-                                                                                      name,
-                                                                                      label,
-                                                                                      version,
-                                                                                      parent=parent_dataset,
-                                                                                      status=status)
+                logger.debug(f"Creating dataset ")
+                child_uuid, dataset, attributes, g_dataset = self.create_dataset(session=session,
+                                                                                 genome_input=genome_uuid,
+                                                                                 dataset_source=dataset_source,
+                                                                                 dataset_type=dataset_type,
+                                                                                 dataset_attributes=dataset_attributes,
+                                                                                 name=name,
+                                                                                 label=label,
+                                                                                 version=version,
+                                                                                 parent=parent_dataset,
+                                                                                 status=status,
+                                                                                 release=release)
             else:
                 child_uuid = exist_ds.dataset_uuid
+
             session.flush()
             # Recursively create children of this new child dataset
             child_dataset = self.__get_dataset(session, child_uuid)
-            self.__create_child_datasets_recursive(session, child_dataset, topic)
+            self.__create_child_datasets_recursive(session=session,
+                                                   parent_dataset=child_dataset,
+                                                   topic=topic,
+                                                   status=status,
+                                                   release=release)
 
     def __query_parent_datasets(self, session, dataset_uuid):
         dataset = self.__get_dataset(session, dataset_uuid)
