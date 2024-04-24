@@ -48,7 +48,8 @@ class DatasetFactory:
             with self.__get_db_connexion().session_scope() as db_session:
                 return self.create_all_child_datasets(dataset_uuid, db_session, topic, status, release)
         top_level_dataset = self.__get_dataset(session, dataset_uuid)
-        self.__create_child_datasets_recursive(session=session, parent_dataset=top_level_dataset,
+        self.__create_child_datasets_recursive(session=session,
+                                               parent_dataset=top_level_dataset,
                                                topic=topic,
                                                status=status,
                                                release=release)
@@ -162,7 +163,8 @@ class DatasetFactory:
             exist_ds = next((
                 d for d in existing_datasets if d.status in [DatasetStatus.SUBMITTED, DatasetStatus.PROCESSING]), None)
             logger.debug(f"Skipped creation {exist_ds.name} is Submitted/Processing") if exist_ds else None
-
+            # TODO check if necessary since db constraint is
+            #  in place: constraint uk_genome_dataset UNIQUE KEY (dataset_id, genome_id)
             if len(parent_dataset.genome_datasets) > 1:
                 raise ValueError("More than one genome linked to a genome_dataset")
 
@@ -176,7 +178,7 @@ class DatasetFactory:
             version = parent_dataset.version
             # Create the child dataset
             if not exist_ds:
-                logger.debug(f"Creating dataset ")
+                logger.debug(f"Creating dataset {dataset_type.name}/{dataset_source.name}/{status.value}/{release}")
                 child_uuid, dataset, attributes, g_dataset = self.create_dataset(session=session,
                                                                                  genome_input=genome_uuid,
                                                                                  dataset_source=dataset_source,

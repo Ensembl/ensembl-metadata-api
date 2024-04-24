@@ -1,10 +1,10 @@
 1	assembly	Genomic assembly	assembly	Compilation of sequences for a genome	\N	\N	\N	\N
 2	genebuild	Genomic Build	genebuild_annotation	Genomic annotations for an assembly	\N	\N	\N	\N
-3	variation	Variation Annotations	variation_annotation	Variation annotation set	\N	\N	\N	\N
+3	variation	Variation Annotations	variation_annotation	Variation annotation set	\N	\N	2	\N
 4	evidence	Variation Evidence	production_process	Variation evidence annotation	\N	3	\N	\N
 5	short_variant	Short variants	production_process	Short variant data	\N	3	\N	\N
 6	homologies	Comparative homologies	compara_annotation	Comparative Genomics annotation	\N	\N	2	\N
-7	regulatory_features	Regulatory Annotation	regulation_annotation	Regulatory annotation for an assembly	\N	\N	\N	\N
+7	regulatory_features	Regulatory Annotation	regulation_annotation	Regulatory annotation for an assembly	\N	\N	2	\N
 8	genebuild_compute	External References	production_process	Xref genome annotation for Genebuild	\N	2	\N	\N
 9	genebuild_files	Files dumps	production_process	File Dumps, either internal or for public consumption	\N	2	8	\N
 11	genebuild_web	Web Geneset content	production_process	Web Geneset related content	\N	2	\N	\N
