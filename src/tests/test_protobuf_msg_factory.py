@@ -30,22 +30,22 @@ class TestClass:
     dbc = None  # type: UnitTestDB
 
     @pytest.mark.parametrize(
-        "allow_unreleased, genome_uuid, ds_type_name,  expected_ds_count, expected_assembly_count, ensembl_name",
+        "allow_unreleased, genome_uuid, ds_type_name,  expected_ds_count, expected_assembly_count, ensembl_name, expected",
         [
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 14, 'SAMN12121739'),
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 4, 14, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 5, 'SAMN12121739', 1),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 14, 'SAMN12121739', 2),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 5, 'SAMN12121739', 3),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 4, 14, 'SAMN12121739', 2),
         ],
         indirect=['allow_unreleased']
     )
     def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, ds_type_name, expected_ds_count,
                            expected_assembly_count,
-                           ensembl_name):
+                           ensembl_name, expected):
         """Test service.create_genome function"""
         genome_input_data = genome_conn.fetch_genomes(genome_uuid=genome_uuid)
         # Make sure we are only getting one
-        assert len(genome_input_data) == 1
+        assert len(genome_input_data) == expected
 
         attrib_input_data = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
                                                               dataset_attributes=True,
@@ -234,7 +234,7 @@ class TestClass:
         "allow_unreleased, expected_count",
         [
             (False, 5),
-            (True, 14)
+            (True, 19)
         ],
         indirect=['allow_unreleased']
     )

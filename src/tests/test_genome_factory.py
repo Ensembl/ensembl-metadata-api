@@ -70,9 +70,9 @@ class TestGenomeFactory:
     @pytest.mark.parametrize(
         "batch_size, status, expected_count",
         [
-            (10, 'Submitted', 2),
-            (40, 'Released', 11),
-            (50, 'Processed', 6),
+            (10, 'Submitted', 1),
+            (40, 'Released', 10),
+            (50, 'Processed', 8),
         ]
     )
     def test_fetch_genomes_by_default_params(self, genome_factory, genome_filters, status, batch_size, expected_count):
@@ -99,7 +99,8 @@ class TestGenomeFactory:
     def test_fetch_genomes_by_dataset_uuid(self, multi_dbs, genome_factory, genome_filters):
         genome_filters['dataset_uuid'] = ['11a0be7f-99ae-45d3-a004-dc19bb562330']
         # fetch genome using genome factory with dataset uuid
-        genome_factory_result = next(genome_factory.get_genomes(**genome_filters))
+        genome_factory_result = next(genome_factory.get_genomes(**genome_filters), None)
+        assert genome_factory_result is not None
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()

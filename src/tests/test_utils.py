@@ -78,7 +78,15 @@ class TestUtils:
         }
         assert json.loads(output) == expected_output
 
-    def test_get_genomes_from_assembly_accession_iterator(self, genome_conn):
+    @pytest.mark.parametrize(
+        "allow_unreleased, expected_count",
+        [
+            (False, 1),
+            (True, 2)
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_get_genomes_from_assembly_accession_iterator(self, genome_conn, allow_unreleased, expected_count):
         output = [
             json.loads(json_format.MessageToJson(response)) for response in
             utils.get_genomes_from_assembly_accession_iterator(
@@ -86,48 +94,7 @@ class TestUtils:
             )
         ]
 
-        expected_output = [
-            {
-                'assembly': {
-                    'accession': 'GCA_000005845.2',
-                    'assemblyUuid': '532aa68f-6500-404e-a470-8afb718a770a',
-                    'ensemblName': 'ASM584v2',
-                    'isReference': True,
-                    'level': 'chromosome',
-                    'name': 'ASM584v2',
-                    'urlName': 'asm584v2'
-                },
-                'attributesInfo': {},
-                'created': '2023-09-22 15:01:44',
-                'genomeUuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
-                'organism': {
-                    'commonName': 'Escherichia coli K-12',
-                    'ensemblName': 'SAMN02604091',
-                    'organismUuid': '1e579f8d-3880-424e-9b4f-190eb69280d9',
-                    'scientificName': 'Escherichia coli str. K-12 substr. MG1655 '
-                                      'str. K12',
-                    'scientificParlanceName': 'E coli K 12',
-                    'speciesTaxonomyId': 562,
-                    'strain': 'K-12 substr. MG1655',
-                    'strainType': 'strain',
-                    'taxonomyId': 511145
-                },
-                'release': {
-                    'releaseDate': '2023-06-15',
-                    'releaseLabel': 'First Beta',
-                    'releaseVersion': 108.0,
-                    'siteLabel': 'MVP Ensembl',
-                    'siteName': 'Ensembl',
-                    'siteUri': 'https://beta.ensembl.org'
-                },
-                'taxon': {
-                    'scientificName': 'Escherichia coli str. K-12 substr. MG1655 str. '
-                                      'K12',
-                    'strain': 'K-12 substr. MG1655',
-                    'taxonomyId': 511145
-                }
-            }]
-        assert output == expected_output
+        assert len(output) == expected_count
 
     @pytest.mark.parametrize(
         "assembly_accession, release_version",

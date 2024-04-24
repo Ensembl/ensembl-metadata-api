@@ -24,12 +24,10 @@ from typing import List
 
 from ensembl.database import DBConnection
 from sqlalchemy import select
-from sqlalchemy.engine import make_url
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
-from ensembl.production.metadata.api.models import EnsemblRelease
 from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
-from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
+from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -43,10 +41,6 @@ class GenomeInputFilters:
     dataset_uuid: List[str] = field(default_factory=list)
     division: List[str] = field(default_factory=list)
     dataset_type: str = "assembly"
-    root_dataset: bool = False
-    dataset_topic: List[str] = field(default_factory=list)
-    dataset_released: bool = False
-    dataset_unreleased: bool = False
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
     dataset_status: List[str] = field(default_factory=lambda: ["Submitted"])
@@ -54,25 +48,21 @@ class GenomeInputFilters:
     page: int = 1
     organism_group_type: str = "DIVISION"
     run_all: int = 0
-    release_id: int = None
     update_dataset_status: str = ""
     update_dataset_attribute: dict = field(default_factory=lambda: {})
     columns: List = field(default_factory=lambda: [Genome.genome_uuid,
                                                    Genome.production_name.label('species'),
                                                    Dataset.dataset_uuid,
                                                    Dataset.status.label('dataset_status'),
-                                                   Dataset.parent_id.label('parent_id'),
-                                                   GenomeDataset.release_id.label('release_id'),
                                                    DatasetSource.name.label('dataset_source'),
                                                    DatasetType.name.label('dataset_type'),
-                                                   DatasetType.topic.label('dataset_topic')
                                                    ])
 
 
 @dataclass
 class GenomeFactory:
     @staticmethod
-    def _apply_filters(query, filters: GenomeInputFilters):
+    def _apply_filters(query, filters):
 
         if filters.organism_group_type:
             query = query.filter(OrganismGroup.type == filters.organism_group_type)
@@ -116,33 +106,16 @@ class GenomeFactory:
         if filters.dataset_type:
             query = query.filter(Genome.genome_datasets.any(DatasetType.name.in_([filters.dataset_type])))
 
-        if filters.dataset_topic:
-            query = query.filter(DatasetType.topic.in_(filters.dataset_topic))
-
-        if filters.root_dataset:
-            query = query.filter(Dataset.parent_id == None)
-
-        if filters.dataset_released:
-            query = query.filter(GenomeDataset.release_id != None)
-
-        if filters.dataset_unreleased:
-            query = query.filter(GenomeDataset.release_id == None)
-
         if filters.dataset_status:
             query = query.filter(Dataset.status.in_(filters.dataset_status))
-
-        if filters.release_id:
-            if filters.dataset_released:
-                query = query.join(EnsemblRelease.genome_datasets)
-            query = query.filter(GenomeDataset.release_id == filters.release_id)
 
         if filters.batch_size:
             filters.page = filters.page if filters.page > 0 else 1
             query = query.offset((filters.page - 1) * filters.batch_size).limit(filters.batch_size)
-        logger.debug("Query GenomeInputFilters: %s", query)
+        logger.debug(f"Filter Query {query}")
         return query
 
-    def _build_query(self, filters: GenomeInputFilters):
+    def _build_query(self, filters):
         query = select(filters.columns) \
             .select_from(Genome) \
             .join(Genome.assembly) \
@@ -158,7 +131,7 @@ class GenomeFactory:
 
         return self._apply_filters(query, filters)
 
-    def get_genomes(self, **filters):
+    def get_genomes(self, **filters: GenomeInputFilters):
 
         filters = GenomeInputFilters(**filters)
         logger.info(f'Get Genomes with filters {filters}')
@@ -240,9 +213,10 @@ def main():
     parser.add_argument('--output', type=str, required=True, help='output file ex: genome_info.json')
 
     args = parser.parse_args()
-    meta_details = make_url(args.metadata_db_uri)
+
+    meta_details = re.match(r"mysql:\/\/.*:?(.*?)@(.*?):\d+\/(.*)", args.metadata_db_uri)
     with open(args.output, 'w') as json_output:
-        logger.info(f'Connecting Metadata Database with  host:{meta_details.host} & dbname:{meta_details.database}')
+        logger.info(f'Connecting Metadata Database with  host:{meta_details.group(2)} & dbname:{meta_details.group(3)}')
 
         genome_fetcher = GenomeFactory()
 

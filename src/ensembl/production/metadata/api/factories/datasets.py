@@ -38,7 +38,7 @@ class DatasetFactory:
     # TODO: Multiple genomes for a single dataset are not incorporated
     def create_all_child_datasets(self, dataset_uuid: str,
                                   session: sqlalchemy.orm.Session = None,
-                                  topic: str = None,  # = 'production_process',
+                                  topic: str = 'production_process',
                                   status: DatasetStatus = None,
                                   release: EnsemblRelease = None):
         # Retrieve the top-level dataset

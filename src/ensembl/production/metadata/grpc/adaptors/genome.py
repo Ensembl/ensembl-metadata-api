@@ -101,7 +101,8 @@ class GenomeAdaptor(BaseAdaptor):
         """
         genome_select = db.select(Genome) \
             .join(Organism, Organism.organism_id == Genome.organism_id) \
-            .join(Assembly, Assembly.assembly_id == Genome.assembly_id)
+            .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
+            .join(GenomeDataset).join(Dataset).filter(GenomeDataset.is_current == 1)
         assembly_field = Assembly.assembly_default if use_default else Assembly.name
         genome_select = genome_select.filter(assembly_field == assembly).filter(Genome.production_name == production_name)
         if genebuild:
@@ -122,7 +123,6 @@ class GenomeAdaptor(BaseAdaptor):
         if release_version is not None and release_version > 0:
             # if release is specified
             genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-        print(genome_select)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_select).all()
@@ -497,7 +497,7 @@ class GenomeAdaptor(BaseAdaptor):
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
                 .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id).order_by(
-                Genome.genome_uuid, Dataset.name).distinct()
+                Genome.genome_uuid, Dataset.name).filter(Dataset.parent_id == None).distinct()
 
             if genome_id is not None:
                 logger.debug(f"Filter on genome_id {genome_id}")
@@ -531,12 +531,7 @@ class GenomeAdaptor(BaseAdaptor):
                 else:
                     genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
             dataset_type_name = "assembly" if dataset_type_name is None else dataset_type_name
-            if dataset_type_name == "all":
-                # TODO: fetch the list dynamically from the DB
-                # TODO: you can as well simply remove the filter, if you want them all.
-                logger.debug(f"Filter on all dataset_type with no parent (main ones)")
-                genome_select = genome_select.filter(DatasetType.parent == None)
-            else:
+            if dataset_type_name != "all":
                 logger.debug(f"Filter on dataset_type_name {dataset_type_name}")
                 genome_select = genome_select.filter(DatasetType.name == dataset_type_name)
 
@@ -568,12 +563,14 @@ class GenomeAdaptor(BaseAdaptor):
                     .join(EnsemblRelease) \
                     .join(EnsemblSite) \
                     .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-                genome_select = genome_select.filter(GenomeDataset.release_id is not None) \
+                genome_select = genome_select.filter(GenomeDataset.release_id != None) \
                     .join(DSRelease, (DSRelease.release_id == GenomeDataset.release_id) &
                           (DSRelease.status == ReleaseStatus.RELEASED))
                 # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
-                genome_select = genome_select.filter(GenomeRelease.is_current == 1)
-                genome_select = genome_select.filter(GenomeDataset.is_current == 1)
+                # FIXME Hard to tell what is the best here. is_current = 1 is useful for stats...
+                #is_current = 0 if unreleased_only else 1
+                #genome_select = genome_select.filter(GenomeRelease.is_current == is_current)
+                #genome_select = genome_select.filter(GenomeDataset.is_current == is_current)
 
             if release_version:
                 logger.debug(f"Filter on release_version <= {release_version}")

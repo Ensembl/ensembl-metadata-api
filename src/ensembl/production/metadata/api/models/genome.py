@@ -61,6 +61,7 @@ class Genome(LoadAble, Base):
              da.attribute.name == "genebuild.annotation_source"),
             'ensembl')
         # Genebuild version is either the laste_geneset_update or the start_date if not specified.
+        root_datasets = [ds for ds in self.genome_datasets if ds.dataset.parent_id is None]
         try:
             match = re.match(r'^(\d{4}-\d{2})', genebuild_dataset.genebuild_version)
             genebuild_version = match.group(1).replace('-', '_')
@@ -68,7 +69,7 @@ class Genome(LoadAble, Base):
             logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
             raise RuntimeError(e)
         common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
-        unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
+        unique_dataset_types = {gd.dataset.dataset_type.name for gd in root_datasets}
 
         if 'regulatory_features' in unique_dataset_types or 'regulation_build' in unique_dataset_types:
             unique_dataset_types.discard('regulatory_features')

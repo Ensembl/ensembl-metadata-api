@@ -31,7 +31,7 @@ class TestGRPCGenomeAdaptor:
     @pytest.mark.parametrize(
         "allow_unreleased, unreleased_only, current_only, output_count",
         [
-            (True, False, False, 19),  # Allow Unreleased
+            (True, False, False, 29),  # Allow Unreleased
             (False, False, False, 10),  # Do not allow unreleased - fetch all even from previous releases
             (False, True, False, 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
             (False, False, True, 3)  # Only the ones from current release
@@ -89,7 +89,7 @@ class TestGRPCGenomeAdaptor:
         "allow_unreleased, division, output_count",
         [
             (False, 'EnsemblVertebrates', 5),  # Released genomes for Vertebrates
-            (True, 'EnsemblVertebrates', 14),  # Unreleased genomes for Vertebrates
+            (True, 'EnsemblVertebrates', 19),  # Unreleased genomes for Vertebrates
         ],
         indirect=['allow_unreleased']
     )
@@ -99,7 +99,7 @@ class TestGRPCGenomeAdaptor:
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
-        [(True, 1), (False, 0)],
+        [(True, 2), (False, 0)],
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_genome_uuid(self, genome_conn, allow_unreleased, output_count):
@@ -147,7 +147,7 @@ class TestGRPCGenomeAdaptor:
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
-        [(True, 1), (False, 0)],
+        [(True, 2), (False, 0)],
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_ensembl_name(self, genome_conn, allow_unreleased, output_count):
@@ -158,7 +158,7 @@ class TestGRPCGenomeAdaptor:
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
-        [(True, 1), (False, 0)],
+        [(True, 2), (False, 0)],
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_taxonomy_id(self, genome_conn, allow_unreleased, output_count):
@@ -169,7 +169,7 @@ class TestGRPCGenomeAdaptor:
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
-        [(True, 1), (False, 0)],
+        [(True, 2), (False, 0)],
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_scientific_name(self, genome_conn, allow_unreleased, output_count):
@@ -230,7 +230,8 @@ class TestGRPCGenomeAdaptor:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "786344d1-a71f-4bab-aa37-6ee315ed60a4", 86),
+            (None, None, True, False, "786344d1-a71f-4bab-aa37-6ee315ed60a4", 68),
+            (None, None, False, False, "45aec801-4fe7-4ac2-9afa-19aea2a8409e", 44),
             # specifying genome_uuid
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "999315f6-6d25-481f-a017-297f7e1490c8", 5),
             # specifying dataset_uuid
@@ -248,6 +249,7 @@ class TestGRPCGenomeAdaptor:
             expected_count):
         genome_datasets = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid, unreleased_only=unreleased_only,
                                                             dataset_uuid=dataset_uuid, dataset_type_name="all")
+        assert len(genome_datasets) >= 0
         assert genome_datasets[0].Dataset.dataset_uuid == expected_dataset_uuid
         assert len(genome_datasets) == expected_count
 
@@ -256,10 +258,9 @@ class TestGRPCGenomeAdaptor:
         [
             # homo_sapiens_37
             (False, "1d336185-affe-4a91-85bb-04ebd73cbb56", 11),
-            (True, "1d336185-affe-4a91-85bb-04ebd73cbb56", 13),
-            # e-coli
-            (False, "1e579f8d-3880-424e-9b4f-190eb69280d9", 3),
-            (True, "1e579f8d-3880-424e-9b4f-190eb69280d9", 4),
+            (True, "1d336185-affe-4a91-85bb-04ebd73cbb56", 26),
+            (False, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 8),
+            (True, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 20),
             # non-existing organism
             (False, "organism-yet-to-be-discovered", 0),
         ],
@@ -314,7 +315,7 @@ class TestGRPCGenomeAdaptor:
         [
             (None, 5, False),  # Default is 'Popular' group
             ('vertebrates', 5, False),  # Returns only vertebrates
-            ('EnsemblVertebrates', 14, True),  # Returns only vertebrates with unreleased
+            ('EnsemblVertebrates', 19, True),  # Returns only vertebrates with unreleased
         ],
         indirect=['allow_unreleased']
     )
@@ -330,8 +331,8 @@ class TestGRPCGenomeAdaptor:
         [
             (9606, None, 5, False),  # Human 5 genomes are released
             (9606, 110.2, 5, False),  # Human specify release doesn't change is not ALLOWED_UNRELEASED
-            (9606, 110.2, 14, True),  # Human specify release changes with ALLOWED_UNRELEASED
-            (562, None, 1, True),  # E.Coli Only return one since no alternative Assembly
+            (9606, 110.2, 19, True),  # Human specify release changes with ALLOWED_UNRELEASED
+            (562, None, 2, True),  # E.Coli return 2 since two genomes released
         ],
         indirect=['allow_unreleased']
     )

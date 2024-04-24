@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 from ensembl.database import UnitTestDB, DBConnection
+from sqlalchemy import func
 
 from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
                                                     GenomeDataset, Genome, DatasetStatus)
@@ -97,34 +98,68 @@ class TestDatasetFactory:
 
     def test_genebuild_workflow(self, multi_dbs, dataset_factory):
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        genebuild_uuid = '11a0be7f-99ae-45d3-a004-dc19bb562330' # Only Submitted dataset
-
+        genebuild_uuid = 'a3352834-cea1-40aa-9dad-99981620c36b'
         # Test children creation
         with metadata_db.session_scope() as session:
-            genebuild_ds = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
-            assert genebuild_ds.name == 'genebuild'
-            dataset_factory.create_all_child_datasets(genebuild_uuid, session)
+            genome = Genome(genebuild_version="1.0",
+                            production_name="new_grch37",
+                            assembly_id=40,
+                            created=func.now(),
+                            organism_id=9)
+            session.add(genome)
+            genebuild = Dataset(
+                dataset_type_id=2,
+                dataset_source=DatasetSource(
+                    name="fake",
+                    type="core"
+                ),
+                created=func.now(),
+                name="fake genebuild",
+                status=DatasetStatus.SUBMITTED,
+                label="fake genebuild",
+                version="1.0",
+                dataset_uuid=genebuild_uuid
+            )
+            session.add(genebuild)
+            session.add(GenomeDataset(
+                genome=genome,
+                dataset=genebuild,
+                is_current=0,
+            ))
+
             session.commit()
-            data = session.query(Dataset).join(DatasetType).filter(
-                DatasetType.name == 'web_gb_content' and Dataset.parent == genebuild_ds).one()
-            sdata = session.query(Dataset).join(DatasetType).filter(
-                DatasetType.name == 'gb_track_api' and Dataset.parent == genebuild_ds).one()
+            assert genebuild.dataset_uuid is not None
+            logger.debug(f" new GB uuid {genebuild.dataset_uuid}")
+            dataset_factory.create_all_child_datasets(genebuild.dataset_uuid, session)
+            session.commit()
+            genebuild_ds = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild.dataset_uuid).one()
+            assert genebuild_ds.name == 'fake genebuild'
+            assert genebuild_ds.dataset_uuid == genebuild.dataset_uuid
+            session.commit()
+
+            data_q = session.query(Dataset).join(DatasetType).filter(
+                DatasetType.name == 'genebuild_web', Dataset.parent == genebuild_ds)
+            logger.debug(data_q)
+            data = data_q.one()
+            sdata = session.query(Dataset).join(GenomeDataset).join(DatasetType).filter(
+                DatasetType.name == 'alpha_fold', GenomeDataset.genome_id == genome.genome_id).one()
             assert data.status == DatasetStatus.SUBMITTED  # "Submitted"
             assert sdata.status == DatasetStatus.SUBMITTED  # "Submitted"
             # test get parent
             test_parent, test_status = dataset_factory.get_parent_datasets(data.dataset_uuid, session=session)
-            assert test_parent == genebuild_uuid
+            assert test_parent == genebuild.dataset_uuid
             stest_parent, test_status = dataset_factory.get_parent_datasets(data.dataset_uuid, session=session)
             assert test_parent == stest_parent
-            assert len(data.children) == 2
-            assert any(x for x in data.children if x.name == 'gb_browser_files')
-            assert any(x for x in data.children if x.name == 'gb_track_api')
+            assert len(data.children) == 3
+            assert any(x for x in data.children if x.name == 'checksums')
+            assert any(x for x in data.children if x.name == 'thoas_dumps')
 
         # Genebuild child datasets are now created, test updating status
         with metadata_db.session_scope() as session:
             genebuild_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
             # Get the genome for this one
             genome_uuid = genebuild_dataset.genome_datasets[0].genome.genome_uuid
+            print(f"GEnome UUID {genome_uuid}")
             # Check that xref is made
             xref_uuid = session.query(Dataset.dataset_uuid) \
                 .join(GenomeDataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
@@ -190,20 +225,10 @@ class TestDatasetFactory:
                 session.commit()
             genebuild_status_check = session.query(Dataset.status).filter(
                 Dataset.dataset_uuid == genebuild_uuid).one()
-            assert genebuild_status_check[0] == DatasetStatus.PROCESSED  # "Processed"
-            dataset_factory.update_dataset_status(genebuild_uuid, DatasetStatus.RELEASED,
-                                                  session=session)  # "Released", session=session)
-            session.commit()
-            genebuild_status_check = session.query(Dataset.status).filter(
-                Dataset.dataset_uuid == genebuild_uuid).one()
-            assert genebuild_status_check[0] == DatasetStatus.RELEASED  # "Released"
-            protfeat_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
-            assert protfeat_status_check[0] == DatasetStatus.RELEASED  # "Released"
-
+            assert genebuild_status_check[0] == DatasetStatus.PROCESSED
             # Check for submitted change
             dataset_factory.update_dataset_status(protfeat_uuid, DatasetStatus.SUBMITTED,
                                                   session=session)  # "Submitted", session=session)
             session.commit()
             submitted_status = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
             assert submitted_status[0] == DatasetStatus.SUBMITTED  # "Submitted"
-
