@@ -67,7 +67,7 @@ class GenomeAdaptor(BaseAdaptor):
             return taxons
 
     def fetch_taxonomy_ids(self, taxonomy_names):
-        taxids = []
+        taxids = []release 
         taxonomy_names = check_parameter(taxonomy_names)
         for taxon in taxonomy_names:
             taxa_name_select = db.select(
@@ -527,8 +527,13 @@ class GenomeAdaptor(BaseAdaptor):
                     genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
                 else:
                     genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
-            dataset_type_name = "assembly" if dataset_type_name is None else dataset_type_name
-            if dataset_type_name != "all":
+            dataset_type_name = "assembly" if not dataset_type_name else dataset_type_name
+            if dataset_type_name == "all":
+                # TODO: fetch the list dynamically from the DB
+                # TODO: you can as well simply remove the filter, if you want them all.
+                logger.debug(f"Filter on all dataset_type with no parent (main ones)")
+                genome_select = genome_select.filter(DatasetType.parent == None)
+            else:
                 logger.debug(f"Filter on dataset_type_name {dataset_type_name}")
                 genome_select = genome_select.filter(DatasetType.name == dataset_type_name)
 
