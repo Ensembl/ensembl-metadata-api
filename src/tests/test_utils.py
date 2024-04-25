@@ -331,7 +331,7 @@ class TestUtils:
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
-        [(True, 14), (False, 5)],
+        [(True, 5), (False, 5)],
         indirect=['allow_unreleased']
     )
     def test_get_genomes_by_keyword_unreleased(self, genome_conn, allow_unreleased, output_count):

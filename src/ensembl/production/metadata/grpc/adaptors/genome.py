@@ -332,7 +332,7 @@ class GenomeAdaptor(BaseAdaptor):
         if not cfg.allow_unreleased:
             logger.debug("NOT Allowed Unreleased")
             genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-        if release_version is not None and release_version > 0:
+        elif release_version is not None and release_version > 0:
             genome_query = genome_query.where(EnsemblRelease.version <= release_version)
 
         subquery = db.select(EnsemblRelease.version).filter(
