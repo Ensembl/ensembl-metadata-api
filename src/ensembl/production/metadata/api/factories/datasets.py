@@ -193,7 +193,7 @@ class DatasetFactory:
             else:
                 child_uuid = exist_ds.dataset_uuid
 
-            session.flush()
+            session.commit()
             # Recursively create children of this new child dataset
             child_dataset = self.__get_dataset(session, child_uuid)
             self.__create_child_datasets_recursive(session=session,

@@ -97,6 +97,9 @@ class TestGenomeFactory:
             assert genome.production_name == genome_factory_result['species']
 
     def test_fetch_genomes_by_dataset_uuid(self, multi_dbs, genome_factory, genome_filters):
+        # TODO from the example in `.test_get_genome_by_uuid`, we could
+        #   - add fixtures parameters for released/unreleased
+        #   - check multiple genomes_uuid
         genome_filters['dataset_uuid'] = ['11a0be7f-99ae-45d3-a004-dc19bb562330']
         # fetch genome using genome factory with dataset uuid
         genome_factory_result = next(genome_factory.get_genomes(**genome_filters), None)
@@ -161,14 +164,15 @@ class TestGenomeFactory:
         # fetch genomes with default filters
         genome_filters['dataset_uuid'] = ['f32b7f9a-97fd-41cd-86be-a5fb5becd335']
         genome_filters['dataset_type'] = 'homologies'
+        genome_filters['dataset_status'] = ['Processed']
 
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
 
     def test_expected_columns_on_update_status(self, genome_factory, expected_columns, genome_filters):
-        genome_filters['dataset_uuid'] = ['f32b7f9a-97fd-41cd-86be-a5fb5becd335']
+        genome_filters['dataset_uuid'] = ['f2734f34-36a0-4594-871d-f7f6d317d05a']
         genome_filters['dataset_type'] = 'homologies'
-        genome_filters['update_dataset_status'] = DatasetStatus.PROCESSING.value  # 'Processing'
+        genome_filters['update_dataset_status'] = DatasetStatus.PROCESSING.value
         expected_columns.append('updated_dataset_status')
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
