@@ -104,9 +104,11 @@ class GenomeAdaptor(BaseAdaptor):
             .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
             .join(GenomeDataset).join(Dataset).filter(GenomeDataset.is_current == 1)
         assembly_field = Assembly.assembly_default if use_default else Assembly.name
-        genome_select = genome_select.filter(assembly_field == assembly).filter(Genome.production_name == production_name)
+        genome_select = genome_select.filter(assembly_field == assembly).filter(
+            Genome.production_name == production_name)
         if genebuild:
             genome_select = genome_select.filter(Genome.genebuild_date == genebuild)
+        logger.debug(f"Allow Unreleased {cfg.allow_unreleased}")
         if cfg.allow_unreleased:
             genome_select = genome_select \
                 .outerjoin(GenomeRelease) \
@@ -136,7 +138,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         Args:
             genome_id (Union[int, List[int]]): The ID(s) of the genome(s) to fetch.
-            genome_uuid (Union[str, List[str]]): The UUID(s) of the genome(s) to fetch.
+            genome_uuid str|None: The UUID of the genome to fetch.
             genome_tag (Union[str, List[str]]): genome_tag value is either in Assembly.url_name or told_id.
             organism_uuid (Union[str, List[str]]): The UUID(s) of the organism(s) to fetch.
             assembly_uuid (Union[str, List[str]]): The UUID(s) of the assembly(s) to fetch.
@@ -173,7 +175,6 @@ class GenomeAdaptor(BaseAdaptor):
         """
         # Parameter validation
         genome_id = check_parameter(genome_id)
-        genome_uuid = check_parameter(genome_uuid)
         genome_tag = check_parameter(genome_tag)
         organism_uuid = check_parameter(organism_uuid)
         assembly_uuid = check_parameter(assembly_uuid)
@@ -205,7 +206,7 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
 
         if genome_uuid is not None:
-            genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
+            genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
 
         if genome_tag is not None:
             genome_select = genome_select.filter(
@@ -266,10 +267,6 @@ class GenomeAdaptor(BaseAdaptor):
             # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
             genome_select = genome_select.filter(GenomeRelease.is_current == 1)
 
-            if current_only:
-                # Current only has effect when Not allowed RELEASED dataset
-                genome_select = genome_select.filter(EnsemblRelease.is_current == 1)
-
         if release_version is not None and release_version > 0:
             # if release is specified
             genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
@@ -279,10 +276,10 @@ class GenomeAdaptor(BaseAdaptor):
 
         if release_type is not None:
             genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
-        logger.debug(f"fetch_genome: {genome_select}")
+        logger.debug(f"fetch_genome: {genome_select} / {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
-            return session.execute(genome_select.order_by("production_name")).all()
+            return session.execute(genome_select.order_by("production_name", EnsemblRelease.version.desc())).all()
 
     def fetch_genomes_by_genome_uuid(self, genome_uuid, allow_unreleased=False, site_name=None, release_type=None,
                                      release_version=None, current_only=True):
@@ -551,8 +548,9 @@ class GenomeAdaptor(BaseAdaptor):
                 genome_select = genome_select.add_columns(EnsemblRelease, DSRelease, EnsemblSite) \
                     .outerjoin(GenomeRelease) \
                     .outerjoin(EnsemblRelease) \
-                    .outerjoin(EnsemblSite) \
-                    .outerjoin(DSRelease, (DSRelease.release_id == GenomeDataset.release_id))
+                    .outerjoin(EnsemblSite).outerjoin(DSRelease, (DSRelease.release_id == GenomeDataset.release_id)) \
+ \
+                    # genome_select = genome_select.outerjoin(DSRelease, (DSRelease.release_id == release_version))
                 if unreleased_only:
                     # fetch only unreleased ones
                     genome_select = genome_select.filter(~Genome.genome_releases.any())
@@ -566,11 +564,14 @@ class GenomeAdaptor(BaseAdaptor):
                 genome_select = genome_select.filter(GenomeDataset.release_id != None) \
                     .join(DSRelease, (DSRelease.release_id == GenomeDataset.release_id) &
                           (DSRelease.status == ReleaseStatus.RELEASED))
-                # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
-                # FIXME Hard to tell what is the best here. is_current = 1 is useful for stats...
-                #is_current = 0 if unreleased_only else 1
-                #genome_select = genome_select.filter(GenomeRelease.is_current == is_current)
-                #genome_select = genome_select.filter(GenomeDataset.is_current == is_current)
+            # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
+            # FIXME Hard to tell what is the best here. is_current = 1 is useful for stats...
+            is_current = 0 if cfg.allow_unreleased else 1
+            logger.debug(f"Is Current {is_current}")
+            genome_select = genome_select.filter(GenomeRelease.is_current == is_current)
+            if unreleased_only:
+                genome_select = genome_select.filter(GenomeDataset.is_current == 0)
+
 
             if release_version:
                 logger.debug(f"Filter on release_version <= {release_version}")
@@ -579,7 +580,7 @@ class GenomeAdaptor(BaseAdaptor):
             logger.debug(genome_select)
             with self.metadata_db.session_scope() as session:
                 session.expire_on_commit = False
-                return session.execute(genome_select).all()
+                return session.execute(genome_select.order_by("production_name", EnsemblRelease.version.desc())).all()
 
         except Exception as e:
             raise ValueError(str(e))

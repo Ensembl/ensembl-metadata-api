@@ -33,16 +33,16 @@ class TestClass:
         "allow_unreleased, genome_uuid, ds_type_name,  expected_ds_count, expected_assembly_count, ensembl_name, expected",
         [
             (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 5, 'SAMN12121739', 1),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 14, 'SAMN12121739', 2),
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 5, 'SAMN12121739', 3),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 4, 14, 'SAMN12121739', 2),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 14, 'SAMN12121739', 1),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 5, 'SAMN12121739', 1),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 4, 14, 'SAMN12121739', 1),
         ],
         indirect=['allow_unreleased']
     )
     def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, ds_type_name, expected_ds_count,
-                           expected_assembly_count,
-                           ensembl_name, expected):
+                           expected_assembly_count, ensembl_name, expected):
         """Test service.create_genome function"""
+        # FIXME all returned genome is now unique following method
         genome_input_data = genome_conn.fetch_genomes(genome_uuid=genome_uuid)
         # Make sure we are only getting one
         assert len(genome_input_data) == expected

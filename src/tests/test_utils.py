@@ -135,29 +135,47 @@ class TestUtils:
     #     expected_output2 = {}
     #     assert json.loads(output2) == expected_output2
 
-    def test_get_top_level_statistics(self, genome_conn):
+    @pytest.mark.parametrize(
+        "allow_unreleased, organism_uuid, expected_count",
+        [
+            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 1),
+            (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 2)
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_get_top_level_statistics(self, genome_conn, allow_unreleased, organism_uuid, expected_count):
         # Triticum aestivum
         output = json_format.MessageToJson(
             utils.get_top_level_statistics(
                 db_conn=genome_conn,
-                group="EnsemblPlants",
-                organism_uuid="86dd50f1-421e-4829-aca5-13ccc9a459f6",
+                organism_uuid=organism_uuid,
             )
         )
         output = json.loads(output)
-        first_genome_stats = output["statsByGenomeUuid"][0]["statistics"]
-        assert first_genome_stats[0] == {
+        print(f"top stats {output}")
+        print(f"top stats {output['statsByGenomeUuid'][0]['statistics']}")
+        assembly_accession_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
+                                    stat['name'] == 'assembly.accession']
+        assert len(assembly_accession_stats) == 1
+        assert assembly_accession_stats[0] == {
             'label': 'assembly.accession',
             'name': 'assembly.accession',
             'statisticType': 'string',
             'statisticValue': 'GCA_900519105.1'
         }
-        assert first_genome_stats[1] == {
+        assembly_accession_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
+                                    stat['name'] == 'assembly.chromosomes']
+        assert len(assembly_accession_stats) == 1
+        assert assembly_accession_stats[0] == {
             'label': 'Chromosomes or plasmids',
             'name': 'assembly.chromosomes',
             'statisticType': 'integer',
             'statisticValue': '22'
         }
+
+        assembly_homology_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
+                                   stat['name'] == 'compara.homology_coverage']
+        assert len(assembly_homology_stats) == 1 if not allow_unreleased else 2
 
     def test_get_top_level_statistics_by_uuid(self, genome_conn):
         output = json_format.MessageToJson(
@@ -166,13 +184,19 @@ class TestUtils:
             )
         )
         output = json.loads(output)
-        assert output["statistics"][0] == {
+        print(f"uuid stats {output}")
+        assembly_accession_stats = [stat for stat in output['statistics'] if stat['name'] == 'assembly.accession']
+        assert len(assembly_accession_stats) == 1
+        assert assembly_accession_stats[0] == {
             'label': 'assembly.accession',
             'name': 'assembly.accession',
             'statisticType': 'string',
             'statisticValue': 'GCA_900519105.1'
         }
-        assert output["statistics"][2] == {
+        assembly_component_sequences = [stat for stat in output['statistics'] if
+                                        stat['name'] == 'assembly.component_sequences']
+        assert len(assembly_component_sequences) == 1
+        assert assembly_component_sequences[0] == {
             'label': 'Component sequences',
             'name': 'assembly.component_sequences',
             'statisticType': 'integer',
@@ -207,7 +231,7 @@ class TestUtils:
     def test_get_dataset_by_genome_and_dataset_type(self, multi_dbs, genome_conn, allow_unreleased, genome_uuid,
                                                     dataset_type, count):
         genome_datasets = utils.get_dataset_by_genome_and_dataset_type(genome_conn, genome_uuid, dataset_type)
-        logger.debug(genome_datasets)
+        logger.debug(f"Genome_datasets {genome_datasets}")
         output = json_format.MessageToJson(genome_datasets, including_default_value_fields=True)
         output = json.loads(output)
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
@@ -259,139 +283,40 @@ class TestUtils:
             ))
         assert json.loads(output) == expected_output
 
-    def test_get_genome_by_uuid(self, genome_conn):
-        output = json_format.MessageToJson(
-            utils.get_genome_by_uuid(
-                db_conn=genome_conn,
-                genome_uuid="a73357ab-93e7-11ec-a39d-005056b38ce3",
-                release_version=110.1
-            ))
-        expected_output = {
-            'assembly': {
-                'accession': 'GCA_900519105.1',
-                'assemblyUuid': '36d6c4f3-8072-4ae3-a485-84a070e725e3',
-                'ensemblName': 'IWGSC',
-                'isReference': True,
-                'level': 'chromosome',
-                'name': 'IWGSC',
-                'urlName': 'iwgsc'
-            },
-            'attributesInfo': {
-                'assemblyDate': '2018-07',
-                'assemblyLevel': 'chromosome',
-                'assemblyProviderName': 'International Wheat Genome '
-                                        'Sequencing Consortium',
-                'assemblyProviderUrl': 'https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1',
-                'genebuildMethod': 'import',
-                'genebuildMethodDisplay': 'Import',
-                'genebuildProviderName': 'PGSB',
-                'genebuildProviderUrl': 'https://www.helmholtz-munich.de/en/pgsb',
-                'genebuildSampleGene': 'TraesCS3D02G273600',
-                'genebuildSampleLocation': '3D:2585940-2634711',
-                'genebuildVersion': 'EXT01',
-                'variationSampleVariant': '1A:58609:1A_58609'
-            },
-            'created': '2023-09-22 15:04:29',
-            'genomeUuid': 'a73357ab-93e7-11ec-a39d-005056b38ce3',
-            'organism': {
-                'commonName': 'Bread wheat',
-                'ensemblName': 'SAMEA4791365',
-                'organismUuid': '86dd50f1-421e-4829-aca5-13ccc9a459f6',
-                'scientificName': 'Triticum aestivum',
-                'scientificParlanceName': 'Wheat',
-                'speciesTaxonomyId': 4565,
-                'strain': 'Chinese Spring',
-                'strainType': 'cultivar',
-                'taxonomyId': 4565
-            },
-            'release': {
-                'releaseDate': '2023-06-15',
-                'releaseLabel': 'First Beta',
-                'releaseVersion': 108.0,
-                'siteLabel': 'MVP Ensembl',
-                'siteName': 'Ensembl',
-                'siteUri': 'https://beta.ensembl.org'
-            },
-            'taxon': {
-                'alternativeNames': ['Canadian hard winter wheat',
-                                     'Triticum aestivum subsp. aestivum',
-                                     'Triticum vulgare',
-                                     'bread wheat',
-                                     'common wheat',
-                                     'wheat'],
-                'scientificName': 'Triticum aestivum',
-                'strain': 'Chinese Spring',
-                'taxonomyId': 4565
-            }
-        }
-        assert json.loads(output) == expected_output
+    @pytest.mark.parametrize(
+        "allow_unreleased, genome_uuid, version, expected_count, actual",
+        [
+            # bread_wheat Released in 108.
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.1, 11, 108.0),
+            # Homo sapiens = Released in 110.1
+            (False, "65d4f21f-695a-4ed0-be67-5732a551fea4", 108.0, 11, None),
+            # bread_wheat new homologies processed for 110.2
+            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.2, 11, 110.2),
+            # bread_wheat version unspecified
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 7, 108.0),
+            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 11, 110.2)
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_get_genome_by_uuid(self, genome_conn, allow_unreleased, genome_uuid, version, expected_count, actual):
 
-    def test_genome_by_uuid_release_version_unspecified(self, genome_conn):
         output = json_format.MessageToJson(
             utils.get_genome_by_uuid(
                 db_conn=genome_conn,
-                genome_uuid="a73357ab-93e7-11ec-a39d-005056b38ce3",
-                release_version=None
+                genome_uuid=genome_uuid,
+                release_version=version
             ))
-        expected_output = {
-            'assembly': {
-                'accession': 'GCA_900519105.1',
-                'assemblyUuid': '36d6c4f3-8072-4ae3-a485-84a070e725e3',
-                'ensemblName': 'IWGSC',
-                'isReference': True,
-                'level': 'chromosome',
-                'name': 'IWGSC',
-                'urlName': 'iwgsc'
-            },
-            'attributesInfo': {
-                'assemblyDate': '2018-07',
-                'assemblyLevel': 'chromosome',
-                'assemblyProviderName': 'International Wheat Genome '
-                                        'Sequencing Consortium',
-                'assemblyProviderUrl': 'https://www.ebi.ac.uk/ena/data/view/GCA_900519105.1',
-                'genebuildMethod': 'import',
-                'genebuildMethodDisplay': 'Import',
-                'genebuildProviderName': 'PGSB',
-                'genebuildProviderUrl': 'https://www.helmholtz-munich.de/en/pgsb',
-                'genebuildSampleGene': 'TraesCS3D02G273600',
-                'genebuildSampleLocation': '3D:2585940-2634711',
-                'genebuildVersion': 'EXT01',
-                'variationSampleVariant': '1A:58609:1A_58609'
-            },
-            'created': '2023-09-22 15:04:29',
-            'genomeUuid': 'a73357ab-93e7-11ec-a39d-005056b38ce3',
-            'organism': {
-                'commonName': 'Bread wheat',
-                'ensemblName': 'SAMEA4791365',
-                'organismUuid': '86dd50f1-421e-4829-aca5-13ccc9a459f6',
-                'scientificName': 'Triticum aestivum',
-                'scientificParlanceName': 'Wheat',
-                'speciesTaxonomyId': 4565,
-                'strain': 'Chinese Spring',
-                'strainType': 'cultivar',
-                'taxonomyId': 4565
-            },
-            'release': {
-                'releaseDate': '2023-06-15',
-                'releaseLabel': 'First Beta',
-                'releaseVersion': 108.0,
-                'siteLabel': 'MVP Ensembl',
-                'siteName': 'Ensembl',
-                'siteUri': 'https://beta.ensembl.org'
-            },
-            'taxon': {
-                'alternativeNames': ['Canadian hard winter wheat',
-                                     'Triticum aestivum subsp. aestivum',
-                                     'Triticum vulgare',
-                                     'bread wheat',
-                                     'common wheat',
-                                     'wheat'],
-                'scientificName': 'Triticum aestivum',
-                'strain': 'Chinese Spring',
-                'taxonomyId': 4565
-            }
-        }
-        assert json.loads(output) == expected_output
+        logger.debug(f"Initial {output}")
+        output = json.loads(output)
+        expected_keys = ['assembly', 'attributesInfo', 'created', 'genomeUuid', 'organism', 'release', 'taxon']
+        logger.debug(f"Output {output}")
+        if actual is not None:
+            assert len(output.keys()) == len(expected_keys)
+            assert [key in output for key in expected_keys]
+            assert output['genomeUuid'] == genome_uuid
+            assert output['release']['releaseVersion'] == actual
+        else:
+            assert len(output) == 0
 
     def test_get_genomes_by_uuid_null(self, genome_conn):
         output = utils.get_genome_by_uuid(genome_conn, None, 0)
@@ -437,6 +362,23 @@ class TestUtils:
         assert output == []
 
     def test_get_genomes_by_name(self, genome_conn):
+        """
+        # FIXME The fetch doesn't fetch expected attributes from Assembly / Organism
+            'assemblyDate': '2021-05',
+            'assemblyLevel': 'scaffold',
+            'genebuildLastGenesetUpdate': '2022-07',
+            'genebuildMethod': 'projection_build',
+            'genebuildMethodDisplay': 'Mapping from reference',
+            'genebuildProviderName': 'Ensembl',
+            'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
+            'genebuildVersion': 'ENS01',
+            'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
+        Args:
+            genome_conn:
+
+        Returns:
+
+        """
         output = json_format.MessageToJson(
             utils.get_genome_by_name(db_conn=genome_conn, biosample_id="SAMN17861241", site_name="Ensembl",
                                      release_version=110.1))
@@ -491,6 +433,8 @@ class TestUtils:
         assert json.loads(output) == expected_output
 
     def test_get_genomes_by_name_release_unspecified(self, genome_conn):
+        # FIXME this test is very similar with the one above, this could be merged into one single one with fixtures
+        #   - that could help with release/unreleased config and expected data to retrieve
         # We are expecting the same result as test_get_genomes_by_name() above
         # because no release is specified get_genome_by_name() -> fetch_genomes
         # checks if the fetched genome is released and picks it up

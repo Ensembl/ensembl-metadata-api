@@ -152,6 +152,8 @@ class ReleaseFactory:
         Mark a release as Released
         - Check release status: must be Prepared
         - Mark all related datasets as "Released"
+        - TODO Mark dataset as current / unmark others are current
+        - TODO Check Genome `is_best` whether to keep this one as current
         - Mark Release as Release and set date
         Args:
             release_date: The actual release date to set

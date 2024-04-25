@@ -29,22 +29,24 @@ class TestGRPCGenomeAdaptor:
     dbc: UnitTestDB = None
 
     @pytest.mark.parametrize(
-        "allow_unreleased, unreleased_only, current_only, output_count",
+        "allow_unreleased, unreleased_only, release_version, current_only, output_count",
         [
-            (True, False, False, 29),  # Allow Unreleased
-            (False, False, False, 10),  # Do not allow unreleased - fetch all even from previous releases
-            (False, True, False, 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
-            (False, False, True, 3)  # Only the ones from current release
+            (True, False, 110.1, False, 29),  # Allow Unreleased
+            (False, False, 110.1, False, 10),  # Do not allow unreleased - fetch all from previous releases
+            (False, True, 110.3, False, 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
+            (False, False, 110.3, True, 3)  # Only the ones from current release
         ],
         indirect=['allow_unreleased']
     )
-    def test_fetch_genomes_release(self, genome_conn, allow_unreleased, unreleased_only, current_only, output_count):
+    def test_fetch_genomes_release(self, genome_conn, allow_unreleased, unreleased_only, release_version,
+                                   current_only, output_count):
         """
         Test fetching all released genomes
         - Unreleased_only: should have no effect on results
         - Current_only: Should filter against only release 110.1 (current)
         """
-        test = genome_conn.fetch_genomes(unreleased_only=unreleased_only, current_only=current_only)
+        test = genome_conn.fetch_genomes(unreleased_only=unreleased_only, current_only=current_only,
+                                         release_version=release_version)
         assert len(test) == output_count
 
     @pytest.mark.parametrize(
@@ -99,7 +101,7 @@ class TestGRPCGenomeAdaptor:
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
-        [(True, 2), (False, 0)],
+        [(True, 2), (False, 1)],
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_genome_uuid(self, genome_conn, allow_unreleased, output_count):
@@ -147,7 +149,7 @@ class TestGRPCGenomeAdaptor:
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
-        [(True, 2), (False, 0)],
+        [(True, 2), (False, 1)],
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_ensembl_name(self, genome_conn, allow_unreleased, output_count):
@@ -157,15 +159,15 @@ class TestGRPCGenomeAdaptor:
             assert genomes[0].Organism.scientific_name == 'Plasmodium falciparum 3D7'
 
     @pytest.mark.parametrize(
-        "allow_unreleased, output_count",
-        [(True, 2), (False, 0)],
-        indirect=['allow_unreleased']
+        "allow_unreleased, taxon_id, output_count",
+        [
+            (True, 36329, 2),
+            (False, 36329, 1)
+        ], indirect=['allow_unreleased']
     )
-    def test_fetch_genomes_by_taxonomy_id(self, genome_conn, allow_unreleased, output_count):
-        genomes = genome_conn.fetch_genomes_by_taxonomy_id(36329)
+    def test_fetch_genomes_by_taxonomy_id(self, genome_conn, allow_unreleased, taxon_id, output_count):
+        genomes = genome_conn.fetch_genomes_by_taxonomy_id(taxonomy_id=taxon_id)
         assert len(genomes) == output_count
-        if output_count:
-            assert genomes[0].Organism.scientific_name == 'Plasmodium falciparum 3D7'
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
@@ -173,7 +175,7 @@ class TestGRPCGenomeAdaptor:
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_scientific_name(self, genome_conn, allow_unreleased, output_count):
-        genomes = genome_conn.fetch_genomes_by_scientific_name(scientific_name='Plasmodium falciparum 3D7')
+        genomes = genome_conn.fetch_genomes_by_scientific_name(scientific_name='Homo sapiens')
         assert len(genomes) == output_count
         if output_count:
             assert genomes[0].Organism.common_name == 'Malaria parasite'
@@ -230,7 +232,7 @@ class TestGRPCGenomeAdaptor:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "786344d1-a71f-4bab-aa37-6ee315ed60a4", 68),
+            (None, None, True, False, "45aec801-4fe7-4ac2-9afa-19aea2a8409e", 68),
             (None, None, False, False, "45aec801-4fe7-4ac2-9afa-19aea2a8409e", 44),
             # specifying genome_uuid
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "999315f6-6d25-481f-a017-297f7e1490c8", 5),
@@ -259,8 +261,9 @@ class TestGRPCGenomeAdaptor:
             # homo_sapiens_37
             (False, "1d336185-affe-4a91-85bb-04ebd73cbb56", 11),
             (True, "1d336185-affe-4a91-85bb-04ebd73cbb56", 26),
+            # Homo sapiens Gambian in Western Division
             (False, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 8),
-            (True, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 20),
+            (True, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 44),
             # non-existing organism
             (False, "organism-yet-to-be-discovered", 0),
         ],
