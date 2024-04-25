@@ -57,7 +57,7 @@ class TestReleaseFactory:
         with metadata_db.session_scope() as session:
             release_112 = session.query(EnsemblRelease).filter(EnsemblRelease.version == 112.0).one()
             release_id = release_112.release_id
-            assert release_112.genome_releases == []
+            assert len(release_112.genome_releases) == 3
             release_genomes = factory.prepare(release=release_112)
             assert release_112.status == ReleaseStatus.PREPARING
             logger.debug(f"Genome uuids {release_genomes}")
@@ -65,7 +65,11 @@ class TestReleaseFactory:
         with metadata_db.session_scope() as session:
             release_112 = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == release_id).one()
             assert len(release_112.genome_releases) == len(release_genomes)
+            assert len(release_112.genome_releases) == 2
             assert factory.check_release(release_112) == True
+            added_release = session.query(EnsemblRelease).filter(EnsemblRelease.version > release_112.version).one()
+            assert float(added_release.version) == float(release_112.version) + float(0.1)
+            assert len(added_release.genome_releases) == 1
 
     def test_release_prepared(self, multi_dbs) -> None:
         """

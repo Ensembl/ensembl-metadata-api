@@ -26,6 +26,7 @@ from ensembl.production.metadata.api.models import ReleaseStatus, EnsemblRelease
     DatasetStatus, Dataset, DatasetType, GenomeRelease
 from .datasets import DatasetFactory
 from .genomes import GenomeFactory
+from ...grpc.config import cfg
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +87,7 @@ class ReleaseFactory:
                 .filter(GenomeDataset.genome_id.in_(genebuild_ds))
             logger.debug(f"GB Ds {genebuild_ds}")
             logger.debug(f"Other Ds {other_ds}")
-            genome_uuids = []
+            genome_ids = []
             dataset_uuids = []
             genomes = []
             # get all processed dataset
@@ -102,20 +103,42 @@ class ReleaseFactory:
                                                           topic='production_preparation',
                                                           status=DatasetStatus.SUBMITTED,
                                                           release=release)
-                genome_uuids.append(ds.Genome.genome_uuid)
+                genome_ids.append(ds.Genome.genome_id)
                 ds.GenomeDataset.release_id = release.release_id
                 dataset_uuids.append(ds.Dataset.dataset_uuid)
 
-            genome_uuids = list(dict.fromkeys(genome_uuids))
-            genomes_release = session.query(Genome).filter(Genome.genome_uuid.in_(genome_uuids)).all()
+            genome_uuids = list(dict.fromkeys(genome_ids))
+            genomes_release = session.query(Genome).filter(Genome.genome_id.in_(genome_ids)).all()
             logger.info(f"Adding {genomes} to release")
-            # Attach them to release but not set as is_current for now (will be done when Releasing)
-            [session.add(GenomeRelease(release_id=release.release_id,
-                                       genome_id=genome.genome_id,
-                                       is_current=0)) for genome in genomes_release]
             # bulk update and attach all to release
             logger.debug("Marked Release as Preparing for datasets: %s", )
             release.status = ReleaseStatus.PREPARING
+            # TODO CHECK Re-affect non-ready genomes to new planned Release
+            next_release = session.query(EnsemblRelease).filter(
+                EnsemblRelease.status == ReleaseStatus.PLANNED,
+                EnsemblRelease.release_id != release.release_id).order_by(EnsemblRelease.version).one_or_none()
+            if next_release is None:
+                next_release = EnsemblRelease(
+                    status=ReleaseStatus.PLANNED,
+                    is_current=0,
+                    label="New Release",
+                    release_type=release.release_type,
+                    version=float(release.version) + float(0.1),
+                    site_id=cfg.ensembl_site_id
+                )
+                session.add(next_release)
+                session.flush()
+            unprepared = session.query(Genome).join(GenomeRelease).where(
+                Genome.genome_id.notin_(genome_ids),
+                GenomeRelease.release_id == release.release_id).all()
+            for moved in unprepared:
+                logger.debug(f"Moved Genome {moved} {release}")
+                genome_release = list(moved.genome_releases)
+                logger.debug(genome_release)
+                current = next(to_move for to_move in genome_release if
+                               to_move.release_id == release.release_id)
+                logger.debug(f"Moved Genome {moved} {next_release.release_id}")
+                current.release_id = next_release.release_id
             self.check_release(release)
             return genome_uuids
 
@@ -209,7 +232,8 @@ class ReleaseFactory:
             if release.status in (ReleaseStatus.PREPARING, ReleaseStatus.PREPARED):
                 ds_type = 'production_process' if release.status == ReleaseStatus.PREPARING else 'production_preparation'
                 if gd.dataset.dataset_type == ds_type and gd.dataset.status != DatasetStatus.PROCESSED:
-                    errors.append(f"Dataset [{gd.dataset.dataset_uuid}/{gd.dataset.name}] is not Processed [{gd.dataset.status.value}]")
+                    errors.append(
+                        f"Dataset [{gd.dataset.dataset_uuid}/{gd.dataset.name}] is not Processed [{gd.dataset.status.value}]")
         if errors:
             raise ReleaseDataException(f"Inconsistent {release.version}: \n{errors}")
         return True
