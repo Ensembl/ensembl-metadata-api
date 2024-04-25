@@ -262,7 +262,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 genebuild_date = match.group(0)
             else:
                 raise exceptions.MetadataUpdateException(f"Unable to parse genebuild.start_date from meta")
-
+        # get next release inline to attach the genome to
+        planned_release = get_or_new_release(self.metadata_uri)
         new_genome = Genome(
             genome_uuid=str(uuid.uuid4()),
             assembly=assembly,
@@ -273,7 +274,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
             is_best=0,
             production_name=production_name,
         )
+        logger.debug(f"Assigning genome {new_genome.genome_uuid} to {planned_release.version}")
         meta_session.add(new_genome)
+        genome_release = GenomeRelease(
+            genome=new_genome,
+            ensembl_release=planned_release
+        )
+        new_genome.genome_releases.append(genome_release)
         assembly_genome_dataset = GenomeDataset(
             genome=new_genome,
             dataset=assembly_dataset,

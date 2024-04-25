@@ -22,8 +22,7 @@ from ensembl.database import DBConnection
 from sqlalchemy import update, select, or_, and_
 
 from ensembl.production.metadata.api.exceptions import *
-from ensembl.production.metadata.api.models import ReleaseStatus, EnsemblRelease, EnsemblSite, Genome, GenomeDataset, \
-    DatasetStatus, Dataset, DatasetType, GenomeRelease
+from ensembl.production.metadata.api.models import *
 from .datasets import DatasetFactory
 from .genomes import GenomeFactory
 from ...grpc.config import cfg
@@ -114,20 +113,10 @@ class ReleaseFactory:
             logger.debug("Marked Release as Preparing for datasets: %s", )
             release.status = ReleaseStatus.PREPARING
             # TODO CHECK Re-affect non-ready genomes to new planned Release
-            next_release = session.query(EnsemblRelease).filter(
-                EnsemblRelease.status == ReleaseStatus.PLANNED,
-                EnsemblRelease.release_id != release.release_id).order_by(EnsemblRelease.version).one_or_none()
-            if next_release is None:
-                next_release = EnsemblRelease(
-                    status=ReleaseStatus.PLANNED,
-                    is_current=0,
-                    label="New Release",
-                    release_type=release.release_type,
-                    version=float(release.version) + float(0.1),
-                    site_id=cfg.ensembl_site_id
-                )
-                session.add(next_release)
-                session.flush()
+
+            next_release = get_or_new_release(self.metadata_uri, release)
+            session.add(next_release)
+            logger.debug(f"Next release {next_release}")
             unprepared = session.query(Genome).join(GenomeRelease).where(
                 Genome.genome_id.notin_(genome_ids),
                 GenomeRelease.release_id == release.release_id).all()

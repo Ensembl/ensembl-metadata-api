@@ -67,7 +67,7 @@ class GenomeAdaptor(BaseAdaptor):
             return taxons
 
     def fetch_taxonomy_ids(self, taxonomy_names):
-        taxids = []release 
+        taxids = []
         taxonomy_names = check_parameter(taxonomy_names)
         for taxon in taxonomy_names:
             taxa_name_select = db.select(
@@ -109,19 +109,12 @@ class GenomeAdaptor(BaseAdaptor):
         if genebuild:
             genome_select = genome_select.filter(Genome.genebuild_date == genebuild)
         logger.debug(f"Allow Unreleased {cfg.allow_unreleased}")
-        if cfg.allow_unreleased:
-            genome_select = genome_select \
-                .outerjoin(GenomeRelease) \
-                .outerjoin(EnsemblRelease) \
-                .outerjoin(EnsemblSite)
-        else:
-            # Include release related info if released_only is True
-            genome_select = genome_select \
-                .join(GenomeRelease) \
-                .join(EnsemblRelease) \
-                .join(EnsemblSite) \
-                .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-
+        genome_select = genome_select \
+            .join(GenomeRelease) \
+            .join(EnsemblRelease) \
+            .join(EnsemblSite)
+        if not cfg.allow_unreleased:
+            genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         if release_version is not None and release_version > 0:
             # if release is specified
             genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
@@ -248,24 +241,19 @@ class GenomeAdaptor(BaseAdaptor):
         if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
         logger.debug(f"ALLOW_UNRELEASED is set to {cfg.allow_unreleased}...")
-        if cfg.allow_unreleased:
-            genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
-                .outerjoin(GenomeRelease) \
-                .outerjoin(EnsemblRelease) \
-                .outerjoin(EnsemblSite)
-            if unreleased_only:
-                # fetch only unreleased ones
-                genome_select = genome_select.filter(~Genome.genome_releases.any())
-        else:
-            # Include release related info if released_only is True
-            genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
-                .join(GenomeRelease) \
-                .join(EnsemblRelease) \
-                .join(EnsemblSite) \
-                .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-
+        genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
+            .join(GenomeRelease) \
+            .join(EnsemblRelease) \
+            .join(EnsemblSite)
+        if not cfg.allow_unreleased:
+            genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
             # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
             genome_select = genome_select.filter(GenomeRelease.is_current == 1)
+        elif unreleased_only:
+            # fetch only unreleased ones
+            genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
+        else:
+            genome_select = genome_select.filter(GenomeRelease.is_current == 0)
 
         if release_version is not None and release_version > 0:
             # if release is specified
@@ -336,27 +324,22 @@ class GenomeAdaptor(BaseAdaptor):
         genome_query = db.select(Genome, Assembly, Organism, EnsemblRelease).select_from(Genome) \
             .join(Organism, Genome.organism_id == Organism.organism_id) \
             .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
-        if cfg.allow_unreleased:
-            logger.debug("Allowed Unreleased No more filtering")
-            genome_query = genome_query.add_columns(EnsemblSite) \
-                .outerjoin(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
-                .outerjoin(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
-                .outerjoin(EnsemblSite,
-                           EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
-            if release_version is not None and release_version > 0:
-                genome_query = genome_query.where(EnsemblRelease.version <= release_version)
-        else:
+        genome_query = genome_query.add_columns(EnsemblSite) \
+            .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
+            .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
+            .join(EnsemblSite,
+                  EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
+        if not cfg.allow_unreleased:
             logger.debug("NOT Allowed Unreleased")
-            genome_query = genome_query.add_columns(EnsemblSite) \
-                .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
-                .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
-                .join(EnsemblSite,
-                      EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
-            subquery = db.select(EnsemblRelease.version).filter(
-                and_(EnsemblRelease.status == ReleaseStatus.RELEASED, EnsemblRelease.is_current == 1))
-            if release_version is not None and release_version > 0:
-                subquery.filter(EnsemblRelease.version <= release_version)
-            genome_query = genome_query.where(EnsemblRelease.version <= subquery.subquery())
+            genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        if release_version is not None and release_version > 0:
+            genome_query = genome_query.where(EnsemblRelease.version <= release_version)
+
+        subquery = db.select(EnsemblRelease.version).filter(
+            and_(EnsemblRelease.status == ReleaseStatus.RELEASED, EnsemblRelease.is_current == 1))
+        if release_version is not None and release_version > 0:
+            subquery.filter(EnsemblRelease.version <= release_version)
+        genome_query = genome_query.where(EnsemblRelease.version <= subquery.subquery())
         genome_query = genome_query.where(db.or_(db.func.lower(Assembly.tol_id) == keyword.lower(),
                                                  db.func.lower(Assembly.accession) == keyword.lower(),
                                                  db.func.lower(Assembly.name) == keyword.lower(),
@@ -548,27 +531,20 @@ class GenomeAdaptor(BaseAdaptor):
                     Genome.genome_uuid, Dataset.name, Attribute.name)
             logger.debug("ALLOWED UNRELEASED %s", cfg.allow_unreleased)
             DSRelease: EnsemblRelease = aliased(EnsemblRelease, name="DSRelease")
-            if cfg.allow_unreleased:
+            genome_select = genome_select.add_columns(EnsemblRelease, DSRelease, EnsemblSite) \
+                .join(GenomeRelease) \
+                .join(EnsemblRelease) \
+                .join(EnsemblSite)
+
+            genome_select = genome_select.filter(GenomeDataset.release_id != None) \
+                .join(DSRelease, (DSRelease.release_id == GenomeDataset.release_id))
+            if not cfg.allow_unreleased:
                 # Filter the genomes
-                genome_select = genome_select.add_columns(EnsemblRelease, DSRelease, EnsemblSite) \
-                    .outerjoin(GenomeRelease) \
-                    .outerjoin(EnsemblRelease) \
-                    .outerjoin(EnsemblSite).outerjoin(DSRelease, (DSRelease.release_id == GenomeDataset.release_id)) \
- \
-                    # genome_select = genome_select.outerjoin(DSRelease, (DSRelease.release_id == release_version))
-                if unreleased_only:
-                    # fetch only unreleased ones
-                    genome_select = genome_select.filter(~Genome.genome_releases.any())
-            else:
-                # Include release related info if released_only is True
-                genome_select = genome_select.add_columns(EnsemblRelease, DSRelease, EnsemblSite) \
-                    .join(GenomeRelease) \
-                    .join(EnsemblRelease) \
-                    .join(EnsemblSite) \
-                    .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-                genome_select = genome_select.filter(GenomeDataset.release_id != None) \
-                    .join(DSRelease, (DSRelease.release_id == GenomeDataset.release_id) &
-                          (DSRelease.status == ReleaseStatus.RELEASED))
+                genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED,
+                                                     DSRelease.status == ReleaseStatus.RELEASED)
+            elif unreleased_only:
+                genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
+
             # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
             # FIXME Hard to tell what is the best here. is_current = 1 is useful for stats...
             is_current = 0 if cfg.allow_unreleased else 1
@@ -576,7 +552,6 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.filter(GenomeRelease.is_current == is_current)
             if unreleased_only:
                 genome_select = genome_select.filter(GenomeDataset.is_current == 0)
-
 
             if release_version:
                 logger.debug(f"Filter on release_version <= {release_version}")
@@ -654,11 +629,9 @@ class GenomeAdaptor(BaseAdaptor):
         )
         query = query.order_by(OrganismGroupMember.order)
         logger.debug("ALLOWED UNRELEASED %s", cfg.allow_unreleased)
-        if cfg.allow_unreleased:
-            query = query.outerjoin(GenomeRelease).outerjoin(EnsemblRelease)
-        else:
-            query = query.join(GenomeRelease).join(EnsemblRelease) \
-                .where(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        query = query.join(GenomeRelease).join(EnsemblRelease)
+        if not cfg.allow_unreleased:
+            query = query.where(EnsemblRelease.status == ReleaseStatus.RELEASED)
         if release_version:
             query = query.filter(EnsemblRelease.version <= release_version)
         logger.debug(query)
@@ -677,12 +650,10 @@ class GenomeAdaptor(BaseAdaptor):
         query = db.select(db.func.count(Assembly.assembly_id)) \
             .join(Genome).join(Organism) \
             .filter(Organism.species_taxonomy_id == species_taxonomy_id)
+        query = query.join(GenomeRelease).join(EnsemblRelease)
         logger.debug("ALLOWED UNRELEASED: %s", cfg.allow_unreleased)
-        if cfg.allow_unreleased:
-            query = query.outerjoin(GenomeRelease).outerjoin(EnsemblRelease)
-        else:
-            query = query.join(GenomeRelease).join(EnsemblRelease) \
-                .where(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        if not cfg.allow_unreleased:
+            query = query.where(EnsemblRelease.status == ReleaseStatus.RELEASED)
         if release_version:
             query = query.filter(EnsemblRelease.version <= release_version)
 

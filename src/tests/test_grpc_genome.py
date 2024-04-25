@@ -31,10 +31,10 @@ class TestGRPCGenomeAdaptor:
     @pytest.mark.parametrize(
         "allow_unreleased, unreleased_only, release_version, current_only, output_count",
         [
-            (True, False, 110.1, False, 29),  # Allow Unreleased
+            (True, False, None, False, 19),  # Allow Unreleased
             (False, False, 110.1, False, 10),  # Do not allow unreleased - fetch all from previous releases
-            (False, True, 110.3, False, 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
-            (False, False, 110.3, True, 3)  # Only the ones from current release
+            (False, True, 112.0, False, 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
+            (False, False, 110.3, True, 10)  # Only the ones from current release
         ],
         indirect=['allow_unreleased']
     )

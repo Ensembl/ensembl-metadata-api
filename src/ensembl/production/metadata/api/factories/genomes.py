@@ -173,7 +173,7 @@ class GenomeFactory:
                             f"{filters.update_dataset_status} to {status}  for genome {genome['genome_uuid']}"
                         )
                         genome_info['updated_dataset_status'] = None
-
+                session.flush()
                 yield genome_info
 
 

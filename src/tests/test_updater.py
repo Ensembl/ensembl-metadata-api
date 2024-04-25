@@ -138,6 +138,7 @@ class TestUpdater:
             assert dataset.dataset_type.name == "genebuild"
             assert dataset.genome_datasets[0].genome.genebuild_version == 'ENS02'
             assert dataset.genome_datasets[0].genome.genebuild_date == '2023-07'
+            assert dataset.genome_datasets[0].genome.genome_releases is not None
 
     def test_taxonomy_common_name(self, multi_dbs):
         test = meta_factory(multi_dbs['core_5'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
