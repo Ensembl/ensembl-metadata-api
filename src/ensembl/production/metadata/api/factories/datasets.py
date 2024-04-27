@@ -376,8 +376,9 @@ class DatasetFactory:
                 child_dataset.status = DatasetStatus.RELEASED  # "Released"
             current_dataset.status = DatasetStatus.RELEASED  # "Released"
         else:
-            raise DatasetFactoryException(f"Dataset status: {status} is not a vallid status")
+            raise DatasetFactoryException(f"Dataset status: {status} is not a valid status")
         updated_datasets = (current_dataset.dataset_uuid, current_dataset.status)
+        logger.debug(f"Updated Datasets {updated_datasets}")
         return updated_datasets
 
     def __get_dataset(self, session, dataset_uuid):

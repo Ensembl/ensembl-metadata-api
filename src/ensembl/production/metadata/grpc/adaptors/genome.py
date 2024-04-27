@@ -102,7 +102,7 @@ class GenomeAdaptor(BaseAdaptor):
         genome_select = db.select(Genome) \
             .join(Organism, Organism.organism_id == Genome.organism_id) \
             .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
-            .join(GenomeDataset).join(Dataset).filter(GenomeDataset.is_current == 1)
+            .join(GenomeDataset).join(Dataset)
         assembly_field = Assembly.assembly_default if use_default else Assembly.name
         genome_select = genome_select.filter(assembly_field == assembly).filter(
             Genome.production_name == production_name)
@@ -115,6 +115,8 @@ class GenomeAdaptor(BaseAdaptor):
             .join(EnsemblSite)
         if not cfg.allow_unreleased:
             genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        else:
+            genome_select = genome_select.filter(GenomeDataset.is_current == 1)
         if release_version is not None and release_version > 0:
             # if release is specified
             genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
@@ -245,15 +247,14 @@ class GenomeAdaptor(BaseAdaptor):
             .join(GenomeRelease) \
             .join(EnsemblRelease) \
             .join(EnsemblSite)
-        if not cfg.allow_unreleased:
-            genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-            # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
+        if current_only or not cfg.allow_unreleased:
             genome_select = genome_select.filter(GenomeRelease.is_current == 1)
+        if not cfg.allow_unreleased:
+            # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
+            genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         elif unreleased_only:
             # fetch only unreleased ones
             genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
-        else:
-            genome_select = genome_select.filter(GenomeRelease.is_current == 0)
 
         if release_version is not None and release_version > 0:
             # if release is specified
@@ -472,7 +473,7 @@ class GenomeAdaptor(BaseAdaptor):
                 Dataset,
                 DatasetType,
                 DatasetSource,
-            ).select_from(Genome) \
+            ).select_from(GenomeDataset) \
                 .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
                 .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
                 .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
@@ -542,16 +543,17 @@ class GenomeAdaptor(BaseAdaptor):
                 # Filter the genomes
                 genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED,
                                                      DSRelease.status == ReleaseStatus.RELEASED)
+                genome_select = genome_select.filter(GenomeRelease.is_current == 1)
+                genome_select = genome_select.filter(GenomeDataset.is_current == 1)
+
             elif unreleased_only:
                 genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
+                genome_select = genome_select.filter(GenomeRelease.is_current == 0)
+                genome_select = genome_select.filter(GenomeDataset.is_current == 0)
 
             # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
             # FIXME Hard to tell what is the best here. is_current = 1 is useful for stats...
-            is_current = 0 if cfg.allow_unreleased else 1
-            logger.debug(f"Is Current {is_current}")
-            genome_select = genome_select.filter(GenomeRelease.is_current == is_current)
-            if unreleased_only:
-                genome_select = genome_select.filter(GenomeDataset.is_current == 0)
+
 
             if release_version:
                 logger.debug(f"Filter on release_version <= {release_version}")

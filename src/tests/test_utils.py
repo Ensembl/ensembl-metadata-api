@@ -599,6 +599,7 @@ class TestUtils:
             # FIXME the message must change, since for all datasets, release Version might be different per dataset type
             # Service would return a list of Version per datasetType
             # ("a73351f7-93e7-11ec-a39d-005056b38ce3", "all", 111.1, {"releaseVersion": 110.1}),
+            ("97e24643-a941-41a0-98da-a00169e1f9e9", "homologies", None, {}),
             # no genome_uuid
             (None, "genebuild", 111.1, {}),
             # empty params

@@ -46,7 +46,7 @@ class GenomeInputFilters:
     dataset_status: List[str] = field(default_factory=lambda: ["Submitted"])
     batch_size: int = 50
     page: int = 1
-    organism_group_type: str = "DIVISION"
+    organism_group_type: str = ''
     run_all: int = 0
     update_dataset_status: str = ""
     update_dataset_attribute: dict = field(default_factory=lambda: {})
@@ -172,6 +172,8 @@ class GenomeFactory:
                             f"Cannot update status for dataset uuid: {dataset_uuid} "
                             f"{filters.update_dataset_status} to {status}  for genome {genome['genome_uuid']}"
                         )
+                        # TODO check why return None instead of initial status
+                        # genome_info['updated_dataset_status'] = filters.update_dataset_status
                         genome_info['updated_dataset_status'] = None
                 session.flush()
                 yield genome_info

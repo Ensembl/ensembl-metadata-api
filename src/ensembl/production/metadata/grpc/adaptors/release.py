@@ -101,7 +101,7 @@ class ReleaseAdaptor(BaseAdaptor):
             return session.execute(release_select).all()
 
     def fetch_releases_for_genome(self, genome_uuid):
-        select_released = db.select(EnsemblRelease).join(GenomeRelease)
+        select_released = db.select(EnsemblRelease).join(GenomeRelease).join(EnsemblRelease)
         if not cfg.allow_unreleased:
             select_released = select_released.filter(GenomeRelease.ensembl_release.status == ReleaseStatus.RELEASED)
         select_released = select_released.join(Genome) \
