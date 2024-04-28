@@ -125,11 +125,12 @@ class GenomeDataset(LoadAble, Base):
     UniqueConstraint("genome_id", "dataset_id", "release_id", name="genome_dataset_release_uidx"),
 
     # genome_dataset_id to genome
-    dataset = relationship("Dataset", back_populates="genome_datasets", )
+    dataset = relationship("Dataset", back_populates="genome_datasets", order_by='Dataset.name, desc(Dataset.created)')
     # genome_id to genome
-    genome = relationship("Genome", back_populates="genome_datasets")
+    genome = relationship("Genome", back_populates="genome_datasets", order_by='Dataset.name, desc(Genome.created)')
     # release_id to release
-    ensembl_release = relationship("EnsemblRelease", back_populates="genome_datasets")
+    ensembl_release = relationship("EnsemblRelease", back_populates="genome_datasets",
+                                   order_by='desc(EnsemblRelease.version)')
 
 
 class GenomeRelease(LoadAble, Base):

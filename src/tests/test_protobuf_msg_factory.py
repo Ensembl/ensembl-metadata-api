@@ -30,28 +30,28 @@ class TestClass:
     dbc = None  # type: UnitTestDB
 
     @pytest.mark.parametrize(
-        "allow_unreleased, genome_uuid, ds_type_name,  expected_ds_count, expected_assembly_count, ensembl_name, expected",
+        "allow_unreleased, genome_uuid, ds_type_name, expected_genome_count, expected_ds_count, expected_assembly_count, ensembl_name",
         [
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 5, 'SAMN12121739', 1),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 14, 'SAMN12121739', 2),
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 5, 'SAMN12121739', 1),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 4, 14, 'SAMN12121739', 2),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 1, 1, 5, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'all', 1, 6, 5, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 2, 1, 19, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 1, 1, 5, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 2, 19, 'SAMN12121739'),
         ],
         indirect=['allow_unreleased']
     )
-    def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, ds_type_name, expected_ds_count,
-                           expected_assembly_count, ensembl_name, expected):
+    def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, ds_type_name, expected_genome_count,
+                           expected_ds_count, expected_assembly_count, ensembl_name):
         """Test service.create_genome function"""
         # FIXME all returned genome is now unique following method
         genome_input_data = genome_conn.fetch_genomes(genome_uuid=genome_uuid)
         # Make sure we are only getting one
-        assert len(genome_input_data) == expected
+        assert len(genome_input_data) == expected_genome_count
 
-        attrib_input_data = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
-                                                              dataset_attributes=True,
-                                                              dataset_type_name=ds_type_name)
+        attrib_input_data = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name=ds_type_name)
         # 11 attributes
-        assert len(attrib_input_data) == expected_ds_count
+        assert len(attrib_input_data[0].datasets) == expected_ds_count
+        # assert len(attrib_input_data[0].datasets) == expected_ds_count
 
         related_assemblies_input_count = genome_conn.fetch_assemblies_count(
             genome_input_data[0].Organism.species_taxonomy_id)
@@ -61,7 +61,7 @@ class TestClass:
         output = json_format.MessageToJson(
             msg_factory.create_genome(
                 data=genome_input_data[0],
-                attributes=attrib_input_data,
+                attributes=attrib_input_data[0].attributes,
                 count=related_assemblies_input_count
             ),
             including_default_value_fields=True
@@ -103,8 +103,7 @@ class TestClass:
     def test_create_stats_by_organism_uuid(self, genome_conn):
         # ecoli
         organism_uuid = "1e579f8d-3880-424e-9b4f-190eb69280d9"
-        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all",
-                                                       dataset_attributes=True)
+        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all")
 
         first_expected_stat = {
             'label': 'assembly.accession',
@@ -121,8 +120,7 @@ class TestClass:
     def test_create_top_level_statistics(self, genome_conn):
         # ecoli
         organism_uuid = "1e579f8d-3880-424e-9b4f-190eb69280d9"
-        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all",
-                                                       dataset_attributes=True)
+        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all")
 
         first_expected_stat = {
             'label': 'assembly.accession',

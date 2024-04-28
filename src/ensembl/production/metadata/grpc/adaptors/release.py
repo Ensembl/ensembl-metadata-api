@@ -101,11 +101,10 @@ class ReleaseAdaptor(BaseAdaptor):
             return session.execute(release_select).all()
 
     def fetch_releases_for_genome(self, genome_uuid):
-        select_released = db.select(EnsemblRelease).join(GenomeRelease).join(EnsemblRelease)
+        select_released = db.select(EnsemblRelease).join(GenomeRelease)
         if not cfg.allow_unreleased:
-            select_released = select_released.filter(GenomeRelease.ensembl_release.status == ReleaseStatus.RELEASED)
-        select_released = select_released.join(Genome) \
-            .where(Genome.genome_uuid == genome_uuid)
+            select_released = select_released.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        select_released = select_released.join(Genome).where(Genome.genome_uuid == genome_uuid)
         select_released = filter_release_status(select_released)
 
         logger.debug("Query: %s ", select_released)

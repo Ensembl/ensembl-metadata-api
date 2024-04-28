@@ -51,9 +51,10 @@ def get_top_level_statistics(db_conn, organism_uuid):
     if not organism_uuid:
         logger.warning("Missing or Empty Organism UUID field.")
         return msg_factory.create_top_level_statistics()
-
-    stats_results = db_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all",
-                                                  dataset_attributes=True)
+    # FIXME get best genome for organism and fetch from genome
+    genomes = db_conn.fetch_genomes(organism_uuid=organism_uuid)
+    stats_results = db_conn.fetch_genome_datasets(genome_uuid=[genome.Genome.genome_uuid for genome in genomes],
+                                                  dataset_type_name="all")
 
     if len(stats_results) > 0:
         stats_by_genome_uuid = msg_factory.create_stats_by_genome_uuid(stats_results)
@@ -67,23 +68,22 @@ def get_top_level_statistics(db_conn, organism_uuid):
     logger.debug("No top level stats found.")
     return msg_factory.create_top_level_statistics()
 
-
 def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_top_level_statistics_by_uuid()
 
-    stats_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all",
-                                                  dataset_attributes=True)
+    stats_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all")
 
     statistics = []
+    # FIXME stats_results can contain multiple entries
     if len(stats_results) > 0:
-        for result in stats_results:
+        for result in stats_results[0].attributes:
             statistics.append({
-                'name': result.Attribute.name,
-                'label': result.Attribute.label,
-                'statistic_type': result.Attribute.type,
-                'statistic_value': result.DatasetAttribute.value
+                'name': result.name,
+                'label': result.label,
+                'statistic_type': result.type,
+                'statistic_value': result.value
             })
 
         statistics.sort(key=lambda x: x['name'])
@@ -119,8 +119,12 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     # we fetch attributes related to that genome
     # TODO This is not sure that this fetch_genome_datasets is always needed, depending on message wanted to be returned
     #   A more specialized approached is to be defined to simplify the whole stack
-    attrib_data_results = db_conn.fetch_genome_datasets(genome_uuid=genome.Genome.genome_id, dataset_type_name="all",
-                                                        release_version=release_version, dataset_attributes=True)
+    attrib_data_results = db_conn.fetch_genome_datasets(genome_uuid=genome.Genome.genome_uuid,
+                                                        dataset_type_name="all",
+                                                        release_version=release_version)
+
+    logger.debug(f"Genome Datasets Retrieved: {attrib_data_results}")
+    attribs = attrib_data_results[0].datasets if len(attrib_data_results) > 0 else None
     # fetch related assemblies count
     related_assemblies_count = db_conn.fetch_assemblies_count(None)
 
@@ -128,7 +132,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
 
     return msg_factory.create_genome(
         data=genome,
-        attributes=attrib_data_results,
+        attributes=attribs,
         count=related_assemblies_count,
         alternative_names=alternative_names
     )
@@ -293,14 +297,12 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_datasets()
     datasets_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all",
-                                                     release_version=release_version, dataset_attributes=True)
-
+                                                     release_version=release_version)
+    # FIXME dataset_results can contain multiple genomes
     if len(datasets_results) > 0:
-        # ds_obj_dict where all datasets are stored as:
-        # { dataset_type_1: [datasets_dt1_1, datasets_dt1_2], dataset_type_2: [datasets_dt2_1] }
         ds_obj_dict = {}
-        for result in datasets_results:
-            dataset_type = result.DatasetType.name
+        for result in datasets_results[0].datasets:
+            dataset_type = result.dataset.dataset_type_id
             # Populate the objects bottom up
             datasets_info = msg_factory.populate_dataset_info(result)
             # Construct the datasets dictionary
@@ -405,15 +407,16 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
         yield msg_factory.create_release(result)
 
 
-def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_dataset_type):
+def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_dataset_type='assembly'):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_dataset_infos()
 
-    dataset_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name=requested_dataset_type,
-                                                    dataset_attributes=True)
+    dataset_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
+                                                    dataset_type_name=requested_dataset_type)
     logger.debug("dataset Results %s", dataset_results)
-    response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results)
+    # FIXME it's possible that multiple datasets are returned here. released multiple times.
+    response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results[0])
     return response_data
 
 
@@ -485,7 +488,8 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_release_version()
 
-    release_version_result = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name=dataset_type,
+    release_version_result = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
+                                                           dataset_type_name=dataset_type,
                                                            release_version=release_version)
 
     if len(release_version_result) == 0:

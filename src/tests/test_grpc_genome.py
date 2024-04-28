@@ -103,12 +103,13 @@ class TestGRPCGenomeAdaptor:
         assert len(division_members) == output_count
 
     @pytest.mark.parametrize(
-        "allow_unreleased, output_count",
-        [(True, 2), (False, 1)],
+        "allow_unreleased, current_only, output_count",
+        [(True, False, 2), (True, True, 1), (False, False, 1)],
         indirect=['allow_unreleased']
     )
-    def test_fetch_genomes_by_genome_uuid(self, genome_conn, allow_unreleased, output_count):
-        genomes = genome_conn.fetch_genomes_by_genome_uuid('a73357ab-93e7-11ec-a39d-005056b38ce3')
+    def test_fetch_genomes_by_genome_uuid(self, genome_conn, allow_unreleased, current_only, output_count):
+        genomes = genome_conn.fetch_genomes_by_genome_uuid('a73357ab-93e7-11ec-a39d-005056b38ce3',
+                                                           current_only=current_only)
         assert len(genomes) == output_count
         if output_count:
             assert genomes[0].Organism.scientific_name == 'Triticum aestivum'
@@ -152,24 +153,24 @@ class TestGRPCGenomeAdaptor:
 
     @pytest.mark.parametrize(
         "allow_unreleased, output_count",
-        [(True, 2), (False, 1)],
+        [(True, 2), (False, 2)],
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_ensembl_name(self, genome_conn, allow_unreleased, output_count):
-        genomes = genome_conn.fetch_genomes_by_ensembl_name('SAMN00102897')
+        genomes = genome_conn.fetch_genomes_by_ensembl_name('SAMN17861670')
         assert len(genomes) == output_count
         if output_count:
-            assert genomes[0].Organism.scientific_name == 'Plasmodium falciparum 3D7'
+            assert genomes[0].Organism.scientific_name == 'Homo sapiens'
 
     @pytest.mark.parametrize(
         "allow_unreleased, taxon_id, output_count",
         [
-            (True, 36329, 2),
-            (False, 36329, 1)
+            (True, 559292, 2),
+            (False, 559292, 1)
         ], indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_taxonomy_id(self, genome_conn, allow_unreleased, taxon_id, output_count):
-        genomes = genome_conn.fetch_genomes_by_taxonomy_id(taxonomy_id=taxon_id)
+        genomes = genome_conn.fetch_genomes_by_taxonomy_id(taxonomy_id=taxon_id, current_only=False)
         assert len(genomes) == output_count
 
     @pytest.mark.parametrize(
@@ -177,14 +178,14 @@ class TestGRPCGenomeAdaptor:
         # WAS [(True, 2), (False, 0)],
         # TODO check consistency Test DB holds 19 genomes of HUMAN (Released)
         #  and 5 Attached to unreleased
-        [(True, 19), (False, 5)],
+        [(True, 11), (False, 5)],
         indirect=['allow_unreleased']
     )
     def test_fetch_genomes_by_scientific_name(self, genome_conn, allow_unreleased, output_count):
         genomes = genome_conn.fetch_genomes_by_scientific_name(scientific_name='Homo sapiens')
         assert len(genomes) == output_count
         if output_count:
-            assert genomes[0].Organism.common_name == 'Malaria parasite'
+            assert genomes[0].Organism.common_name == 'Human'
 
     def test_fetch_sequences(self, genome_conn):
         test = genome_conn.fetch_sequences(assembly_uuid='9d6b239c-46dd-4c79-bc29-1089f348d31d')
@@ -238,15 +239,15 @@ class TestGRPCGenomeAdaptor:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "45aec801-4fe7-4ac2-9afa-19aea2a8409e", 49),
-            (None, None, False, False, "45aec801-4fe7-4ac2-9afa-19aea2a8409e", 39),
+            (None, None, True, False, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 29),
+            (None, None, False, False, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 10),
+            ("8364a820-5485-42d7-a648-1a5eeb858319", None, True, False, "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
             # specifying genome_uuid -- Triticum aestivum (SAMEA4791365)
-            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, False, False, "999315f6-6d25-481f-a017-297f7e1490c8", 4),
-            # specifying dataset_uuid
-            (None, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", False, False, "949defef-c4d2-4ab1-8a73-f41d2b3c7719", 1),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, True, False, "999315f6-6d25-481f-a017-297f7e1490c8", 2),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, True, True, "999315f6-6d25-481f-a017-297f7e1490c8", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "d51ab85a-f037-47a3-ba53-423ad8e42669", 44),
-            (None, None, True, True, "d51ab85a-f037-47a3-ba53-423ad8e42669", 9),
+            (None, None, False, True, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 10),
+            (None, 'f93d21ca-9a24-4c31-ae11-b0f8d3deab6d', True, True, "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
         ],
         indirect=['allow_unreleased']
     )
@@ -255,21 +256,26 @@ class TestGRPCGenomeAdaptor:
             dataset_uuid, allow_unreleased,
             unreleased_only, expected_dataset_uuid,
             expected_count):
-        genome_datasets = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid, unreleased_only=unreleased_only,
-                                                            dataset_uuid=dataset_uuid, dataset_type_name="all")
-        assert len(genome_datasets) >= 0
-        assert genome_datasets[0].Dataset.dataset_uuid == expected_dataset_uuid
+        genome_datasets = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
+                                                            dataset_uuid=dataset_uuid,
+                                                            unreleased_only=unreleased_only,
+                                                            dataset_type_name="all")
+        logger.debug(f"Genome Datasets retrieved {[gd.genome.genome_uuid for gd in genome_datasets]}")
+        assert len(genome_datasets) > 0
+        logger.debug(f"First element {genome_datasets[0]}")
+        assert len(genome_datasets[0].datasets) >= 2  # At least genebuild + assembly
+        assert genome_datasets[0].datasets[0].dataset.dataset_uuid == expected_dataset_uuid
         assert len(genome_datasets) == expected_count
 
     @pytest.mark.parametrize(
         "allow_unreleased, organism_uuid, expected_count",
         [
             # homo_sapiens_37
-            (False, "1d336185-affe-4a91-85bb-04ebd73cbb56", 11),
-            (True, "1d336185-affe-4a91-85bb-04ebd73cbb56", 26),
+            (False, "1d336185-affe-4a91-85bb-04ebd73cbb56", 2),
+            (True, "1d336185-affe-4a91-85bb-04ebd73cbb56", 4),
             # Homo sapiens Gambian in Western Division
-            (False, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 8),
-            (True, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 10),
+            (False, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 2),
+            (True, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 4),
             # non-existing organism
             (False, "organism-yet-to-be-discovered", 0),
         ],

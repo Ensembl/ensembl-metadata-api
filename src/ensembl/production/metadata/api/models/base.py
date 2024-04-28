@@ -22,7 +22,6 @@ class LoadAble(object):
     def __repr__(self):
         from ensembl.production.metadata.api.models import DatasetStatus, ReleaseStatus
         class_name = self.__class__.__name__
-        print(f" object fields {self.__dict__.items()}")
         attributes = {name: value for name, value in self.__dict__.items() if
                       isinstance(value, (type(None), str, int, float, bool, DatasetStatus, ReleaseStatus))}
 

@@ -56,6 +56,11 @@ class TypeNotFoundException(UpdaterException, RuntimeError):
     pass
 
 
+class MetadataObjectNotFoundException(MetaException, RuntimeError):
+    """ Object can't be found with given parameters """
+    pass
+
+
 class DatasetFactoryException(Exception):
     """An error occured while using dataset factory"""
     pass

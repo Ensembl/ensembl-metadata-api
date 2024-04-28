@@ -12,7 +12,8 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Tuple
+from collections import namedtuple
+from typing import List, Tuple, NamedTuple
 
 import sqlalchemy as db
 from ensembl.database import DBConnection
@@ -20,12 +21,22 @@ from ensembl.ncbi_taxonomy.models import NCBITaxaName
 from sqlalchemy import and_
 from sqlalchemy.orm import aliased
 
+from ensembl.production.metadata.api.exceptions import MetadataObjectNotFoundException
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
-    Attribute, DatasetAttribute, ReleaseStatus
+    Attribute, DatasetAttribute, ReleaseStatus, DatasetStatus
 from ensembl.production.metadata.grpc.adaptors.base import BaseAdaptor, check_parameter, cfg
 
 logger = logging.getLogger(__name__)
+
+DatasetAttributeItem = namedtuple('DatasetAttributeItem', ['name', 'value', 'type', 'label'])
+
+
+class GenomeDatasetsListItem(NamedTuple):
+    genome: Genome
+    release: EnsemblRelease
+    datasets: [GenomeDataset]
+    attributes: [DatasetAttributeItem]
 
 
 class GenomeAdaptor(BaseAdaptor):
@@ -270,8 +281,8 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("production_name", EnsemblRelease.version.desc())).all()
 
-    def fetch_genomes_by_genome_uuid(self, genome_uuid, allow_unreleased=False, site_name=None, release_type=None,
-                                     release_version=None, current_only=True):
+    def fetch_genomes_by_genome_uuid(self, genome_uuid, site_name=None, release_type=None, release_version=None,
+                                     current_only=True):
         return self.fetch_genomes(genome_uuid=genome_uuid, site_name=site_name, release_type=release_type,
                                   release_version=release_version, current_only=current_only)
 
@@ -285,7 +296,7 @@ class GenomeAdaptor(BaseAdaptor):
         return self.fetch_genomes(biosample_id=ensembl_name, site_name=site_name, release_type=release_type,
                                   release_version=release_version, current_only=current_only)
 
-    def fetch_genomes_by_taxonomy_id(self, taxonomy_id, allow_unreleased=False, site_name=None, release_type=None,
+    def fetch_genomes_by_taxonomy_id(self, taxonomy_id, site_name=None, release_type=None,
                                      release_version=None, current_only=True):
         return self.fetch_genomes(taxonomy_id=taxonomy_id, site_name=site_name, release_type=release_type,
                                   release_version=release_version, current_only=current_only)
@@ -303,7 +314,6 @@ class GenomeAdaptor(BaseAdaptor):
 
         return self.fetch_genomes_by_taxonomy_id(
             taxonomy_ids,
-            allow_unreleased=allow_unreleased,
             site_name=site_name,
             release_type=release_type,
             release_version=release_version,
@@ -424,27 +434,25 @@ class GenomeAdaptor(BaseAdaptor):
             assembly_accession=assembly_accession, chromosomal_only=chromosomal_only
         )
 
-    def fetch_genome_datasets(self, genome_id: (int | List[int]) = None, genome_uuid: (str | List[str]) = None,
-                              organism_uuid: (str | List[str]) = None, unreleased_only: bool = False,
-                              dataset_uuid: (str | List[str]) = None, dataset_source: str = None,
-                              dataset_type_name: str = None, release_version: float = None,
-                              dataset_attributes: bool = None) -> List[
-        Tuple[Genome, GenomeDataset, Dataset, DatasetType, DatasetSource, EnsemblRelease, DatasetAttribute, Attribute]]:
+    def fetch_genome_datasets(self,
+                              genome_uuid: (str | List[str]) = None,
+                              dataset_uuid: str = None,
+                              organism_uuid: str = None,
+                              unreleased_only: bool = False,
+                              dataset_type_name: str = 'assembly',
+                              release_version: float = None) -> List[GenomeDatasetsListItem]:
         """
         Fetches genome datasets based on the provided parameters.
 
         Args:
-            genome_id (int or list or None): Genome ID(s) to filter by.
             genome_uuid (str or list or None): Genome UUID(s) to filter by.
-            organism_uuid (str or list or None): Organism UUID(s) to filter by.
+            dataset_uuid: str filter for this dataset_uuid
+            organism_uuid: str filter for this organism_uuid
             unreleased_only (bool): Fetch only unreleased datasets (default: False). allow_unreleased is used by gRPC
                                      to fetch both released and unreleased datasets, while unreleased_only
                                      is used in production pipelines (fetches only unreleased datasets)
-            dataset_uuid (str or list or None): Dataset UUID(s) to filter by.
-            dataset_source (str or None): Dataset source to filter by.
             dataset_type_name (str or None): Dataset type name to filter by.
             release_version (float or None): EnsemblRelease version to filter by.
-            dataset_attributes (bool): Flag to include dataset attributes
 
         Returns:
             List[Tuple[
@@ -466,106 +474,71 @@ class GenomeAdaptor(BaseAdaptor):
             ValueError: If an exception occurs during the fetch process.
 
         """
-        try:
-            genome_select = db.select(
-                Genome,
-                GenomeDataset,
-                Dataset,
-                DatasetType,
-                DatasetSource,
-            ).select_from(GenomeDataset) \
-                .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id) \
-                .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
-                .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id) \
-                .join(DatasetSource, Dataset.dataset_source_id == DatasetSource.dataset_source_id).order_by(
-                Genome.genome_uuid, Dataset.name).filter(Dataset.parent_id == None).distinct()
-
-            if genome_id is not None:
-                logger.debug(f"Filter on genome_id {genome_id}")
-                if type(genome_id) is list:
-                    genome_select = genome_select.filter(Genome.genome_id.in_(genome_id))
-                else:
-                    genome_select = genome_select.filter(Genome.genome_id == genome_id)
-
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            # fetch from genome table
+            genome_select = db.select(GenomeRelease, Genome, EnsemblRelease).join(EnsemblRelease).join(Genome).join(
+                GenomeDataset).join(Dataset).join(Organism)
             if genome_uuid is not None:
-                logger.debug(f"Filter on genome_uuid {genome_uuid}")
-
-                if type(genome_uuid) is list:
-                    genome_select = genome_select.filter(Genome.genome_uuid.in_(genome_uuid))
-                else:
-                    genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
-
-            if organism_uuid is not None:
-                logger.debug(f"Filter on organism_uuid {organism_uuid}")
-
-                if type(organism_uuid) is list:
-                    genome_select = genome_select.join(Organism, Organism.organism_id == Genome.organism_id).filter(
-                        Organism.organism_uuid.in_(organism_uuid))
-                else:
-                    genome_select = genome_select.join(Organism, Organism.organism_id == Genome.organism_id).filter(
-                        Organism.organism_uuid == organism_uuid)
-
+                genome_uuid = check_parameter(genome_uuid)
+                genome_select = genome_select.where(Genome.genome_uuid.in_(genome_uuid))
             if dataset_uuid is not None:
-                logger.debug(f"Filter on dataset_uuid {dataset_uuid}")
-                if type(dataset_uuid) is list:
-                    genome_select = genome_select.filter(Dataset.dataset_uuid.in_(dataset_uuid))
-                else:
-                    genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
-            dataset_type_name = "assembly" if not dataset_type_name else dataset_type_name
-            if dataset_type_name == "all":
-                # TODO: fetch the list dynamically from the DB
-                # TODO: you can as well simply remove the filter, if you want them all.
-                logger.debug(f"Filter on all dataset_type with no parent (main ones)")
-                genome_select = genome_select.filter(DatasetType.parent == None)
-            else:
-                logger.debug(f"Filter on dataset_type_name {dataset_type_name}")
-                genome_select = genome_select.filter(DatasetType.name == dataset_type_name)
-
-            if dataset_source is not None:
-                logger.debug(f"Filter on dataset_source {dataset_source}")
-                genome_select = genome_select.filter(DatasetSource.name == dataset_source)
-
-            if dataset_attributes:
-                genome_select = genome_select.add_columns(DatasetAttribute, Attribute) \
-                    .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
-                    .join(Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id).order_by(
-                    Genome.genome_uuid, Dataset.name, Attribute.name)
-            logger.debug("ALLOWED UNRELEASED %s", cfg.allow_unreleased)
-            DSRelease: EnsemblRelease = aliased(EnsemblRelease, name="DSRelease")
-            genome_select = genome_select.add_columns(EnsemblRelease, DSRelease, EnsemblSite) \
-                .join(GenomeRelease) \
-                .join(EnsemblRelease) \
-                .join(EnsemblSite)
-
-            genome_select = genome_select.filter(GenomeDataset.release_id != None) \
-                .join(DSRelease, (DSRelease.release_id == GenomeDataset.release_id))
+                genome_select = genome_select.filter(Dataset.dataset_uuid == dataset_uuid)
+            if organism_uuid is not None:
+                organism_uuid = check_parameter(organism_uuid)
+                genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
+            # We have to fetch from DB
             if not cfg.allow_unreleased:
-                # Filter the genomes
-                genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED,
-                                                     DSRelease.status == ReleaseStatus.RELEASED)
-                genome_select = genome_select.filter(GenomeRelease.is_current == 1)
-                genome_select = genome_select.filter(GenomeDataset.is_current == 1)
-
+                genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+                # only released datasets
+                #genome_select = genome_select.filter(Dataset.status == DatasetStatus.RELEASED,
+                 #                                    GenomeDataset.is_current == 1)
             elif unreleased_only:
                 genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
-                genome_select = genome_select.filter(GenomeRelease.is_current == 0)
-                genome_select = genome_select.filter(GenomeDataset.is_current == 0)
+                genome_select = genome_select.filter(Dataset.status != DatasetStatus.RELEASED)
+            else:
+                # TODO CHECK THIS if needed further filter
+                pass
+            logger.debug(f"genome Dataset query {genome_select}")
+            genomes = session.execute(genome_select.order_by(Genome.created.desc()).distinct()).all()
 
-            # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
-            # FIXME Hard to tell what is the best here. is_current = 1 is useful for stats...
+            # fetch all genomes datasets
+            # filter regarding allow_unreleased / release_version / unreleased_only
+            genomes_dataset_info = []
+            # Release check
 
+            for genome_release in genomes:
+                logger.debug(f"Retrieved genome {genome_release}")
+                genome_datasets = [gd for gd in genome_release.Genome.genome_datasets if gd.dataset.parent_id is None]
+                if dataset_type_name is not None and dataset_type_name != 'all':
+                    genome_datasets = [gd for gd in genome_datasets if
+                                       gd.dataset.dataset_type.name == dataset_type_name]
+                # filter release / unreleased
+                if not cfg.allow_unreleased:
+                    # TODO see to add is_current as well
+                    genome_datasets = [gd for gd in genome_datasets if gd.dataset.status == DatasetStatus.RELEASED]
+                    # TODO Get only the first one when allow_unreleased
+                elif unreleased_only:
+                    genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release is None or
+                                       gd.ensembl_release.status != DatasetStatus.RELEASED]
+                if release_version is not None:
+                    genome_datasets = [gd for gd in genome_datasets if
+                                       float(gd.ensembl_release.version) <= release_version]
+                if len(genome_datasets) > 0:
+                    all_attributes = [
+                        DatasetAttributeItem(name=ds.attribute.name, value=ds.value, type=ds.attribute.type,
+                                             label=ds.attribute.label) for gd
+                        in genome_datasets for ds in
+                        gd.dataset.dataset_attributes]
+                    genomes_dataset_info.append(
+                        GenomeDatasetsListItem(genome=genome_release.Genome,
+                                               release=genome_release.EnsemblRelease,
+                                               datasets=genome_datasets,
+                                               attributes=all_attributes))
+                else:
+                    logger.warning(f"No dataset retrieved for genome and parameters")
 
-            if release_version:
-                logger.debug(f"Filter on release_version <= {release_version}")
-                genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-
-            logger.debug(genome_select)
-            with self.metadata_db.session_scope() as session:
-                session.expire_on_commit = False
-                return session.execute(genome_select.order_by("production_name", EnsemblRelease.version.desc())).all()
-
-        except Exception as e:
-            raise ValueError(str(e))
+            return genomes_dataset_info
 
     def fetch_genomes_info(self, genome_id=None, genome_uuid=None, biosample_id=None, group=None,
                            dataset_type_name=None, dataset_source=None, dataset_attributes=True,
@@ -581,9 +554,7 @@ class GenomeAdaptor(BaseAdaptor):
             genomes_uuids = [genome[0].genome_uuid for genome in genomes]
             logger.debug(f"genomes uuids: {genomes_uuids}")
             genomes_datasets = self.fetch_genome_datasets(genome_uuid=genomes_uuids,
-                                                          dataset_source=dataset_source,
                                                           dataset_type_name=dataset_type_name,
-                                                          dataset_attributes=dataset_attributes,
                                                           release_version=release_version)
             indexed_genomes = {}
             # Agglomerated both lists

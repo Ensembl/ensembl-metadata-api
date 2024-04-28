@@ -154,8 +154,10 @@ class TestUtils:
         output = json.loads(output)
         print(f"top stats {output}")
         print(f"top stats {output['statsByGenomeUuid'][0]['statistics']}")
+        # FIXME when genome is retrieved from multiple release/dataset, stats are duplicated
         assembly_accession_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
                                     stat['name'] == 'assembly.accession']
+        logger.debug(assembly_accession_stats)
         assert len(assembly_accession_stats) == 1
         assert assembly_accession_stats[0] == {
             'label': 'assembly.accession',
@@ -258,8 +260,7 @@ class TestUtils:
 
     def test_get_dataset_by_genome_id_no_results(self, genome_conn):
         output = json_format.MessageToJson(
-            utils.get_dataset_by_genome_and_dataset_type(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3",
-                                                         "blah blah blah"))
+            utils.get_dataset_by_genome_and_dataset_type(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3"))
         output = json.loads(output)
         assert output == {}
 
@@ -382,6 +383,7 @@ class TestUtils:
         output = json_format.MessageToJson(
             utils.get_genome_by_name(db_conn=genome_conn, biosample_id="SAMN17861241", site_name="Ensembl",
                                      release_version=110.1))
+
         expected_output = {
             'assembly': {
                 'accession': 'GCA_018469415.1',
@@ -587,7 +589,7 @@ class TestUtils:
             ("a73351f7-93e7-11ec-a39d-005056b38ce3", None, None, {"releaseVersion": 108.0}),
             # wrong genome_uuid
             ("some-random-genome-uuid-000000000000", None, None, {}),
-            # genome_uuid and data_type_name
+            # genome_uuid and data_type_name / same release as assembly
             ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", None, {"releaseVersion": 108.0}),
             # genome_uuid and release_version
             ("a73351f7-93e7-11ec-a39d-005056b38ce3", "genebuild", 111.1, {"releaseVersion": 108.0}),
