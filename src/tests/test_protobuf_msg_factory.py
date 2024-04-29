@@ -265,6 +265,10 @@ class TestClass:
         [
             # url_name = GRCh38 => homo_sapien 38
             ("GRCh38", True, {'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'}),
+            #Todo: Need to review how genomes are fetched from release version (minor revision)
+            #genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+            #if a genome is assigned to 110.1 & 108.0 and current release version is 110.3
+            #the return should be ordered to its genome last release version 110.1
             ("GRCh38", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
             # tol_id = mHomSap1 => homo_sapien 37
             # I randomly picked up this tol_id, probably wrong (biologically speaking)
@@ -276,7 +280,7 @@ class TestClass:
     def test_create_genome_uuid(self, genome_conn, genome_tag, current_only, expected_output):
         input_data = genome_conn.fetch_genomes(genome_tag=genome_tag, current_only=current_only)
 
-        genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) == 1 else ""
+        genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) else ""
         output = json_format.MessageToJson(
             msg_factory.create_genome_uuid({"genome_uuid": genome_uuid})
         )

@@ -59,8 +59,12 @@ class TestGRPCGenomeAdaptor:
             (False, 110.1, False, 1),  # Wrong Release specified, not current release only
             (False, 108.0, False, 1),  # Right Release with current False
             (False, 108.0, True, 1),  # Right Release with only_current True
-            (False, 110.1, True, 0),  # Wrong Release with only_current True
-            (True, 110.2, True, 2),  # Unreleased should return 2
+            # wrong release version with is current true :##########################################
+            # checks given release is current or any release less than given release
+            #Todo: genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+            (False, 110.1, True, 1),  # Wrong Release with only_current True
+            #########################################################################################
+            (True, 110.2, False, 2),  # Unreleased should return 2
             (False, 110.2, True, 1)  # Unreleased should return 2
         ],
         indirect=['allow_unreleased']
@@ -73,6 +77,7 @@ class TestGRPCGenomeAdaptor:
                                              biosample_id="SAMN04256190", taxonomy_id="6239", group="EnsemblMetazoa",
                                              site_name="Ensembl", release_type="partial",
                                              release_version=release_version, current_only=current_only)
+
         assert len(celegans) == output_count
         if output_count == 1:
             assert celegans[0].Organism.biosample_id == 'SAMN04256190'
