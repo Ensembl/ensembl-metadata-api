@@ -78,13 +78,15 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
     statistics = []
     # FIXME stats_results can contain multiple entries
     if len(stats_results) > 0:
-        for result in stats_results[0].attributes:
-            statistics.append({
-                'name': result.name,
-                'label': result.label,
-                'statistic_type': result.type,
-                'statistic_value': result.value
-            })
+
+        for dataset in stats_results[0].datasets:
+            for attribute in dataset.attributes:
+                statistics.append({
+                    'name': attribute.name,
+                    'label': attribute.label,
+                    'statistic_type': attribute.type,
+                    'statistic_value': attribute.value
+                })
 
         statistics.sort(key=lambda x: x['name'])
         response_data = msg_factory.create_top_level_statistics_by_uuid(
@@ -124,7 +126,11 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
                                                         release_version=release_version)
 
     logger.debug(f"Genome Datasets Retrieved: {attrib_data_results}")
-    attribs = attrib_data_results[0].datasets if len(attrib_data_results) > 0 else None
+    attribs = []
+    if len(attrib_data_results) > 0:
+        for dataset in attrib_data_results[0].datasets:
+            attribs.extend(dataset.attributes)
+
     # fetch related assemblies count
     related_assemblies_count = db_conn.fetch_assemblies_count(None)
 
@@ -415,9 +421,15 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
     dataset_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
                                                     dataset_type_name=requested_dataset_type)
     logger.debug("dataset Results %s", dataset_results)
-    # FIXME it's possible that multiple datasets are returned here. released multiple times.
-    response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results[0])
-    return response_data
+    if len(dataset_results) == 0:
+        logger.error(f"No data for {genome_uuid} / {requested_dataset_type}")
+        return {}
+    else:
+        # FIXME it's possible that multiple datasets are returned here. released multiple times.
+        if len(dataset_results) > 1:
+            logger.warning(f"Multiple results for {genome_uuid} / {requested_dataset_type}")
+        response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results[0])
+        return response_data
 
 
 def get_organisms_group_count(db_conn, release_version):

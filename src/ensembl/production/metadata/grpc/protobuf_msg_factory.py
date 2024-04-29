@@ -39,20 +39,22 @@ def create_stats_by_genome_uuid(data=None):
     # this dict will help us group stats by genome_uuid, protobuf is pain in the back...
     # it won't let us do that while constructing the object
     statistics = {}
-    # data is GenomeDatasetsListItem
+    # data is [GenomeDatasetsListItem]
+    # FIXME deduplicate and make sure we keep the right one Sure it can be simplified now we have the NamedTuple
     for result in data:
         # start creating a dictionary with genome_uuid as key and stats as value list
         if result.genome.genome_uuid not in list(statistics.keys()):
             statistics[result.genome.genome_uuid] = []
-        # FIXME deduplicate and make sure we keep the right one
-        attributes_stats = {attribute.name: attribute for attribute in result.attributes if
-                            attribute.name not in attributes_stats.keys()}
-        statistics[result.genome.genome_uuid].extend(ensembl_metadata_pb2.AttributeStatistics(
-            name=attribute.name,
-            label=attribute.label,
-            statistic_type=attribute.type,
-            statistic_value=attribute.value
-        ) for attribute in attributes_stats.values())  # list of DatasetAttributeItem
+        for dataset in result.datasets:
+            # item is GenomeDatasetItem
+            dataset_stats = [attribute for attribute in dataset.attributes]
+            statistics[result.genome.genome_uuid].extend(
+                [ensembl_metadata_pb2.AttributeStatistics(
+                    name=attribute.name,
+                    label=attribute.label,
+                    statistic_type=attribute.type,
+                    statistic_value=attribute.value
+                ) for attribute in dataset_stats])  # list of DatasetAttributeItem
 
     # now we can construct the object after having everything in statistics grouped by genome_uuid
     for genome_uuid in list(statistics.keys()):
@@ -183,7 +185,7 @@ def create_attributes_info(data=None):
         "variation.sample_variant": ""
     }
     # set required_attributes values
-    if type(data) is dict and len(data) > 0:
+    if type(data) is list and len(data) > 0:
         pass
     else:
         return ensembl_metadata_pb2.AttributesInfo()
@@ -358,20 +360,20 @@ def create_datasets(data=None):
     )
 
 
-def create_dataset_info(data=None, release=None):
-    if data is None:
+def create_dataset_info(dataset, attribute, release=None):
+    if dataset is None:
         return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
-    # FIXME = what is the expectd output here? Data.Attribute ONe entry per datasets / attribute combination?
+    # FIXME = what is the expected output here? Data.Attribute ONe entry per datasets / attribute combination?
     #   is it used anywhere in web?
     return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid=data.dataset.dataset_uuid,
-        dataset_name=data.dataset.name,
-        name=data.Attribute.name,
-        type=data.Attribute.type,
-        dataset_version=data.Dataset.version,
-        dataset_label=data.Dataset.label,
-        version=data.DSRelease.version if data.DSRelease else None,
-        value=data.DatasetAttribute.value,
+        dataset_uuid=dataset.dataset_uuid,
+        dataset_name=dataset.name,
+        name=attribute.name,
+        type=attribute.type,
+        dataset_version=dataset.version,
+        dataset_label=dataset.label,
+        version=release.version if release else None,
+        value=attribute.value,
     )
 
 
@@ -379,7 +381,10 @@ def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=Non
     if data is None or data == []:
         return ensembl_metadata_pb2.DatasetInfos()
     # NB: data is GenomeDatasetsListItem
-    dataset_infos = [create_dataset_info(result) for result in data.datasets]
+    dataset_infos = []
+    for dataset in data.datasets:
+        dataset_infos.extend(
+            [create_dataset_info(dataset.dataset, attribute, dataset.release) for attribute in dataset.attributes])
     return ensembl_metadata_pb2.DatasetInfos(
         genome_uuid=genome_uuid,
         dataset_type=requested_dataset_type,

@@ -57,11 +57,13 @@ class TestClass:
             genome_input_data[0].Organism.species_taxonomy_id)
         # There are three related assemblies
         assert related_assemblies_input_count == expected_assembly_count
-
+        attributes = []
+        for dataset in attrib_input_data[0].datasets:
+            attributes.extend([ds for ds in dataset.attributes])
         output = json_format.MessageToJson(
             msg_factory.create_genome(
                 data=genome_input_data[0],
-                attributes=attrib_input_data[0].attributes,
+                attributes=attributes,
                 count=related_assemblies_input_count
             ),
             including_default_value_fields=True

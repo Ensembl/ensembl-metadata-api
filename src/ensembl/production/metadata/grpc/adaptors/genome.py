@@ -29,14 +29,24 @@ from ensembl.production.metadata.grpc.adaptors.base import BaseAdaptor, check_pa
 
 logger = logging.getLogger(__name__)
 
-DatasetAttributeItem = namedtuple('DatasetAttributeItem', ['name', 'value', 'type', 'label'])
+
+class DatasetAttributeItem(NamedTuple):
+    name: str
+    value: str
+    type: str
+    label: str
+
+
+class GenomeDatasetItem(NamedTuple):
+    dataset: Dataset
+    release: EnsemblRelease
+    attributes: [DatasetAttributeItem]
 
 
 class GenomeDatasetsListItem(NamedTuple):
     genome: Genome
     release: EnsemblRelease
-    datasets: [GenomeDataset]
-    attributes: [DatasetAttributeItem]
+    datasets: [GenomeDatasetItem]
 
 
 class GenomeAdaptor(BaseAdaptor):
@@ -346,11 +356,6 @@ class GenomeAdaptor(BaseAdaptor):
         elif release_version is not None and release_version > 0:
             genome_query = genome_query.where(EnsemblRelease.version <= release_version)
 
-        subquery = db.select(EnsemblRelease.version).filter(
-            and_(EnsemblRelease.status == ReleaseStatus.RELEASED, EnsemblRelease.is_current == 1))
-        if release_version is not None and release_version > 0:
-            subquery.filter(EnsemblRelease.version <= release_version)
-        genome_query = genome_query.where(EnsemblRelease.version <= subquery.subquery())
         genome_query = genome_query.where(db.or_(db.func.lower(Assembly.tol_id) == keyword.lower(),
                                                  db.func.lower(Assembly.accession) == keyword.lower(),
                                                  db.func.lower(Assembly.name) == keyword.lower(),
@@ -491,8 +496,8 @@ class GenomeAdaptor(BaseAdaptor):
             if not cfg.allow_unreleased:
                 genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
                 # only released datasets
-                #genome_select = genome_select.filter(Dataset.status == DatasetStatus.RELEASED,
-                 #                                    GenomeDataset.is_current == 1)
+                # genome_select = genome_select.filter(Dataset.status == DatasetStatus.RELEASED,
+                #                                    GenomeDataset.is_current == 1)
             elif unreleased_only:
                 genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
                 genome_select = genome_select.filter(Dataset.status != DatasetStatus.RELEASED)
@@ -525,16 +530,20 @@ class GenomeAdaptor(BaseAdaptor):
                     genome_datasets = [gd for gd in genome_datasets if
                                        float(gd.ensembl_release.version) <= release_version]
                 if len(genome_datasets) > 0:
-                    all_attributes = [
-                        DatasetAttributeItem(name=ds.attribute.name, value=ds.value, type=ds.attribute.type,
-                                             label=ds.attribute.label) for gd
-                        in genome_datasets for ds in
-                        gd.dataset.dataset_attributes]
                     genomes_dataset_info.append(
                         GenomeDatasetsListItem(genome=genome_release.Genome,
                                                release=genome_release.EnsemblRelease,
-                                               datasets=genome_datasets,
-                                               attributes=all_attributes))
+                                               datasets=[
+                                                   GenomeDatasetItem(
+                                                       dataset=gd.dataset,
+                                                       release=gd.ensembl_release,
+                                                       attributes=[
+                                                           DatasetAttributeItem(name=ds.attribute.name, value=ds.value,
+                                                                                type=ds.attribute.type,
+                                                                                label=ds.attribute.label) for ds in
+                                                           gd.dataset.dataset_attributes]
+                                                   ) for gd in genome_datasets
+                                               ]))
                 else:
                     logger.warning(f"No dataset retrieved for genome and parameters")
 
