@@ -143,7 +143,6 @@ class GenomeFactory:
                 genome_info = genome._asdict()
                 dataset_uuid = genome_info.get('dataset_uuid', None)
 
-                # TODO: below code required with implementation of datasetstatus enum class in dataset models
                 # convert status enum object to string value
                 dataset_status = genome_info.get('dataset_status', None)
                 if dataset_status and isinstance(dataset_status, DatasetStatus):
@@ -172,8 +171,6 @@ class GenomeFactory:
                             f"Cannot update status for dataset uuid: {dataset_uuid} "
                             f"{filters.update_dataset_status} to {status}  for genome {genome['genome_uuid']}"
                         )
-                        # TODO check why return None instead of initial status
-                        # genome_info['updated_dataset_status'] = filters.update_dataset_status
                         genome_info['updated_dataset_status'] = None
                 session.flush()
                 yield genome_info

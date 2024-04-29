@@ -261,7 +261,7 @@ class TestUtils:
             assert [dataset['datasetUuid'] == datasets[0].dataset_uuid for dataset in output['datasetInfos']]
 
     # TODO Check if this test is really important, because I can't really see the point of this
-    #def test_get_dataset_by_genome_id_no_results(self, genome_conn):
+    # def test_get_dataset_by_genome_id_no_results(self, genome_conn):
     #    output = json_format.MessageToJson(
     #        utils.get_dataset_by_genome_and_dataset_type(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3"))
     #    output = json.loads(output)
@@ -347,7 +347,6 @@ class TestUtils:
         unreleased = [json.loads(json_format.MessageToJson(response)) for response in
                       utils.get_genomes_by_keyword_iterator(genome_conn, keyword)]
         assert len(unreleased) == output_count
-
 
     def test_get_genomes_by_keyword_null(self, genome_conn):
         output = list(

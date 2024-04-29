@@ -107,13 +107,10 @@ class ReleaseFactory:
                 dataset_uuids.append(ds.Dataset.dataset_uuid)
 
             genome_uuids = list(dict.fromkeys(genome_ids))
-            genomes_release = session.query(Genome).filter(Genome.genome_id.in_(genome_ids)).all()
             logger.info(f"Adding {genomes} to release")
             # bulk update and attach all to release
             logger.debug("Marked Release as Preparing for datasets: %s", )
             release.status = ReleaseStatus.PREPARING
-            # TODO CHECK Re-affect non-ready genomes to new planned Release
-
             next_release = get_or_new_release(self.metadata_uri, release)
             session.add(next_release)
             logger.debug(f"Next release {next_release}")
@@ -154,6 +151,7 @@ class ReleaseFactory:
                 .where(DatasetType.topic == 'release_preparation')
             logger.debug(preparation_datasets)
             datasets = preparation_datasets.all()
+            # TODO check that all the datasets are PROCESSED
             logger.debug(datasets)
             release.status = ReleaseStatus.PREPARED
             self.check_release(release)

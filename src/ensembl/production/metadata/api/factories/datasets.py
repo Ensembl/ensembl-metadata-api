@@ -124,7 +124,7 @@ class DatasetFactory:
         return updated_datasets
 
     def update_dataset_attributes(self, dataset_uuid, attribute_dict, **kwargs):
-        # TODO ADD DELETE opiton to kwargs to redo dataset_attributes.
+        # TODO ADD DELETE option to kwargs to redo dataset_attributes.
         session = kwargs.get('session')
         if not isinstance(attribute_dict, dict):
             raise TypeError("attribute_dict must be a dictionary")
