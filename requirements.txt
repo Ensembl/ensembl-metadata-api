@@ -10,7 +10,7 @@ charset-normalizer==3.3.2
     # via requests
 ensembl-hive @ git+https://github.com/Ensembl/ensembl-hive.git
     # via ensembl-py
-ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git@1.2.2
+ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git
     # via -r requirements.in
 exceptiongroup==1.2.0
     # via pytest
