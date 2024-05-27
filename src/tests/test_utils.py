@@ -338,7 +338,7 @@ class TestUtils:
     @pytest.mark.parametrize(
         "allow_unreleased, output_count, keyword",
         [
-            (True, 19, "Homo sapiens"),
+            (True, 18, "Homo sapiens"),
             (False, 5, "Homo sapiens"),
             (True, 1, "GRCh37.p13"),
             (False, 1, "GRCh37.p13"),
