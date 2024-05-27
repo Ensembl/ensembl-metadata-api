@@ -53,7 +53,8 @@ def get_top_level_statistics(db_conn, organism_uuid):
         return msg_factory.create_top_level_statistics()
     # FIXME get best genome for organism and fetch from genome
     genomes = db_conn.fetch_genomes(organism_uuid=organism_uuid)
-    stats_results = db_conn.fetch_genome_datasets(genome_uuid=[genome.Genome.genome_uuid for genome in genomes],
+    #Todo fetch_genome returns duplicate genome uuids  if a genome assigned to multiple release and param allow_unreleased set to true
+    stats_results = db_conn.fetch_genome_datasets(genome_uuid=list({genome.Genome.genome_uuid for genome in genomes}),
                                                   dataset_type_name="all")
 
     if len(stats_results) > 0:

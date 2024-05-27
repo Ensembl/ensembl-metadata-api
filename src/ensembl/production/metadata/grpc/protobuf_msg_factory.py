@@ -354,9 +354,12 @@ def create_datasets(data=None):
     if data is None:
         return ensembl_metadata_pb2.Datasets()
     # FIXME data['datasets'] doesn't hold the right datatype.
-    # dataset_infos =
+    #ensembl_metadata_pb2.pyi the dataset type key value type is string
+    # def __init__(self, genome_uuid: _Optional[str] = ...,
+    #              datasets: _Optional[_Mapping[str, DatasetInfos]] = ...) -> None: ...
+    datasets = {str(i): j for i, j in data['datasets'].items()}
     return ensembl_metadata_pb2.Datasets(
-        genome_uuid=data["genome_uuid"], datasets=data['datasets']
+        genome_uuid=data["genome_uuid"], datasets = datasets
     )
 
 
