@@ -11,6 +11,7 @@
 #   limitations under the License.
 from sqlalchemy.ext.declarative import declarative_base
 
+
 Base = declarative_base()
 metadata = Base.metadata
 
@@ -19,7 +20,9 @@ __all__ = ['LoadAble']
 
 class LoadAble(object):
     def __repr__(self):
+        from ensembl.production.metadata.api.models import DatasetStatus, ReleaseStatus
         class_name = self.__class__.__name__
         attributes = {name: value for name, value in self.__dict__.items() if
-                      isinstance(value, (type(None), str, int, float, bool))}
+                      isinstance(value, (type(None), str, int, float, bool, DatasetStatus, ReleaseStatus))}
+
         return '<{}({})>'.format(class_name, attributes)

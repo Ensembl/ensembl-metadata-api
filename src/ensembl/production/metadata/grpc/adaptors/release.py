@@ -101,13 +101,10 @@ class ReleaseAdaptor(BaseAdaptor):
             return session.execute(release_select).all()
 
     def fetch_releases_for_genome(self, genome_uuid):
-        select_released = db.select(EnsemblRelease)
-        if cfg.allow_unreleased:
-            select_released = select_released.outerjoin(GenomeRelease)
-        else:
-            select_released = select_released.join(GenomeRelease)
-        select_released = select_released.join(Genome) \
-            .where(Genome.genome_uuid == genome_uuid)
+        select_released = db.select(EnsemblRelease).join(GenomeRelease)
+        if not cfg.allow_unreleased:
+            select_released = select_released.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        select_released = select_released.join(Genome).where(Genome.genome_uuid == genome_uuid)
         select_released = filter_release_status(select_released)
 
         logger.debug("Query: %s ", select_released)
@@ -120,12 +117,11 @@ class ReleaseAdaptor(BaseAdaptor):
         select_released = db.select(EnsemblRelease) \
             .select_from(Dataset) \
             .join(GenomeDataset) \
+            .join(EnsemblRelease) \
             .where(Dataset.dataset_uuid == dataset_uuid)
 
-        if cfg.allow_unreleased:
-            select_released = select_released.outerjoin(EnsemblRelease)
-        else:
-            select_released = select_released.join(EnsemblRelease)
+        if not cfg.allow_unreleased:
+            select_released = select_released.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         select_released = filter_release_status(select_released)
         logger.debug("Query: %s ", select_released)
         with self.metadata_db.session_scope() as session:

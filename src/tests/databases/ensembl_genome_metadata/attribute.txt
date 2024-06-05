@@ -83,12 +83,9 @@
 83	assembly.version	assembly.version	assembly.version	string
 84	genebuild.provider_name	genebuild.provider_name	genebuild.provider_name	string
 85	genebuild.provider_url	genebuild.provider_url	genebuild.provider_url	string
-118	production.production_name	Internal Production Name	Backward compatibility for registry production Name	string
 119	variation.short_variants	Short variants	Small-scale genetic variations	integer
 120	variation.sample_variant	variation.sample_variant	variation.sample_variant	string
-123	variation.short_variants_with_phenotype_assertions	Short variants	\N	
-124	Short variants with phenotypic evidence	integer	\N	
-125	Short variants studied for frequency	integer	\N	
+123	variation.short_variants_with_phenotype_assertions	Short variation with phenotype assertion	Short variation with phenotype assertion	string
 161	compara.homology_coverage	compara.homology_coverage	compara.homology_coverage	float
 162	compara.homology_reference_species	compara.homology_reference_species	compara.homology_reference_species	string
 163	regulation.open_chromatin_count	regulation.open_chromatin_count	Number of open chromatin regions	integer
@@ -99,8 +96,8 @@
 168	assembly.tol_id	assembly.tol_id	assembly.tol_id	string
 169	genebuild.annotation_source	genebuild.annotation_source	genebuild.annotation_source	string
 170	genebuild.nc_total_exons	Exons in non-coding genes	Total exon count	integer
-171	sample.gene_param	sample.gene_param	Sample Gene Data	string
-172	sample.location_param	sample.location_param	Sample Location Data	string
 179	assembly.description	assembly.description	assembly.description	string
 180	assembly.master_accession	assembly.master_accession	assembly.master_accession	string
 181	assembly.alt_accession	assembly.alt_accession	assembly.alt_accession	string
+182	dataset.build_start	Dataset Build start date	Dataset Build start date	string
+183	dataset.build_end	Dataset Build completed	Dataset Build completed	string

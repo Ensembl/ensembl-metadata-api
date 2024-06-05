@@ -9,8 +9,14 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+from __future__ import annotations
+
+from ensembl.database import DBConnection
+
+from . import EnsemblRelease, ReleaseStatus
 from .dataset import Dataset
 from .genome import GenomeDataset
+from ...grpc.config import cfg
 
 
 def check_release_status(meta_dbc, dataset_uuid):
@@ -26,3 +32,28 @@ def check_release_status(meta_dbc, dataset_uuid):
                                                 GenomeDataset.ensembl_release != None).exists()
         ).scalar()
         return result
+
+
+def get_or_new_release(meta_dbc: str, skip_release: EnsemblRelease = None) -> EnsemblRelease:
+    db = DBConnection(meta_dbc)
+    with db.session_scope() as session:
+        next_release = session.query(EnsemblRelease).filter(
+            EnsemblRelease.status == ReleaseStatus.PLANNED).order_by(EnsemblRelease.version)
+        if skip_release:
+            next_release = next_release.filter(EnsemblRelease.release_id != skip_release.release_id)
+        next_release = next_release.one_or_none()
+        if next_release is None:
+            top_release = session.query(EnsemblRelease).order_by(EnsemblRelease.version.desc()).first()
+            next_release = EnsemblRelease(
+                status=ReleaseStatus.PLANNED,
+                is_current=0,
+                label=f"New Release (Automated from {top_release.version}",
+                release_type=top_release.release_type,
+                version=float(top_release.version) + float(0.1),
+                site_id=cfg.ensembl_site_id
+            )
+        import logging
+        logging.debug(f"Next release {next_release}")
+        session.add(next_release)
+        session.expire_on_commit = False
+        return next_release

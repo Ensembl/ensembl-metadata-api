@@ -10,6 +10,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def create_species(species_data=None, taxo_info=None):
@@ -36,18 +39,22 @@ def create_stats_by_genome_uuid(data=None):
     # this dict will help us group stats by genome_uuid, protobuf is pain in the back...
     # it won't let us do that while constructing the object
     statistics = {}
+    # data is [GenomeDatasetsListItem]
+    # FIXME deduplicate and make sure we keep the right one Sure it can be simplified now we have the NamedTuple
     for result in data:
         # start creating a dictionary with genome_uuid as key and stats as value list
-        if result.Genome.genome_uuid not in list(statistics.keys()):
-            statistics[result.Genome.genome_uuid] = []
-
-        one_stat = ensembl_metadata_pb2.AttributeStatistics(
-            name=result.Attribute.name,
-            label=result.Attribute.label,
-            statistic_type=result.Attribute.type,
-            statistic_value=result.DatasetAttribute.value
-        )
-        statistics[result.Genome.genome_uuid].append(one_stat)
+        if result.genome.genome_uuid not in list(statistics.keys()):
+            statistics[result.genome.genome_uuid] = []
+        for dataset in result.datasets:
+            # item is GenomeDatasetItem
+            dataset_stats = [attribute for attribute in dataset.attributes]
+            statistics[result.genome.genome_uuid].extend(
+                [ensembl_metadata_pb2.AttributeStatistics(
+                    name=attribute.name,
+                    label=attribute.label,
+                    statistic_type=attribute.type,
+                    statistic_value=attribute.value
+                ) for attribute in dataset_stats])  # list of DatasetAttributeItem
 
     # now we can construct the object after having everything in statistics grouped by genome_uuid
     for genome_uuid in list(statistics.keys()):
@@ -177,12 +184,16 @@ def create_attributes_info(data=None):
         "assembly.provider_url": "",
         "variation.sample_variant": ""
     }
-
     # set required_attributes values
+    if type(data) is list and len(data) > 0:
+        pass
+    else:
+        return ensembl_metadata_pb2.AttributesInfo()
+
     for attrib_data in data:
-        attrib_name = attrib_data.Attribute.name
+        attrib_name = attrib_data.name
         if attrib_name in list(required_attributes.keys()):
-            required_attributes[attrib_name] = attrib_data.DatasetAttribute.value
+            required_attributes[attrib_name] = attrib_data.value
 
     return ensembl_metadata_pb2.AttributesInfo(
         genebuild_method=required_attributes["genebuild.method"],
@@ -332,9 +343,9 @@ def create_release_version(data=None):
     """
     if data is None:
         return ensembl_metadata_pb2.ReleaseVersion()
-
+    logger.debug(f"Release data {data}")
     release = ensembl_metadata_pb2.ReleaseVersion(
-        release_version=data.EnsemblRelease.version if hasattr(data, 'EnsemblRelease') else None,
+        release_version=data.release.version if hasattr(data, 'release') else None,
     )
     return release
 
@@ -342,33 +353,41 @@ def create_release_version(data=None):
 def create_datasets(data=None):
     if data is None:
         return ensembl_metadata_pb2.Datasets()
-
+    # FIXME data['datasets'] doesn't hold the right datatype.
+    #ensembl_metadata_pb2.pyi the dataset type key value type is string
+    # def __init__(self, genome_uuid: _Optional[str] = ...,
+    #              datasets: _Optional[_Mapping[str, DatasetInfos]] = ...) -> None: ...
+    datasets = {str(i): j for i, j in data['datasets'].items()}
     return ensembl_metadata_pb2.Datasets(
-        genome_uuid=data["genome_uuid"], datasets=data["datasets"]
+        genome_uuid=data["genome_uuid"], datasets = datasets
     )
 
 
-def create_dataset_info(data=None):
-    if data is None:
+def create_dataset_info(dataset, attribute, release=None):
+    if dataset is None:
         return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
-
+    # FIXME = what is the expected output here? Data.Attribute ONe entry per datasets / attribute combination?
+    #   is it used anywhere in web?
     return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid=data.Dataset.dataset_uuid,
-        dataset_name=data.Dataset.name,
-        name=data.Attribute.name,
-        type=data.Attribute.type,
-        dataset_version=data.Dataset.version,
-        dataset_label=data.Dataset.label,
-        version=data.DSRelease.version if data.DSRelease else None,
-        value=data.DatasetAttribute.value,
+        dataset_uuid=dataset.dataset_uuid,
+        dataset_name=dataset.name,
+        name=attribute.name,
+        type=attribute.type,
+        dataset_version=dataset.version,
+        dataset_label=dataset.label,
+        version=release.version if release else None,
+        value=attribute.value,
     )
 
 
 def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=None):
     if data is None or data == []:
         return ensembl_metadata_pb2.DatasetInfos()
-
-    dataset_infos = [create_dataset_info(result) for result in data]
+    # NB: data is GenomeDatasetsListItem
+    dataset_infos = []
+    for dataset in data.datasets:
+        dataset_infos.extend(
+            [create_dataset_info(dataset.dataset, attribute, dataset.release) for attribute in dataset.attributes])
     return ensembl_metadata_pb2.DatasetInfos(
         genome_uuid=genome_uuid,
         dataset_type=requested_dataset_type,
@@ -378,11 +397,11 @@ def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=Non
 
 def populate_dataset_info(data):
     return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid=data.Dataset.dataset_uuid,
-        dataset_name=data.Dataset.name,
-        dataset_version=data.Dataset.version,
-        dataset_label=data.Dataset.label,
-        version=int(data.EnsemblRelease.version) if hasattr(data, 'EnsemblRelease') else None,
+        dataset_uuid=data.dataset.dataset_uuid,
+        dataset_name=data.dataset.name,
+        dataset_version=data.dataset.version,
+        dataset_label=data.dataset.label,
+        version=int(data.ensembl_release.version) if hasattr(data, 'ensembl_release') else None,
     )
 
 
@@ -406,10 +425,11 @@ def create_organisms_group_count(data, release_version):
         release_version=release_version
     )
 
+
 def create_paths(data=None):
     if data is None:
         return ensembl_metadata_pb2.FTPLinks(
-           Links=[]
+            Links=[]
         )
 
     ftp_links_list = []
@@ -421,6 +441,5 @@ def create_paths(data=None):
         ftp_links_list.append(created_ftp_link)
 
     return ensembl_metadata_pb2.FTPLinks(
-           Links=ftp_links_list
-        )
-
+        Links=ftp_links_list
+    )

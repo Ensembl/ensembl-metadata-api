@@ -46,7 +46,7 @@ class GenomeInputFilters:
     dataset_status: List[str] = field(default_factory=lambda: ["Submitted"])
     batch_size: int = 50
     page: int = 1
-    organism_group_type: str = "DIVISION"
+    organism_group_type: str = ''
     run_all: int = 0
     update_dataset_status: str = ""
     update_dataset_attribute: dict = field(default_factory=lambda: {})
@@ -64,7 +64,8 @@ class GenomeFactory:
     @staticmethod
     def _apply_filters(query, filters):
 
-        query = query.filter(OrganismGroup.type == filters.organism_group_type)
+        if filters.organism_group_type:
+            query = query.filter(OrganismGroup.type == filters.organism_group_type)
 
         if filters.run_all:
             filters.division = [
@@ -111,7 +112,7 @@ class GenomeFactory:
         if filters.batch_size:
             filters.page = filters.page if filters.page > 0 else 1
             query = query.offset((filters.page - 1) * filters.batch_size).limit(filters.batch_size)
-
+        logger.debug(f"Filter Query {query}")
         return query
 
     def _build_query(self, filters):
@@ -121,7 +122,7 @@ class GenomeFactory:
             .join(Genome.organism) \
             .join(Organism.organism_group_members) \
             .join(OrganismGroupMember.organism_group) \
-            .outerjoin(Genome.genome_datasets) \
+            .join(Genome.genome_datasets) \
             .join(GenomeDataset.dataset) \
             .join(Dataset.dataset_source) \
             .join(Dataset.dataset_type) \
@@ -142,7 +143,6 @@ class GenomeFactory:
                 genome_info = genome._asdict()
                 dataset_uuid = genome_info.get('dataset_uuid', None)
 
-                # TODO: below code required with implementation of datasetstatus enum class in dataset models
                 # convert status enum object to string value
                 dataset_status = genome_info.get('dataset_status', None)
                 if dataset_status and isinstance(dataset_status, DatasetStatus):
@@ -172,7 +172,7 @@ class GenomeFactory:
                             f"{filters.update_dataset_status} to {status}  for genome {genome['genome_uuid']}"
                         )
                         genome_info['updated_dataset_status'] = None
-
+                session.flush()
                 yield genome_info
 
 

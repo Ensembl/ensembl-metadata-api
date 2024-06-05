@@ -52,7 +52,7 @@ class EnsemblRelease(LoadAble, Base):
         Index('ensembl_release_version_site_id_b743399a_uniq', 'version', 'site_id', unique=True),
     )
 
-    release_id = Column(Integer, primary_key=True)
+    release_id = Column(Integer, primary_key=True, nullable=True)
     version = Column(DECIMAL(10, 1), nullable=False)
     release_date = Column(Date, nullable=False)
     label = Column(String(64))

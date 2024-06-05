@@ -18,8 +18,7 @@ from ensembl.database import UnitTestDB, DBConnection
 
 from ensembl.production.metadata.api.exceptions import MetadataUpdateException
 from ensembl.production.metadata.api.factory import meta_factory
-from ensembl.production.metadata.api.models import Organism, Assembly, Dataset, AssemblySequence, DatasetAttribute, \
-    DatasetSource, DatasetType, Attribute
+from ensembl.production.metadata.api.models import *
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -49,13 +48,15 @@ class TestUpdater:
 
         # Check for insertion of genome_uuid
         core_1_db = DBConnection(multi_dbs['core_1'].dbc.url)
+        inserted_genome_uuid = None
         with core_1_db.session_scope() as session:
             species_id = "1"
-            inserted_genome_uuid = session.query(Meta).filter(
+            inserted_meta = session.query(Meta).filter(
                 Meta.species_id == species_id,
                 Meta.meta_key == 'genome.genome_uuid'
             ).first()
-            assert inserted_genome_uuid is not None
+            inserted_genome_uuid = inserted_meta.meta_value
+        assert inserted_genome_uuid is not None
 
         # Look for organism, assembly and geneset
         metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
@@ -92,9 +93,11 @@ class TestUpdater:
                 (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'TEST3_seqC')
             ).first()
             assert sequence3 is not None
-            count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
+            count = session.query(Dataset).join(DatasetSource).join(DatasetType) \
+                .join(GenomeDataset).join(Genome).filter(
                 DatasetSource.name.like('%compara%'),
-                DatasetType.name == 'homology_dumps'
+                DatasetType.name == 'homology_compute',
+                Genome.genome_uuid == inserted_genome_uuid
             ).count()
             assert count == 1
 
@@ -135,6 +138,7 @@ class TestUpdater:
             assert dataset.dataset_type.name == "genebuild"
             assert dataset.genome_datasets[0].genome.genebuild_version == 'ENS02'
             assert dataset.genome_datasets[0].genome.genebuild_date == '2023-07'
+            assert dataset.genome_datasets[0].genome.genome_releases is not None
 
     def test_taxonomy_common_name(self, multi_dbs):
         test = meta_factory(multi_dbs['core_5'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,

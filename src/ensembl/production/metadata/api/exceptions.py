@@ -41,6 +41,11 @@ class MissingMetaException(MetaException, RuntimeError):
     pass
 
 
+class ReleaseDataException(MetaException, RuntimeError):
+    """ Release data is inconsistent """
+    pass
+
+
 class UpdateBackCoreException(UpdaterException, RuntimeError):
     """An error occurred while updating back the core database"""
     pass
@@ -48,6 +53,11 @@ class UpdateBackCoreException(UpdaterException, RuntimeError):
 
 class TypeNotFoundException(UpdaterException, RuntimeError):
     """Dataset Type not found"""
+    pass
+
+
+class MetadataObjectNotFoundException(MetaException, RuntimeError):
+    """ Object can't be found with given parameters """
     pass
 
 

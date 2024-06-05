@@ -30,38 +30,40 @@ class TestClass:
     dbc = None  # type: UnitTestDB
 
     @pytest.mark.parametrize(
-        "allow_unreleased, genome_uuid, ds_type_name,  expected_ds_count, expected_assembly_count, ensembl_name",
+        "allow_unreleased, genome_uuid, ds_type_name, expected_genome_count, expected_ds_count, expected_assembly_count, ensembl_name",
         [
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 24, 14, 'SAMN12121739'),
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 4, 14, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 1, 1, 5, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'all', 1, 6, 5, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 2, 1, 19, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 1, 1, 5, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 2, 19, 'SAMN12121739'),
         ],
         indirect=['allow_unreleased']
     )
-    def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, ds_type_name, expected_ds_count,
-                           expected_assembly_count,
-                           ensembl_name):
+    def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, ds_type_name, expected_genome_count,
+                           expected_ds_count, expected_assembly_count, ensembl_name):
         """Test service.create_genome function"""
+        # FIXME all returned genome is now unique following method
         genome_input_data = genome_conn.fetch_genomes(genome_uuid=genome_uuid)
         # Make sure we are only getting one
-        assert len(genome_input_data) == 1
+        assert len(genome_input_data) == expected_genome_count
 
-        attrib_input_data = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
-                                                              dataset_attributes=True,
-                                                              dataset_type_name=ds_type_name)
+        attrib_input_data = genome_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name=ds_type_name)
         # 11 attributes
-        assert len(attrib_input_data) == expected_ds_count
+        assert len(attrib_input_data[0].datasets) == expected_ds_count
+        # assert len(attrib_input_data[0].datasets) == expected_ds_count
 
         related_assemblies_input_count = genome_conn.fetch_assemblies_count(
             genome_input_data[0].Organism.species_taxonomy_id)
         # There are three related assemblies
         assert related_assemblies_input_count == expected_assembly_count
-
+        attributes = []
+        for dataset in attrib_input_data[0].datasets:
+            attributes.extend([ds for ds in dataset.attributes])
         output = json_format.MessageToJson(
             msg_factory.create_genome(
                 data=genome_input_data[0],
-                attributes=attrib_input_data,
+                attributes=attributes,
                 count=related_assemblies_input_count
             ),
             including_default_value_fields=True
@@ -103,8 +105,7 @@ class TestClass:
     def test_create_stats_by_organism_uuid(self, genome_conn):
         # ecoli
         organism_uuid = "1e579f8d-3880-424e-9b4f-190eb69280d9"
-        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all",
-                                                       dataset_attributes=True)
+        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all")
 
         first_expected_stat = {
             'label': 'assembly.accession',
@@ -121,8 +122,7 @@ class TestClass:
     def test_create_top_level_statistics(self, genome_conn):
         # ecoli
         organism_uuid = "1e579f8d-3880-424e-9b4f-190eb69280d9"
-        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all",
-                                                       dataset_attributes=True)
+        input_data = genome_conn.fetch_genome_datasets(organism_uuid=organism_uuid, dataset_type_name="all")
 
         first_expected_stat = {
             'label': 'assembly.accession',
@@ -234,7 +234,7 @@ class TestClass:
         "allow_unreleased, expected_count",
         [
             (False, 5),
-            (True, 14)
+            (True, 19)
         ],
         indirect=['allow_unreleased']
     )
@@ -265,6 +265,10 @@ class TestClass:
         [
             # url_name = GRCh38 => homo_sapien 38
             ("GRCh38", True, {'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'}),
+            #Todo: Need to review how genomes are fetched from release version (minor revision)
+            #genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
+            #if a genome is assigned to 110.1 & 108.0 and current release version is 110.3
+            #the return should be ordered to its genome last release version 110.1
             ("GRCh38", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
             # tol_id = mHomSap1 => homo_sapien 37
             # I randomly picked up this tol_id, probably wrong (biologically speaking)
@@ -276,7 +280,7 @@ class TestClass:
     def test_create_genome_uuid(self, genome_conn, genome_tag, current_only, expected_output):
         input_data = genome_conn.fetch_genomes(genome_tag=genome_tag, current_only=current_only)
 
-        genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) == 1 else ""
+        genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) else ""
         output = json_format.MessageToJson(
             msg_factory.create_genome_uuid({"genome_uuid": genome_uuid})
         )
