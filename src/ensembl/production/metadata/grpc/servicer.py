@@ -42,7 +42,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetTopLevelStatistics(self, request, context):
         logger.debug(f"Received RPC for GetTopLevelStatistics with request: {request}")
-        return utils.get_top_level_statistics(self.db, request.organism_uuid, request.group)
+        return utils.get_top_level_statistics(self.db, request.organism_uuid)
 
     def GetTopLevelStatisticsByUUID(self, request, context):
         logger.debug(f"Received RPC for GetTopLevelStatisticsByUUID with request: {request}")
