@@ -514,18 +514,26 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
     return msg_factory.create_release_version()
 
 
-def get_attribute_by_uuid(db_conn, genome_uuid, dataset_type):
+def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_attribute_value()
 
     dataset_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
-        dataset_type_name=dataset_type
+        dataset_type_name=dataset_type,
+        release_version=release_version
     )
 
     if len(dataset_results) == 1:
-        return msg_factory.create_attribute_value(data=dataset_results[0])
+        response_data = msg_factory.create_attribute_value(data=dataset_results)
+        logger.debug(f"Response data: \n{response_data}")
+        return response_data
+
+    elif len(dataset_results) > 1:
+        logger.debug("Multiple results returned.")
+    else:
+        logger.debug("Genome not found.")
 
     logger.debug("No attribute values were found.")
     return msg_factory.create_attribute_value()

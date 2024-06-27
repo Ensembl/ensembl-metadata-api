@@ -343,6 +343,7 @@ message DatasetAttributeValue {
 
 message DatasetAttributesValues {
   repeated DatasetAttributeValue attributes = 1;
+  double release_version = 2;
 }
 
 
@@ -501,5 +502,5 @@ Dataset attribute request
 message DatasetAttributesValuesRequest {
   string genome_uuid = 1;     // Mandatory
   string dataset_type = 2;    // Optional
-//  double release_version = 3; // Optional
+  double release_version = 3; // Optional
 }

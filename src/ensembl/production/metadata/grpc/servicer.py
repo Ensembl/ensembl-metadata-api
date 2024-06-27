@@ -131,6 +131,6 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
 
     def GetAttributesValuesByUUID(self, request, context):
         logger.debug(f"Received RPC for GetAttributesByUUID with request: {request}")
-        return utils.get_attribute_by_uuid(
-            self.db, request.genome_uuid, request.dataset_type #, request.release_version
+        return utils.get_attributes_values_by_uuid(
+            self.db, request.genome_uuid, request.dataset_type, request.release_version
         )

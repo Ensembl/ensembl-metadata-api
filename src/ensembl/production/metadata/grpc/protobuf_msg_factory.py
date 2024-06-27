@@ -446,14 +446,39 @@ def create_paths(data=None):
 
 
 def create_attribute_value(data=None):
+    """
+    Creates a DatasetAttributesValues message from the provided data.
 
+    If no data is provided, returns an empty DatasetAttributeValue message with an empty attributes list.
+
+    Args:
+        data (optional): A list of objects containing dataset attributes.
+            The expected structure is that `data` is a list containing an object with a `datasets` attribute,
+            which is a list containing an object with an `attributes` attribute. The `attributes` attribute
+            is a list of objects each having `name` and `value` attributes.
+            it's many nested objects, and we need to go deep in the rabit hole to fetch the data we need
+            The nested objects look something like this:
+            [GenomeDatasetsListItem]
+                [GenomeDatasetItem]
+                    [DatasetAttributeItem] <- this is the attributes list we want to extract
+                    Dataset
+                    EnsemblRelease
+                Genome
+                EnsemblRelease
+
+    Returns:
+        ensembl_metadata_pb2.DatasetAttributesValues: A message containing a list of DatasetAttributeValue
+        messages, each corresponding to the attributes from the input data.
+    """
     if data is None:
-        return ensembl_metadata_pb2.DatasetAttributeValue(
+        return ensembl_metadata_pb2.DatasetAttributesValues(
             attributes=[]
         )
 
     attributes_list = []
-    for attrib in data.datasets[0].attributes:
+    # we expect only one dataset: data[0].datasets[0] gets the first GenomeDatasetItem
+    for attrib in data[0].datasets[0].attributes:
+        # for each attribute in the DatasetAttributeItem
         created_attribute = ensembl_metadata_pb2.DatasetAttributeValue(
             attribute_name=attrib.name,
             attribute_value=attrib.value,
@@ -461,5 +486,6 @@ def create_attribute_value(data=None):
         attributes_list.append(created_attribute)
 
     return ensembl_metadata_pb2.DatasetAttributesValues(
-        attributes=attributes_list
+        attributes=attributes_list,
+        release_version=data[0].release.version
     )
