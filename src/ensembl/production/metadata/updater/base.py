@@ -18,14 +18,12 @@ from ensembl.production.metadata.api.models import EnsemblRelease
 
 
 class BaseMetaUpdater:
-    def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None, force=None):
+    def __init__(self, db_uri, metadata_uri, release=None, force=None):
         self.db_uri = db_uri
         self.force = force
-        self.taxonomy_uri = taxonomy_uri
         self.metadata_uri = metadata_uri
         self.db = DBConnection(self.db_uri)
         self.metadata_db = DBConnection(metadata_uri)
-        self.taxonomy_db = DBConnection(taxonomy_uri)
         # We will add a release later. For now, the release must be specified for it to be used.
         if release is None:
             self.listed_release = None

@@ -19,7 +19,6 @@ import logging
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
     SeqRegionSynonym, AttribType
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
-from ensembl.ncbi_taxonomy.models import NCBITaxaName
 from sqlalchemy import or_, func
 from sqlalchemy import select, and_
 from sqlalchemy.exc import NoResultFound
@@ -37,8 +36,8 @@ logger = logging.getLogger(__name__)
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
-    def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None, force=None):
-        super().__init__(db_uri, metadata_uri, taxonomy_uri, release, force)
+    def __init__(self, db_uri, metadata_uri, release=None, force=None):
+        super().__init__(db_uri, metadata_uri, release, force)
         self.db_type = 'core'
         # Single query to get all of the metadata information.
         self.meta_dict = {}
@@ -321,7 +320,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
         if common_name is None or common_name == "":
 
-            with self.taxonomy_db.session_scope() as session:
+            with self.metadata_db.session_scope() as session:
                 common_name = session.query(NCBITaxaName).filter(
                     NCBITaxaName.taxon_id == taxid,
                     NCBITaxaName.name_class == "genbank common name"
@@ -361,7 +360,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # If no existing Organism is found, conduct additional checks before creating a new one.
 
             # Check if the new organism's taxonomy ID exists in the taxonomy database.
-            with self.taxonomy_db.session_scope() as session:
+            with self.metadata_db.session_scope() as session:
                 try:
                     Taxonomy.fetch_node_by_id(session, new_organism.taxonomy_id)
                 except NoResultFound:
