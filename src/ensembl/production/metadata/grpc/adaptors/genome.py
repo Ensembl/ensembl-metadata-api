@@ -479,6 +479,12 @@ class GenomeAdaptor(BaseAdaptor):
             ValueError: If an exception occurs during the fetch process.
 
         """
+        # by default, if no dataset_type is provided, the default value is an empty string '' not None
+        # that cancels out the default assignment in the method definition above
+        # same thing for release_version, default value IS 0.0 NOT None
+        # TODO: figure out if this is a gRPC thing or not
+        dataset_type_name = 'assembly' if dataset_type_name == '' else dataset_type_name
+
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             # fetch from genome table
@@ -526,7 +532,7 @@ class GenomeAdaptor(BaseAdaptor):
                 elif unreleased_only:
                     genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release is None or
                                        gd.ensembl_release.status != DatasetStatus.RELEASED]
-                if release_version is not None:
+                if release_version:
                     genome_datasets = [gd for gd in genome_datasets if
                                        float(gd.ensembl_release.version) <= release_version]
                 if len(genome_datasets) > 0:
