@@ -443,3 +443,23 @@ def create_paths(data=None):
     return ensembl_metadata_pb2.FTPLinks(
         Links=ftp_links_list
     )
+
+
+def create_attribute_value(data=None):
+
+    if data is None:
+        return ensembl_metadata_pb2.DatasetAttributeValue(
+            attributes=[]
+        )
+
+    attributes_list = []
+    for attrib in data.datasets[0].attributes:
+        created_attribute = ensembl_metadata_pb2.DatasetAttributeValue(
+            attribute_name=attrib.name,
+            attribute_value=attrib.value,
+        )
+        attributes_list.append(created_attribute)
+
+    return ensembl_metadata_pb2.DatasetAttributesValues(
+        attributes=attributes_list
+    )

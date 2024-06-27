@@ -94,6 +94,9 @@ service EnsemblMetadata {
 
   // Get release version for a given genome_uuid
   rpc GetReleaseVersionByUUID(ReleaseVersionRequest) returns (ReleaseVersion) {}
+
+  // Get attributes by genome UUID
+  rpc GetAttributesValuesByUUID(DatasetAttributesValuesRequest) returns (DatasetAttributesValues) {}
 }
 
 /*
@@ -333,6 +336,15 @@ message ReleaseVersion {
   double release_version = 1;
 }
 
+message DatasetAttributeValue {
+  string attribute_name = 1;
+  string attribute_value = 2;
+}
+
+message DatasetAttributesValues {
+  repeated DatasetAttributeValue attributes = 1;
+}
+
 
 /*
 The messages below are used to request data - required-ness is not enforced
@@ -481,4 +493,13 @@ message ReleaseVersionRequest {
   string genome_uuid = 1;     // Mandatory
   string dataset_type = 2;    // Optional
   double release_version = 3; // Optional
+}
+
+/*
+Dataset attribute request
+ */
+message DatasetAttributesValuesRequest {
+  string genome_uuid = 1;     // Mandatory
+  string dataset_type = 2;    // Optional
+//  double release_version = 3; // Optional
 }
