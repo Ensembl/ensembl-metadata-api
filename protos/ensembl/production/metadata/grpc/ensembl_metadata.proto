@@ -500,8 +500,8 @@ message ReleaseVersionRequest {
 Dataset attribute request
  */
 message DatasetAttributesValuesRequest {
-  string genome_uuid = 1;     // Mandatory
-  string dataset_type = 2;    // Optional
+  string genome_uuid = 1;             // Mandatory
+  string dataset_type = 2;            // Optional
   repeated string attribute_name = 3; // Optional
-  double release_version = 4; // Optional
+  double release_version = 4;         // Optional
 }

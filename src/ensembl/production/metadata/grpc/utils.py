@@ -515,6 +515,24 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
 
 
 def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names):
+    """
+    Retrieve attribute values for a given genome UUID from the database.
+
+    This function fetches genome datasets based on the provided genome UUID, dataset type, and release version.
+    If a single dataset result is found, it creates and returns the attribute values. If no or multiple datasets
+    are found, appropriate warnings or debug messages are logged.
+
+    Args:
+        db_conn: Database connection object.
+        genome_uuid (str): The UUID of the genome to fetch data for. Must not be empty.
+        dataset_type (str): The type of dataset to retrieve.
+        release_version (str): The release version of the dataset to retrieve.
+        attribute_names (list): A list of attribute names to filter the results by.
+
+    Returns:
+        object: A response object containing the attribute values. If no valid dataset is found,
+                an empty attribute value object is returned.
+    """
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_attribute_value()
