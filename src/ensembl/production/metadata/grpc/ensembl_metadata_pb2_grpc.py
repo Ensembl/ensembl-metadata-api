@@ -123,6 +123,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseVersionRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseVersion.FromString,
                 )
+        self.GetAttributesValuesByUUID = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetAttributesValuesByUUID',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetAttributesValuesRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetAttributesValues.FromString,
+                )
 
 
 class EnsemblMetadataServicer(object):
@@ -280,6 +285,13 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetAttributesValuesByUUID(self, request, context):
+        """Get attributes by genome UUID
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_EnsemblMetadataServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -387,6 +399,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetReleaseVersionByUUID,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseVersionRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseVersion.SerializeToString,
+            ),
+            'GetAttributesValuesByUUID': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAttributesValuesByUUID,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetAttributesValuesRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetAttributesValues.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -756,5 +773,22 @@ class EnsemblMetadata(object):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetReleaseVersionByUUID',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseVersionRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.ReleaseVersion.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetAttributesValuesByUUID(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetAttributesValuesByUUID',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetAttributesValuesRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetAttributesValues.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

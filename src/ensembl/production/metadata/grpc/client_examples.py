@@ -31,7 +31,8 @@ from ensembl_metadata_pb2 import (
     GenomeAssemblySequenceRegionRequest,
     GenomeTagRequest,
     FTPLinksRequest,
-    ReleaseVersionRequest
+    ReleaseVersionRequest,
+    DatasetAttributesValuesRequest
 )
 
 
@@ -389,6 +390,58 @@ def get_release_version_by_genome_uuid(stub):
     print("**** Release Version: No genome_uuid provided (no results) ****")
     print(genome_uuid5)
 
+
+def get_datasets_attributes_values_by_genome_uuid(stub):
+    request1 = DatasetAttributesValuesRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3"
+    )
+    attributes1 = stub.GetAttributesValuesByUUID(request1)
+
+    print("**** Dataset Attributes Values: By genome_uuid only (default dataset_type is 'assembly') ****")
+    print(attributes1)
+
+    request2 = DatasetAttributesValuesRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="homologies"
+    )
+    attributes2 = stub.GetAttributesValuesByUUID(request2)
+
+    print("**** Dataset Attributes Values: By genome_uuid and dataset_type='homologies' ****")
+    print(attributes2)
+
+    request3 = DatasetAttributesValuesRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="homologies",
+        attribute_name=["compara.homology_coverage"]
+    )
+    attributes3 = stub.GetAttributesValuesByUUID(request3)
+
+    print("**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and attribute_name=['compara.homology_coverage'] ****")
+    print(attributes3)
+
+    request4 = DatasetAttributesValuesRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="homologies",
+        release_version=110.1
+    )
+    attributes4 = stub.GetAttributesValuesByUUID(request4)
+
+    print(
+        "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and release_version=110.1 ****")
+    print(attributes4)
+
+    request5 = DatasetAttributesValuesRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="homologies",
+        attribute_name=["i.dont.exist"]
+    )
+    attributes5 = stub.GetAttributesValuesByUUID(request5)
+
+    print(
+        "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and attribute_name=['i.dont.exist'] ****")
+    print(attributes5)
+
+
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
@@ -432,6 +485,8 @@ def run():
         get_ftp_links(stub)
         print("-------------- Get Release Version By Genome UUID --------------")
         get_release_version_by_genome_uuid(stub)
+        print("-------------- Get Datasets Attributes Values By Genome UUID --------------")
+        get_datasets_attributes_values_by_genome_uuid(stub)
 
 
 if __name__ == "__main__":
