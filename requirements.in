@@ -1,8 +1,0 @@
-ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.2.2
-grpcio
-protobuf
-grpcio-tools
-grpcio-reflection
-sqlalchemy<=2.0
-types-pymysql
-urllib3~=1.26.15
