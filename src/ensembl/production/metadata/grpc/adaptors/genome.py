@@ -445,7 +445,6 @@ class GenomeAdaptor(BaseAdaptor):
                               organism_uuid: str = None,
                               unreleased_only: bool = False,
                               dataset_type_name: str = 'assembly',
-                              attribute_name: str = None,
                               release_version: float = None) -> List[GenomeDatasetsListItem]:
         """
         Fetches genome datasets based on the provided parameters.
@@ -458,7 +457,6 @@ class GenomeAdaptor(BaseAdaptor):
                                      to fetch both released and unreleased datasets, while unreleased_only
                                      is used in production pipelines (fetches only unreleased datasets)
             dataset_type_name (str or None): Dataset type name to filter by.
-            attribute_name (str or None): Dataset attribute name to filter by.
             release_version (float or None): EnsemblRelease version to filter by.
 
         Returns:
@@ -526,11 +524,6 @@ class GenomeAdaptor(BaseAdaptor):
                 if dataset_type_name is not None and dataset_type_name != 'all':
                     genome_datasets = [gd for gd in genome_datasets if
                                        gd.dataset.dataset_type.name == dataset_type_name]
-                # if attribute_name:
-                #     attribute_name = check_parameter(attribute_name)
-                #
-                #     genome_datasets = [gd for gd in genome_datasets if
-                #                        gd.dataset.dataset_attributes.value == dataset_type_name]
                 # filter release / unreleased
                 if not cfg.allow_unreleased:
                     # TODO see to add is_current as well

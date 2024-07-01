@@ -514,7 +514,7 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
     return msg_factory.create_release_version()
 
 
-def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version):
+def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_attribute_value()
@@ -526,7 +526,12 @@ def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_ve
     )
 
     if len(dataset_results) == 1:
-        response_data = msg_factory.create_attribute_value(data=dataset_results)
+        response_data = msg_factory.create_attribute_value(
+            data=dataset_results,
+            # There is no point in filtering by attribute_names in the API because it returns the whole dataset object
+            # which will contain all the attributes (we should be altering them from within the API)
+            attribute_names=attribute_names
+        )
         logger.debug(f"Response data: \n{response_data}")
         return response_data
 

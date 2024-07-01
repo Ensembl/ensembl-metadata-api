@@ -445,7 +445,7 @@ def create_paths(data=None):
     )
 
 
-def create_attribute_value(data=None):
+def create_attribute_value(data=None, attribute_names=None):
     """
     Creates a DatasetAttributesValues message from the provided data.
 
@@ -466,6 +466,8 @@ def create_attribute_value(data=None):
                 Genome
                 EnsemblRelease
 
+        attribute_names (optional): A List of attributes names to filter by
+
     Returns:
         ensembl_metadata_pb2.DatasetAttributesValues: A message containing a list of DatasetAttributeValue
         messages, each corresponding to the attributes from the input data.
@@ -479,11 +481,17 @@ def create_attribute_value(data=None):
     # we expect only one dataset: data[0].datasets[0] gets the first GenomeDatasetItem
     for attrib in data[0].datasets[0].attributes:
         # for each attribute in the DatasetAttributeItem
-        created_attribute = ensembl_metadata_pb2.DatasetAttributeValue(
-            attribute_name=attrib.name,
-            attribute_value=attrib.value,
-        )
-        attributes_list.append(created_attribute)
+        # (1) if attribute_names is not provided,
+        # (2) Or attribute_name from the DB is in the provided attribute_names
+        # append it to the list of the returned result
+        # if (1) is true, we will be fetching all the attributes
+        # if (2) is true, we will be fetching the requested attributes only
+        if not attribute_names or attrib.name in attribute_names:
+            created_attribute = ensembl_metadata_pb2.DatasetAttributeValue(
+                attribute_name=attrib.name,
+                attribute_value=attrib.value,
+            )
+            attributes_list.append(created_attribute)
 
     return ensembl_metadata_pb2.DatasetAttributesValues(
         attributes=attributes_list,
