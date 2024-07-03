@@ -145,8 +145,7 @@ class TestUpdater:
             assert organism.common_name == 'Sheep'
 
     def test_fail_existing_genome_uuid_data_not_match(self, multi_dbs):
-        test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url,
-                            multi_dbs['ensembl_genome_metadata'].dbc.url)
+        test = meta_factory(multi_dbs['core_6'].dbc.url, multi_dbs['ensembl_genome_metadata'].dbc.url)
         with pytest.raises(MetadataUpdateException) as exif:
             test.process_core()
             assert ("Core database contains a genome.genome_uuid which matches an entry in the meta table. "
