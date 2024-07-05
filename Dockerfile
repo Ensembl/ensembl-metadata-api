@@ -1,4 +1,4 @@
-FROM python:3.8.15-alpine
+FROM python:3.10-alpine
 # Package
 RUN apk update && apk add --no-cache git mariadb-dev build-base
 
