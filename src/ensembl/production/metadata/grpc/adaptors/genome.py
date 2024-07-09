@@ -370,6 +370,91 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(genome_query).all()
 
+    def fetch_genome_by_specific_keyword(self, request, release_version=None):
+        """
+        Fetches genomes based on a specific keyword and release version.
+
+        Args:
+            request (GenomeBySpecificKeywordRequest - Mandatory): Request containing the field and value the user is searching by.
+            release_version (int or None): Release version to filter by. If set to 0 or None, fetches only current genomes.
+
+        Returns:
+            list: A list of fetched genomes matching the keyword and release version.
+        """
+
+        genome_query = db.select(Genome, Assembly, Organism, EnsemblRelease).select_from(Genome) \
+            .join(Organism, Genome.organism_id == Organism.organism_id) \
+            .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+        genome_query = genome_query.add_columns(EnsemblSite) \
+            .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
+            .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
+            .join(EnsemblSite,
+                  EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
+        if not cfg.allow_unreleased:
+            logger.debug("NOT Allowed Unreleased")
+            genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        if release_version is not None and release_version > 0:
+            genome_query = genome_query.where(EnsemblRelease.version <= release_version)
+
+        provided_fields = [
+            request.tolid,
+            request.assembly_accession_id,
+            request.assembly_name,
+            request.ensembl_name,
+            request.common_name,
+            request.scientific_name,
+            request.scientific_parlance_name,
+            request.species_taxonomy_id
+        ]
+
+        # Count how many fields are provided
+        provided_count = sum(1 for field in provided_fields if field)
+        # Default behaviour: return an empty list if more than one is provided
+        if provided_count != 1:
+            return []
+
+        # Check which field is provided and execute the query accordingly
+        logger.debug(f"request: {request}")
+        if request.tolid:
+            genome_query = genome_query.where(
+                db.func.lower(Assembly.tol_id) == request.tolid.lower()
+            )
+        elif request.assembly_accession_id:
+            genome_query = genome_query.where(
+                db.func.lower(Assembly.accession) == request.assembly_accession_id.lower()
+            )
+        elif request.assembly_name:
+            genome_query = genome_query.where(
+                db.func.lower(Assembly.name) == request.assembly_name.lower()
+            )
+        elif request.ensembl_name:
+            genome_query = genome_query.where(
+                db.func.lower(Assembly.ensembl_name) == request.ensembl_name.lower()
+            )
+        elif request.common_name:
+            genome_query = genome_query.where(
+                db.func.lower(Organism.common_name) == request.common_name.lower()
+            )
+        elif request.scientific_name:
+            genome_query = genome_query.where(
+                db.func.lower(Organism.scientific_name) == request.scientific_name.lower()
+            )
+        elif request.scientific_parlance_name:
+            genome_query = genome_query.where(
+                db.func.lower(Organism.scientific_parlance_name) == request.scientific_name.lower()
+            )
+        elif request.species_taxonomy_id:
+            genome_query = genome_query.where(
+                db.func.lower(Organism.species_taxonomy_id) == request.species_taxonomy_id.lower()
+            )
+        else:
+            return []
+
+        logger.debug(f"bySpecificKeyword: {genome_query} {release_version}")
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            return session.execute(genome_query).all()
+
     def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None, assembly_accession=None,
                         assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
         """

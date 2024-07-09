@@ -40,6 +40,9 @@ service EnsemblMetadata {
   // Retrieve genomes by keyword search
   rpc GetGenomesByKeyword(GenomeByKeywordRequest) returns (stream Genome) {}
 
+  // Retrieve genomes by keyword search
+  rpc GetGenomesBySpecificKeyword(GenomeBySpecificKeywordRequest) returns (stream Genome) {}
+
   // Retrieve all genomes for a give assembly accession ID
   rpc GetGenomesByAssemblyAccessionID(AssemblyAccessionIDRequest) returns (stream Genome) {}
 
@@ -369,6 +372,24 @@ If release_version is not given, the current version is used.
 message GenomeByKeywordRequest {
   string keyword = 1; // Mandatory
   double release_version = 2; // Optional
+}
+
+/*
+Genome specific keyword filter.
+If release_version is not given, the current version is used.
+XOR: At least one field should be provided, if none or more than one field is provided
+the returned result will be an empty
+ */
+message GenomeBySpecificKeywordRequest {
+  string tolid = 1;                     // XOR
+  string assembly_accession_id = 2;     // XOR
+  string assembly_name = 3;             // XOR
+  string ensembl_name = 4;              // XOR
+  string common_name = 5;               // XOR
+  string scientific_name = 6;           // XOR
+  string scientific_parlance_name = 7;  // XOR
+  string species_taxonomy_id = 8;       // XOR
+  double release_version = 9;           // Optional
 }
 
 /*

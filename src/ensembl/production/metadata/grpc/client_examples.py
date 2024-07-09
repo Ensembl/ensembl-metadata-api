@@ -21,6 +21,7 @@ from ensembl_metadata_pb2 import (
     GenomeSequenceRequest,
     AssemblyIDRequest,
     GenomeByKeywordRequest,
+    GenomeBySpecificKeywordRequest,
     AssemblyAccessionIDRequest,
     OrganismIDRequest,
     DatasetsRequest,
@@ -59,6 +60,12 @@ def get_genomes_by_keyword(stub, genome_request):
             print(genome)
 
 
+def get_genomes_by_specific_keyword(stub, genome_request):
+    if isinstance(genome_request, GenomeBySpecificKeywordRequest):
+        genomes = stub.GetGenomesBySpecificKeyword(genome_request)
+        for genome in genomes:
+            print(genome)
+
 def get_genomes(stub):
     request1 = GenomeUUIDRequest(genome_uuid="9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1")
     request2 = GenomeUUIDRequest(genome_uuid="rhubarb")
@@ -69,8 +76,6 @@ def get_genomes(stub):
     request5 = GenomeNameRequest(
         ensembl_name="banana", site_name="plants", release_version=104.0
     )
-    request6 = GenomeByKeywordRequest(keyword="Human")
-    request7 = GenomeByKeywordRequest(keyword="Bigfoot")
     print("**** Valid UUID ****")
     get_genome(stub, request1)
     print("**** Invalid UUID ****")
@@ -81,10 +86,30 @@ def get_genomes(stub):
     get_genome(stub, request4)
     print("**** Invalid name ****")
     get_genome(stub, request5)
-    print("**** Valid keyword, no release ****")
-    get_genomes_by_keyword(stub, request6)
-    print("**** Invalid keyword ****")
-    get_genomes_by_keyword(stub, request7)
+
+
+def get_genome_by_keyword(stub):
+    request1 = GenomeBySpecificKeywordRequest(common_name="Human")
+    request2 = GenomeBySpecificKeywordRequest(assembly_accession_id="GCA_018473315.1")
+    request3 = GenomeBySpecificKeywordRequest(assembly_name="HG03540.alt.pat.f1_v2")
+    request4 = GenomeBySpecificKeywordRequest(ensembl_name="HG03540.alt.pat.f1_v2")
+    request5 = GenomeBySpecificKeywordRequest(scientific_name="Homo sapiens")
+    request6 = GenomeBySpecificKeywordRequest(scientific_parlance_name="Homo sapiens")
+    request7 = GenomeBySpecificKeywordRequest(species_taxonomy_id="9606")
+    print("**** Search by common_name ****")
+    get_genomes_by_specific_keyword(stub, request1)
+    print("**** Search by common_name ****")
+    get_genomes_by_specific_keyword(stub, request2)
+    print("**** Search by assembly_accession_id ****")
+    get_genomes_by_specific_keyword(stub, request3)
+    print("**** Search by assembly_name ****")
+    get_genomes_by_specific_keyword(stub, request4)
+    print("**** Search by scientific_name ****")
+    get_genomes_by_specific_keyword(stub, request5)
+    print("**** Search by scientific_parlance_name ****")
+    get_genomes_by_specific_keyword(stub, request6)
+    print("**** Search by species_taxonomy_id ****")
+    get_genomes_by_specific_keyword(stub, request7)
 
 
 def list_genome_sequences(stub):
@@ -461,6 +486,8 @@ def run():
         get_top_level_statistics_by_uuid(stub)
         print("-------------- Get Genomes --------------")
         get_genomes(stub)
+        print("-------------- Get Genome By Keyword --------------")
+        get_genome_by_keyword(stub)
         print("-------------- List Genome Sequences --------------")
         list_genome_sequences(stub)
         print("-------------- List Genome Assembly Sequences --------------")
