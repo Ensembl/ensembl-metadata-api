@@ -441,7 +441,7 @@ class GenomeAdaptor(BaseAdaptor):
             )
         elif request.scientific_parlance_name:
             genome_query = genome_query.where(
-                db.func.lower(Organism.scientific_parlance_name) == request.scientific_name.lower()
+                db.func.lower(Organism.scientific_parlance_name) == request.scientific_parlance_name.lower()
             )
         elif request.species_taxonomy_id:
             genome_query = genome_query.where(
