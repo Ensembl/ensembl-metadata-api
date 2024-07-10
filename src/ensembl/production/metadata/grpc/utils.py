@@ -514,7 +514,7 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
     return msg_factory.create_release_version()
 
 
-def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names):
+def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names, latest_only):
     """
     Retrieve attribute values for a given genome UUID from the database.
 
@@ -528,6 +528,7 @@ def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_ve
         dataset_type (str): The type of dataset to retrieve.
         release_version (str): The release version of the dataset to retrieve.
         attribute_names (list): A list of attribute names to filter the results by.
+        latest_only (bool): Whether to fetch the latest dataset or not (default is `True`).
 
     Returns:
         object: A response object containing the attribute values. If no valid dataset is found,
@@ -548,7 +549,8 @@ def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_ve
             data=dataset_results,
             # There is no point in filtering by attribute_names in the API because it returns the whole dataset object
             # which will contain all the attributes (we should be altering them from within the API)
-            attribute_names=attribute_names
+            attribute_names=attribute_names,
+            latest_only=latest_only
         )
         logger.debug(f"Response data: \n{response_data}")
         return response_data

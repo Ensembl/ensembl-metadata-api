@@ -396,7 +396,6 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3"
     )
     attributes1 = stub.GetAttributesValuesByUUID(request1)
-
     print("**** Dataset Attributes Values: By genome_uuid only (default dataset_type is 'assembly') ****")
     print(attributes1)
 
@@ -405,7 +404,6 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         dataset_type="homologies"
     )
     attributes2 = stub.GetAttributesValuesByUUID(request2)
-
     print("**** Dataset Attributes Values: By genome_uuid and dataset_type='homologies' ****")
     print(attributes2)
 
@@ -415,7 +413,6 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         attribute_name=["compara.homology_coverage"]
     )
     attributes3 = stub.GetAttributesValuesByUUID(request3)
-
     print("**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and attribute_name=['compara.homology_coverage'] ****")
     print(attributes3)
 
@@ -425,7 +422,6 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         release_version=110.1
     )
     attributes4 = stub.GetAttributesValuesByUUID(request4)
-
     print(
         "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and release_version=110.1 ****")
     print(attributes4)
@@ -436,10 +432,19 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         attribute_name=["i.dont.exist"]
     )
     attributes5 = stub.GetAttributesValuesByUUID(request5)
-
     print(
         "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and attribute_name=['i.dont.exist'] ****")
     print(attributes5)
+
+    request6 = DatasetAttributesValuesRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="homologies",
+        latest_only=0
+    )
+    attributes6 = stub.GetAttributesValuesByUUID(request6)
+    print(
+        "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and latest_only=0 ****")
+    print(attributes6)
 
 
 def run():

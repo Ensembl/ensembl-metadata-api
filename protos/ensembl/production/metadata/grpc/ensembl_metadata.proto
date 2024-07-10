@@ -339,6 +339,9 @@ message ReleaseVersion {
 message DatasetAttributeValue {
   string attribute_name = 1;
   string attribute_value = 2;
+  string dataset_version = 3;
+  string dataset_uuid = 4;
+  string dataset_type = 5;
 }
 
 message DatasetAttributesValues {
@@ -504,4 +507,5 @@ message DatasetAttributesValuesRequest {
   string dataset_type = 2;            // Optional
   repeated string attribute_name = 3; // Optional
   double release_version = 4;         // Optional
+  bool latest_only = 5;               // Optional, default is True
 }
