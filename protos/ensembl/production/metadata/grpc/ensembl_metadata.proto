@@ -507,5 +507,5 @@ message DatasetAttributesValuesRequest {
   string dataset_type = 2;            // Optional
   repeated string attribute_name = 3; // Optional
   double release_version = 4;         // Optional
-  bool latest_only = 5;               // Optional, default is True
+  bool latest_only = 5;               // Optional, default is False
 }

@@ -445,7 +445,7 @@ def create_paths(data=None):
     )
 
 
-def create_attribute_value(data=None, attribute_names=None, latest_only=True):
+def create_attribute_value(data=None, attribute_names=None, latest_only=False):
     """
     Creates a DatasetAttributesValues message from the provided data.
 
@@ -467,7 +467,7 @@ def create_attribute_value(data=None, attribute_names=None, latest_only=True):
                 EnsemblRelease
 
         attribute_names (optional): A List of attributes names to filter by
-        latest_only (optional): Whether to fetch the latest dataset or not (default is `True`)
+        latest_only (optional): Whether to fetch the latest dataset or not (default is `False`)
 
     Returns:
         ensembl_metadata_pb2.DatasetAttributesValues: A message containing a list of DatasetAttributeValue
