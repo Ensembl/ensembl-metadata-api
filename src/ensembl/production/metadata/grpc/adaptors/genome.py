@@ -627,7 +627,11 @@ class GenomeAdaptor(BaseAdaptor):
                                                datasets=[
                                                    GenomeDatasetItem(
                                                        dataset=gd.dataset,
-                                                       release=gd.ensembl_release,
+                                                       release=gd.dataset.genome_datasets[0],  # I've got the feeling
+                                                       # that this [0] will give birth to a bug in the future... we
+                                                       # will see, it works for now because we have one genome_dataset
+                                                       # linked to a dataset, but we can have many in the future
+                                                       # we can deal with this later when the need arises
                                                        attributes=[
                                                            DatasetAttributeItem(name=ds.attribute.name, value=ds.value,
                                                                                 type=ds.attribute.type,
