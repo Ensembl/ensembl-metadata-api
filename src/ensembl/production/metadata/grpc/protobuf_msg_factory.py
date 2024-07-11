@@ -387,7 +387,7 @@ def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=Non
     dataset_infos = []
     for dataset in data.datasets:
         dataset_infos.extend(
-            [create_dataset_info(dataset.dataset, attribute, dataset.release) for attribute in dataset.attributes])
+            [create_dataset_info(dataset.dataset, attribute, data.release) for attribute in dataset.attributes])
     return ensembl_metadata_pb2.DatasetInfos(
         genome_uuid=genome_uuid,
         dataset_type=requested_dataset_type,
