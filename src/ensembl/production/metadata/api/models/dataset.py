@@ -113,7 +113,7 @@ class DatasetAttribute(LoadAble, Base):
     )
 
     dataset_attribute_id = Column(Integer, primary_key=True)
-    value = Column(String(128), nullable=False)
+    value = Column(String(255), nullable=False)
     attribute_id = Column(ForeignKey('attribute.attribute_id'), nullable=False, index=True)
     dataset_id = Column(ForeignKey('dataset.dataset_id'), nullable=False, index=True)
     # One to many relationships
