@@ -370,13 +370,24 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(genome_query).all()
 
-    def fetch_genome_by_specific_keyword(self, request, release_version=None):
+    def fetch_genome_by_specific_keyword(self,
+                                         tolid, assembly_accession_id, assembly_name, ensembl_name,
+                                         common_name, scientific_name, scientific_parlance_name,
+                                         species_taxonomy_id, release_version=None
+                                         ):
         """
         Fetches genomes based on a specific keyword and release version.
 
         Args:
-            request (GenomeBySpecificKeywordRequest - Mandatory): Request containing the field and value the user is searching by.
-            release_version (int or None): Release version to filter by. If set to 0 or None, fetches only current genomes.
+            tolid (str or None): TOLID to filter genomes by.
+            assembly_accession_id (str or None): Assembly accession ID to filter genomes by.
+            assembly_name (str or None): Assembly name to filter genomes by.
+            ensembl_name (str or None): Ensembl name to filter genomes by.
+            common_name (str or None): Common name to filter genomes by.
+            scientific_name (str or None): Scientific name to filter genomes by.
+            scientific_parlance_name (str or None): Scientific parlance name to filter genomes by.
+            species_taxonomy_id (str or None): Species taxonomy ID to filter genomes by.
+            release_version (int or None, optional): Release version to filter by. If set to 0 or None, fetches only current genomes. Defaults to None.
 
         Returns:
             list: A list of fetched genomes matching the keyword and release version.
@@ -397,14 +408,14 @@ class GenomeAdaptor(BaseAdaptor):
             genome_query = genome_query.where(EnsemblRelease.version <= release_version)
 
         provided_fields = [
-            request.tolid,
-            request.assembly_accession_id,
-            request.assembly_name,
-            request.ensembl_name,
-            request.common_name,
-            request.scientific_name,
-            request.scientific_parlance_name,
-            request.species_taxonomy_id
+            tolid,
+            assembly_accession_id,
+            assembly_name,
+            ensembl_name,
+            common_name,
+            scientific_name,
+            scientific_parlance_name,
+            species_taxonomy_id
         ]
 
         # Count how many fields are provided
@@ -414,38 +425,45 @@ class GenomeAdaptor(BaseAdaptor):
             return []
 
         # Check which field is provided and execute the query accordingly
-        logger.debug(f"request: {request}")
-        if request.tolid:
+        if tolid:
+            logger.debug(f"tolid: {tolid}")
             genome_query = genome_query.where(
-                db.func.lower(Assembly.tol_id) == request.tolid.lower()
+                db.func.lower(Assembly.tol_id) == tolid.lower()
             )
-        elif request.assembly_accession_id:
+        elif assembly_accession_id:
+            logger.debug(f"assembly_accession_id: {assembly_accession_id}")
             genome_query = genome_query.where(
-                db.func.lower(Assembly.accession) == request.assembly_accession_id.lower()
+                db.func.lower(Assembly.accession) == assembly_accession_id.lower()
             )
-        elif request.assembly_name:
+        elif assembly_name:
+            logger.debug(f"assembly_name: {assembly_name}")
             genome_query = genome_query.where(
-                db.func.lower(Assembly.name) == request.assembly_name.lower()
+                db.func.lower(Assembly.name) == assembly_name.lower()
             )
-        elif request.ensembl_name:
+        elif ensembl_name:
+            logger.debug(f"ensembl_name: {ensembl_name}")
             genome_query = genome_query.where(
-                db.func.lower(Assembly.ensembl_name) == request.ensembl_name.lower()
+                db.func.lower(Assembly.ensembl_name) == ensembl_name.lower()
             )
-        elif request.common_name:
+        elif common_name:
+            logger.debug(f"common_name: {common_name}")
             genome_query = genome_query.where(
-                db.func.lower(Organism.common_name) == request.common_name.lower()
+                db.func.lower(Organism.common_name) == common_name.lower()
             )
-        elif request.scientific_name:
+        elif scientific_name:
+            logger.debug(f"scientific_name: {scientific_name}")
             genome_query = genome_query.where(
-                db.func.lower(Organism.scientific_name) == request.scientific_name.lower()
+                db.func.lower(Organism.scientific_name) == scientific_name.lower()
             )
-        elif request.scientific_parlance_name:
+        elif scientific_parlance_name:
+            logger.debug(f"scientific_parlance_name: {scientific_parlance_name}")
             genome_query = genome_query.where(
-                db.func.lower(Organism.scientific_parlance_name) == request.scientific_parlance_name.lower()
+                db.func.lower(Organism.scientific_parlance_name) == scientific_parlance_name.lower()
             )
-        elif request.species_taxonomy_id:
+        elif species_taxonomy_id:
+            logger.debug(f"species_taxonomy_id: {species_taxonomy_id}")
             genome_query = genome_query.where(
-                db.func.lower(Organism.species_taxonomy_id) == request.species_taxonomy_id.lower()
+                db.func.lower(Organism.species_taxonomy_id) == species_taxonomy_id.lower()
             )
         else:
             return []

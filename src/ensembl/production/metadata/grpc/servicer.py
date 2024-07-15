@@ -69,7 +69,16 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
     def GetGenomesBySpecificKeyword(self, request, context):
         logger.debug(f"Received RPC for GetGenomesBySpecificKeyword with request: {request}")
         return utils.get_genomes_by_specific_keyword_iterator(
-            self.db, request, request.release_version
+            self.db,
+            request.tolid,
+            request.assembly_accession_id,
+            request.assembly_name,
+            request.ensembl_name,
+            request.common_name,
+            request.scientific_name,
+            request.scientific_parlance_name,
+            request.species_taxonomy_id,
+            request.release_version
         )
 
     def GetGenomeByName(self, request, context):

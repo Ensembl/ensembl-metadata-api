@@ -282,14 +282,20 @@ def get_genomes_by_keyword_iterator(db_conn, keyword, release_version=None):
     return msg_factory.create_genome()
 
 
-def get_genomes_by_specific_keyword_iterator(db_conn, request, release_version=None):
-    if not request:
-        logger.warning("Missing or Empty Keyword field.")
+def get_genomes_by_specific_keyword_iterator(
+    db_conn, tolid, assembly_accession_id, assembly_name, ensembl_name,
+    common_name, scientific_name, scientific_parlance_name, species_taxonomy_id,
+    release_version=None
+):
+    if (not tolid and assembly_accession_id and assembly_name and ensembl_name and
+            common_name and scientific_name and scientific_parlance_name and species_taxonomy_id):
+        logger.warning("Missing required field")
         return msg_factory.create_genome()
 
     genome_results = db_conn.fetch_genome_by_specific_keyword(
-        request=request,
-        release_version=release_version
+        tolid, assembly_accession_id, assembly_name, ensembl_name,
+        common_name, scientific_name, scientific_parlance_name,
+        species_taxonomy_id, release_version
     )
 
     if len(genome_results) > 0:
