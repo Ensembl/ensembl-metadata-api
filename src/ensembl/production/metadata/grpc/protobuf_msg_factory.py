@@ -366,17 +366,20 @@ def create_datasets(data=None):
 def create_dataset_info(dataset, attribute, release=None):
     if dataset is None:
         return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
-    # FIXME = what is the expected output here? Data.Attribute ONe entry per datasets / attribute combination?
+    # FIXME (Marc) = what is the expected output here? Data.Attribute ONe entry per datasets / attribute combination?
     #   is it used anywhere in web?
+    # NB: This will now be used by Thoas in genomes query
     return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
         dataset_uuid=dataset.dataset_uuid,
         dataset_name=dataset.name,
-        name=attribute.name,
-        type=attribute.type,
+        attribute_name=attribute.name,
+        attribute_type=attribute.type,
         dataset_version=dataset.version,
         dataset_label=dataset.label,
-        version=release.version if release else None,
-        value=attribute.value,
+        release_version=release.version if release else None,
+        attribute_value=attribute.value,
+        dataset_type_topic=dataset.dataset_type.topic,
+        dataset_source_type=dataset.dataset_source.type if dataset.dataset_source else "",
     )
 
 
@@ -401,7 +404,9 @@ def populate_dataset_info(data):
         dataset_name=data.dataset.name,
         dataset_version=data.dataset.version,
         dataset_label=data.dataset.label,
-        version=int(data.ensembl_release.version) if hasattr(data, 'ensembl_release') else None,
+        release_version=int(data.release.version) if hasattr(data, 'release.version') else None,
+        dataset_type_topic=data.dataset.dataset_type.topic,
+        dataset_source_type=data.dataset.dataset_source.type if data.dataset.dataset_source else "",
     )
 
 
