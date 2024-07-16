@@ -342,31 +342,13 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
         return msg_factory.create_datasets()
     datasets_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all",
                                                      release_version=release_version)
-    # FIXME dataset_results can contain multiple genomes
+
     if len(datasets_results) > 0:
-        ds_obj_dict = {}
-        for result in datasets_results[0].datasets:
-            dataset_type = result.dataset_type.name
-            # Populate the objects bottom up
-            datasets_info = msg_factory.populate_dataset_info(result)
-            # Construct the datasets dictionary
-            if dataset_type in ds_obj_dict:
-                ds_obj_dict[dataset_type].append(datasets_info)
-            else:
-                ds_obj_dict[dataset_type] = [datasets_info]
-
-        dataset_object_dict = {}
-        # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetInfos
-        for dataset_type_key in ds_obj_dict:
-            dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
-                dataset_infos=ds_obj_dict[dataset_type_key],
-                genome_uuid=genome_uuid,
-                dataset_type=dataset_type_key
-            )
-
+        # FIXME dataset_results can contain multiple genomes?
+        datasets_info = msg_factory.populate_dataset_info(datasets_results[0])
         response_data = msg_factory.create_datasets({
             'genome_uuid': genome_uuid,
-            'datasets': dataset_object_dict
+            'datasets': datasets_info
         })
         # logger.debug(f"Response data: \n{response_data}")
         return response_data

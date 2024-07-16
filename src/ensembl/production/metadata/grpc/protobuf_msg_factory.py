@@ -9,6 +9,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from datetime import datetime
+
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 import logging
 
@@ -353,13 +355,8 @@ def create_release_version(data=None):
 def create_datasets(data=None):
     if data is None:
         return ensembl_metadata_pb2.Datasets()
-    # FIXME data['datasets'] doesn't hold the right datatype.
-    #ensembl_metadata_pb2.pyi the dataset type key value type is string
-    # def __init__(self, genome_uuid: _Optional[str] = ...,
-    #              datasets: _Optional[_Mapping[str, DatasetInfos]] = ...) -> None: ...
-    datasets = {str(i): j for i, j in data['datasets'].items()}
     return ensembl_metadata_pb2.Datasets(
-        genome_uuid=data["genome_uuid"], datasets = datasets
+        genome_uuid=data["genome_uuid"], datasets=data['datasets']
     )
 
 
@@ -399,15 +396,22 @@ def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=Non
 
 
 def populate_dataset_info(data):
-    return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid=data.dataset.dataset_uuid,
-        dataset_name=data.dataset.name,
-        dataset_version=data.dataset.version,
-        dataset_label=data.dataset.label,
-        release_version=int(data.release.version) if hasattr(data, 'release.version') else None,
-        dataset_type_topic=data.dataset.dataset_type.topic,
-        dataset_source_type=data.dataset.dataset_source.type if data.dataset.dataset_source else "",
-    )
+    ds_obj_list = []
+    for ds_item in data.datasets:
+        ds_info = ensembl_metadata_pb2.Datasets.DatasetInfo(
+            dataset_uuid=ds_item.dataset.dataset_uuid,
+            dataset_name=ds_item.dataset.name,
+            dataset_version=ds_item.dataset.version,
+            dataset_label=ds_item.dataset.label,
+            dataset_type_topic=ds_item.dataset.dataset_type.topic,
+            dataset_source_type=ds_item.dataset.dataset_source.type if ds_item.dataset.dataset_source else "",
+            dataset_type_name=ds_item.dataset.dataset_type.name,
+            release_version=float(data.release.version) if data.release.version else None,
+            release_date=datetime.strftime(data.release.release_date, "%m/%d/%Y"),
+            release_type=data.release.release_type,
+        )
+        ds_obj_list.append(ds_info)
+    return ds_obj_list
 
 
 def create_organisms_group_count(data, release_version):
