@@ -340,9 +340,9 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_datasets()
+
     datasets_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all",
                                                      release_version=release_version)
-
     if len(datasets_results) > 0:
         # FIXME dataset_results can contain multiple genomes?
         datasets_info = msg_factory.populate_dataset_info(datasets_results[0])
@@ -437,7 +437,7 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
 def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_dataset_type='assembly'):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
-        return msg_factory.create_dataset_infos()
+        return msg_factory.populate_dataset_info()
 
     dataset_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
                                                     dataset_type_name=requested_dataset_type)
@@ -449,7 +449,12 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
         # FIXME it's possible that multiple datasets are returned here. released multiple times.
         if len(dataset_results) > 1:
             logger.warning(f"Multiple results for {genome_uuid} / {requested_dataset_type}")
-        response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results[0])
+
+        datasets_info = msg_factory.populate_dataset_info(dataset_results[0])
+        response_data = msg_factory.create_datasets({
+            'genome_uuid': genome_uuid,
+            'datasets': datasets_info
+        })
         return response_data
 
 

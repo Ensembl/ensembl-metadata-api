@@ -120,6 +120,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         )
 
     def GetDatasetInformation(self, request, context):
+        # TODO: this method can merged with the GetDatasetsListByUUID above...
         logger.debug(f"Received RPC for GetDatasetInformation with request: {request}")
         return utils.get_dataset_by_genome_and_dataset_type(
             self.db, request.genome_uuid, request.dataset_type

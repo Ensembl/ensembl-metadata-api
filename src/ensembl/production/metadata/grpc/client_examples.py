@@ -295,7 +295,7 @@ def get_dataset_infos_by_dataset_type(stub):
         genome_uuid="9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1", dataset_type="assembly"
     )
     datasets1 = stub.GetDatasetInformation(request1)
-    print(datasets1.dataset_infos)
+    print(datasets1.datasets)
 
 
 def get_genome_uuid(stub):

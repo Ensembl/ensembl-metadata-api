@@ -106,7 +106,7 @@ class EnsemblMetadataStub(object):
         self.GetDatasetInformation = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetDatasetInformation',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetInfos.FromString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Datasets.FromString,
                 )
         self.GetOrganismsGroupCount = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetOrganismsGroupCount',
@@ -395,7 +395,7 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
             'GetDatasetInformation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetDatasetInformation,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetInfos.SerializeToString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Datasets.SerializeToString,
             ),
             'GetOrganismsGroupCount': grpc.unary_unary_rpc_method_handler(
                     servicer.GetOrganismsGroupCount,
@@ -738,7 +738,7 @@ class EnsemblMetadata(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ensembl_metadata.EnsemblMetadata/GetDatasetInformation',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeDatatypeRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.DatasetInfos.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Datasets.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

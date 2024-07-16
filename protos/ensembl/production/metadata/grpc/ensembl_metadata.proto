@@ -83,7 +83,7 @@ service EnsemblMetadata {
   rpc GetDatasetsListByUUID(DatasetsRequest) returns (Datasets) {}
 
   // Retrieve dataset info by genome uuid and dataset_type
-  rpc GetDatasetInformation(GenomeDatatypeRequest) returns (DatasetInfos) {}
+  rpc GetDatasetInformation(GenomeDatatypeRequest) returns (Datasets) {}
 
   // Retrieve organisms group count
   rpc GetOrganismsGroupCount(OrganismsGroupRequest) returns (OrganismsGroupCount) {}
@@ -241,25 +241,6 @@ message AttributesInfo {
 }
 
 /*
-Wrapper for a list of DatasetInfo objects
-*/
-message DatasetInfos {
-  message DatasetInfo {
-    string dataset_uuid = 1;
-    string dataset_name = 2;
-    string attribute_name = 3;
-    string attribute_type = 4;
-    string dataset_version = 5;
-    string dataset_label = 6;
-    double release_version = 7;
-    string attribute_value = 8;
-    string dataset_type_topic = 9;
-    string dataset_source_type = 10;
-  }
-  repeated DatasetInfo dataset_infos = 3;
-}
-
-/*
 Metadata about the sequences that comprise a genome's assembly.
  */
 message GenomeSequence {
@@ -294,25 +275,29 @@ message GenomeAssemblySequenceRegion {
 }
 
 /*
-Datasets list associated to the provided genome_uuid 
+Wrapper for a list of DatasetInfo objects
+*/
+message DatasetInfo {
+  string dataset_uuid = 1;
+  string dataset_name = 2;
+  string attribute_name = 3;
+  string attribute_type = 4;
+  string dataset_version = 5;
+  string dataset_label = 6;
+  double release_version = 7;
+  string attribute_value = 8;
+  string dataset_type_topic = 9;
+  string dataset_source_type = 10;
+  string dataset_type_name = 11;
+  string release_date = 12;
+  string release_type = 13;
+}
+
+/*
+Datasets list associated to the provided genome_uuid
  */
 message Datasets {
   string genome_uuid = 1;
-  message DatasetInfo {
-    string dataset_uuid = 1;
-    string dataset_name = 2;
-    string attribute_name = 3;
-    string attribute_type = 4;
-    string dataset_version = 5;
-    string dataset_label = 6;
-    double release_version = 7;
-    string attribute_value = 8;
-    string dataset_type_topic = 9;
-    string dataset_source_type = 10;
-    string dataset_type_name = 11;
-    string release_date = 12;
-    string release_type = 13;
-  }
   repeated DatasetInfo datasets = 2;
 }
 
@@ -484,7 +469,7 @@ Genome datatype filter
  */
 message GenomeDatatypeRequest {
   string genome_uuid = 1;     // Mandatory
-  string dataset_type = 2;    // Mandatory
+  string dataset_type = 2;    // Optional
 }
 
 /*

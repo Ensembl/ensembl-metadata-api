@@ -360,45 +360,13 @@ def create_datasets(data=None):
     )
 
 
-def create_dataset_info(dataset, attribute, release=None):
-    if dataset is None:
-        return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
-    # FIXME (Marc) = what is the expected output here? Data.Attribute ONe entry per datasets / attribute combination?
-    #   is it used anywhere in web?
-    # NB: This will now be used by Thoas in genomes query
-    return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid=dataset.dataset_uuid,
-        dataset_name=dataset.name,
-        attribute_name=attribute.name,
-        attribute_type=attribute.type,
-        dataset_version=dataset.version,
-        dataset_label=dataset.label,
-        release_version=release.version if release else None,
-        attribute_value=attribute.value,
-        dataset_type_topic=dataset.dataset_type.topic,
-        dataset_source_type=dataset.dataset_source.type if dataset.dataset_source else "",
-    )
+def populate_dataset_info(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.DatasetInfo()
 
-
-def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=None):
-    if data is None or data == []:
-        return ensembl_metadata_pb2.DatasetInfos()
-    # NB: data is GenomeDatasetsListItem
-    dataset_infos = []
-    for dataset in data.datasets:
-        dataset_infos.extend(
-            [create_dataset_info(dataset.dataset, attribute, data.release) for attribute in dataset.attributes])
-    return ensembl_metadata_pb2.DatasetInfos(
-        genome_uuid=genome_uuid,
-        dataset_type=requested_dataset_type,
-        dataset_infos=dataset_infos,
-    )
-
-
-def populate_dataset_info(data):
     ds_obj_list = []
     for ds_item in data.datasets:
-        ds_info = ensembl_metadata_pb2.Datasets.DatasetInfo(
+        ds_info = ensembl_metadata_pb2.DatasetInfo(
             dataset_uuid=ds_item.dataset.dataset_uuid,
             dataset_name=ds_item.dataset.name,
             dataset_version=ds_item.dataset.version,
