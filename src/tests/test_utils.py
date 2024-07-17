@@ -245,9 +245,9 @@ class TestUtils:
             genome: Genome = session.query(Genome).filter(Genome.genome_uuid == genome_uuid).one()
             datasets: List[Dataset] = [ds.dataset for ds in genome.genome_datasets if
                                        ds.dataset.dataset_type.name == dataset_type]
-            datasets_uuids = set([dataset['datasetUuid'] for dataset in output['datasetInfos']])
+            datasets_uuids = set([dataset['datasetUuid'] for dataset in output['datasets']])
             logger.debug(datasets_uuids)
-            logger.debug(output['datasetInfos'])
+            logger.debug(output['datasets'])
             assert len(datasets_uuids) == count
             logger.debug(datasets[0].dataset_attributes)
             if dataset_type == 'genebuild':
@@ -260,7 +260,7 @@ class TestUtils:
                 assert datasets[0].version is not None
 
             assert output['genomeUuid'] == genome.genome_uuid
-            assert [dataset['datasetUuid'] == datasets[0].dataset_uuid for dataset in output['datasetInfos']]
+            assert [dataset['datasetUuid'] == datasets[0].dataset_uuid for dataset in output['datasets']]
 
     # TODO Check if this test is really important, because I can't really see the point of this
     # def test_get_dataset_by_genome_id_no_results(self, genome_conn):
