@@ -314,7 +314,8 @@ class TestUtils:
             ))
         logger.debug(f"Initial {output}")
         output = json.loads(output)
-        expected_keys = ['assembly', 'attributesInfo', 'created', 'genomeUuid', 'organism', 'release', 'taxon']
+        expected_keys = ['assembly', 'attributesInfo', 'created', 'genomeUuid',
+                         'organism', 'release', 'taxon', 'relatedAssembliesCount']
         logger.debug(f"Output {output}")
         if actual is not None:
             assert len(output.keys()) == len(expected_keys)
@@ -430,7 +431,8 @@ class TestUtils:
                 'scientificName': 'Homo sapiens',
                 'strain': 'Esan in Nigeria',
                 'taxonomyId': 9606
-            }
+            },
+            'relatedAssembliesCount': 5
         }
         assert json.loads(output) == expected_output
 
@@ -493,7 +495,8 @@ class TestUtils:
                 'scientificName': 'Caenorhabditis elegans',
                 'strain': 'N2',
                 'taxonomyId': 6239
-            }
+            },
+            'relatedAssembliesCount': 1
         }
         assert json.loads(output) == expected_output
 
