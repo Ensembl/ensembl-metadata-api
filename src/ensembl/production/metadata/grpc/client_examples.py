@@ -53,13 +53,6 @@ def get_genome(stub, genome_request):
         return
 
 
-def get_genomes_by_keyword(stub, genome_request):
-    if isinstance(genome_request, GenomeByKeywordRequest):
-        genomes = stub.GetGenomesByKeyword(genome_request)
-        for genome in genomes:
-            print(genome)
-
-
 def get_genomes_by_specific_keyword(stub, genome_request):
     if isinstance(genome_request, GenomeBySpecificKeywordRequest):
         genomes = stub.GetGenomesBySpecificKeyword(genome_request)

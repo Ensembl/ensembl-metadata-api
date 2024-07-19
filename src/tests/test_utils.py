@@ -141,7 +141,7 @@ class TestUtils:
             # FIXME The current version returns 2 assembly.accession, see whether it's test set related or code
             # (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 1),
             (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 1),
-            #create_stats_by_genome_uuid cannot handle if genome uuidid attached to multiple release and multiple datasert
+            # create_stats_by_genome_uuid cannot handle if genome uuidid attached to multiple release and multiple datasert
             (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 2)
         ],
         indirect=['allow_unreleased']
@@ -158,7 +158,7 @@ class TestUtils:
         print(f"top stats {output}")
         print(f"top stats {output['statsByGenomeUuid'][0]['statistics']}")
         # FIXME when genome is retrieved from multiple release/dataset, stats are duplicated
-        #create_stats_by_genome_uuid(protobuf_msg_factory) cannot handle if genome uuidid attached to multiple release and multiple datasert
+        # create_stats_by_genome_uuid(protobuf_msg_factory) cannot handle if genome uuidid attached to multiple release and multiple datasert
         assembly_accession_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
                                     stat['name'] == 'assembly.accession']
         logger.debug(assembly_accession_stats)
@@ -329,37 +329,58 @@ class TestUtils:
         assert output == ensembl_metadata_pb2.Genome()
 
     def test_get_genomes_by_keyword(self, genome_conn):
-        output = [json.loads(json_format.MessageToJson(response)) for response in
-                  utils.get_genomes_by_keyword_iterator(genome_conn, "Human", 110.1)]
-
+        output = [
+            json.loads(json_format.MessageToJson(response)) for response in
+            utils.get_genomes_by_specific_keyword_iterator(
+                db_conn=genome_conn, tolid=None, assembly_accession_id=None, assembly_name=None, ensembl_name=None,
+                common_name="Human", scientific_name=None, scientific_parlance_name=None, species_taxonomy_id=None,
+                release_version=110.1
+            )
+        ]
         assert len(output) == 5
         assert all(genome['organism']['commonName'].lower() == 'human' for genome in output)
 
     @pytest.mark.parametrize(
-        "allow_unreleased, output_count, keyword",
+        "allow_unreleased, output_count, scientific_name, assembly_name",
         [
             # FIXME: 18 or 14 in Travis! and 19 locally?!!
             # (True, 18, "Homo sapiens"),
-            (False, 5, "Homo sapiens"),
-            (True, 1, "GRCh37.p13"),
-            (False, 1, "GRCh37.p13"),
+            (False, 5, "Homo sapiens", None),
+            (True, 1, None, "GRCh37.p13"),
+            (False, 1, None, "GRCh37.p13"),
         ],
         indirect=['allow_unreleased']
     )
-    def test_get_genomes_by_keyword_unreleased(self, genome_conn, allow_unreleased, output_count, keyword):
-        unreleased = [json.loads(json_format.MessageToJson(response)) for response in
-                      utils.get_genomes_by_keyword_iterator(genome_conn, keyword)]
+    def test_get_genomes_by_keyword_unreleased(self, genome_conn, allow_unreleased, output_count, scientific_name,
+                                               assembly_name):
+        unreleased = [
+            json.loads(json_format.MessageToJson(response)) for response in
+            utils.get_genomes_by_specific_keyword_iterator(
+                db_conn=genome_conn, tolid=None, assembly_accession_id=None, assembly_name=assembly_name,
+                ensembl_name=None, common_name=None, scientific_name=scientific_name, scientific_parlance_name=None,
+                species_taxonomy_id=None, release_version=None
+            )
+        ]
         assert len(unreleased) == output_count
 
     def test_get_genomes_by_keyword_null(self, genome_conn):
         output = list(
-            utils.get_genomes_by_keyword_iterator(genome_conn, None, 0))
+            utils.get_genomes_by_specific_keyword_iterator(
+                db_conn=genome_conn, tolid=None, assembly_accession_id=None, assembly_name=None,
+                ensembl_name=None, common_name=None, scientific_name=None, scientific_parlance_name=None,
+                species_taxonomy_id=None, release_version=0
+            )
+        )
         assert output == []
 
     def test_get_genomes_by_keyword_no_matches(self, genome_conn):
         output = list(
-            utils.get_genomes_by_keyword_iterator(genome_conn, "bigfoot",
-                                                  1))
+            utils.get_genomes_by_specific_keyword_iterator(
+                db_conn=genome_conn, tolid=None, assembly_accession_id=None, assembly_name=None,
+                ensembl_name=None, common_name="bigfoot", scientific_name=None, scientific_parlance_name=None,
+                species_taxonomy_id=None, release_version=1
+            )
+        )
         assert output == []
 
     def test_get_genomes_by_name(self, genome_conn):

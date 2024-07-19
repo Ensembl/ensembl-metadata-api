@@ -38,9 +38,6 @@ service EnsemblMetadata {
   rpc GetGenomeUUID(GenomeInfoRequest) returns (GenomeUUID) {}
 
   // Retrieve genomes by keyword search
-  rpc GetGenomesByKeyword(GenomeByKeywordRequest) returns (stream Genome) {}
-
-  // Retrieve genomes by keyword search
   rpc GetGenomesBySpecificKeyword(GenomeBySpecificKeywordRequest) returns (stream Genome) {}
 
   // Retrieve all genomes for a give assembly accession ID

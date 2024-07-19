@@ -330,46 +330,6 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_genome_by_keyword(self, keyword, release_version=None):
-        """
-        Fetches genomes based on a keyword and release version.
-
-        Args:
-            keyword (str - Mandatory): Keyword to search for in various attributes of genomes, assemblies, and organisms.
-            release_version (int or None): Release version to filter by. If set to 0 or None, fetches only current genomes.
-
-        Returns:
-            list: A list of fetched genomes matching the keyword and release version.
-        """
-
-        genome_query = db.select(Genome, Assembly, Organism, EnsemblRelease).select_from(Genome) \
-            .join(Organism, Genome.organism_id == Organism.organism_id) \
-            .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
-        genome_query = genome_query.add_columns(EnsemblSite) \
-            .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
-            .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
-            .join(EnsemblSite,
-                  EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
-        if not cfg.allow_unreleased:
-            logger.debug("NOT Allowed Unreleased")
-            genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-        elif release_version is not None and release_version > 0:
-            genome_query = genome_query.where(EnsemblRelease.version <= release_version)
-
-        genome_query = genome_query.where(db.or_(db.func.lower(Assembly.tol_id) == keyword.lower(),
-                                                 db.func.lower(Assembly.accession) == keyword.lower(),
-                                                 db.func.lower(Assembly.name) == keyword.lower(),
-                                                 db.func.lower(Assembly.ensembl_name) == keyword.lower(),
-                                                 db.func.lower(Organism.common_name) == keyword.lower(),
-                                                 db.func.lower(Organism.scientific_name) == keyword.lower(),
-                                                 db.func.lower(
-                                                     Organism.scientific_parlance_name) == keyword.lower(),
-                                                 db.func.lower(Organism.species_taxonomy_id) == keyword.lower()))
-        logger.debug(f"byKeyWord: {genome_query} {release_version}")
-        with self.metadata_db.session_scope() as session:
-            session.expire_on_commit = False
-            return session.execute(genome_query).all()
-
     def fetch_genome_by_specific_keyword(self,
                                          tolid, assembly_accession_id, assembly_name, ensembl_name,
                                          common_name, scientific_name, scientific_parlance_name,
