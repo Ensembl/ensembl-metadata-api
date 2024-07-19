@@ -39,7 +39,9 @@ class DatasetAttributeItem(NamedTuple):
 
 class GenomeDatasetItem(NamedTuple):
     dataset: Dataset
-    release: EnsemblRelease
+    dataset_type: DatasetType
+    dataset_source: DatasetSource
+    release: GenomeDataset
     attributes: [DatasetAttributeItem]
 
 
@@ -605,6 +607,8 @@ class GenomeAdaptor(BaseAdaptor):
                                                datasets=[
                                                    GenomeDatasetItem(
                                                        dataset=gd.dataset,
+                                                       dataset_type=gd.dataset.dataset_type,
+                                                       dataset_source=gd.dataset.dataset_source,
                                                        release=gd.dataset.genome_datasets[0],  # I've got the feeling
                                                        # that this [0] will give birth to a bug in the future... we
                                                        # will see, it works for now because we have one genome_dataset
