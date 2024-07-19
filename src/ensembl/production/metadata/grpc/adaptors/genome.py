@@ -330,13 +330,24 @@ class GenomeAdaptor(BaseAdaptor):
             current_only=current_only,
         )
 
-    def fetch_genome_by_keyword(self, keyword, release_version=None):
+    def fetch_genome_by_specific_keyword(self,
+                                         tolid, assembly_accession_id, assembly_name, ensembl_name,
+                                         common_name, scientific_name, scientific_parlance_name,
+                                         species_taxonomy_id, release_version=None
+                                         ):
         """
-        Fetches genomes based on a keyword and release version.
+        Fetches genomes based on a specific keyword and release version.
 
         Args:
-            keyword (str - Mandatory): Keyword to search for in various attributes of genomes, assemblies, and organisms.
-            release_version (int or None): Release version to filter by. If set to 0 or None, fetches only current genomes.
+            tolid (str or None): TOLID to filter genomes by.
+            assembly_accession_id (str or None): Assembly accession ID to filter genomes by.
+            assembly_name (str or None): Assembly name to filter genomes by.
+            ensembl_name (str or None): Ensembl name to filter genomes by.
+            common_name (str or None): Common name to filter genomes by.
+            scientific_name (str or None): Scientific name to filter genomes by.
+            scientific_parlance_name (str or None): Scientific parlance name to filter genomes by.
+            species_taxonomy_id (str or None): Species taxonomy ID to filter genomes by.
+            release_version (int or None, optional): Release version to filter by. If set to 0 or None, fetches only current genomes. Defaults to None.
 
         Returns:
             list: A list of fetched genomes matching the keyword and release version.
@@ -353,19 +364,71 @@ class GenomeAdaptor(BaseAdaptor):
         if not cfg.allow_unreleased:
             logger.debug("NOT Allowed Unreleased")
             genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-        elif release_version is not None and release_version > 0:
+        if release_version is not None and release_version > 0:
             genome_query = genome_query.where(EnsemblRelease.version <= release_version)
 
-        genome_query = genome_query.where(db.or_(db.func.lower(Assembly.tol_id) == keyword.lower(),
-                                                 db.func.lower(Assembly.accession) == keyword.lower(),
-                                                 db.func.lower(Assembly.name) == keyword.lower(),
-                                                 db.func.lower(Assembly.ensembl_name) == keyword.lower(),
-                                                 db.func.lower(Organism.common_name) == keyword.lower(),
-                                                 db.func.lower(Organism.scientific_name) == keyword.lower(),
-                                                 db.func.lower(
-                                                     Organism.scientific_parlance_name) == keyword.lower(),
-                                                 db.func.lower(Organism.species_taxonomy_id) == keyword.lower()))
-        logger.debug(f"byKeyWord: {genome_query} {release_version}")
+        provided_fields = [
+            tolid,
+            assembly_accession_id,
+            assembly_name,
+            ensembl_name,
+            common_name,
+            scientific_name,
+            scientific_parlance_name,
+            species_taxonomy_id
+        ]
+
+        # Count how many fields are provided
+        provided_count = sum(1 for field in provided_fields if field)
+        # Default behaviour: return an empty list if more than one is provided
+        if provided_count != 1:
+            return []
+
+        # Check which field is provided and execute the query accordingly
+        if tolid:
+            logger.debug(f"tolid: {tolid}")
+            genome_query = genome_query.where(
+                db.func.lower(Assembly.tol_id) == tolid.lower()
+            )
+        elif assembly_accession_id:
+            logger.debug(f"assembly_accession_id: {assembly_accession_id}")
+            genome_query = genome_query.where(
+                db.func.lower(Assembly.accession) == assembly_accession_id.lower()
+            )
+        elif assembly_name:
+            logger.debug(f"assembly_name: {assembly_name}")
+            genome_query = genome_query.where(
+                db.func.lower(Assembly.name) == assembly_name.lower()
+            )
+        elif ensembl_name:
+            logger.debug(f"ensembl_name: {ensembl_name}")
+            genome_query = genome_query.where(
+                db.func.lower(Assembly.ensembl_name) == ensembl_name.lower()
+            )
+        elif common_name:
+            logger.debug(f"common_name: {common_name}")
+            genome_query = genome_query.where(
+                db.func.lower(Organism.common_name) == common_name.lower()
+            )
+        elif scientific_name:
+            logger.debug(f"scientific_name: {scientific_name}")
+            genome_query = genome_query.where(
+                db.func.lower(Organism.scientific_name) == scientific_name.lower()
+            )
+        elif scientific_parlance_name:
+            logger.debug(f"scientific_parlance_name: {scientific_parlance_name}")
+            genome_query = genome_query.where(
+                db.func.lower(Organism.scientific_parlance_name) == scientific_parlance_name.lower()
+            )
+        elif species_taxonomy_id:
+            logger.debug(f"species_taxonomy_id: {species_taxonomy_id}")
+            genome_query = genome_query.where(
+                db.func.lower(Organism.species_taxonomy_id) == species_taxonomy_id.lower()
+            )
+        else:
+            return []
+
+        logger.debug(f"bySpecificKeyword: {genome_query} {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_query).all()
