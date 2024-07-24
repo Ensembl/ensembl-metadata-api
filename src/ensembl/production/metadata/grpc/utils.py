@@ -14,9 +14,8 @@ import logging
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.models import Genome
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
-from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
+from ensembl.production.metadata.api.adaptors import GenomeAdaptor
+from ensembl.production.metadata.api.adaptors import ReleaseAdaptor
 from ensembl.production.metadata.grpc.config import MetadataConfig
 
 logger = logging.getLogger(__name__)
