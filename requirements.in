@@ -1,4 +1,4 @@
-ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.2.2
+ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.4.2
 grpcio
 protobuf
 grpcio-tools

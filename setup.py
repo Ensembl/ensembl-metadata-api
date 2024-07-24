@@ -39,7 +39,7 @@ setup(
     packages=find_namespace_packages(where='src', include=['ensembl.*']),
     package_dir={'': 'src'},
     include_package_data=True,
-    python_requires='>=3.8.9',
+    python_requires='>=3.10',
     install_requires=[import_requirements()],
     classifiers=[
         "Intended Audience :: Science/Research",
@@ -47,6 +47,7 @@ setup(
         "Natural Language :: English",
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.10",
     ]
 )

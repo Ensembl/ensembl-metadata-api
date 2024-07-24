@@ -1,8 +1,9 @@
 language: python
 os: linux
+dist: bionic
 python:
-  - '3.8'
-  - '3.9'
+  - '3.10'
+  - '3.11'
 services:
   - mysql
 before_script:
