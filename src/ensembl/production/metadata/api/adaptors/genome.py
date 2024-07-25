@@ -12,20 +12,17 @@
 from __future__ import annotations
 
 import logging
-from collections import namedtuple
 from typing import List, Tuple, NamedTuple
 
 import sqlalchemy as db
 from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
-from sqlalchemy import and_
 from sqlalchemy.orm import aliased
 
-from ensembl.production.metadata.api.exceptions import MetadataObjectNotFoundException
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
-    Attribute, DatasetAttribute, ReleaseStatus, DatasetStatus
-from ensembl.production.metadata.grpc.adaptors.base import BaseAdaptor, check_parameter, cfg
+    ReleaseStatus, DatasetStatus
+from ensembl.production.metadata.api.adaptors.base import BaseAdaptor, check_parameter, cfg
 
 logger = logging.getLogger(__name__)
 
