@@ -105,6 +105,7 @@ class GenomeFactory:
             query = query.filter(~Genome.production_name.in_(filters.antispecies))
 
         if filters.release_id:
+            query = query.join(Genome.genome_releases)
             query = query.filter(GenomeDataset.release_id==filters.release_id)
             query = query.filter(GenomeRelease.release_id==filters.release_id)
 
@@ -129,7 +130,6 @@ class GenomeFactory:
             .join(OrganismGroupMember.organism_group) \
             .join(Genome.genome_datasets) \
             .join(GenomeDataset.dataset) \
-            .join(Genome.genome_releases) \
             .join(Dataset.dataset_source) \
             .join(Dataset.dataset_type) \
             .group_by(Genome.genome_id, Dataset.dataset_id) \
