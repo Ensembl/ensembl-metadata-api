@@ -27,7 +27,7 @@ from sqlalchemy import select
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
-from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset
+from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -44,6 +44,7 @@ class GenomeInputFilters:
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
     dataset_status: List[str] = field(default_factory=lambda: ["Submitted"])
+    release_id: int = 0
     batch_size: int = 50
     page: int = 1
     organism_group_type: str = ''
@@ -102,6 +103,11 @@ class GenomeFactory:
 
         elif filters.antispecies:
             query = query.filter(~Genome.production_name.in_(filters.antispecies))
+
+        if filters.release_id:
+            query = query.join(Genome.genome_releases)
+            query = query.filter(GenomeDataset.release_id==filters.release_id)
+            query = query.filter(GenomeRelease.release_id==filters.release_id)
 
         if filters.dataset_type:
             query = query.filter(Genome.genome_datasets.any(DatasetType.name.in_([filters.dataset_type])))
@@ -195,6 +201,8 @@ def main():
                         help='List of Species Production names to filter the query. Default is an empty list.')
     parser.add_argument('--antispecies', type=str, nargs='*', default=[], required=False,
                         help='List of Species Production names to exclude from the query. Default is an empty list.')
+    parser.add_argument('--release_id', type=int, default=0, required=False,
+                        help='Genome_dataset release_id to filter the query. Default is 0 (no filter).')
     parser.add_argument('--dataset_status', nargs='*', default=["Submitted"],
                         choices=['Submitted', 'Processing', 'Processed', 'Released'], required=False,
                         help='List of dataset statuses to filter the query. Default is an empty list.')
@@ -231,6 +239,7 @@ def main():
                 species=args.species,
                 antispecies=args.antispecies,
                 batch_size=args.batch_size,
+                release_id=args.release_id,
                 dataset_status=args.dataset_status,
         ) or []:
             json.dump(genome, json_output)
