@@ -9,13 +9,13 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.`
+import logging
 import re
 import uuid
 from collections import defaultdict
 
 import sqlalchemy as db
 import sqlalchemy.exc
-import logging
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
     SeqRegionSynonym, AttribType
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
@@ -24,9 +24,9 @@ from sqlalchemy import select, and_
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import aliased
 
+from ensembl.production.metadata.api import exceptions
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models import *
-from ensembl.production.metadata.api import exceptions
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
@@ -571,13 +571,46 @@ class CoreMetaUpdater(BaseMetaUpdater):
         """
         assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
-        if self.get_meta_single_meta_key(species_id,
-                                         "genebuild.provider_name") is None \
-                or self.get_meta_single_meta_key(species_id,
-                                                 "genebuild.last_geneset_update") is None \
-                or self.get_meta_single_meta_key(species_id, "genebuild.start_date") is None:
+        provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
+        last_geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
+        start_date = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
+
+        if None in (provider_name, last_geneset_update, start_date):
             exceptions.MissingMetaException(
                 "genebuild.provider_name, genebuild.last_geneset_update, genebuild.start_date are required keys")
+        # There should not exist an existing genome with assembly_accesion/provider_name/last_geneset_update and start_date.
+        provider_name_attr = aliased(DatasetAttribute)
+        last_geneset_update_attr = aliased(DatasetAttribute)
+        start_date_attr = aliased(DatasetAttribute)
+
+        existing_combination = (
+            meta_session.query(Genome)
+            .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id)
+            .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
+            .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+            .join(provider_name_attr, Dataset.dataset_id == provider_name_attr.dataset_id)
+            .join(last_geneset_update_attr, Dataset.dataset_id == last_geneset_update_attr.dataset_id)
+            .join(start_date_attr, Dataset.dataset_id == start_date_attr.dataset_id)
+            .filter(
+                Dataset.name == "genebuild",
+                Assembly.accession == assembly_accession,  # Correctly linking the assembly_accession
+                provider_name_attr.value == provider_name,
+                last_geneset_update_attr.value == last_geneset_update,
+                start_date_attr.value == start_date,
+                provider_name_attr.attribute.has(Attribute.name == "genebuild.provider_name"),
+                last_geneset_update_attr.attribute.has(Attribute.name == "genebuild.last_geneset_update"),
+                start_date_attr.attribute.has(Attribute.name == "genebuild.start_date")
+            )
+            .exists()
+        )
+        if meta_session.query(existing_combination).scalar():
+            exceptions.MetaException(
+                "genebuild.provider_name, genebuild.last_geneset_update, genebuild.start_date and assembly.accession can"
+                " not match existing records. If this is an update, please update genebuild.last_geneset_update with the "
+                "current date. "
+            )
+
+
         # The genebuild accession is formed by combining the assembly accession and the genebuild version
         genebuild_accession = assembly_accession + "_" + genebuild_version
         if source is None:
