@@ -38,7 +38,7 @@ service EnsemblMetadata {
   rpc GetGenomeUUID(GenomeInfoRequest) returns (GenomeUUID) {}
 
   // Retrieve genomes by keyword search
-  rpc GetGenomesByKeyword(GenomeByKeywordRequest) returns (stream Genome) {}
+  rpc GetGenomesBySpecificKeyword(GenomeBySpecificKeywordRequest) returns (stream Genome) {}
 
   // Retrieve all genomes for a give assembly accession ID
   rpc GetGenomesByAssemblyAccessionID(AssemblyAccessionIDRequest) returns (stream Genome) {}
@@ -80,7 +80,7 @@ service EnsemblMetadata {
   rpc GetDatasetsListByUUID(DatasetsRequest) returns (Datasets) {}
 
   // Retrieve dataset info by genome uuid and dataset_type
-  rpc GetDatasetInformation(GenomeDatatypeRequest) returns (DatasetInfos) {}
+  rpc GetDatasetInformation(GenomeDatatypeRequest) returns (Datasets) {}
 
   // Retrieve organisms group count
   rpc GetOrganismsGroupCount(OrganismsGroupRequest) returns (OrganismsGroupCount) {}
@@ -238,28 +238,6 @@ message AttributesInfo {
 }
 
 /*
-Wrapper for a list of DatasetInfo objects
-*/
-message DatasetInfos {
-  string genome_uuid = 1;
-  string dataset_type = 2;
-  /*
-  Details for datasets
-  */
-  message DatasetInfo {
-    string dataset_uuid = 1;
-    string dataset_name = 2;
-    string name = 3;
-    string type = 4;
-    string dataset_version = 5;
-    string dataset_label = 6;
-    double version = 7;
-    string value = 8;
-  }
-  repeated DatasetInfo dataset_infos = 3;
-}
-
-/*
 Metadata about the sequences that comprise a genome's assembly.
  */
 message GenomeSequence {
@@ -294,13 +272,30 @@ message GenomeAssemblySequenceRegion {
 }
 
 /*
-Datasets list associated to the provided genome_uuid 
+Wrapper for a list of DatasetInfo objects
+*/
+message DatasetInfo {
+  string dataset_uuid = 1;
+  string dataset_name = 2;
+  string attribute_name = 3;
+  string attribute_type = 4;
+  string dataset_version = 5;
+  string dataset_label = 6;
+  double release_version = 7;
+  string attribute_value = 8;
+  string dataset_type_topic = 9;
+  string dataset_source_type = 10;
+  string dataset_type_name = 11;
+  string release_date = 12;
+  string release_type = 13;
+}
+
+/*
+Datasets list associated to the provided genome_uuid
  */
 message Datasets {
   string genome_uuid = 1;
-  // https://stackoverflow.com/q/56401376/4488332
-  // https://developers.google.com/protocol-buffers/docs/reference/python-generated#map-fields
-  map<string, DatasetInfos> datasets = 2;
+  repeated DatasetInfo datasets = 2;
 }
 
 /*
@@ -339,6 +334,9 @@ message ReleaseVersion {
 message DatasetAttributeValue {
   string attribute_name = 1;
   string attribute_value = 2;
+  string dataset_version = 3;
+  string dataset_uuid = 4;
+  string dataset_type = 5;
 }
 
 message DatasetAttributesValues {
@@ -369,6 +367,24 @@ If release_version is not given, the current version is used.
 message GenomeByKeywordRequest {
   string keyword = 1; // Mandatory
   double release_version = 2; // Optional
+}
+
+/*
+Genome specific keyword filter.
+If release_version is not given, the current version is used.
+XOR: At least one field should be provided, if none or more than one field is provided
+the returned result will be an empty
+ */
+message GenomeBySpecificKeywordRequest {
+  string tolid = 1;                     // XOR
+  string assembly_accession_id = 2;     // XOR
+  string assembly_name = 3;             // XOR
+  string ensembl_name = 4;              // XOR
+  string common_name = 5;               // XOR
+  string scientific_name = 6;           // XOR
+  string scientific_parlance_name = 7;  // XOR
+  string species_taxonomy_id = 8;       // XOR
+  double release_version = 9;           // Optional
 }
 
 /*
@@ -450,7 +466,7 @@ Genome datatype filter
  */
 message GenomeDatatypeRequest {
   string genome_uuid = 1;     // Mandatory
-  string dataset_type = 2;    // Mandatory
+  string dataset_type = 2;    // Optional
 }
 
 /*
@@ -504,4 +520,5 @@ message DatasetAttributesValuesRequest {
   string dataset_type = 2;            // Optional
   repeated string attribute_name = 3; // Optional
   double release_version = 4;         // Optional
+  bool latest_only = 5;               // Optional, default is False
 }

@@ -8,27 +8,29 @@ ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git@v2.1.0
     # via -r requirements.in
 greenlet==3.0.3
     # via sqlalchemy
-grpcio==1.62.0
+grpcio==1.66.1
     # via
     #   -r requirements.in
     #   grpcio-reflection
     #   grpcio-tools
-grpcio-reflection==1.62.0
+grpcio-reflection==1.66.1
     # via -r requirements.in
-grpcio-tools==1.62.0
+grpcio-tools==1.66.1
     # via -r requirements.in
-protobuf==4.25.3
+protobuf==5.28.0
     # via
     #   -r requirements.in
     #   grpcio-reflection
     #   grpcio-tools
-sqlalchemy==1.4.52
+sqlalchemy==2.0.0
     # via
     #   -r requirements.in
     #   ensembl-py
-types-pymysql==1.1.0.1
+types-pymysql==1.1.0.20240524
     # via -r requirements.in
-urllib3==1.26.18
+typing-extensions==4.12.2
+    # via sqlalchemy
+urllib3==1.26.20
     # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:

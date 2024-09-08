@@ -21,6 +21,7 @@ from ensembl_metadata_pb2 import (
     GenomeSequenceRequest,
     AssemblyIDRequest,
     GenomeByKeywordRequest,
+    GenomeBySpecificKeywordRequest,
     AssemblyAccessionIDRequest,
     OrganismIDRequest,
     DatasetsRequest,
@@ -52,12 +53,11 @@ def get_genome(stub, genome_request):
         return
 
 
-def get_genomes_by_keyword(stub, genome_request):
-    if isinstance(genome_request, GenomeByKeywordRequest):
-        genomes = stub.GetGenomesByKeyword(genome_request)
+def get_genomes_by_specific_keyword(stub, genome_request):
+    if isinstance(genome_request, GenomeBySpecificKeywordRequest):
+        genomes = stub.GetGenomesBySpecificKeyword(genome_request)
         for genome in genomes:
             print(genome)
-
 
 def get_genomes(stub):
     request1 = GenomeUUIDRequest(genome_uuid="9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1")
@@ -69,8 +69,6 @@ def get_genomes(stub):
     request5 = GenomeNameRequest(
         ensembl_name="banana", site_name="plants", release_version=104.0
     )
-    request6 = GenomeByKeywordRequest(keyword="Human")
-    request7 = GenomeByKeywordRequest(keyword="Bigfoot")
     print("**** Valid UUID ****")
     get_genome(stub, request1)
     print("**** Invalid UUID ****")
@@ -81,10 +79,30 @@ def get_genomes(stub):
     get_genome(stub, request4)
     print("**** Invalid name ****")
     get_genome(stub, request5)
-    print("**** Valid keyword, no release ****")
-    get_genomes_by_keyword(stub, request6)
-    print("**** Invalid keyword ****")
-    get_genomes_by_keyword(stub, request7)
+
+
+def get_genome_by_keyword(stub):
+    request1 = GenomeBySpecificKeywordRequest(common_name="Human")
+    request2 = GenomeBySpecificKeywordRequest(assembly_accession_id="GCA_018473315.1")
+    request3 = GenomeBySpecificKeywordRequest(assembly_name="HG03540.alt.pat.f1_v2")
+    request4 = GenomeBySpecificKeywordRequest(ensembl_name="HG03540.alt.pat.f1_v2")
+    request5 = GenomeBySpecificKeywordRequest(scientific_name="Homo sapiens")
+    request6 = GenomeBySpecificKeywordRequest(scientific_parlance_name="Human")
+    request7 = GenomeBySpecificKeywordRequest(species_taxonomy_id="9606")
+    print("**** Search by common_name ****")
+    get_genomes_by_specific_keyword(stub, request1)
+    print("**** Search by assembly_accession_id ****")
+    get_genomes_by_specific_keyword(stub, request2)
+    print("**** Search by assembly_name ****")
+    get_genomes_by_specific_keyword(stub, request3)
+    print("**** Search by ensembl_name ****")
+    get_genomes_by_specific_keyword(stub, request4)
+    print("**** Search by scientific_name ****")
+    get_genomes_by_specific_keyword(stub, request5)
+    print("**** Search by scientific_parlance_name ****")
+    get_genomes_by_specific_keyword(stub, request6)
+    print("**** Search by species_taxonomy_id ****")
+    get_genomes_by_specific_keyword(stub, request7)
 
 
 def list_genome_sequences(stub):
@@ -270,7 +288,7 @@ def get_dataset_infos_by_dataset_type(stub):
         genome_uuid="9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1", dataset_type="assembly"
     )
     datasets1 = stub.GetDatasetInformation(request1)
-    print(datasets1.dataset_infos)
+    print(datasets1.datasets)
 
 
 def get_genome_uuid(stub):
@@ -396,7 +414,6 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3"
     )
     attributes1 = stub.GetAttributesValuesByUUID(request1)
-
     print("**** Dataset Attributes Values: By genome_uuid only (default dataset_type is 'assembly') ****")
     print(attributes1)
 
@@ -405,7 +422,6 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         dataset_type="homologies"
     )
     attributes2 = stub.GetAttributesValuesByUUID(request2)
-
     print("**** Dataset Attributes Values: By genome_uuid and dataset_type='homologies' ****")
     print(attributes2)
 
@@ -415,7 +431,6 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         attribute_name=["compara.homology_coverage"]
     )
     attributes3 = stub.GetAttributesValuesByUUID(request3)
-
     print("**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and attribute_name=['compara.homology_coverage'] ****")
     print(attributes3)
 
@@ -425,7 +440,6 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         release_version=110.1
     )
     attributes4 = stub.GetAttributesValuesByUUID(request4)
-
     print(
         "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and release_version=110.1 ****")
     print(attributes4)
@@ -436,10 +450,19 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         attribute_name=["i.dont.exist"]
     )
     attributes5 = stub.GetAttributesValuesByUUID(request5)
-
     print(
         "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and attribute_name=['i.dont.exist'] ****")
     print(attributes5)
+
+    request6 = DatasetAttributesValuesRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="homologies",
+        latest_only=0
+    )
+    attributes6 = stub.GetAttributesValuesByUUID(request6)
+    print(
+        "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and latest_only=0 ****")
+    print(attributes6)
 
 
 def run():
@@ -461,6 +484,8 @@ def run():
         get_top_level_statistics_by_uuid(stub)
         print("-------------- Get Genomes --------------")
         get_genomes(stub)
+        print("-------------- Get Genome By Keyword --------------")
+        get_genome_by_keyword(stub)
         print("-------------- List Genome Sequences --------------")
         list_genome_sequences(stub)
         print("-------------- List Genome Assembly Sequences --------------")

@@ -60,10 +60,19 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         logger.debug(f"Received RPC for GetGenomeByUUID with request: {request}")
         return utils.get_genome_by_uuid(self.db, request.genome_uuid, request.release_version)
 
-    def GetGenomesByKeyword(self, request, context):
-        logger.debug(f"Received RPC for GetGenomesByKeyword with request: {request}")
-        return utils.get_genomes_by_keyword_iterator(
-            self.db, request.keyword, request.release_version
+    def GetGenomesBySpecificKeyword(self, request, context):
+        logger.debug(f"Received RPC for GetGenomesBySpecificKeyword with request: {request}")
+        return utils.get_genomes_by_specific_keyword_iterator(
+            self.db,
+            request.tolid,
+            request.assembly_accession_id,
+            request.assembly_name,
+            request.ensembl_name,
+            request.common_name,
+            request.scientific_name,
+            request.scientific_parlance_name,
+            request.species_taxonomy_id,
+            request.release_version
         )
 
     def GetGenomeByName(self, request, context):
@@ -105,6 +114,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         )
 
     def GetDatasetInformation(self, request, context):
+        # TODO: this method can merged with the GetDatasetsListByUUID above...
         logger.debug(f"Received RPC for GetDatasetInformation with request: {request}")
         return utils.get_dataset_by_genome_and_dataset_type(
             self.db, request.genome_uuid, request.dataset_type
@@ -133,5 +143,6 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         logger.debug(f"Received RPC for GetAttributesByUUID with request: {request}")
         attribute_names = list(request.attribute_name) if request.attribute_name else None
         return utils.get_attributes_values_by_uuid(
-            self.db, request.genome_uuid, request.dataset_type, request.release_version, attribute_names
+            self.db, request.genome_uuid, request.dataset_type,
+            request.release_version, attribute_names, request.latest_only
         )

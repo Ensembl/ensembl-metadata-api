@@ -9,6 +9,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from datetime import datetime
+
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
 import logging
 
@@ -353,56 +355,31 @@ def create_release_version(data=None):
 def create_datasets(data=None):
     if data is None:
         return ensembl_metadata_pb2.Datasets()
-    # FIXME data['datasets'] doesn't hold the right datatype.
-    #ensembl_metadata_pb2.pyi the dataset type key value type is string
-    # def __init__(self, genome_uuid: _Optional[str] = ...,
-    #              datasets: _Optional[_Mapping[str, DatasetInfos]] = ...) -> None: ...
-    datasets = {str(i): j for i, j in data['datasets'].items()}
     return ensembl_metadata_pb2.Datasets(
-        genome_uuid=data["genome_uuid"], datasets = datasets
+        genome_uuid=data["genome_uuid"], datasets=data['datasets']
     )
 
 
-def create_dataset_info(dataset, attribute, release=None):
-    if dataset is None:
-        return ensembl_metadata_pb2.DatasetInfos.DatasetInfo()
-    # FIXME = what is the expected output here? Data.Attribute ONe entry per datasets / attribute combination?
-    #   is it used anywhere in web?
-    return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid=dataset.dataset_uuid,
-        dataset_name=dataset.name,
-        name=attribute.name,
-        type=attribute.type,
-        dataset_version=dataset.version,
-        dataset_label=dataset.label,
-        version=release.version if release else None,
-        value=attribute.value,
-    )
+def populate_dataset_info(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.DatasetInfo()
 
-
-def create_dataset_infos(genome_uuid=None, requested_dataset_type=None, data=None):
-    if data is None or data == []:
-        return ensembl_metadata_pb2.DatasetInfos()
-    # NB: data is GenomeDatasetsListItem
-    dataset_infos = []
-    for dataset in data.datasets:
-        dataset_infos.extend(
-            [create_dataset_info(dataset.dataset, attribute, dataset.release) for attribute in dataset.attributes])
-    return ensembl_metadata_pb2.DatasetInfos(
-        genome_uuid=genome_uuid,
-        dataset_type=requested_dataset_type,
-        dataset_infos=dataset_infos,
-    )
-
-
-def populate_dataset_info(data):
-    return ensembl_metadata_pb2.DatasetInfos.DatasetInfo(
-        dataset_uuid=data.dataset.dataset_uuid,
-        dataset_name=data.dataset.name,
-        dataset_version=data.dataset.version,
-        dataset_label=data.dataset.label,
-        version=int(data.ensembl_release.version) if hasattr(data, 'ensembl_release') else None,
-    )
+    ds_obj_list = []
+    for ds_item in data.datasets:
+        ds_info = ensembl_metadata_pb2.DatasetInfo(
+            dataset_uuid=ds_item.dataset.dataset_uuid,
+            dataset_name=ds_item.dataset.name,
+            dataset_version=ds_item.dataset.version,
+            dataset_label=ds_item.dataset.label,
+            dataset_type_topic=ds_item.dataset.dataset_type.topic,
+            dataset_source_type=ds_item.dataset.dataset_source.type if ds_item.dataset.dataset_source else "",
+            dataset_type_name=ds_item.dataset.dataset_type.name,
+            release_version=float(data.release.version) if data.release.version else None,
+            release_date=datetime.strftime(data.release.release_date, "%m/%d/%Y"),
+            release_type=data.release.release_type,
+        )
+        ds_obj_list.append(ds_info)
+    return ds_obj_list
 
 
 def create_organisms_group_count(data, release_version):
@@ -445,7 +422,7 @@ def create_paths(data=None):
     )
 
 
-def create_attribute_value(data=None, attribute_names=None):
+def create_attribute_value(data=None, attribute_names=None, latest_only=False):
     """
     Creates a DatasetAttributesValues message from the provided data.
 
@@ -462,36 +439,56 @@ def create_attribute_value(data=None, attribute_names=None):
                 [GenomeDatasetItem]
                     [DatasetAttributeItem] <- this is the attributes list we want to extract
                     Dataset
-                    EnsemblRelease
+                    GenomeDataset
                 Genome
                 EnsemblRelease
 
         attribute_names (optional): A List of attributes names to filter by
+        latest_only (optional): Whether to fetch the latest dataset or not (default is `False`)
 
     Returns:
         ensembl_metadata_pb2.DatasetAttributesValues: A message containing a list of DatasetAttributeValue
         messages, each corresponding to the attributes from the input data.
     """
+    def add_attributes(ds_item, attributes_list, dataset_version, dataset_uuid, attribute_names, dataset_type):
+        """
+        Adds attributes from a dataset item to the attributes list.
+        """
+        for attrib in ds_item.attributes:
+            # (1) if attribute_names is not provided,
+            # (2) Or attribute_name from the DB is in the provided attribute_names
+            # append it to the list of the returned result
+            # if (1) is true, we will be fetching all the attributes
+            # if (2) is true, we will be fetching the requested attributes only
+            if not attribute_names or attrib.name in attribute_names:
+                created_attribute = ensembl_metadata_pb2.DatasetAttributeValue(
+                    attribute_name=attrib.name,
+                    attribute_value=attrib.value,
+                    dataset_version=dataset_version,
+                    dataset_uuid=dataset_uuid,
+                    dataset_type=dataset_type
+                )
+                attributes_list.append(created_attribute)
+
     if data is None:
         return ensembl_metadata_pb2.DatasetAttributesValues(
             attributes=[]
         )
 
     attributes_list = []
-    # we expect only one dataset: data[0].datasets[0] gets the first GenomeDatasetItem
-    for attrib in data[0].datasets[0].attributes:
-        # for each attribute in the DatasetAttributeItem
-        # (1) if attribute_names is not provided,
-        # (2) Or attribute_name from the DB is in the provided attribute_names
-        # append it to the list of the returned result
-        # if (1) is true, we will be fetching all the attributes
-        # if (2) is true, we will be fetching the requested attributes only
-        if not attribute_names or attrib.name in attribute_names:
-            created_attribute = ensembl_metadata_pb2.DatasetAttributeValue(
-                attribute_name=attrib.name,
-                attribute_value=attrib.value,
-            )
-            attributes_list.append(created_attribute)
+    # we can have more than one dataset
+    for ds_item in data[0].datasets:
+        # that we can distinguish by version or dataset_uuid
+        dataset_version = ds_item.dataset.version
+        dataset_uuid = ds_item.dataset.dataset_uuid
+        dataset_type = ds_item.dataset.dataset_type.name
+
+        # get the latest if latest_only is True
+        if latest_only:
+            if ds_item.release.is_current:
+                add_attributes(ds_item, attributes_list, dataset_version, dataset_uuid, attribute_names, dataset_type)
+        else:
+            add_attributes(ds_item, attributes_list, dataset_version, dataset_uuid, attribute_names, dataset_type)
 
     return ensembl_metadata_pb2.DatasetAttributesValues(
         attributes=attributes_list,

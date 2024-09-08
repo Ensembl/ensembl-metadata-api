@@ -14,9 +14,8 @@ import logging
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.models import Genome
-from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-from ensembl.production.metadata.grpc.adaptors.genome import GenomeAdaptor
-from ensembl.production.metadata.grpc.adaptors.release import ReleaseAdaptor
+from ensembl.production.metadata.api.adaptors import GenomeAdaptor
+from ensembl.production.metadata.api.adaptors import ReleaseAdaptor
 from ensembl.production.metadata.grpc.config import MetadataConfig
 
 logger = logging.getLogger(__name__)
@@ -133,7 +132,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
             attribs.extend(dataset.attributes)
 
     # fetch related assemblies count
-    related_assemblies_count = db_conn.fetch_assemblies_count(None)
+    related_assemblies_count = db_conn.fetch_assemblies_count(genome.Organism.taxonomy_id)
 
     alternative_names = get_alternative_names(db_conn, genome.Organism.taxonomy_id)
 
@@ -251,14 +250,20 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     return msg_factory.create_genome()
 
 
-def get_genomes_by_keyword_iterator(db_conn, keyword, release_version=None):
-    if not keyword:
-        logger.warning("Missing or Empty Keyword field.")
+def get_genomes_by_specific_keyword_iterator(
+    db_conn, tolid, assembly_accession_id, assembly_name, ensembl_name,
+    common_name, scientific_name, scientific_parlance_name, species_taxonomy_id,
+    release_version=None
+):
+    if (not tolid and assembly_accession_id and assembly_name and ensembl_name and
+            common_name and scientific_name and scientific_parlance_name and species_taxonomy_id):
+        logger.warning("Missing required field")
         return msg_factory.create_genome()
 
-    genome_results = db_conn.fetch_genome_by_keyword(
-        keyword=keyword,
-        release_version=release_version
+    genome_results = db_conn.fetch_genome_by_specific_keyword(
+        tolid, assembly_accession_id, assembly_name, ensembl_name,
+        common_name, scientific_name, scientific_parlance_name,
+        species_taxonomy_id, release_version
     )
 
     if len(genome_results) > 0:
@@ -303,31 +308,15 @@ def get_datasets_list_by_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_datasets()
+
     datasets_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all",
                                                      release_version=release_version)
-    # FIXME dataset_results can contain multiple genomes
     if len(datasets_results) > 0:
-        ds_obj_dict = {}
-        for result in datasets_results[0].datasets:
-            dataset_type = result.dataset.dataset_type_id
-            # Populate the objects bottom up
-            datasets_info = msg_factory.populate_dataset_info(result)
-            # Construct the datasets dictionary
-            if dataset_type in ds_obj_dict:
-                ds_obj_dict[dataset_type].append(datasets_info)
-            else:
-                ds_obj_dict[dataset_type] = [datasets_info]
-
-        dataset_object_dict = {}
-        # map each datasets list (e.g: [datasets_dt1_1, datasets_dt1_2]) to DatasetInfos
-        for dataset_type_key in ds_obj_dict:
-            dataset_object_dict[dataset_type_key] = ensembl_metadata_pb2.DatasetInfos(
-                dataset_infos=ds_obj_dict[dataset_type_key]
-            )
-
+        # FIXME dataset_results can contain multiple genomes?
+        datasets_info = msg_factory.populate_dataset_info(datasets_results[0])
         response_data = msg_factory.create_datasets({
             'genome_uuid': genome_uuid,
-            'datasets': dataset_object_dict
+            'datasets': datasets_info
         })
         # logger.debug(f"Response data: \n{response_data}")
         return response_data
@@ -416,7 +405,7 @@ def release_by_uuid_iterator(metadata_db, genome_uuid):
 def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_dataset_type='assembly'):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
-        return msg_factory.create_dataset_infos()
+        return msg_factory.populate_dataset_info()
 
     dataset_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
                                                     dataset_type_name=requested_dataset_type)
@@ -428,7 +417,12 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
         # FIXME it's possible that multiple datasets are returned here. released multiple times.
         if len(dataset_results) > 1:
             logger.warning(f"Multiple results for {genome_uuid} / {requested_dataset_type}")
-        response_data = msg_factory.create_dataset_infos(genome_uuid, requested_dataset_type, dataset_results[0])
+
+        datasets_info = msg_factory.populate_dataset_info(dataset_results[0])
+        response_data = msg_factory.create_datasets({
+            'genome_uuid': genome_uuid,
+            'datasets': datasets_info
+        })
         return response_data
 
 
@@ -514,7 +508,7 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
     return msg_factory.create_release_version()
 
 
-def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names):
+def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names, latest_only):
     """
     Retrieve attribute values for a given genome UUID from the database.
 
@@ -528,6 +522,7 @@ def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_ve
         dataset_type (str): The type of dataset to retrieve.
         release_version (str): The release version of the dataset to retrieve.
         attribute_names (list): A list of attribute names to filter the results by.
+        latest_only (bool): Whether to fetch the latest dataset or not (default is `False`).
 
     Returns:
         object: A response object containing the attribute values. If no valid dataset is found,
@@ -548,7 +543,8 @@ def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_ve
             data=dataset_results,
             # There is no point in filtering by attribute_names in the API because it returns the whole dataset object
             # which will contain all the attributes (we should be altering them from within the API)
-            attribute_names=attribute_names
+            attribute_names=attribute_names,
+            latest_only=latest_only
         )
         logger.debug(f"Response data: \n{response_data}")
         return response_data
