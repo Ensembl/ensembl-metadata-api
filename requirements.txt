@@ -4,8 +4,16 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
+certifi==2024.8.30
+    # via requests
+charset-normalizer==3.3.2
+    # via requests
 ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git@v2.1.0
     # via -r requirements.in
+ensembl-utils==0.4.4
+    # via -r requirements.in
+exceptiongroup==1.2.2
+    # via pytest
 greenlet==3.0.3
     # via sqlalchemy
 grpcio==1.66.1
@@ -17,21 +25,47 @@ grpcio-reflection==1.66.1
     # via -r requirements.in
 grpcio-tools==1.66.1
     # via -r requirements.in
+idna==3.8
+    # via requests
+iniconfig==2.0.0
+    # via pytest
+mysqlclient==2.2.4
+    # via -r requirements.in
+packaging==24.1
+    # via pytest
+pluggy==1.5.0
+    # via pytest
 protobuf==5.28.0
     # via
     #   -r requirements.in
     #   grpcio-reflection
     #   grpcio-tools
+pytest==8.3.2
+    # via ensembl-utils
+python-dotenv==1.0.1
+    # via ensembl-utils
+pyyaml==6.0.2
+    # via ensembl-utils
+requests==2.32.3
+    # via ensembl-utils
 sqlalchemy==2.0.0
     # via
     #   -r requirements.in
     #   ensembl-py
+    #   ensembl-utils
+    #   sqlalchemy-utils
+sqlalchemy-utils==0.41.2
+    # via ensembl-utils
+tomli==2.0.1
+    # via pytest
 types-pymysql==1.1.0.20240524
     # via -r requirements.in
 typing-extensions==4.12.2
     # via sqlalchemy
 urllib3==1.26.20
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   requests
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

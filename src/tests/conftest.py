@@ -34,17 +34,17 @@ def pytest_configure(config: Config) -> None:
 
 
 @pytest.fixture(scope="module", autouse=True)
-def engine(multi_dbs):
-    os.environ["METADATA_URI"] = multi_dbs["ensembl_genome_metadata"].dbc.url
-    os.environ["TAXONOMY_URI"] = multi_dbs["ncbi_taxonomy"].dbc.url
-    yield db.create_engine(multi_dbs["ensembl_genome_metadata"].dbc.url)
+def engine(test_dbs):
+    os.environ["METADATA_URI"] = test_dbs["ensembl_genome_metadata"].dbc.url
+    os.environ["TAXONOMY_URI"] = test_dbs["ncbi_taxonomy"].dbc.url
+    yield db.create_engine(test_dbs["ensembl_genome_metadata"].dbc.url)
 
 
 @pytest.fixture(scope="function")
-def genome_conn(multi_dbs):
+def genome_conn(test_dbs):
     genome_conn = GenomeAdaptor(
-        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url,
-        taxonomy_uri=multi_dbs["ncbi_taxonomy"].dbc.url
+        metadata_uri=test_dbs["ensembl_genome_metadata"].dbc.url,
+        taxonomy_uri=test_dbs["ncbi_taxonomy"].dbc.url
     )
     yield genome_conn
 
@@ -58,9 +58,9 @@ def allow_unreleased(request):
 
 
 @pytest.fixture(scope="class")
-def release_conn(multi_dbs):
+def release_conn(test_dbs):
     release_conn = ReleaseAdaptor(
-        metadata_uri=multi_dbs["ensembl_genome_metadata"].dbc.url
+        metadata_uri=test_dbs["ensembl_genome_metadata"].dbc.url
     )
     yield release_conn
 
@@ -71,8 +71,8 @@ def genome_factory():
 
 
 @pytest.fixture(scope="class")
-def dataset_factory(multi_dbs):
-    yield DatasetFactory(multi_dbs["ensembl_genome_metadata"].dbc.url)
+def dataset_factory(test_dbs):
+    yield DatasetFactory(test_dbs["ensembl_genome_metadata"].dbc.url)
 
 
 @pytest.fixture(scope='module')
@@ -83,7 +83,7 @@ def grpc_add_to_server():
 
 
 @pytest.fixture(scope='module')
-def grpc_servicer(multi_dbs, engine):
+def grpc_servicer(test_dbs, engine):
     from ensembl.production.metadata.grpc.servicer import EnsemblMetadataServicer
     return EnsemblMetadataServicer()
 

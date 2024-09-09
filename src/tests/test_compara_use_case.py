@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 
 import pytest
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from google.protobuf import json_format
 from sqlalchemy import Column, Integer, String, SmallInteger
 from yagrc import reflector as yagrc_reflector
@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="class")
-def compara_conn(multi_dbs):
-    compara_conn = DBConnection(multi_dbs['compara_db'].dbc.url)
+def compara_conn(test_dbs):
+    compara_conn = DBConnection(test_dbs['compara_db'].dbc.url)
     yield compara_conn
 
 
@@ -46,7 +46,7 @@ class GenomeDB(Base):
     last_release = Column(SmallInteger, nullable=True)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                         {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
                                         {'src': Path(__file__).parent / "databases/compara_db"}
                                         ]], indirect=True)

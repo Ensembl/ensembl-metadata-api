@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import List
 
 import pytest
-from ensembl.database import UnitTestDB, DBConnection
+from ensembl.utils.database import UnitTestDB, DBConnection
 from google.protobuf import json_format
 
 from ensembl.production.metadata.api.models import Genome, Dataset
@@ -27,7 +27,7 @@ from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                         {'src': Path(__file__).parent / "databases/ncbi_taxonomy"}]],
                          indirect=True)
 class TestUtils:
@@ -234,13 +234,13 @@ class TestUtils:
         ],
         indirect=['allow_unreleased']
     )
-    def test_get_dataset_by_genome_and_dataset_type(self, multi_dbs, genome_conn, allow_unreleased, genome_uuid,
+    def test_get_dataset_by_genome_and_dataset_type(self, test_dbs, genome_conn, allow_unreleased, genome_uuid,
                                                     dataset_type, count):
         genome_datasets = utils.get_dataset_by_genome_and_dataset_type(genome_conn, genome_uuid, dataset_type)
         logger.debug(f"Genome_datasets {genome_datasets}")
         output = json_format.MessageToJson(genome_datasets, including_default_value_fields=True)
         output = json.loads(output)
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             genome: Genome = session.query(Genome).filter(Genome.genome_uuid == genome_uuid).one()
             datasets: List[Dataset] = [ds.dataset for ds in genome.genome_datasets if

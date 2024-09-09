@@ -22,7 +22,7 @@ import re
 from dataclasses import dataclass, field
 from typing import List
 
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from sqlalchemy import select
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory

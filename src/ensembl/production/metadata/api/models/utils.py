@@ -11,7 +11,7 @@
 #   limitations under the License.
 from __future__ import annotations
 
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 
 from . import EnsemblRelease, ReleaseStatus
 from .dataset import Dataset

@@ -9,7 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from sqlalchemy import inspect
 from sqlalchemy.engine import make_url
 

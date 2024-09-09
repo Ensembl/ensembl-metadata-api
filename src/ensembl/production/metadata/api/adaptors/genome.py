@@ -15,7 +15,7 @@ import logging
 from typing import List, Tuple, NamedTuple
 
 import sqlalchemy as db
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
 from sqlalchemy.orm import aliased
 

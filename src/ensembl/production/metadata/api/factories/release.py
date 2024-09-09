@@ -18,7 +18,7 @@ import argparse
 import datetime
 import logging
 
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from sqlalchemy import update, select, or_, and_
 
 from ensembl.production.metadata.api.exceptions import *
