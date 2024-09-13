@@ -51,12 +51,12 @@ class GenomeInputFilters:
     run_all: int = 0
     update_dataset_status: str = ""
     update_dataset_attribute: dict = field(default_factory=lambda: {})
-    columns: List = field(default_factory=lambda: [Genome.genome_uuid,
+    columns: List = field(default_factory=lambda: [Genome.genome_uuid.label('genome_uuid'),
                                                    Genome.production_name.label('species'),
-                                                   Dataset.dataset_uuid,
+                                                   Dataset.dataset_uuid.label('dataset_uuid'),
                                                    Dataset.status.label('dataset_status'),
                                                    DatasetSource.name.label('dataset_source'),
-                                                   DatasetType.name.label('dataset_type'),
+                                                   DatasetType.name.label('dataset_type')
                                                    ])
 
 
@@ -122,7 +122,7 @@ class GenomeFactory:
         return query
 
     def _build_query(self, filters):
-        query = select(filters.columns) \
+        query = select(*filters.columns) \
             .select_from(Genome) \
             .join(Genome.assembly) \
             .join(Genome.organism) \

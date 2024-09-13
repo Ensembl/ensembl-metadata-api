@@ -36,9 +36,12 @@ class TestDatasetFactory:
         with metadata_db.session_scope() as session:
             test_uuid = session.query(Dataset.dataset_uuid).filter(Dataset.dataset_id == 1).scalar()
             test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
-            dataset_factory.update_dataset_attributes(test_uuid, test_attributes,
-                                                      metadata_uri=test_dbs['ensembl_genome_metadata'].dbc.url)
+            dataset_attribute = dataset_factory.update_dataset_attributes(test_uuid, test_attributes)
+            for attrib in dataset_attribute:
+                session.add(attrib)
+
             session.commit()
+
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
             dataset_attribute = session.query(DatasetAttribute) \
                 .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
@@ -48,7 +51,9 @@ class TestDatasetFactory:
                 .one_or_none()
             assert dataset_attribute is not None
             test_attributes = {"assembly.gc_percentage": "test3", "genebuild.nc_longest_gene_length": "test4"}
-            dataset_factory.update_dataset_attributes(test_uuid, test_attributes, session=session)
+            dataset_attribute = dataset_factory.update_dataset_attributes(test_uuid, test_attributes, session=session)
+            for attrib in dataset_attribute:
+                session.add(attrib)
             session.commit()
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == test_uuid).one()
             test_attribute = session.query(DatasetAttribute) \
@@ -56,7 +61,7 @@ class TestDatasetFactory:
                 .filter(DatasetAttribute.dataset_id == dataset.dataset_id,
                         Attribute.name == 'genebuild.nc_longest_gene_length',
                         DatasetAttribute.value == 'test4') \
-                .all()
+                .one_or_none()
             assert test_attribute is not None
 
     def test_create_dataset(self, test_dbs, dataset_factory):
