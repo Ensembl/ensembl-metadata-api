@@ -312,7 +312,10 @@ class DatasetFactory:
         # if released
         if isinstance(status, str):
             status = DatasetStatus(status)
+        print('AAAAAAAAAAAAAAAAAA')
+
         if status == DatasetStatus.SUBMITTED:  # "Submitted":
+            print('BBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
             # Update to SUBMITTED and all parents.
             # Do not touch the children.
             # This should only be called in times of strife and error.
@@ -322,21 +325,28 @@ class DatasetFactory:
                 self.__update_status(session, parent_uuid, DatasetStatus.SUBMITTED)  # "Submitted")
 
         elif status == DatasetStatus.PROCESSING:  # "Processing":
+            print('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC')
             # Update to PROCESSING and all parents.
             # Do not touch the children.
             if current_dataset.status == DatasetStatus.RELEASED:  # "Released":  # and it is not top level.
                 return updated_datasets
             # Check the dependents
+            print('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC')
             dependents = self.__query_depends_on(session, dataset_uuid)
+            print(dependents)
             for uuid, dep_status in dependents:
                 if dep_status not in (DatasetStatus.PROCESSED, DatasetStatus.RELEASED):  # ("Processed", "Released"):
+                    print()
                     return updated_datasets
             current_dataset.status = DatasetStatus.PROCESSING  # "Processing"
             parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
+            print('cc11111111111111111111111111111')
             if parent_uuid is not None:
+                print('cc22222222222222')
                 self.__update_status(session, parent_uuid, DatasetStatus.PROCESSING)  # "Processing")
 
         elif status == DatasetStatus.PROCESSED:  # "Processed":
+            print('DDDDDDDDDDDDDDDDDDDDDDDDDDDD')
             if current_dataset.status == DatasetStatus.RELEASED:  # "Released":  # and it is not top level.
                 return updated_datasets
             # Get children
@@ -353,6 +363,7 @@ class DatasetFactory:
                 self.__update_status(session, parent_uuid, DatasetStatus.PROCESSED)  # "Processed")
 
         elif status == DatasetStatus.RELEASED:  # "Released":
+            print('EEEEEEEEEEEEEEEEEEEEEEEEEEEEE')
             # TODO: Check that you are top level. Then check all children are ready to release.
             # Get current datasets chain top level.
             top_level_uuid = self.__query_top_level_parent(session, dataset_uuid)

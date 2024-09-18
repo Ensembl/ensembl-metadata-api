@@ -248,7 +248,7 @@ class GenomeAdaptor(BaseAdaptor):
             # END
             conditional_column = db.case(
                 # literal is used to prevent evaluating use_default_assembly to a boolean (True or False)
-                [(db.literal(use_default_assembly) == 1, Assembly.assembly_default)],
+                (db.literal(use_default_assembly) == 1, Assembly.assembly_default),
                 else_=Assembly.name
             )
             lowered_assemblies = [name.lower() for name in assembly_name]

@@ -238,7 +238,7 @@ class TestUtils:
                                                     dataset_type, count):
         genome_datasets = utils.get_dataset_by_genome_and_dataset_type(genome_conn, genome_uuid, dataset_type)
         logger.debug(f"Genome_datasets {genome_datasets}")
-        output = json_format.MessageToJson(genome_datasets, including_default_value_fields=True)
+        output = json_format.MessageToJson(genome_datasets)
         output = json.loads(output)
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:

@@ -175,7 +175,7 @@ class GenomeFactory:
                     else:
                         logger.warning(
                             f"Cannot update status for dataset uuid: {dataset_uuid} "
-                            f"{filters.update_dataset_status} to {status}  for genome {genome['genome_uuid']}"
+                            f"{filters.update_dataset_status} to {status}  for genome {genome_info['genome_uuid']}"
                         )
                         genome_info['updated_dataset_status'] = None
                 session.flush()

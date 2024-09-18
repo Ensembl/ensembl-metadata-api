@@ -65,8 +65,8 @@ class TestClass:
                 data=genome_input_data[0],
                 attributes=attributes,
                 count=related_assemblies_input_count
-            ),
-            including_default_value_fields=True
+            )
+
         )
         assert json.loads(output)['organism']['ensemblName'] == ensembl_name
 
@@ -227,7 +227,8 @@ class TestClass:
     def test_create_release(self, release_conn, allow_unreleased, version, output):
         input_data = release_conn.fetch_releases(release_version=version)
         actual = json_format.MessageToJson(msg_factory.create_release(input_data[-1]),
-                                           including_default_value_fields=True)
+                                           always_print_fields_with_no_presence=True)
+
         assert json.loads(actual) == output
 
     @pytest.mark.parametrize(
