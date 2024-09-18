@@ -1,4 +1,4 @@
-ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@v2.1.0
+ensembl-py >= 2.1.0
 ensembl-utils >= 0.4.2
 mysqlclient >= 1.4.6, < 2.3.0
 grpcio
