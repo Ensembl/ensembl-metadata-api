@@ -1,6 +1,6 @@
 language: python
 os: linux
-dist: bionic
+dist: focal
 python:
   - '3.10'
   - '3.11'
