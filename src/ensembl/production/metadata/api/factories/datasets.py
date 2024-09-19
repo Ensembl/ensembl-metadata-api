@@ -118,8 +118,6 @@ class DatasetFactory:
         if not session:
             with self.__get_db_connexion().session_scope() as db_session:
                 return self.update_dataset_status(dataset_uuid, status, session=db_session)
-        print('1111111111111111111111111')
-        print(status)
         updated_datasets = self.__update_status(session, dataset_uuid, status)
         if attribute_dict:
             self.update_dataset_attributes(dataset_uuid, attribute_dict, session=session)
