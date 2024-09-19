@@ -23,13 +23,13 @@ from yagrc import reflector as yagrc_reflector
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{"src": Path(__file__).parent / "databases/ensembl_genome_metadata"},
+@pytest.mark.parametrize("test_dbs", [[{"src": Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                         {"src": Path(__file__).parent / "databases/ncbi_taxonomy"}]],
                          indirect=True)
 class TestGRPCReflection:
     dbc = None
 
-    def test_services_discovery(self, multi_dbs, grpc_channel, grpc_server):
+    def test_services_discovery(self, test_dbs, grpc_channel, grpc_server):
         from ensembl.production.metadata.grpc.ensembl_metadata_pb2_grpc import EnsemblMetadata
 
         reflection_db = ProtoReflectionDescriptorDatabase(grpc_channel)
@@ -44,8 +44,8 @@ class TestGRPCReflection:
             method_desc = metadata_service.FindMethodByName(method_name)
             assert isinstance(method_desc, MethodDescriptor)
 
-    def test_dynamic_invoke(self, multi_dbs, grpc_channel, grpc_server):
-        logger.warning("multi dbs", multi_dbs)
+    def test_dynamic_invoke(self, test_dbs, grpc_channel, grpc_server):
+        logger.warning("multi dbs", test_dbs)
         reflector = yagrc_reflector.GrpcReflectionClient()
         reflector.load_protocols(grpc_channel, symbols=["ensembl_metadata.EnsemblMetadata"])
         stub_class = reflector.service_stub_class("ensembl_metadata.EnsemblMetadata")

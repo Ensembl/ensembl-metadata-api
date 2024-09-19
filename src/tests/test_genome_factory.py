@@ -12,7 +12,7 @@
 from pathlib import Path
 
 import pytest
-from ensembl.database import UnitTestDB, DBConnection
+from ensembl.utils.database import UnitTestDB, DBConnection
 
 from ensembl.production.metadata.api.exceptions import DatasetFactoryException
 from ensembl.production.metadata.api.factories.genomes import GenomeInputFilters
@@ -23,11 +23,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                         {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
                                         ]], indirect=True)
 @pytest.fixture(scope="function")
-def genome_filters(multi_dbs):
+def genome_filters(test_dbs):
     return {
         'genome_uuid': [],
         'dataset_uuid': [],
@@ -38,7 +38,7 @@ def genome_filters(multi_dbs):
         'dataset_status': ["Submitted"],
         'batch_size': 50,
         'organism_group_type': "",
-        'metadata_db_uri': multi_dbs['ensembl_genome_metadata'].dbc.url
+        'metadata_db_uri': test_dbs['ensembl_genome_metadata'].dbc.url
     }
 
 
@@ -53,7 +53,7 @@ def expected_columns():
             ]
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                         {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
                                         ]], indirect=True)
 class TestGenomeFactory:
@@ -88,12 +88,12 @@ class TestGenomeFactory:
         fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
         assert fetched_genome_factory_count == expected_count
 
-    def test_fetch_genomes_by_genome_uuid(self, multi_dbs, genome_factory, genome_filters):
+    def test_fetch_genomes_by_genome_uuid(self, test_dbs, genome_factory, genome_filters):
         # fetch genome using genome factory with default filters
         genome_filters['genome_uuid'] = ['a73351f7-93e7-11ec-a39d-005056b38ce3']
         genome_filters['dataset_status'] = ['Released']
         genome_factory_result = next(genome_factory.get_genomes(**genome_filters))
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
 
         with metadata_db.session_scope() as session:
             genome = session.query(Genome).filter(Genome.genome_uuid == genome_filters['genome_uuid']).one()
@@ -102,7 +102,7 @@ class TestGenomeFactory:
             assert genome.genome_uuid == genome_factory_result['genome_uuid']
             assert genome.production_name == genome_factory_result['species']
 
-    def test_fetch_genomes_by_dataset_uuid(self, multi_dbs, genome_factory, genome_filters):
+    def test_fetch_genomes_by_dataset_uuid(self, test_dbs, genome_factory, genome_filters):
         # TODO from the example in `.test_get_genome_by_uuid`, we could
         #   - add fixtures parameters for released/unreleased
         #   - check multiple genomes_uuid
@@ -111,18 +111,18 @@ class TestGenomeFactory:
         # fetch genome using genome factory with dataset uuid
         genome_factory_result = next(genome_factory.get_genomes(**genome_filters), None)
         assert genome_factory_result is not None
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
             assert genome_factory_result['dataset_uuid'] == genome_filters['dataset_uuid'][0]
             assert dataset.dataset_uuid == genome_filters['dataset_uuid'][0]
 
-    def test_fetch_genomes_by_default_status_submitted(self, multi_dbs, genome_factory, genome_filters):
+    def test_fetch_genomes_by_default_status_submitted(self, test_dbs, genome_factory, genome_filters):
         genome_filters['dataset_uuid'] = ['bd63a676-45ff-494a-b26f-2b779cb6c180']
         genome_filters['dataset_status'] = []
         # fetch genome using genome factory with dataset uuid
         genome_factory_result = next(genome_factory.get_genomes(**genome_filters))
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset: Dataset = session.query(Dataset).filter(
                 Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
@@ -130,7 +130,7 @@ class TestGenomeFactory:
             assert dataset.dataset_uuid == genome_filters['dataset_uuid'][0]
             assert dataset.status.value == genome_factory_result['dataset_status']
 
-    def test_update_dataset_status_submitted_processing_processed_released(self, multi_dbs, genome_factory,
+    def test_update_dataset_status_submitted_processing_processed_released(self, test_dbs, genome_factory,
                                                                            genome_filters):
         # fetch genome using genome factory with dataset uuid
 
@@ -145,7 +145,7 @@ class TestGenomeFactory:
         # fetch genomes by status submitted and update to processing
         genome_factory_result = [genome for genome in genome_factory.get_genomes(**genome_filters)][0]
         logger.debug(f"Factory Results 1 {genome_factory_result}")
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # check genebuild one has been updated to Processing as well
             dataset: Dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()

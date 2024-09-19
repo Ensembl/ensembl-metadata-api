@@ -17,12 +17,12 @@ import logging
 from pathlib import Path
 
 import pytest
-from ensembl.database import UnitTestDB
+from ensembl.utils.database import UnitTestDB
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{"src": Path(__file__).parent / "databases/ensembl_genome_metadata"},
+@pytest.mark.parametrize("test_dbs", [[{"src": Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                         {"src": Path(__file__).parent / "databases/ncbi_taxonomy"}]],
                          indirect=True)
 class TestGRPCGenomeAdaptor:

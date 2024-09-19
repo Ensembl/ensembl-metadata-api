@@ -14,7 +14,7 @@ import logging
 import uuid
 
 import sqlalchemy.orm
-from ensembl.database import DBConnection
+from ensembl.utils.database.dbconnection import DBConnection
 from sqlalchemy.engine import make_url
 from sqlalchemy.sql import func
 

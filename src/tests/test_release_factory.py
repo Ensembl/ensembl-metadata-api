@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 
 import pytest
-from ensembl.database import UnitTestDB, DBConnection
+from ensembl.utils.database import UnitTestDB, DBConnection
 
 from ensembl.production.metadata.api.exceptions import ReleaseDataException
 from ensembl.production.metadata.api.factories.genomes import GenomeFactory
@@ -23,37 +23,37 @@ from ensembl.production.metadata.api.models import *
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("multi_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                         {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
                                         ]], indirect=True)
 class TestReleaseFactory:
     dbc: UnitTestDB = None
     gen_factory = GenomeFactory()
 
-    def test_reset(self, multi_dbs):
+    def test_reset(self, test_dbs):
         """ Just reload current txt test file set"""
         assert True
 
-    def test_released_data_consistency(self, multi_dbs):
+    def test_released_data_consistency(self, test_dbs):
         """ Test current test datasets are consistent """
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             releases = session.query(EnsemblRelease).order_by(EnsemblRelease.version).all()
-            factory = ReleaseFactory(multi_dbs['ensembl_genome_metadata'].dbc.url)
+            factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
             [factory.check_release(rel) for rel in releases]
 
-    def test_release_prepare(self, multi_dbs) -> None:
+    def test_release_prepare(self, test_dbs) -> None:
         """
         Move a Release from planed to preparing
         Args:
-            multi_dbs: related db connection information
+            test_dbs: related db connection information
         Returns:
             None
         """
         # fetch genome using genome factory with default filters
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         release_id = None
-        factory = ReleaseFactory(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             release_112 = session.query(EnsemblRelease).filter(EnsemblRelease.version == 112.0).one()
             release_id = release_112.release_id
@@ -71,17 +71,17 @@ class TestReleaseFactory:
             assert float(added_release.version) == float(release_112.version) + float(0.1)
             assert len(added_release.genome_releases) == 1
 
-    def test_release_prepared(self, multi_dbs) -> None:
+    def test_release_prepared(self, test_dbs) -> None:
         """
         Test case for Release status moving from Preparing to Prepared
         Args:
-            multi_dbs: related db connection information
+            test_dbs: related db connection information
 
         Returns:
             None
         """
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
-        factory = ReleaseFactory(multi_dbs['ensembl_genome_metadata'].dbc.url)
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             release_110 = session.query(EnsemblRelease).filter(EnsemblRelease.version == 110.3).one()
             genomes = release_110.genome_releases
@@ -90,22 +90,22 @@ class TestReleaseFactory:
             assert len(genomes) == len(release_genomes)
             assert release_110.status == ReleaseStatus.PREPARED
 
-    def test_release_release(self, multi_dbs) -> None:
+    def test_release_release(self, test_dbs) -> None:
         """
         Test case for Release status moving from Preparing to Prepared
         Args:
-            multi_dbs: related db connection information
+            test_dbs: related db connection information
 
         Returns:
             None
         """
         pass
 
-    def test_prepared_release(self, multi_dbs) -> None:
-        metadata_db = DBConnection(multi_dbs['ensembl_genome_metadata'].dbc.url)
+    def test_prepared_release(self, test_dbs) -> None:
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             releases = session.query(EnsemblRelease).all()
-            factory = ReleaseFactory(multi_dbs['ensembl_genome_metadata'].dbc.url)
+            factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
             try:
                 for rel in releases:
                     factory.check_release(rel)

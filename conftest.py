@@ -10,4 +10,4 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 """Global pytest configuration for Ensembl Metadata GRPC tests."""
-pytest_plugins = ("ensembl.plugins.pytest_unittest",)
+pytest_plugins = ("ensembl.utils.plugin",)

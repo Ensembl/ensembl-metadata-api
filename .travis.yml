@@ -1,11 +1,15 @@
 language: python
 os: linux
+dist: focal
 python:
-  - '3.8'
-  - '3.9'
+  - '3.10'
+  - '3.11'
 services:
   - mysql
 before_script:
+  # In MySQL 8, local_infile is disabled by default for security reasons.
+  # By adding SET GLOBAL local_infile=1;, we enable this feature at runtime.
+  - mysql -e "SET GLOBAL local_infile=1;"
   - pip install -r requirements-test.txt
   - pip install .
 script:

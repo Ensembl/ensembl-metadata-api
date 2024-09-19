@@ -18,7 +18,7 @@ import random
 from datetime import datetime, timedelta
 from typing import List
 
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from sqlalchemy.engine import make_url
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
