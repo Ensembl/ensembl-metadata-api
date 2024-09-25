@@ -356,8 +356,9 @@ Genome UUID filter.
 If release_version is not given, the current version is used.
  */
 message GenomeUUIDRequest {
-  string genome_uuid = 1; // Mandatory
-  double release_version = 2; // Optional
+  string genome_uuid = 1;     // Mandatory
+  bool get_attributes = 2;    // Optional, default is False
+  double release_version = 3; // Optional
 }
 
 /*
