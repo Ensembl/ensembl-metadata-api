@@ -422,7 +422,7 @@ class TestUtils:
                 'genebuildMethodDisplay': 'Mapping from reference',
                 'genebuildProviderName': 'Ensembl',
                 'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
-                'genebuildVersion': 'ENS01',
+                'genebuildVersion': 'ENS01TEST',
                 'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
             },
             'created': '2023-09-22 15:02:01',
@@ -455,6 +455,11 @@ class TestUtils:
             },
             'relatedAssembliesCount': 5
         }
+        
+        t = json.loads(output)
+        
+        assert t["attributesInfo"] == expected_output["attributesInfo"]
+        
         assert json.loads(output) == expected_output
 
     def test_get_genomes_by_name_release_unspecified(self, genome_conn):
