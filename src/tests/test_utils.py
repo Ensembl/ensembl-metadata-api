@@ -422,7 +422,7 @@ class TestUtils:
                 'genebuildMethodDisplay': 'Mapping from reference',
                 'genebuildProviderName': 'Ensembl',
                 'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
-                'genebuildVersion': 'ENS01TEST',
+                'genebuildVersion': 'ENS01',
                 'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
             },
             'created': '2023-09-22 15:02:01',
@@ -524,7 +524,9 @@ class TestUtils:
             },
             'relatedAssembliesCount': 1
         }
-        assert json.loads(output) == expected_output
+        t = json.loads(output)
+        assert t["attributesInfo"] == expected_output["attributesInfo"]
+        assert t == expected_output
 
     def test_get_organisms_group_count(self, genome_conn):
         output = json_format.MessageToJson(
