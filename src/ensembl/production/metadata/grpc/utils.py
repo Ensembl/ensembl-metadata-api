@@ -11,6 +11,7 @@
 #  limitations under the License.
 import itertools
 import logging
+import uuid
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.models import Genome
@@ -27,6 +28,15 @@ def connect_to_db():
         taxonomy_uri=MetadataConfig().taxon_uri
     )
     return conn
+
+
+def is_valid_uuid(value):
+    try:
+        # Attempt to create a UUID object from the input
+        uuid_obj = uuid.UUID(value)
+        return True
+    except (ValueError, AttributeError, TypeError):
+        return False
 
 
 def get_alternative_names(db_conn, taxon_id):
@@ -252,17 +262,31 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     return msg_factory.create_genome()
 
 
-def get_brief_genome_details_by_uuid(db_conn, genome_uuid, release_version):
-    if not genome_uuid:
+def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_version):
+    genome_uuid = None
+    if not genome_uuid_or_tag:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_brief_genome_details()
+
+    # if it's not a valid genome_uuid we suspect it can be a tag/slug (e.g. "grch38")
+    # the aim of this block is get the genome_uuid for a given genome tag
+    if not is_valid_uuid(genome_uuid_or_tag):
+        logger.debug(f"Invalid genome_uuid {genome_uuid_or_tag}, assuming it's a tag and using it to fetch genome_uuid")
+        genome_uuid_result = db_conn.fetch_genomes(genome_tag=genome_uuid_or_tag)
+        if len(genome_uuid_result) == 0:
+            logger.error(f"No Genome UUID found. {genome_uuid_or_tag}")
+        else:
+            if len(genome_uuid_result) > 1:
+                logger.warning(f"Multiple results returned. {genome_uuid_result}")
+            genome_uuid = genome_uuid_result[0].Genome.genome_uuid
+
+    # get genome data
     genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
     if len(genome_results) == 0:
         logger.error(f"No Genome/Release found: {genome_uuid}/{release_version}")
     else:
         if len(genome_results) > 1:
             logger.warning(f"Multiple results returned. {genome_results}")
-        print(f"^^^^^^^^^^^ genome_results ----> {genome_results}")
         response_data = msg_factory.create_brief_genome_details(
             data=genome_results[0]
         )
