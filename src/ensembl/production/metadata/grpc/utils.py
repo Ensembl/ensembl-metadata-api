@@ -117,22 +117,19 @@ def get_assembly_information(db_conn, assembly_uuid):
 
 
 # TODO: move this function to protobuf_msg_factory.py file
-def create_genome_with_attributes_and_count(db_conn, genome, get_attributes, release_version):
+def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     # we fetch attributes related to that genome
     # TODO This is not sure that this fetch_genome_datasets is always needed, depending on message wanted to be returned
     #   A more specialized approached is to be defined to simplify the whole stack
+    attrib_data_results = db_conn.fetch_genome_datasets(genome_uuid=genome.Genome.genome_uuid,
+                                                        dataset_type_name="all",
+                                                        release_version=release_version)
 
+    logger.debug(f"Genome Datasets Retrieved: {attrib_data_results}")
     attribs = []
-    if get_attributes:
-        attrib_data_results = db_conn.fetch_genome_datasets(genome_uuid=genome.Genome.genome_uuid,
-                                                            dataset_type_name="all",
-                                                            release_version=release_version)
-
-        logger.debug(f"Genome Datasets Retrieved: {attrib_data_results}")
-
-        if len(attrib_data_results) > 0:
-            for dataset in attrib_data_results[0].datasets:
-                attribs.extend(dataset.attributes)
+    if len(attrib_data_results) > 0:
+        for dataset in attrib_data_results[0].datasets:
+            attribs.extend(dataset.attributes)
 
     # fetch related assemblies count
     related_assemblies_count = db_conn.fetch_assemblies_count(genome.Organism.taxonomy_id)
@@ -236,7 +233,7 @@ def get_genome_uuid(db_conn: GenomeAdaptor,
     return msg_factory.create_genome_uuid()
 
 
-def get_genome_by_uuid(db_conn, genome_uuid, get_attributes, release_version):
+def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_genome()
@@ -249,7 +246,6 @@ def get_genome_by_uuid(db_conn, genome_uuid, get_attributes, release_version):
         response_data = create_genome_with_attributes_and_count(
             db_conn=db_conn,
             genome=genome_results[0],
-            get_attributes=get_attributes,
             release_version=release_version
         )
         return response_data
