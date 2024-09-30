@@ -256,6 +256,31 @@ def get_genome_by_uuid(db_conn, genome_uuid, get_attributes, release_version):
     return msg_factory.create_genome()
 
 
+def get_attributes_by_genome_uuid(db_conn, genome_uuid, release_version):
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
+        return msg_factory.create_genome()
+
+    attrib_data_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
+                                                        dataset_type_name="all",
+                                                        release_version=release_version)
+
+    logger.debug(f"Genome Datasets Retrieved: {attrib_data_results}")
+
+    if len(attrib_data_results) == 0:
+        logger.error(f"No Attributes were found: {genome_uuid}/{release_version}")
+
+    else:
+        if len(attrib_data_results) > 0:
+            attribs = []
+            for dataset in attrib_data_results[0].datasets:
+                attribs.extend(dataset.attributes)
+
+            attributes_info = msg_factory.create_attributes_info(attribs)
+            return attributes_info
+    return msg_factory.create_attributes_info()
+
+
 def get_genomes_by_specific_keyword_iterator(
     db_conn, tolid, assembly_accession_id, assembly_name, ensembl_name,
     common_name, scientific_name, scientific_parlance_name, species_taxonomy_id,

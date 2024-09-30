@@ -20,7 +20,7 @@ from ensembl_metadata_pb2 import (
     ReleaseRequest,
     GenomeSequenceRequest,
     AssemblyIDRequest,
-    GenomeByKeywordRequest,
+    DatasetAttributesValuesRequest,
     GenomeBySpecificKeywordRequest,
     AssemblyAccessionIDRequest,
     OrganismIDRequest,
@@ -32,8 +32,7 @@ from ensembl_metadata_pb2 import (
     GenomeAssemblySequenceRegionRequest,
     GenomeTagRequest,
     FTPLinksRequest,
-    ReleaseVersionRequest,
-    DatasetAttributesValuesRequest
+    ReleaseVersionRequest
 )
 
 
@@ -396,7 +395,6 @@ def get_release_version_by_genome_uuid(stub):
     )
     genome_uuid5 = stub.GetReleaseVersionByUUID(request5)
 
-
     print("**** Release Version: By genome_uuid ****")
     print(genome_uuid1)
     print("**** Release Version: By genome_uuid and dataset_type ****")
@@ -464,6 +462,15 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
         "**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and latest_only=0 ****")
     print(attributes6)
 
+def get_attributes_by_genome_uuid(stub):
+    request = GenomeUUIDRequest(
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
+    )
+    genome_attributes = stub.GetAttributesByGenomeUUID(request)
+
+    print("**** Attributes: By genome_uuid ****")
+    print(genome_attributes)
+
 
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -510,8 +517,8 @@ def run():
         get_ftp_links(stub)
         print("-------------- Get Release Version By Genome UUID --------------")
         get_release_version_by_genome_uuid(stub)
-        print("-------------- Get Datasets Attributes Values By Genome UUID --------------")
-        get_datasets_attributes_values_by_genome_uuid(stub)
+        print("-------------- Get Attributes By Genome UUID --------------")
+        get_attributes_by_genome_uuid(stub)
 
 
 if __name__ == "__main__":

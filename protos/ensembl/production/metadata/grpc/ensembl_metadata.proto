@@ -34,6 +34,9 @@ service EnsemblMetadata {
   // Retrieve genome by its UUID.
   rpc GetGenomeByUUID(GenomeUUIDRequest) returns (Genome) {}
 
+  // Retrieve example objects of a given genome by genome UUID.
+  rpc GetAttributesByGenomeUUID(GenomeUUIDRequest) returns (AttributesInfo) {}
+
   // Retrieve genome UUID by providing production name and assembly id.
   rpc GetGenomeUUID(GenomeInfoRequest) returns (GenomeUUID) {}
 
