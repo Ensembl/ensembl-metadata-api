@@ -455,6 +455,11 @@ class TestUtils:
             },
             'relatedAssembliesCount': 5
         }
+        
+        t = json.loads(output)
+        
+        assert t["attributesInfo"] == expected_output["attributesInfo"]
+        
         assert json.loads(output) == expected_output
 
     def test_get_genomes_by_name_release_unspecified(self, genome_conn):
@@ -519,7 +524,9 @@ class TestUtils:
             },
             'relatedAssembliesCount': 1
         }
-        assert json.loads(output) == expected_output
+        t = json.loads(output)
+        assert t["attributesInfo"] == expected_output["attributesInfo"]
+        assert t == expected_output
 
     def test_get_organisms_group_count(self, genome_conn):
         output = json_format.MessageToJson(
