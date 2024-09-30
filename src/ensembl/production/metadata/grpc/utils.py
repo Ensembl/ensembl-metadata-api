@@ -252,6 +252,23 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     return msg_factory.create_genome()
 
 
+def get_brief_genome_details_by_uuid(db_conn, genome_uuid, release_version):
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
+        return msg_factory.create_brief_genome_details()
+    genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
+    if len(genome_results) == 0:
+        logger.error(f"No Genome/Release found: {genome_uuid}/{release_version}")
+    else:
+        if len(genome_results) > 1:
+            logger.warning(f"Multiple results returned. {genome_results}")
+        print(f"^^^^^^^^^^^ genome_results ----> {genome_results}")
+        response_data = msg_factory.create_brief_genome_details(
+            data=genome_results[0]
+        )
+        return response_data
+    return msg_factory.create_brief_genome_details()
+
 def get_attributes_by_genome_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")

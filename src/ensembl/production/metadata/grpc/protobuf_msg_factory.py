@@ -265,6 +265,24 @@ def create_genome(data=None, attributes=None, count=0, alternative_names=[]):
     return genome
 
 
+def create_brief_genome_details(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.BriefGenomeDetails()
+
+    assembly = create_assembly(data)
+    organism = create_organism(data)
+    release = create_release(data)
+
+    brief_genome_details = ensembl_metadata_pb2.BriefGenomeDetails(
+        genome_uuid=data.Genome.genome_uuid,
+        created=str(data.Genome.created),
+        assembly=assembly,
+        organism=organism,
+        release=release,
+    )
+    return brief_genome_details
+
+
 def create_genome_sequence(data=None):
     if data is None:
         return ensembl_metadata_pb2.GenomeSequence()

@@ -48,6 +48,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfo.FromString,
                 _registered_method=True)
+        self.GetBriefGenomeDetailsByUUID = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetBriefGenomeDetailsByUUID',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.BriefGenomeDetails.FromString,
+                _registered_method=True)
         self.GetGenomeUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomeUUID',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeInfoRequest.SerializeToString,
@@ -163,14 +168,21 @@ class EnsemblMetadataServicer(object):
     """
 
     def GetGenomeByUUID(self, request, context):
-        """Retrieve genome by its UUID.
+        """Retrieve genome by its UUID (used by /details REST API Endpoint).
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetAttributesByGenomeUUID(self, request, context):
-        """Retrieve example objects of a given genome by genome UUID.
+        """Retrieve example objects of a given genome by genome UUID (used by /example_objects REST API Endpoint).
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetBriefGenomeDetailsByUUID(self, request, context):
+        """Retrieve brief genome details of a given genome by genome UUID (used by /explain REST API Endpoint).
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -337,6 +349,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfo.SerializeToString,
             ),
+            'GetBriefGenomeDetailsByUUID': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetBriefGenomeDetailsByUUID,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.BriefGenomeDetails.SerializeToString,
+            ),
             'GetGenomeUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetGenomeUUID,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeInfoRequest.FromString,
@@ -501,6 +518,33 @@ class EnsemblMetadata(object):
             '/ensembl_metadata.EnsemblMetadata/GetAttributesByGenomeUUID',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfo.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetBriefGenomeDetailsByUUID(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/ensembl_metadata.EnsemblMetadata/GetBriefGenomeDetailsByUUID',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.BriefGenomeDetails.FromString,
             options,
             channel_credentials,
             insecure,

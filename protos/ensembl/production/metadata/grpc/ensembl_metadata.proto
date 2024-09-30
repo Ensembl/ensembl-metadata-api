@@ -31,11 +31,14 @@ package ensembl_metadata;
 
 // Metadata for the genomes in Ensembl.
 service EnsemblMetadata {
-  // Retrieve genome by its UUID.
+  // Retrieve genome by its UUID (used by /details REST API Endpoint).
   rpc GetGenomeByUUID(GenomeUUIDRequest) returns (Genome) {}
 
-  // Retrieve example objects of a given genome by genome UUID.
+  // Retrieve example objects of a given genome by genome UUID (used by /example_objects REST API Endpoint).
   rpc GetAttributesByGenomeUUID(GenomeUUIDRequest) returns (AttributesInfo) {}
+
+  // Retrieve brief genome details of a given genome by genome UUID (used by /explain REST API Endpoint).
+  rpc GetBriefGenomeDetailsByUUID(GenomeUUIDRequest) returns (BriefGenomeDetails) {}
 
   // Retrieve genome UUID by providing production name and assembly id.
   rpc GetGenomeUUID(GenomeInfoRequest) returns (GenomeUUID) {}
@@ -115,6 +118,18 @@ message Genome {
   AttributesInfo attributes_info = 6;
   int32 related_assemblies_count = 7;
   Release release = 8;
+}
+
+/*
+A genome is a collection of datasets for an assembly,
+which may or may not be in the current Ensembl release.
+ */
+message BriefGenomeDetails {
+  string genome_uuid = 1;
+  Assembly assembly = 2;
+  string created = 3;
+  Organism organism = 4;
+  Release release = 5;
 }
 
 message Species {
