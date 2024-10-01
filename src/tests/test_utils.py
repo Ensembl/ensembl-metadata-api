@@ -347,9 +347,9 @@ class TestUtils:
     def test_get_brief_genome_details_by_uuid(self, genome_conn, allow_unreleased, genome_uuid, version, expected_count, actual):
 
         output = json_format.MessageToJson(
-            utils.get_genome_by_uuid(
+            utils.get_brief_genome_details_by_uuid(
                 db_conn=genome_conn,
-                genome_uuid=genome_uuid,
+                genome_uuid_or_tag=genome_uuid,
                 release_version=version
             ))
         logger.debug(f"Initial {output}")
@@ -381,7 +381,7 @@ class TestUtils:
     )
     def test_get_attributes_by_genome_uuid(self, genome_conn, allow_unreleased, genome_uuid, assembly_level, genebuild_sample_gene, version):
         output = json_format.MessageToJson(
-            utils.get_genome_by_uuid(
+            utils.get_attributes_by_genome_uuid(
                 db_conn=genome_conn,
                 genome_uuid=genome_uuid,
                 release_version=version
