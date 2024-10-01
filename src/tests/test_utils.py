@@ -405,13 +405,11 @@ class TestUtils:
         ]
 
         logger.debug(f"Output {output}")
-        if actual is not None:
-            assert len(output.keys()) == len(expected_keys)
-            assert [key in output for key in expected_keys]
-            assert output['assembly_level'] == assembly_level
-            assert output['assembly_level'] == genebuild_sample_gene
-        else:
-            assert len(output) == 0
+        assert len(output.keys()) == len(expected_keys)
+        assert [key in output for key in expected_keys]
+        assert output['assembly_level'] == assembly_level
+        assert output['assembly_level'] == genebuild_sample_gene
+
 
     def test_get_genomes_by_keyword(self, genome_conn):
         output = [
