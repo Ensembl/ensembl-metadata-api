@@ -379,7 +379,7 @@ class TestUtils:
         ],
         indirect=['allow_unreleased']
     )
-    def test_get_attributes_by_genome_uuid(self, genome_conn, allow_unreleased, genome_uuid, assembly_level, genebuild_sample_gene):
+    def test_get_attributes_by_genome_uuid(self, genome_conn, allow_unreleased, genome_uuid, assembly_level, genebuild_sample_gene, version):
         output = json_format.MessageToJson(
             utils.get_genome_by_uuid(
                 db_conn=genome_conn,
