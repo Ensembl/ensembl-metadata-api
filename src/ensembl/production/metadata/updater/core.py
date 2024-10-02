@@ -35,23 +35,55 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+# TODO:
+# test_update_unreleased_no_force
+# test_update_released_force
+# dataset_attribute collumn with the mandatory.
+# genebuild.start_date should not be required.
+# Test for required keys.
 class CoreMetaUpdater(BaseMetaUpdater):
     def __init__(self, db_uri, metadata_uri, release=None, force=None):
         super().__init__(db_uri, metadata_uri, release, force)
         self.db_type = 'core'
         # Single query to get all of the metadata information.
         self.meta_dict = {}
+        self._load_meta_dict()
+        self._validate_required_attributes()
+
+    def _load_meta_dict(self):
+        """Load metadata into meta_dict from the database."""
         with self.db.session_scope() as session:
-            results = session.query(Meta).all()
+            results = session.query(Meta).filter(Meta.meta_value.isnot(None),
+                                                 Meta.meta_value.notin_(['', 'Null', 'NULL'])).all()
             for result in results:
                 species_id = result.species_id
                 meta_key = result.meta_key
                 meta_value = result.meta_value
-
                 if species_id not in self.meta_dict:
                     self.meta_dict[species_id] = {}
                 # WARNING! Duplicated meta_keys for a species_id will not error out!. A datacheck is necessary for key values.
                 self.meta_dict[species_id][meta_key] = meta_value
+
+    def _validate_required_attributes(self):
+        """Check if all required attributes are present in the meta_dict for each species."""
+        required_attribute_names = []
+        with self.metadata_db.session_scope() as session:
+            # Query the attribute table to get all required attributes
+            required_attributes = session.query(Attribute.name).filter(Attribute.required == 1).all()
+            required_attribute_names = {attr.name for attr in required_attributes}
+
+        with self.db.session_scope() as session:
+            # Check each species_id in meta_dict
+            missing_attributes = {}
+            for species_id, meta in self.meta_dict.items():
+                missing = required_attribute_names - set(meta.keys())
+                if missing:
+                    missing_attributes[species_id] = missing
+
+            if missing_attributes:
+                # TODO: TEST THIS RETURN VALUE
+                exceptions.MissingMetaException(
+                    "Species ID {species_id} is missing required attributes: {missing_attributes}")
 
     # Basic API for the meta table in the submission database.
     def get_meta_single_meta_key(self, species_id, parameter):
@@ -317,6 +349,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
         common_name = self.get_meta_single_meta_key(species_id, "species.common_name")
+        #TODO: Taxid should be required.
         taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
         if common_name is None or common_name == "":
 
@@ -432,6 +465,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             accession_info = defaultdict(
                 # The None's here are improper, but they break far too much for this update if they are changed.
                 # When accession is decided I will fix them.
+                # TODO: Just delete the comment. No one cares about the assembly sequence table.
                 lambda: {
                     "names": set(), "accession": None, "length": None, "location": None, "chromosomal": None,
                     "karyotype_rank": None
