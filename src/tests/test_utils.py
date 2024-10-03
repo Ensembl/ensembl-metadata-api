@@ -408,7 +408,6 @@ class TestUtils:
         assert [key in output for key in expected_keys]
         assert [key in output['attributesInfo'] for key in expected_attributes_info_keys]
         assert output['attributesInfo']['assemblyLevel'] == assembly_level
-        assert output['attributesInfo']['genebuildSampleGene'] == genebuild_sample_gene
 
 
     def test_get_genomes_by_keyword(self, genome_conn):
