@@ -214,6 +214,12 @@ def create_attributes_info(data=None):
     )
 
 
+def create_attributes_by_genome_uuid(genome_uuid=None, attributes_info=None):
+    return ensembl_metadata_pb2.AttributesInfoByGenome(
+        genome_uuid=genome_uuid,
+        attributes_info=attributes_info,
+    )
+
 def create_assembly_info(data=None):
     if data is None:
         return ensembl_metadata_pb2.AssemblyInfo()

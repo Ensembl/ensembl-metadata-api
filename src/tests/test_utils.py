@@ -388,7 +388,8 @@ class TestUtils:
             ))
         logger.debug(f"Initial {output}")
         output = json.loads(output)
-        expected_keys = [
+        expected_keys = ['genomeUuid', 'attributesInfo']
+        expected_attributes_info_keys = [
             'genebuildMethod',
             'genebuildMethodDisplay',
             'genebuildLastGenesetUpdate',
@@ -406,9 +407,11 @@ class TestUtils:
 
         logger.debug(f"Output {output}")
         assert len(output.keys()) == len(expected_keys)
+        assert output['genomeUuid'] == genome_uuid
         assert [key in output for key in expected_keys]
-        assert output['assembly_level'] == assembly_level
-        assert output['assembly_level'] == genebuild_sample_gene
+        assert [key in output['attributesInfo'] for key in expected_attributes_info_keys]
+        assert output['attributesInfo']['assembly_level'] == assembly_level
+        assert output['attributesInfo']['assembly_level'] == genebuild_sample_gene
 
 
     def test_get_genomes_by_keyword(self, genome_conn):

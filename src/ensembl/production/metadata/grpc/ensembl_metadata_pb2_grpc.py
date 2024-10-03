@@ -46,7 +46,7 @@ class EnsemblMetadataStub(object):
         self.GetAttributesByGenomeUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetAttributesByGenomeUUID',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfo.FromString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfoByGenome.FromString,
                 _registered_method=True)
         self.GetBriefGenomeDetailsByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetBriefGenomeDetailsByUUID',
@@ -347,7 +347,7 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
             'GetAttributesByGenomeUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetAttributesByGenomeUUID,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
-                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfo.SerializeToString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfoByGenome.SerializeToString,
             ),
             'GetBriefGenomeDetailsByUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetBriefGenomeDetailsByUUID,
@@ -517,7 +517,7 @@ class EnsemblMetadata(object):
             target,
             '/ensembl_metadata.EnsemblMetadata/GetAttributesByGenomeUUID',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfo.FromString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AttributesInfoByGenome.FromString,
             options,
             channel_credentials,
             insecure,
