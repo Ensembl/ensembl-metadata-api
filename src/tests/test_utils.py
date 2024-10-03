@@ -368,14 +368,11 @@ class TestUtils:
         "allow_unreleased, genome_uuid, assembly_level, genebuild_sample_gene, version",
         [
             # bread_wheat Released in 108.
-            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", "", "", None),
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", "chromosome", "TraesCS3D02G273600", 108.0),
             # Homo sapiens = Released in 110.1
-            (False, "65d4f21f-695a-4ed0-be67-5732a551fea4", "", "", None),
-            # bread_wheat new homologies processed for 110.2
-            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", "", "", None),
+            (False, "65d4f21f-695a-4ed0-be67-5732a551fea4", "scaffold", "ENSG05110003542", None),
             # bread_wheat version unspecified
-            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", "", "", None),
-            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", "", "", None)
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", "chromosome", "TraesCS3D02G273600", None),
         ],
         indirect=['allow_unreleased']
     )
@@ -410,8 +407,8 @@ class TestUtils:
         assert output['genomeUuid'] == genome_uuid
         assert [key in output for key in expected_keys]
         assert [key in output['attributesInfo'] for key in expected_attributes_info_keys]
-        assert output['attributesInfo']['assembly_level'] == assembly_level
-        assert output['attributesInfo']['assembly_level'] == genebuild_sample_gene
+        assert output['attributesInfo']['assemblyLevel'] == assembly_level
+        assert output['attributesInfo']['genebuildSampleGene'] == genebuild_sample_gene
 
 
     def test_get_genomes_by_keyword(self, genome_conn):

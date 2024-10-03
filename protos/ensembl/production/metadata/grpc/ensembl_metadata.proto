@@ -35,7 +35,7 @@ service EnsemblMetadata {
   rpc GetGenomeByUUID(GenomeUUIDRequest) returns (Genome) {}
 
   // Retrieve example objects of a given genome by genome UUID (used by /example_objects REST API Endpoint).
-  rpc GetAttributesByGenomeUUID(GenomeUUIDRequest) returns (AttributesInfo) {}
+  rpc GetAttributesByGenomeUUID(GenomeUUIDRequest) returns (AttributesInfoByGenome) {}
 
   // Retrieve brief genome details of a given genome by genome UUID (used by /explain REST API Endpoint).
   rpc GetBriefGenomeDetailsByUUID(GenomeUUIDRequest) returns (BriefGenomeDetails) {}
@@ -130,6 +130,11 @@ message BriefGenomeDetails {
   string created = 3;
   Organism organism = 4;
   Release release = 5;
+}
+
+message AttributesInfoByGenome {
+  string genome_uuid = 1;
+  AttributesInfo attributes_info = 2;
 }
 
 message Species {
