@@ -329,6 +329,87 @@ class TestUtils:
         output = utils.get_genome_by_uuid(genome_conn, None, 0)
         assert output == ensembl_metadata_pb2.Genome()
 
+    @pytest.mark.parametrize(
+        "allow_unreleased, genome_uuid, version, expected_count, actual",
+        [
+            # bread_wheat Released in 108.
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.1, 11, 108.0),
+            # Homo sapiens = Released in 110.1
+            (False, "65d4f21f-695a-4ed0-be67-5732a551fea4", 108.0, 11, None),
+            # bread_wheat new homologies processed for 110.2
+            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.2, 11, 110.2),
+            # bread_wheat version unspecified
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 7, 108.0),
+            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 11, 110.2)
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_get_brief_genome_details_by_uuid(self, genome_conn, allow_unreleased, genome_uuid, version, expected_count, actual):
+
+        output = json_format.MessageToJson(
+            utils.get_brief_genome_details_by_uuid(
+                db_conn=genome_conn,
+                genome_uuid_or_tag=genome_uuid,
+                release_version=version
+            ))
+        logger.debug(f"Initial {output}")
+        output = json.loads(output)
+        expected_keys = ['assembly', 'created', 'genomeUuid', 'organism', 'release']
+        logger.debug(f"Output {output}")
+        if actual is not None:
+            assert len(output.keys()) == len(expected_keys)
+            assert [key in output for key in expected_keys]
+            assert output['genomeUuid'] == genome_uuid
+            assert output['release']['releaseVersion'] == actual
+        else:
+            assert len(output) == 0
+
+    @pytest.mark.parametrize(
+        "allow_unreleased, genome_uuid, assembly_level, genebuild_sample_gene, version",
+        [
+            # bread_wheat Released in 108.
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", "chromosome", "TraesCS3D02G273600", 108.0),
+            # Homo sapiens = Released in 110.1
+            (False, "65d4f21f-695a-4ed0-be67-5732a551fea4", "scaffold", "ENSG05110003542", None),
+            # bread_wheat version unspecified
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", "chromosome", "TraesCS3D02G273600", None),
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_get_attributes_by_genome_uuid(self, genome_conn, allow_unreleased, genome_uuid, assembly_level, genebuild_sample_gene, version):
+        output = json_format.MessageToJson(
+            utils.get_attributes_by_genome_uuid(
+                db_conn=genome_conn,
+                genome_uuid=genome_uuid,
+                release_version=version
+            ))
+        logger.debug(f"Initial {output}")
+        output = json.loads(output)
+        expected_keys = ['genomeUuid', 'attributesInfo']
+        expected_attributes_info_keys = [
+            'genebuildMethod',
+            'genebuildMethodDisplay',
+            'genebuildLastGenesetUpdate',
+            'genebuildVersion',
+            'genebuildProviderName',
+            'genebuildProviderUrl',
+            'genebuildSampleGene',
+            'genebuildSampleLocation',
+            'assemblyLevel',
+            'assemblyDate',
+            'assemblyProviderName',
+            'assemblyProviderUrl',
+            'variationSampleVariant'
+        ]
+
+        logger.debug(f"Output {output}")
+        assert len(output.keys()) == len(expected_keys)
+        assert output['genomeUuid'] == genome_uuid
+        assert [key in output for key in expected_keys]
+        assert [key in output['attributesInfo'] for key in expected_attributes_info_keys]
+        assert output['attributesInfo']['assemblyLevel'] == assembly_level
+
+
     def test_get_genomes_by_keyword(self, genome_conn):
         output = [
             json.loads(json_format.MessageToJson(response)) for response in
