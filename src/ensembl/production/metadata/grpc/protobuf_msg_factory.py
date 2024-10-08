@@ -399,7 +399,7 @@ def populate_dataset_info(data=None):
             dataset_source_type=ds_item.dataset.dataset_source.type if ds_item.dataset.dataset_source else "",
             dataset_type_name=ds_item.dataset.dataset_type.name,
             release_version=float(data.release.version) if data.release.version else None,
-            release_date=datetime.strftime(data.release.release_date, "%m/%d/%Y"),
+            release_date=datetime.strftime(data.release.release_date, "%m/%d/%Y") if data.release.release_date else None,
             release_type=data.release.release_type,
         )
         ds_obj_list.append(ds_info)

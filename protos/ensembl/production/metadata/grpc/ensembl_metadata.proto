@@ -384,15 +384,6 @@ message GenomeUUIDRequest {
 }
 
 /*
-Genome keyword filter.
-If release_version is not given, the current version is used.
- */
-message GenomeByKeywordRequest {
-  string keyword = 1; // Mandatory
-  double release_version = 2; // Optional
-}
-
-/*
 Genome specific keyword filter.
 If release_version is not given, the current version is used.
 XOR: At least one field should be provided, if none or more than one field is provided
