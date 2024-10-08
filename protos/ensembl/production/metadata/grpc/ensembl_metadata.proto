@@ -248,7 +248,7 @@ message AttributesInfo {
   string genebuild_method = 1;
   string genebuild_method_display = 2;
   string genebuild_last_geneset_update = 3;
-  string genebuild_version = 4;
+  string genebuild_provider_version = 4;
   string genebuild_provider_name = 5;
   string genebuild_provider_url = 6;
   string genebuild_sample_gene = 7;
