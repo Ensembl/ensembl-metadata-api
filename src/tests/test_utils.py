@@ -170,17 +170,17 @@ class TestUtils:
             'statisticValue': 'GCA_900519105.1'
         }
         assembly_accession_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
-                                    stat['name'] == 'assembly.chromosomes']
+                                    stat['name'] == 'assembly.stats.chromosomes']
         assert len(assembly_accession_stats) == expected_count
         assert assembly_accession_stats[0] == {
             'label': 'Chromosomes or plasmids',
-            'name': 'assembly.chromosomes',
+            'name': 'assembly.stats.chromosomes',
             'statisticType': 'integer',
             'statisticValue': '22'
         }
 
         assembly_homology_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
-                                   stat['name'] == 'compara.homology_coverage']
+                                   stat['name'] == 'compara.stats.homology_coverage']
         assert len(assembly_homology_stats) == 1 if not allow_unreleased else 2
 
     def test_get_top_level_statistics_by_uuid(self, genome_conn):
@@ -200,11 +200,11 @@ class TestUtils:
             'statisticValue': 'GCA_900519105.1'
         }
         assembly_component_sequences = [stat for stat in output['statistics'] if
-                                        stat['name'] == 'assembly.component_sequences']
+                                        stat['name'] == 'assembly.stats.component_sequences']
         assert len(assembly_component_sequences) == 1
         assert assembly_component_sequences[0] == {
             'label': 'Component sequences',
-            'name': 'assembly.component_sequences',
+            'name': 'assembly.stats.component_sequences',
             'statisticType': 'integer',
             'statisticValue': '22'
         }
