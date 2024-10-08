@@ -390,7 +390,7 @@ class TestUtils:
             'genebuildMethod',
             'genebuildMethodDisplay',
             'genebuildLastGenesetUpdate',
-            'genebuildVersion',
+            'genebuildProviderVersion',
             'genebuildProviderName',
             'genebuildProviderUrl',
             'genebuildSampleGene',
@@ -475,7 +475,7 @@ class TestUtils:
             'genebuildMethodDisplay': 'Mapping from reference',
             'genebuildProviderName': 'Ensembl',
             'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
-            'genebuildVersion': 'ENS01',
+            'genebuildProviderVersion': 'ENS01',
             'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
         Args:
             genome_conn:
@@ -503,7 +503,7 @@ class TestUtils:
                 'genebuildMethodDisplay': 'Mapping from reference',
                 'genebuildProviderName': 'Ensembl',
                 'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
-                'genebuildVersion': 'ENS01',
+                'genebuildProviderVersion': 'ENS01',
                 'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
             },
             'created': '2023-09-22 15:02:01',
@@ -574,7 +574,7 @@ class TestUtils:
                 'genebuildProviderUrl': 'https://wormbase.org/',
                 'genebuildSampleGene': 'WBGene00004893',
                 'genebuildSampleLocation': 'X:937766-957832',
-                'genebuildVersion': 'EXT01'
+                'genebuildProviderVersion': 'EXT01'
             },
             'created': '2023-09-22 15:06:58',
             'genomeUuid': 'a733550b-93e7-11ec-a39d-005056b38ce3',
