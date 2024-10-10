@@ -101,3 +101,4 @@
 181	assembly.alt_accession	assembly.alt_accession	assembly.alt_accession	string
 182	dataset.build_start	Dataset Build start date	Dataset Build start date	string
 183	dataset.build_end	Dataset Build completed	Dataset Build completed	string
+197	genebuild.provider_version	genebuild.provider_version	genebuild.provider_version	string

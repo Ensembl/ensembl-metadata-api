@@ -11,6 +11,7 @@
 #  limitations under the License.
 import itertools
 import logging
+import uuid
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.models import Genome
@@ -27,6 +28,15 @@ def connect_to_db():
         taxonomy_uri=MetadataConfig().taxon_uri
     )
     return conn
+
+
+def is_valid_uuid(value):
+    try:
+        # Attempt to create a UUID object from the input
+        uuid_obj = uuid.UUID(value)
+        return True
+    except (ValueError, AttributeError, TypeError):
+        return False
 
 
 def get_alternative_names(db_conn, taxon_id):
@@ -116,11 +126,8 @@ def get_assembly_information(db_conn, assembly_uuid):
     return msg_factory.create_assembly_info()
 
 
-# TODO: move this function to protobuf_msg_factory.py file
+# TODO: move this function to protobuf_msg_factory.py file?
 def create_genome_with_attributes_and_count(db_conn, genome, release_version):
-    # we fetch attributes related to that genome
-    # TODO This is not sure that this fetch_genome_datasets is always needed, depending on message wanted to be returned
-    #   A more specialized approached is to be defined to simplify the whole stack
     attrib_data_results = db_conn.fetch_genome_datasets(genome_uuid=genome.Genome.genome_uuid,
                                                         dataset_type_name="all",
                                                         release_version=release_version)
@@ -244,10 +251,75 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
         if len(genome_results) > 1:
             logger.warning(f"Multiple results returned. {genome_results}")
         response_data = create_genome_with_attributes_and_count(
-            db_conn=db_conn, genome=genome_results[0], release_version=release_version
+            db_conn=db_conn,
+            genome=genome_results[0],
+            release_version=release_version
         )
         return response_data
     return msg_factory.create_genome()
+
+
+def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_version):
+    if not genome_uuid_or_tag:
+        logger.warning("Missing or Empty Genome UUID field.")
+        return msg_factory.create_brief_genome_details()
+
+    genome_uuid = genome_uuid_or_tag
+    # If genome_uuid_or_tag is not a valid UUID, assume it's a tag and fetch genome_uuid
+    if not is_valid_uuid(genome_uuid_or_tag):
+        logger.debug(f"Invalid genome_uuid {genome_uuid_or_tag}, assuming it's a tag and using it to fetch genome_uuid")
+        genome_uuid_result = db_conn.fetch_genomes(genome_tag=genome_uuid_or_tag)
+
+        if not genome_uuid_result:
+            logger.error(f"No Genome UUID found. {genome_uuid_or_tag}")
+            return msg_factory.create_brief_genome_details()
+
+        if len(genome_uuid_result) > 1:
+            logger.warning(f"Multiple results found for genome tag: {genome_uuid_or_tag}. Using the first result.")
+
+        genome_uuid = genome_uuid_result[0].Genome.genome_uuid
+
+    # Fetch genome details using genome_uuid and release_version
+    genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
+
+    if not genome_results:
+        logger.error(f"No Genome/Release found: {genome_uuid}/{release_version}")
+        return msg_factory.create_brief_genome_details()
+
+    if len(genome_results) > 1:
+        logger.warning(
+            f"Multiple results found for Genome UUID/Release version: {genome_uuid}/{release_version}. "
+            f"Using the first result.")
+
+    # Return the first result
+    return msg_factory.create_brief_genome_details(data=genome_results[0])
+
+def get_attributes_by_genome_uuid(db_conn, genome_uuid, release_version):
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
+        return msg_factory.create_attributes_by_genome_uuid()
+
+    attrib_data_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
+                                                        dataset_type_name="all",
+                                                        release_version=release_version)
+
+    logger.debug(f"Genome Datasets Retrieved: {attrib_data_results}")
+
+    if len(attrib_data_results) == 0:
+        logger.error(f"No Attributes were found: {genome_uuid}/{release_version}")
+
+    else:
+        if len(attrib_data_results) > 0:
+            attribs = []
+            for dataset in attrib_data_results[0].datasets:
+                attribs.extend(dataset.attributes)
+
+            attributes_info = msg_factory.create_attributes_info(attribs)
+            return msg_factory.create_attributes_by_genome_uuid(
+                genome_uuid=genome_uuid,
+                attributes_info=attributes_info
+            )
+    return msg_factory.create_attributes_by_genome_uuid()
 
 
 def get_genomes_by_specific_keyword_iterator(
