@@ -145,10 +145,10 @@ Mypy will use type hints to statically type check the code.
 
 ### To build docker image
 ```
-docker build -t ensembl-metadata-service .
+docker build -t ensembl-metadata-api .
 ```
 
 ### To run docker container
 ```
- docker run -t -i -e METADATA_URI=<URI> -e TAXONOMY_URI=<URI> -p 80:80 ensembl-metadata-api
+docker run -t -i -e METADATA_URI=<URI> -e TAXONOMY_URI=<URI> -p 80:80 ensembl-metadata-api
 ```
