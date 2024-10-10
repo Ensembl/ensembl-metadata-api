@@ -6,7 +6,7 @@
 16	1	genebuild.last_geneset_update	01
 3	1	species.common_name	Caenorhabditis elegans (PRJNA13758)
 7	1	species.division	Ensembl_TEST
-6	1	species.production_name	Caenorhabditis_elegans
+6	1	organism.production_name	Caenorhabditis_elegans
 4	1	species.scientific_name	Caenorhabditis elegans
 1	1	species.species_taxonomy_id	6239
 8	1	species.strain	N2
