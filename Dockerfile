@@ -17,6 +17,7 @@ ENV PATH="/usr/src/app/venv/bin:$PATH"
 
 RUN python -m venv /usr/src/app/venv/
 RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 RUN pip install .
 RUN pip uninstall -y ensembl-hive
 
