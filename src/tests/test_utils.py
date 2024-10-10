@@ -170,17 +170,17 @@ class TestUtils:
             'statisticValue': 'GCA_900519105.1'
         }
         assembly_accession_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
-                                    stat['name'] == 'assembly.chromosomes']
+                                    stat['name'] == 'assembly.stats.chromosomes']
         assert len(assembly_accession_stats) == expected_count
         assert assembly_accession_stats[0] == {
             'label': 'Chromosomes or plasmids',
-            'name': 'assembly.chromosomes',
+            'name': 'assembly.stats.chromosomes',
             'statisticType': 'integer',
             'statisticValue': '22'
         }
 
         assembly_homology_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
-                                   stat['name'] == 'compara.homology_coverage']
+                                   stat['name'] == 'compara.stats.homology_coverage']
         assert len(assembly_homology_stats) == 1 if not allow_unreleased else 2
 
     def test_get_top_level_statistics_by_uuid(self, genome_conn):
@@ -200,11 +200,11 @@ class TestUtils:
             'statisticValue': 'GCA_900519105.1'
         }
         assembly_component_sequences = [stat for stat in output['statistics'] if
-                                        stat['name'] == 'assembly.component_sequences']
+                                        stat['name'] == 'assembly.stats.component_sequences']
         assert len(assembly_component_sequences) == 1
         assert assembly_component_sequences[0] == {
             'label': 'Component sequences',
-            'name': 'assembly.component_sequences',
+            'name': 'assembly.stats.component_sequences',
             'statisticType': 'integer',
             'statisticValue': '22'
         }
@@ -390,7 +390,7 @@ class TestUtils:
             'genebuildMethod',
             'genebuildMethodDisplay',
             'genebuildLastGenesetUpdate',
-            'genebuildVersion',
+            'genebuildProviderVersion',
             'genebuildProviderName',
             'genebuildProviderUrl',
             'genebuildSampleGene',
@@ -475,7 +475,7 @@ class TestUtils:
             'genebuildMethodDisplay': 'Mapping from reference',
             'genebuildProviderName': 'Ensembl',
             'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
-            'genebuildVersion': 'ENS01',
+            'genebuildProviderVersion': 'ENS01',
             'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
         Args:
             genome_conn:
@@ -503,7 +503,7 @@ class TestUtils:
                 'genebuildMethodDisplay': 'Mapping from reference',
                 'genebuildProviderName': 'Ensembl',
                 'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
-                'genebuildVersion': 'ENS01',
+                'genebuildProviderVersion': 'ENS01',
                 'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
             },
             'created': '2023-09-22 15:02:01',
@@ -574,7 +574,7 @@ class TestUtils:
                 'genebuildProviderUrl': 'https://wormbase.org/',
                 'genebuildSampleGene': 'WBGene00004893',
                 'genebuildSampleLocation': 'X:937766-957832',
-                'genebuildVersion': 'EXT01'
+                'genebuildProviderVersion': 'EXT01'
             },
             'created': '2023-09-22 15:06:58',
             'genomeUuid': 'a733550b-93e7-11ec-a39d-005056b38ce3',

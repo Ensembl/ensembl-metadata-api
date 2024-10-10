@@ -20,6 +20,6 @@
 20	1	strain.type	test
 23	1	genome.genome_uuid	a733550b-93e7-11ec-a39d-005056b38ce3
 24	1	genebuild.havana_datafreeze_date	test2
-25	1	assembly.total_genome_length	546
+25	1	assembly.stats.total_genome_length	546
 26	1	genebuild.start_date	2023-07-Ensembl
 27	\N	schema_version	110

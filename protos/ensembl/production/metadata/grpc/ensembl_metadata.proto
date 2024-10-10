@@ -248,7 +248,7 @@ message AttributesInfo {
   string genebuild_method = 1;
   string genebuild_method_display = 2;
   string genebuild_last_geneset_update = 3;
-  string genebuild_version = 4;
+  string genebuild_provider_version = 4;
   string genebuild_provider_name = 5;
   string genebuild_provider_url = 6;
   string genebuild_sample_gene = 7;
@@ -381,15 +381,6 @@ If release_version is not given, the current version is used.
 message GenomeUUIDRequest {
   string genome_uuid = 1;     // Mandatory
   double release_version = 3; // Optional
-}
-
-/*
-Genome keyword filter.
-If release_version is not given, the current version is used.
- */
-message GenomeByKeywordRequest {
-  string keyword = 1; // Mandatory
-  double release_version = 2; // Optional
 }
 
 /*

@@ -426,10 +426,10 @@ def get_datasets_attributes_values_by_genome_uuid(stub):
     request3 = DatasetAttributesValuesRequest(
         genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
         dataset_type="homologies",
-        attribute_name=["compara.homology_coverage"]
+        attribute_name=["compara.stats.homology_coverage"]
     )
     attributes3 = stub.GetAttributesValuesByUUID(request3)
-    print("**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and attribute_name=['compara.homology_coverage'] ****")
+    print("**** Dataset Attributes Values: By genome_uuid, dataset_type='homologies' and attribute_name=['compara.stats.homology_coverage'] ****")
     print(attributes3)
 
     request4 = DatasetAttributesValuesRequest(

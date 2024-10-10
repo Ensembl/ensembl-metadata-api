@@ -244,7 +244,7 @@ class TestUpdater:
             assert count == 1
             # Check that the old attributes are gone
             count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'assembly.total_coding_sequence_length',
+                Attribute.name == 'assembly.stats.total_coding_sequence_length',
                 DatasetAttribute.value == '8989'
             ).count()
             assert count == 0

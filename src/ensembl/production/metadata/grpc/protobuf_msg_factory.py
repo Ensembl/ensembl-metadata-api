@@ -201,7 +201,7 @@ def create_attributes_info(data=None):
         genebuild_method=required_attributes["genebuild.method"],
         genebuild_method_display=required_attributes["genebuild.method_display"],
         genebuild_last_geneset_update=required_attributes["genebuild.last_geneset_update"],
-        genebuild_version=required_attributes["genebuild.provider_version"],
+        genebuild_provider_version=required_attributes["genebuild.provider_version"],
         genebuild_provider_name=required_attributes["genebuild.provider_name"],
         genebuild_provider_url=required_attributes["genebuild.provider_url"],
         genebuild_sample_gene=required_attributes["genebuild.sample_gene"],
@@ -399,7 +399,7 @@ def populate_dataset_info(data=None):
             dataset_source_type=ds_item.dataset.dataset_source.type if ds_item.dataset.dataset_source else "",
             dataset_type_name=ds_item.dataset.dataset_type.name,
             release_version=float(data.release.version) if data.release.version else None,
-            release_date=datetime.strftime(data.release.release_date, "%m/%d/%Y"),
+            release_date=datetime.strftime(data.release.release_date, "%m/%d/%Y") if data.release.release_date else None,
             release_type=data.release.release_type,
         )
         ds_obj_list.append(ds_info)
