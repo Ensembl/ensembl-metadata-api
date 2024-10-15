@@ -35,7 +35,7 @@ class TestDatasetFactory:
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             test_uuid = session.query(Dataset.dataset_uuid).filter(Dataset.dataset_id == 1).scalar()
-            test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
+            test_attributes = {"assembly.stats.contig_n50": "test1", "assembly.stats.total_genome_length": "test2"}
             dataset_attribute = dataset_factory.update_dataset_attributes(test_uuid, test_attributes)
             for attrib in dataset_attribute:
                 session.add(attrib)
@@ -46,11 +46,11 @@ class TestDatasetFactory:
             dataset_attribute = session.query(DatasetAttribute) \
                 .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
                 .filter(DatasetAttribute.dataset_id == dataset.dataset_id,
-                        Attribute.name == 'assembly.contig_n50',
+                        Attribute.name == 'assembly.stats.contig_n50',
                         DatasetAttribute.value == 'test1') \
                 .one_or_none()
             assert dataset_attribute is not None
-            test_attributes = {"assembly.gc_percentage": "test3", "genebuild.nc_longest_gene_length": "test4"}
+            test_attributes = {"assembly.stats.gc_percentage": "test3", "genebuild.stats.nc_longest_gene_length": "test4"}
             dataset_attribute = dataset_factory.update_dataset_attributes(test_uuid, test_attributes, session=session)
             for attrib in dataset_attribute:
                 session.add(attrib)
@@ -59,7 +59,7 @@ class TestDatasetFactory:
             test_attribute = session.query(DatasetAttribute) \
                 .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
                 .filter(DatasetAttribute.dataset_id == dataset.dataset_id,
-                        Attribute.name == 'genebuild.nc_longest_gene_length',
+                        Attribute.name == 'genebuild.stats.nc_longest_gene_length',
                         DatasetAttribute.value == 'test4') \
                 .one_or_none()
             assert test_attribute is not None
@@ -67,7 +67,7 @@ class TestDatasetFactory:
     def test_create_dataset(self, test_dbs, dataset_factory):
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            test_attributes = {"assembly.contig_n50": "test1", "assembly.total_genome_length": "test2"}
+            test_attributes = {"assembly.stats.contig_n50": "test1", "assembly.stats.total_genome_length": "test2"}
             test_genome_uuid = session.query(Genome.genome_uuid).filter(Genome.genome_id == 4).scalar()  # one human
             test_dataset_source = session.query(DatasetSource).filter(
                 DatasetSource.name == 'homo_sapiens_gca018473315v1_core_110_1').one()
@@ -96,7 +96,7 @@ class TestDatasetFactory:
             test_attribute = session.query(DatasetAttribute) \
                 .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
                 .filter(DatasetAttribute.dataset_id == created_dataset.dataset_id,
-                        Attribute.name == 'genebuild.nc_longest_gene_length',
+                        Attribute.name == 'genebuild.stats.nc_longest_gene_length',
                         DatasetAttribute.value == 'test4') \
                 .all()
             assert test_attribute is not None

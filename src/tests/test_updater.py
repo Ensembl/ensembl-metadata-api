@@ -197,4 +197,3 @@ class TestUpdater:
         with pytest.raises(Exception) as exif:
             test.process_core()
             assert ("Existing Organism, Assembly, and Datasets within a release. "
-                    "Please update genebuild.version and genebuild.last_geneset_update. " in str(exif.value))

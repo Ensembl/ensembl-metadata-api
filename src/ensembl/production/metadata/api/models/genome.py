@@ -81,6 +81,19 @@ class Genome(LoadAble, Base):
         if 'regulatory_features' == dataset_type or 'regulation_build' == dataset_type:
             dataset_type = 'regulation'
 
+        # if any of these three values are in unique_dataset_types
+        discarded_homology_types = {'homology_load', 'homology_compute', 'homology_ftp'}
+        if unique_dataset_types.intersection(discarded_homology_types):
+            # discard them
+            unique_dataset_types.difference_update(discarded_homology_types)
+            # and add 'homologies' if it doesn't exist
+            unique_dataset_types.add('homologies')
+
+        discarded_web_types = {'web_genesearch', 'web_genomediscovery'}
+        if unique_dataset_types.intersection(discarded_web_types):
+            # we are just discarding them for now
+            unique_dataset_types.difference_update(discarded_web_types)
+
         # Defining path templates
         path_templates = {
             'genebuild': f"{common_path}/geneset/{genebuild_version}",
