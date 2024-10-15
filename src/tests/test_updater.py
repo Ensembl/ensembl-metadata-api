@@ -196,4 +196,4 @@ class TestUpdater:
         test = meta_factory(test_dbs['core_8'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
         with pytest.raises(Exception) as exif:
             test.process_core()
-            assert ("Existing Organism, Assembly, and Datasets within a release. "
+            assert ("Existing Organism, Assembly, and Datasets within a release. ")
