@@ -15,7 +15,6 @@ import uuid
 
 import sqlalchemy.orm
 from ensembl.utils.database.dbconnection import DBConnection
-from sqlalchemy.engine import make_url
 from sqlalchemy.sql import func
 
 from ensembl.production.metadata.api.exceptions import *
@@ -41,6 +40,7 @@ class DatasetFactory:
                                   topic: str = 'production_process',
                                   status: DatasetStatus = None,
                                   release: EnsemblRelease = None):
+        # CURRENTLY BROKEN FOR STATUS AND RELEASE. Marc broke it with his last update. Trace back to fix.
         # Retrieve the top-level dataset
         # Will not work on datasets that are tied to multiple genomes!
         # !!!! WILL CREATE THE DATASETS EVEN IF THEY ALREADY EXIST
