@@ -30,7 +30,7 @@ def meta_factory(db_uri, metadata_uri, force=False):
     elif '_funcgen_' in db_url.database:
         raise Exception("funcgen not implemented yet")
     elif '_core_' in db_url.database:
-        return CoreMetaUpdater(db_uri, metadata_uri, force=force)
+        return CoreMetaUpdater(db_uri, metadata_uri)
     elif '_otherfeatures_' in db_url.database:
         raise Exception("otherfeatures not implemented yet")
     elif '_rnaseq_' in db_url.database:

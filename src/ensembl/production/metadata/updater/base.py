@@ -18,9 +18,8 @@ from ensembl.production.metadata.api.models import EnsemblRelease
 
 
 class BaseMetaUpdater:
-    def __init__(self, db_uri, metadata_uri, release=None, force=None):
+    def __init__(self, db_uri, metadata_uri, release=None):
         self.db_uri = db_uri
-        self.force = force
         self.metadata_uri = metadata_uri
         self.db = DBConnection(self.db_uri)
         self.metadata_db = DBConnection(metadata_uri)

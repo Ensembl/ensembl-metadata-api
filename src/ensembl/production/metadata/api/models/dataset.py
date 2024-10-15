@@ -16,7 +16,7 @@ import uuid
 
 import sqlalchemy
 from sqlalchemy import Column, Integer, String, text, ForeignKey, Index, JSON
-from sqlalchemy.dialects.mysql import DATETIME
+from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from sqlalchemy.types import Enum
@@ -49,6 +49,7 @@ class Attribute(LoadAble, Base):
     name = Column(String(128), nullable=False)
     label = Column(String(128), nullable=False)
     description = Column(String(255))
+    required = Column(TINYINT(1), nullable=False, default=0)
     type = Column(Enum('string', 'percent', 'float', 'integer', 'bp', 'number'), server_default=text("'string'"))
     # One to many relationships
     # attribute_id within dataset attribute

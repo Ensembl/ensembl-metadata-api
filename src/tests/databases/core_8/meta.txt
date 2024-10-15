@@ -4,20 +4,22 @@
 11	1	assembly.ucsc_alias	SCARY
 15	1	gencode.version	999
 16	1	genebuild.last_geneset_update	01
-3	1	species.common_name	Caenorhabditis elegans (PRJNA13758)
-7	1	species.division	Ensembl_TEST
-6	1	species.production_name	Caenorhabditis_elegans
-4	1	species.scientific_name	Caenorhabditis elegans
-1	1	species.species_taxonomy_id	6239
-8	1	species.strain	N2
-9	1	species.strain_group	testing
-2	1	species.taxonomy_id	6239
-10	1	species.type	monsters
-5	1	species.url	Jabbe
-17	1	genebuild.version	ENS01
+3	1	organism.biosample_id	SAMN04256190
+3	1	organism.common_name	Caenorhabditis elegans (PRJNA13758)
+7	1	organism.division	Ensembl_TEST
+6	1	organism.production_name	Caenorhabditis_elegans
+4	1	organism.scientific_name	Caenorhabditis elegans
+1	1	organism.species_taxonomy_id	6239
+8	1	organism.strain	N2
+9	1	organism.strain_group	testing
+2	1	organism.taxonomy_id	6239
+10	1	organism.type	monsters
+5	1	organism.url	Jabbe
+17	1	genebuild.version	EXT01
 18	1	genebuild.sample_gene	ENSAMXG00005000318
 19	1	genebuild.sample_location	KB871578.1:9766653-9817473
 20	1	strain.type	test
 23	1	genebuild.provider_name	test
 24	1	genebuild.start_date	2023-07-Ensembl
 25	\N	schema_version	110
+29	1	genebuild.last_geneset_update	2023-01
