@@ -178,7 +178,7 @@ class DatasetFactory:
             version = parent_dataset.version
             # Create the child dataset
             if not exist_ds:
-                logger.debug(f"Creating dataset {dataset_type.name}/{dataset_source.name}/{status.value}/{release}")
+                # logger.debug(f"Creating dataset {dataset_type.name}/{dataset_source.name}/{status.value}/{release}")
                 child_uuid, dataset, attributes, g_dataset = self.create_dataset(session=session,
                                                                                  genome_input=genome_uuid,
                                                                                  dataset_source=dataset_source,
