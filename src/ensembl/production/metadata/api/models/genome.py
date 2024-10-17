@@ -197,7 +197,10 @@ class Genome(LoadAble, Base):
             'checksums', 'ftp_dumps', 'thoas_load', 'alpha_fold', 'blast',
             'genebuild_browser_files', 'genebuild_files', 'genebuild_compute',
             'genebuild_web', 'genebuild_prep', 'genebuild_track',
-            'web_genesearch', 'web_genomediscovery', 'vep_cache'
+            'web_genesearch', 'web_genomediscovery', 'vep_cache',
+            'variation_ftp', 'genebuild_track', 'vcf_handover',
+            'variation_ftp_web', 'variation_register_track', 'regulation_ftp_web',
+            'track_handover', 'regulation_handover', 'regulation_register_track'
         }
         unique_dataset_types.difference_update(to_discard)
         return unique_dataset_types
