@@ -74,27 +74,35 @@ class Genome(LoadAble, Base):
         common_path = f"{common_path_wo_anno_provider}/{genebuild_source_name}"
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
 
-        if 'regulatory_features' in unique_dataset_types or 'regulation_build' in unique_dataset_types:
-            unique_dataset_types.discard('regulatory_features')
-            unique_dataset_types.discard('regulation_build')
-            unique_dataset_types.add('regulation')
-        if 'evidence' in unique_dataset_types:
-            unique_dataset_types.discard('evidence')
-            unique_dataset_types.add('variation')
-        if 'regulatory_features' == dataset_type or 'regulation_build' == dataset_type:
-            dataset_type = 'regulation'
-        # if any of these three values are in unique_dataset_types
-        discarded_homology_types = {'homology_load', 'homology_compute', 'homology_ftp'}
-        if unique_dataset_types.intersection(discarded_homology_types):
-            # discard them
-            unique_dataset_types.difference_update(discarded_homology_types)
-            # and add 'homologies' if it doesn't exist
-            unique_dataset_types.add('homologies')
+        # Mapping dataset types to new consolidated types
+        consolidate_mapping = {
+            ('regulatory_features', 'regulation_build'): 'regulation',
+            ('evidence',): 'variation',
+            ('homology_load', 'homology_compute', 'homology_ftp'): 'homologies',
+        }
 
-        discarded_web_types = {'web_genesearch', 'web_genomediscovery'}
-        if unique_dataset_types.intersection(discarded_web_types):
-            # we are just discarding them for now
-            unique_dataset_types.difference_update(discarded_web_types)
+        # Apply consolidation rules
+        for types, corresponding_type in consolidate_mapping.items():
+            # if any of 'types' values are in unique_dataset_types
+            if unique_dataset_types.intersection(types):
+                # discard them
+                unique_dataset_types.difference_update(types)
+                # and add 'corresponding_type' value if it doesn't exist
+                unique_dataset_types.add(corresponding_type)
+
+        # dataset types to discard
+        to_discard = {
+            'xref', 'xrefs', 'thoas_dumps', 'protein_features', 'refget_load',
+            'checksums', 'ftp_dumps', 'thoas_load', 'alpha_fold', 'blast',
+            'genebuild_browser_files', 'genebuild_files', 'genebuild_compute',
+            'genebuild_web', 'genebuild_prep', 'genebuild_track',
+            'web_genesearch', 'web_genomediscovery', 'vep_cache'
+        }
+        unique_dataset_types.difference_update(to_discard)
+
+        # Transform 'dataset_type' variable if needed
+        if dataset_type in {'regulatory_features', 'regulation_build'}:
+            dataset_type = 'regulation'
 
         # Defining path templates
         path_templates = {
