@@ -68,8 +68,11 @@ class Genome(LoadAble, Base):
         except TypeError as e:
             logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
             raise RuntimeError(e)
-        common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
-        unique_dataset_types = {gd.dataset.dataset_type.name for gd in root_datasets}
+        # common path without annotation provider for assembly and regulation as they are independent
+        common_path_wo_anno_provider = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}"
+        # common path including
+        common_path = f"{common_path_wo_anno_provider}/{genebuild_source_name}"
+        unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
 
         if 'regulatory_features' in unique_dataset_types or 'regulation_build' in unique_dataset_types:
             unique_dataset_types.discard('regulatory_features')
@@ -80,7 +83,6 @@ class Genome(LoadAble, Base):
             unique_dataset_types.add('variation')
         if 'regulatory_features' == dataset_type or 'regulation_build' == dataset_type:
             dataset_type = 'regulation'
-
         # if any of these three values are in unique_dataset_types
         discarded_homology_types = {'homology_load', 'homology_compute', 'homology_ftp'}
         if unique_dataset_types.intersection(discarded_homology_types):

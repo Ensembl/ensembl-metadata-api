@@ -58,13 +58,13 @@ class TestApi:
             path = genome.get_public_path(dataset_type='genebuild')
             assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/geneset/2023_03'
             path = genome.get_public_path(dataset_type='assembly')
-            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/genome'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/genome'
             path = genome.get_public_path(dataset_type='variation')
             assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/variation/2023_03'
             path = genome.get_public_path(dataset_type='homologies')
             assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/homology/2023_03'
             path = genome.get_public_path(dataset_type='regulatory_features')
-            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/regulation'
+            assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/regulation'
 
     def test_organism_ensembl_name_compat(self, test_dbs):
         """ Validate that we can still yse ensembl_name in queries from SQLAlchemy
