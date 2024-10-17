@@ -48,32 +48,122 @@ class Genome(LoadAble, Base):
     organism = relationship("Organism", back_populates="genomes")
 
     def get_public_path(self, dataset_type='all', release=None):
+        """
+        Get the public path for the specified dataset type.
+
+        Args:
+            dataset_type (str): Type of dataset to fetch path for. Defaults to 'all'.
+            release: Release information for fetching datasets attached to releases before the specified one.
+
+        Returns:
+            list: A list of dictionaries containing dataset types and their corresponding paths.
+
+        Raises:
+            ValueError: If the genebuild dataset cannot be found for the genome.
+            TypeNotFoundException: If the dataset type is not found in the metadata.
+        """
         # TODO manage the Release parameter to fetch datasets attached to release anterior to the one specified.
         paths = []
+
+        genebuild_dataset, genebuild_source_name, genebuild_version = self._get_genebuild_info()
+        common_path_wo_anno_provider, common_path = self._get_common_paths(genebuild_source_name)
+        unique_dataset_types = self._get_unique_dataset_types()
+        unique_dataset_types = self._apply_consolidation_rules(unique_dataset_types)
+        unique_dataset_types = self._discard_unwanted_types(unique_dataset_types)
+        dataset_type = self._transform_dataset_type(dataset_type)
+        path_templates = self._define_path_templates(common_path, common_path_wo_anno_provider, genebuild_version)
+
+        # Check for invalid dataset type early.
+        if dataset_type not in unique_dataset_types and dataset_type != 'all':
+            raise TypeNotFoundException(f"Dataset Type : {dataset_type} not found in metadata.")
+
+        # Add paths for all unique dataset types if 'all' is specified.
+        if dataset_type == 'all':
+            for t in unique_dataset_types:
+                paths.append({
+                    "dataset_type": t,
+                    "path": path_templates[t]
+                })
+        elif dataset_type in path_templates:
+            # Add path for the specific dataset type.
+            paths.append({
+                "dataset_type": dataset_type,
+                "path": path_templates[dataset_type]
+            })
+        else:
+            # If the code reaches here, it means there is a logic error.
+            raise TypeNotFoundException(f"Dataset Type : {dataset_type} has no associated path.")
+
+        return paths
+
+
+    def _get_genebuild_info(self):
+        """
+        Retrieve genebuild dataset, source name, and version.
+
+        Returns:
+            tuple: Genebuild dataset, source name, and genebuild version.
+
+        Raises:
+            ValueError: If the genebuild dataset cannot be found for the genome.
+            RuntimeError: If the genebuild version cannot be determined.
+        """
         genome_genebuild_dataset = next(
             (gd for gd in self.genome_datasets if gd.dataset.dataset_type.name == "genebuild"),
             None)
         if genome_genebuild_dataset is None:
             raise ValueError("Genebuild dataset not found for the genome")
         genebuild_dataset = genome_genebuild_dataset.dataset
+
         genebuild_source_name = next(
             (da.value for da in genebuild_dataset.dataset_attributes if
              da.attribute.name == "genebuild.annotation_source"),
             'ensembl')
-        # Genebuild version is either the laste_geneset_update or the start_date if not specified.
-        root_datasets = [ds for ds in self.genome_datasets if ds.dataset.parent_id is None]
+
         try:
             match = re.match(r'^(\d{4}-\d{2})', genebuild_dataset.genebuild_version)
             genebuild_version = match.group(1).replace('-', '_')
         except TypeError as e:
             logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
             raise RuntimeError(e)
+
+        return genebuild_dataset, genebuild_source_name, genebuild_version
+
+    def _get_common_paths(self, genebuild_source_name):
+        """
+        Define the common paths used in the dataset paths.
+
+        Args:
+            genebuild_source_name (str): The genebuild source name.
+
+        Returns:
+            tuple: Common paths without and with annotation provider.
+        """
         # common path without annotation provider for assembly and regulation as they are independent
         common_path_wo_anno_provider = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}"
-        # common path including
+        # common path including annotation provider
         common_path = f"{common_path_wo_anno_provider}/{genebuild_source_name}"
-        unique_dataset_types = {gd.dataset.dataset_type.name for gd in self.genome_datasets}
+        return common_path_wo_anno_provider, common_path
 
+    def _get_unique_dataset_types(self):
+        """
+        Get unique dataset types available.
+
+        Returns:
+            set: A set of unique dataset types.
+        """
+        return {gd.dataset.dataset_type.name for gd in self.genome_datasets}
+
+    def _apply_consolidation_rules(self, unique_dataset_types):
+        """
+        Apply consolidation rules to dataset types.
+
+        Args:
+            unique_dataset_types (set): A set of unique dataset types.
+
+        Returns:
+            set: A set of consolidated dataset types.
+        """
         # Mapping dataset types to new consolidated types
         consolidate_mapping = {
             ('regulatory_features', 'regulation_build'): 'regulation',
@@ -90,7 +180,18 @@ class Genome(LoadAble, Base):
                 # and add 'corresponding_type' value if it doesn't exist
                 unique_dataset_types.add(corresponding_type)
 
-        # dataset types to discard
+        return unique_dataset_types
+
+    def _discard_unwanted_types(self, unique_dataset_types):
+        """
+        Discard unwanted dataset types.
+
+        Args:
+            unique_dataset_types (set): A set of unique dataset types.
+
+        Returns:
+            set: A set of dataset types after discarding unwanted types.
+        """
         to_discard = {
             'xref', 'xrefs', 'thoas_dumps', 'protein_features', 'refget_load',
             'checksums', 'ftp_dumps', 'thoas_load', 'alpha_fold', 'blast',
@@ -99,42 +200,41 @@ class Genome(LoadAble, Base):
             'web_genesearch', 'web_genomediscovery', 'vep_cache'
         }
         unique_dataset_types.difference_update(to_discard)
+        return unique_dataset_types
 
-        # Transform 'dataset_type' variable if needed
+    def _transform_dataset_type(self, dataset_type):
+        """
+        Transform the dataset type if needed.
+
+        Args:
+            dataset_type (str): The original dataset type.
+
+        Returns:
+            str: The transformed dataset type.
+        """
         if dataset_type in {'regulatory_features', 'regulation_build'}:
             dataset_type = 'regulation'
+        return dataset_type
 
-        # Defining path templates
-        path_templates = {
+    def _define_path_templates(self, common_path, common_path_wo_anno_provider, genebuild_version):
+        """
+        Define path templates for each dataset type.
+
+        Args:
+            common_path (str): The common path including annotation provider.
+            common_path_wo_anno_provider (str): The common path without annotation provider.
+            genebuild_version (str): The genebuild version.
+
+        Returns:
+            dict: A dictionary of path templates for each dataset type.
+        """
+        return {
             'genebuild': f"{common_path}/geneset/{genebuild_version}",
             'assembly': f"{common_path_wo_anno_provider}/genome",
             'homologies': f"{common_path}/homology/{genebuild_version}",
             'regulation': f"{common_path_wo_anno_provider}/regulation",
             'variation': f"{common_path}/variation/{genebuild_version}"
         }
-
-        # Check for invalid dataset type early
-        if dataset_type not in unique_dataset_types and dataset_type != 'all':
-            raise TypeNotFoundException(f"Dataset Type : {dataset_type} not found in metadata.")
-
-        # If 'all', add paths for all unique dataset types
-        if dataset_type == 'all':
-            for t in unique_dataset_types:
-                paths.append({
-                    "dataset_type": t,
-                    "path": path_templates[t]
-                })
-        elif dataset_type in path_templates:
-            # Add path for the specific dataset type
-            paths.append({
-                "dataset_type": dataset_type,
-                "path": path_templates[dataset_type]
-            })
-        else:
-            # If the code reaches here, it means there is a logic error
-            raise TypeNotFoundException(f"Dataset Type : {dataset_type} has no associated path.")
-
-        return paths
 
 
 class GenomeDataset(LoadAble, Base):
