@@ -193,14 +193,15 @@ class Genome(LoadAble, Base):
             set: A set of dataset types after discarding unwanted types.
         """
         to_discard = {
-            'xref', 'xrefs', 'thoas_dumps', 'protein_features', 'refget_load',
-            'checksums', 'ftp_dumps', 'thoas_load', 'alpha_fold', 'blast',
-            'genebuild_browser_files', 'genebuild_files', 'genebuild_compute',
-            'genebuild_web', 'genebuild_prep', 'genebuild_track',
-            'web_genesearch', 'web_genomediscovery', 'vep_cache',
-            'variation_ftp', 'genebuild_track', 'vcf_handover',
-            'variation_ftp_web', 'variation_register_track', 'regulation_ftp_web',
-            'track_handover', 'regulation_handover', 'regulation_register_track'
+            'alpha_fold', 'blast', 'checksums', 'ftp_dumps', 'genebuild_browser_files',
+            'genebuild_compute', 'genebuild_files', 'genebuild_prep', 'genebuild_track',
+            'genebuild_web', 'protein_features', 'refget_load', 'regulation_ftp',
+            'regulation_ftp_web', 'short_variant', 'regulation_browser_files',
+            'regulation_handover', 'regulation_register_track', 'regulation_track',
+            'thoas_dumps', 'thoas_load', 'track_handover', 'variation_browser_files',
+            'variation_ftp', 'variation_ftp_web', 'variation_register_track',
+            'variation_track', 'vcf_handover', 'vep' 'vep_cache', 'web_genesearch',
+            'web_genomediscovery', 'xref', 'xrefs'
         }
         unique_dataset_types.difference_update(to_discard)
         return unique_dataset_types
