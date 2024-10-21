@@ -10,7 +10,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.`
 import logging
-import re
 import uuid
 from collections import defaultdict
 
@@ -36,22 +35,47 @@ logger = logging.getLogger(__name__)
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
-    def __init__(self, db_uri, metadata_uri, release=None, force=None):
-        super().__init__(db_uri, metadata_uri, release, force)
+    def __init__(self, db_uri, metadata_uri, release=None):
+        super().__init__(db_uri, metadata_uri, release)
         self.db_type = 'core'
         # Single query to get all of the metadata information.
         self.meta_dict = {}
+        self._load_meta_dict()
+        self._validate_required_attributes()
+
+    def _load_meta_dict(self):
+        """Load metadata into meta_dict from the database."""
         with self.db.session_scope() as session:
-            results = session.query(Meta).all()
+            results = session.query(Meta).filter(Meta.meta_value.isnot(None),
+                                                 Meta.meta_value.notin_(['', 'Null', 'NULL'])).all()
             for result in results:
                 species_id = result.species_id
                 meta_key = result.meta_key
                 meta_value = result.meta_value
-
                 if species_id not in self.meta_dict:
                     self.meta_dict[species_id] = {}
                 # WARNING! Duplicated meta_keys for a species_id will not error out!. A datacheck is necessary for key values.
                 self.meta_dict[species_id][meta_key] = meta_value
+
+    def _validate_required_attributes(self):
+        """Check if all required attributes are present in the meta_dict for each species."""
+        required_attribute_names = []
+        with self.metadata_db.session_scope() as session:
+            # Query the attribute table to get all required attributes
+            required_attributes = session.query(Attribute.name).filter(Attribute.required == 1).all()
+            required_attribute_names = {attr.name for attr in required_attributes}
+
+        with self.db.session_scope() as session:
+            # Check each species_id in meta_dict
+            missing_attributes = {}
+            for species_id, meta in self.meta_dict.items():
+                missing = required_attribute_names - set(meta.keys())
+                if missing:
+                    missing_attributes[species_id] = missing
+
+            if missing_attributes:
+                exceptions.MissingMetaException(
+                    "Species ID {species_id} is missing required attributes: {missing_attributes}")
 
     # Basic API for the meta table in the submission database.
     def get_meta_single_meta_key(self, species_id, parameter):
@@ -69,11 +93,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def process_core(self, **kwargs):
         # Special case for loading a single species from a collection database. Can be removed in a future release
-        sel_species = kwargs.get('species', None)
+        sel_species = kwargs.get('organism', None)
         if sel_species:
             with self.db.session_scope() as session:
                 multi_species = session.execute(
-                    select(Meta.species_id).filter(Meta.meta_key == "species.production_name").filter(
+                    select(Meta.species_id).filter(Meta.meta_key == "organism.production_name").filter(
                         Meta.meta_value == sel_species).distinct()
                 )
         else:
@@ -81,7 +105,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # Handle multi-species databases and run an update for each species
             with self.db.session_scope() as session:
                 multi_species = session.execute(
-                    select(Meta.species_id).filter(Meta.meta_key == "species.production_name").distinct()
+                    select(Meta.species_id).filter(Meta.meta_key == "organism.production_name").distinct()
                 )
         multi_species = [multi_species for multi_species, in multi_species]
 
@@ -95,7 +119,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         """
 
         with self.metadata_db.session_scope() as meta_session:
-            organism, division, organism_group_member = self.get_or_new_organism(species_id, meta_session)
+            organism = self.get_or_new_organism(species_id, meta_session)
             assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source = self.get_or_new_assembly(
                 species_id, meta_session)
             genebuild_dataset, genebuild_dataset_attributes = self.get_or_new_genebuild(species_id, meta_session,
@@ -108,15 +132,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     Genome.genome_uuid == old_genome_uuid).one_or_none()
                 # Logic for existing key in database.
                 if old_genome is not None:
-                    if self.force is False:
-                        raise exceptions.MetadataUpdateException(
-                            "Core database contains a genome.genome_uuid which matches an entry in the meta table. "
-                            "The force flag was not specified so the core was not updated.")
-                    elif self.is_object_new(organism) or self.is_object_new(assembly):
-                        raise exceptions.ExistingGenomeIdCoreException(
-                            f"Core contains a genome.genome_uuid {old_genome_uuid} which matches an existing entry. "
-                            "The assembly data or organism data is new and requires the creation a new uuid. Delete "
-                            "the old uuid from the core to continue")
+                    raise exceptions.MetadataUpdateException(
+                        "Core database contains a genome.genome_uuid which matches an entry in the meta table. "
+                        "Please update the genebuild.version, genebuild.last_genset_update, delete the genome.genome_uuid and resubmit.")
                 else:
                     raise exceptions.MetadataUpdateException(
                         "Database contains a Genome.genome_uuid, but the corresponding data is not in"
@@ -197,15 +215,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
             else:
                 # Check if the data has been released:
-                if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid) and not self.force:
+                if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid):
                     raise exceptions.WrongReleaseException(
                         "Existing Organism, Assembly, and Datasets within a release. "
-                        "To update released data set force=True. This will force assembly "
-                        "and genebuild"
-                        "dataset updates and assembly sequences.")
+                        "Please update genebuild.version and genebuild.last_geneset_update for new release. ")
                 else:
-                    logger.info('Rewrite of existing datasets. Only assembly dataset attributes, genebuild '
-                                'dataset, dataset attributes, and assembly sequences are modified.')
+                    logger.info('Rewrite of existing datasets. Only genebuild '
+                                'dataset, dataset attributes are modified.')
                     # TODO: We need to review this process, because if some Variation / Regulation / Compara datasets
                     #  exists we'll expect either to refuse the updates - imagine this was a fix in sequences! OR we
                     #  decide to delete the other datasets to force their recompute. In this case, we want to rewrite
@@ -218,10 +234,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                               existing=genebuild_dataset)
 
                     # #Update assembly_dataset
-                    meta_session.query(DatasetAttribute).filter(
-                        DatasetAttribute.dataset_id == assembly_dataset.dataset_id).delete()
                     self.get_or_new_assembly(
-                        species_id, meta_session, source=dataset_source, existing=assembly_dataset)
+                        species_id, meta_session, source=dataset_source)
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
         # Currently impossible with myisam without two phase commit (requires full refactor)
@@ -251,16 +265,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     f"but it successfully updated the metadata. ")
 
     def new_genome(self, meta_session, species_id, organism, assembly, assembly_dataset, genebuild_dataset):
-        production_name = self.get_meta_single_meta_key(species_id, "species.production_name")
+        production_name = self.get_meta_single_meta_key(species_id, "organism.production_name")
         genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
         genebuild_date = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
         if genebuild_date is None:
-            start_date_str = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
-            match = re.search(r'^(\d{4}-\d{2})', start_date_str)
-            if match:
-                genebuild_date = match.group(0)
-            else:
-                raise exceptions.MetadataUpdateException(f"Unable to parse genebuild.start_date from meta")
+            raise exceptions.MetadataUpdateException(f"Unable to parse genebuild.last_geneset_update from meta")
         # get next release inline to attach the genome to
         planned_release = get_or_new_release(self.metadata_uri)
         new_genome = Genome(
@@ -310,16 +319,17 @@ class CoreMetaUpdater(BaseMetaUpdater):
         Get an existing Organism instance or create a new one, depending on the information from the metadata database.
         """
         # Fetch the Ensembl name of the organism from metadata using either 'species.biosample_id'
-        # or 'species.production_name' as the key.
+        # or 'organism.production_name' as the key.
         biosample_id = self.get_meta_single_meta_key(species_id, "organism.biosample_id")
         if biosample_id is None:
-            biosample_id = self.get_meta_single_meta_key(species_id, "species.production_name")
+            biosample_id = self.get_meta_single_meta_key(species_id, "organism.production_name")
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
-        common_name = self.get_meta_single_meta_key(species_id, "species.common_name")
-        taxid = self.get_meta_single_meta_key(species_id, "species.taxonomy_id")
-        if common_name is None or common_name == "":
-
+        common_name = self.get_meta_single_meta_key(species_id, "organism.common_name")
+        taxid = self.get_meta_single_meta_key(species_id, "organism.taxonomy_id")
+        if taxid is None:
+            raise exceptions.MissingMetaException("organism.taxid is required")
+        if common_name is None:
             with self.metadata_db.session_scope() as session:
                 common_name = session.query(NCBITaxaName).filter(
                     NCBITaxaName.taxon_id == taxid,
@@ -328,34 +338,28 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 common_name = common_name.name if common_name is not None else '-'
         # Ensure that the first character is upper case.
         common_name = common_name[0].upper() + common_name[1:]
-        species_taxonomy_id = self.get_meta_single_meta_key(species_id, "species.species_taxonomy_id")
+        species_taxonomy_id = self.get_meta_single_meta_key(species_id, "organism.species_taxonomy_id")
         if species_taxonomy_id is None:
             species_taxonomy_id = taxid
         # Instantiate a new Organism object using data fetched from metadata.
         new_organism = Organism(
             species_taxonomy_id=species_taxonomy_id,
-            taxonomy_id=self.get_meta_single_meta_key(species_id, "species.taxonomy_id"),
+            taxonomy_id=self.get_meta_single_meta_key(species_id, "organism.taxonomy_id"),
             common_name=common_name,
-            scientific_name=self.get_meta_single_meta_key(species_id, "species.scientific_name"),
+            scientific_name=self.get_meta_single_meta_key(species_id, "organism.scientific_name"),
             biosample_id=biosample_id,
-            strain=self.get_meta_single_meta_key(species_id, "species.strain"),
-            strain_type=self.get_meta_single_meta_key(species_id, "strain.type"),
-            scientific_parlance_name=self.get_meta_single_meta_key(species_id, "species.parlance_name")
+            strain=self.get_meta_single_meta_key(species_id, "organism.strain"),
+            strain_type=self.get_meta_single_meta_key(species_id, "organism.type"),
+            scientific_parlance_name=self.get_meta_single_meta_key(species_id, "organism.scientific_parlance_name")
         )
 
         # Query the metadata database to find if an Organism with the same Ensembl name already exists.
         old_organism = meta_session.query(Organism).filter(
             Organism.biosample_id == new_organism.biosample_id).one_or_none()
-        division_name = self.get_meta_single_meta_key(species_id, "species.division")
-        division = meta_session.query(OrganismGroup).filter(OrganismGroup.name == division_name).one_or_none()
 
         # If an existing Organism is found, return it and indicate that it already existed.
         if old_organism:
-            organism_group_member = meta_session.query(OrganismGroupMember).filter(
-                OrganismGroupMember.organism_id == old_organism.organism_id,
-                OrganismGroupMember.organism_group_id == division.organism_group_id).one_or_none()
-
-            return old_organism, division, organism_group_member
+            return old_organism
         else:
             # If no existing Organism is found, conduct additional checks before creating a new one.
 
@@ -373,29 +377,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
             if assembly_test is not None:
                 logger.info("Assembly Accession already exists for a different organism.")
 
-            # Fetch the division name of the new organism from metadata.
-            if division_name is None:
-                exceptions.MissingMetaException("No species.division found in meta table")
-
-            # Query the metadata database to find if an OrganismGroup with the same division name already exists.
-            if division is None:
-                # If no such OrganismGroup exists, create a new one.
-                division = OrganismGroup(
-                    type="Division",
-                    name=division_name,
-                )
-                meta_session.add(division)
-
-            # Create a new OrganismGroupMember linking the new Organism to the division group.
-            organism_group_member = OrganismGroupMember(
-                is_reference=0,
-                organism=new_organism,
-                organism_group=division,
-            )
             meta_session.add(new_organism)
-            meta_session.add(organism_group_member)
             # Return the newly created Organism and indicate that it is new.
-            return new_organism, division, organism_group_member
+            return new_organism
 
     def get_assembly_sequences(self, species_id, assembly):
         """
@@ -432,6 +416,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             accession_info = defaultdict(
                 # The None's here are improper, but they break far too much for this update if they are changed.
                 # When accession is decided I will fix them.
+                # TODO: Just delete the comment. No one cares about the assembly sequence table.
                 lambda: {
                     "names": set(), "accession": None, "length": None, "location": None, "chromosomal": None,
                     "karyotype_rank": None
@@ -499,7 +484,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 assembly_sequences.append(assembly_sequence)
         return assembly_sequences
 
-    def get_or_new_assembly(self, species_id, meta_session, source=None, existing=None):
+    def get_or_new_assembly(self, species_id, meta_session, source=None):
         # Get the new assembly accession  from the core handed over
         assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         assembly = meta_session.query(Assembly).filter(Assembly.accession == assembly_accession).one_or_none()
@@ -509,57 +494,46 @@ class CoreMetaUpdater(BaseMetaUpdater):
             dataset_source = source
 
         # This should return the existing objects
-        if assembly is not None and existing is None:
+        if assembly is not None:
             # Get the existing assembly dataset
             assembly_dataset = meta_session.query(Dataset).filter(Dataset.label == assembly_accession).one_or_none()
             # I should not need this, but double check on database updating.
             assembly_dataset_attributes = assembly_dataset.dataset_attributes
             assembly_sequences = assembly.assembly_sequences
             return assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source
-
         else:
-
             attributes = self.get_meta_list_from_prefix_meta_key(species_id, "assembly")
+            is_reference = 1 if self.get_meta_single_meta_key(species_id, "assembly.is_reference") else 0
+            with self.db.session_scope() as session:
+                level = (session.execute(db.select(CoordSystem.name).filter(
+                    CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
+                tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")
+            assembly = Assembly(
+                ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
+                accession=self.get_meta_single_meta_key(species_id, "assembly.accession"),
+                level=level,
+                name=self.get_meta_single_meta_key(species_id, "assembly.name"),
+                accession_body=self.get_meta_single_meta_key(species_id, "assembly.provider"),
+                assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
+                tol_id=tol_id,
+                alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
+                created=func.now(),
+                assembly_uuid=str(uuid.uuid4()),
+                url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
+                is_reference=is_reference
+            )
+            dataset_factory = DatasetFactory(self.metadata_uri)
+            dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "assembly").first()
+            (dataset_uuid, assembly_dataset, assembly_dataset_attributes,
+             new_genome_dataset) = dataset_factory.create_dataset(meta_session, None, dataset_source,
+                                                                  dataset_type, attributes, "assembly",
+                                                                  assembly.accession, None,
+                                                                  DatasetStatus.PROCESSED)
+            meta_session.add(assembly)
+            meta_session.add(assembly_dataset)
+            assembly_sequences = self.get_assembly_sequences(species_id, assembly)
+            meta_session.add_all(assembly_sequences)
 
-            if existing is None:
-                is_reference = 1 if self.get_meta_single_meta_key(species_id, "assembly.is_reference") else 0
-                with self.db.session_scope() as session:
-                    level = (session.execute(db.select(CoordSystem.name).filter(
-                        CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
-                    tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")
-                assembly = Assembly(
-                    ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
-                    accession=self.get_meta_single_meta_key(species_id, "assembly.accession"),
-                    level=level,
-                    name=self.get_meta_single_meta_key(species_id, "assembly.name"),
-                    accession_body=self.get_meta_single_meta_key(species_id, "assembly.provider"),
-                    assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
-                    tol_id=tol_id,
-                    alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
-                    created=func.now(),
-                    assembly_uuid=str(uuid.uuid4()),
-                    url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
-                    is_reference=is_reference
-                )
-                dataset_factory = DatasetFactory(self.metadata_uri)
-                dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "assembly").first()
-                (dataset_uuid, assembly_dataset, assembly_dataset_attributes,
-                 new_genome_dataset) = dataset_factory.create_dataset(meta_session, None, dataset_source,
-                                                                      dataset_type, attributes, "assembly",
-                                                                      assembly.accession, None,
-                                                                      DatasetStatus.PROCESSED)
-                meta_session.add(assembly)
-                meta_session.add(assembly_dataset)
-                assembly_sequences = self.get_assembly_sequences(species_id, assembly)
-                meta_session.add_all(assembly_sequences)
-            else:
-                assembly_dataset = existing
-                assembly_dataset.dataset_source = dataset_source
-                for dataset_attribute in assembly_dataset.dataset_attributes:
-                    meta_session.delete(dataset_attribute)
-                assembly_dataset_attributes = update_attributes(assembly_dataset, attributes, meta_session)
-                assembly_sequences = meta_session.query(AssemblySequence).filter(
-                    AssemblySequence.assembly_id == assembly.assembly_id)
             meta_session.add_all(assembly_dataset_attributes)
             return assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source
 
@@ -573,15 +547,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
         genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
         provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
         last_geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
-        start_date = self.get_meta_single_meta_key(species_id, "genebuild.start_date")
 
-        if None in (provider_name, last_geneset_update, start_date):
-            exceptions.MissingMetaException(
-                "genebuild.provider_name, genebuild.last_geneset_update, genebuild.start_date are required keys")
-        # There should not exist an existing genome with assembly_accesion/provider_name/last_geneset_update and start_date.
         provider_name_attr = aliased(DatasetAttribute)
         last_geneset_update_attr = aliased(DatasetAttribute)
-        start_date_attr = aliased(DatasetAttribute)
 
         existing_combination = (
             meta_session.query(Genome)
@@ -590,26 +558,22 @@ class CoreMetaUpdater(BaseMetaUpdater):
             .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
             .join(provider_name_attr, Dataset.dataset_id == provider_name_attr.dataset_id)
             .join(last_geneset_update_attr, Dataset.dataset_id == last_geneset_update_attr.dataset_id)
-            .join(start_date_attr, Dataset.dataset_id == start_date_attr.dataset_id)
             .filter(
                 Dataset.name == "genebuild",
                 Assembly.accession == assembly_accession,  # Correctly linking the assembly_accession
                 provider_name_attr.value == provider_name,
                 last_geneset_update_attr.value == last_geneset_update,
-                start_date_attr.value == start_date,
                 provider_name_attr.attribute.has(Attribute.name == "genebuild.provider_name"),
                 last_geneset_update_attr.attribute.has(Attribute.name == "genebuild.last_geneset_update"),
-                start_date_attr.attribute.has(Attribute.name == "genebuild.start_date")
             )
             .exists()
         )
         if meta_session.query(existing_combination).scalar():
             exceptions.MetaException(
-                "genebuild.provider_name, genebuild.last_geneset_update, genebuild.start_date and assembly.accession can"
+                "genebuild.provider_name, genebuild.last_geneset_update, and assembly.accession can"
                 " not match existing records. If this is an update, please update genebuild.last_geneset_update with the "
                 "current date. "
             )
-
 
         # The genebuild accession is formed by combining the assembly accession and the genebuild version
         genebuild_accession = assembly_accession + "_" + genebuild_version
@@ -638,15 +602,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genebuild_dataset.label = genebuild_accession
             genebuild_dataset.dataset_source = dataset_source
             genebuild_dataset.version = genebuild_version
-            for dataset_attribute in genebuild_dataset.dataset_attributes:
-                meta_session.delete(dataset_attribute)
-            genebuild_dataset_attributes = update_attributes(genebuild_dataset, attributes, meta_session)
+            genebuild_dataset_attributes = update_attributes(genebuild_dataset, attributes, meta_session, replace=True)
 
         return genebuild_dataset, genebuild_dataset_attributes
 
     def new_homology(self, meta_session, species_id, genome=None, source=None, dataset_attributes=None, version="1.0"):
         if source is None:
-            production_name = self.get_meta_single_meta_key(species_id, "species.production_name")
+            production_name = self.get_meta_single_meta_key(species_id, "organism.production_name")
             db_version = self.get_meta_single_meta_key(None, "schema_version")
             compara_name = production_name + "_compara_" + db_version
             dataset_source = self.get_or_new_source(meta_session, "compara", name=compara_name)

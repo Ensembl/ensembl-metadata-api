@@ -56,6 +56,7 @@ CREATE TABLE attribute
     label        varchar(128)                                                          not null,
     description  varchar(255)                                                          null,
     type         enum ('integer', 'float', 'percent', 'string', 'bp') default 'string' null,
+    required tinyint(1)                    DEFAULT '0'                              not null,
     constraint name
         unique (name),
     constraint name_2

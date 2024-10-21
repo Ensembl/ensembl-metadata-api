@@ -13,16 +13,22 @@ from ensembl.production.metadata.api.exceptions import UpdaterException
 from ensembl.production.metadata.api.models import Attribute, DatasetAttribute
 
 
-def update_attributes(dataset, attributes, session):
+def update_attributes(dataset, attributes, session, replace=False):
     # TODO If attributes already exist, update them. Add option to replace all.
     dataset_attributes = []
+    if replace:
+        for dataset_attribute in dataset.dataset_attributes:
+            session.delete(dataset_attribute)
+            session.flush()
     for attribute, value in attributes.items():
         meta_attribute = session.query(Attribute).filter(Attribute.name == attribute).one_or_none()
         if meta_attribute is None:
             raise UpdaterException(f"{attribute} does not exist. Add it to the database and reload.")
-        dataset_attributes.append(DatasetAttribute(
+        new_dataset_attribute = DatasetAttribute(
             value=value,
             dataset=dataset,
             attribute=meta_attribute,
-        ))
+        )
+        session.add(new_dataset_attribute)
+        dataset_attributes.append(new_dataset_attribute)
     return dataset_attributes

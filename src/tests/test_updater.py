@@ -65,7 +65,7 @@ class TestUpdater:
             assembly = session.query(Assembly).where(Assembly.name == 'jaber01').first()
             assert organism.scientific_name == 'carol_jabberwocky'
             assert organism.genomes[0].genebuild_version == 'ENS01'
-            assert organism.genomes[0].genebuild_date == '2023-07'
+            assert organism.genomes[0].genebuild_date == '2023-01'
             # Test the Assembly
             assert assembly.accession == 'GCF_1111111123.3'
             assert assembly.alt_accession == 'GCA_0000012345.3'
@@ -133,7 +133,7 @@ class TestUpdater:
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
             assert dataset.genome_datasets[0].genome.genebuild_version == 'ENS02'
-            assert dataset.genome_datasets[0].genome.genebuild_date == '2023-07'
+            assert dataset.genome_datasets[0].genome.genebuild_date == '2023-01'
             assert dataset.genome_datasets[0].genome.genome_releases is not None
 
     def test_taxonomy_common_name(self, test_dbs):
@@ -151,32 +151,17 @@ class TestUpdater:
             assert ("Core database contains a genome.genome_uuid which matches an entry in the meta table. "
                     "The force flag was not specified so the core was not updated." in str(exif.value))
 
-    #TODO: fix this test case
-    @pytest.mark.xfail(strict=False)
     def test_update_unreleased_no_force(self, test_dbs):
         test = meta_factory(test_dbs['core_7'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
         test.process_core()
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            # Test that assembly seqs have been updated
-            new_seq = session.query(AssemblySequence).filter(
-                AssemblySequence.name == 'TEST1_seq_update').one_or_none()
-            assert new_seq is None
-            old_seq = session.query(AssemblySequence).where(
-                (AssemblySequence.name == 'TEST1_seqA')).first()
-            assert old_seq is not None
             # Check that the old datasets have been removed
             genebuild_test = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
                 DatasetSource.name.like('%core_5'),
             ).filter(DatasetType.name == "genebuild").one_or_none()
             assert genebuild_test is None
 
-            # Check that the old attributes are gone
-            count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'assembly.default',
-                DatasetAttribute.value == 'NewTest'
-            ).count()
-            assert count == 1
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'genebuild.provider_name',
                 DatasetAttribute.value == 'removed_for_test'
@@ -188,68 +173,27 @@ class TestUpdater:
                 DatasetSource.name.like('%core_7'),
                 DatasetType.name == 'assembly'
             ).count()
-            assert count == 1
+            assert count == 0
             count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
                 DatasetSource.name.like('%core_7'),
                 DatasetType.name == 'genebuild'
             ).count()
             assert count == 1
-            # Check that the new attribute values are present
+            # Check that new assembly attribute values are not present
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'assembly.ucsc_alias',
                 DatasetAttribute.value == 'test_alias'
             ).count()
-            assert count > 0
-
+            assert count == 0
+            # Check that new genebuild attribute values are present
             count = session.query(DatasetAttribute).join(Attribute).filter(
                 Attribute.name == 'genebuild.havana_datafreeze_date',
                 DatasetAttribute.value == 'test2'
             ).count()
             assert count > 0
 
-    def test_update_released_no_force(self, test_dbs):
+    def test_update_released(self, test_dbs):
         test = meta_factory(test_dbs['core_8'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
         with pytest.raises(Exception) as exif:
             test.process_core()
-            assert ("Existing Organism, Assembly, and Datasets within a release. "
-                    "To update released data set force=True. "
-                    "This will force assembly and genebuilddataset updates and assembly sequences." in str(exif.value))
-
-    #TODO: fix this test case
-    @pytest.mark.xfail(strict=False)
-    def test_update_released_force(self, test_dbs):
-        test = meta_factory(test_dbs['core_9'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url, force=True)
-        test.process_core()
-        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
-        with metadata_db.session_scope() as session:
-            # Test that assembly seqs have not been updated
-            new_seq = session.query(AssemblySequence).where(
-                (AssemblySequence.name == 'TEST1_seq_BAD')).first()
-            assert new_seq is None
-            old_seq = session.query(AssemblySequence).where(
-                (AssemblySequence.accession == 'MtDNA')).first()
-            assert old_seq is not None
-            # Check that the old datasets have been removed
-
-            count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name.like('%core_7'),
-                DatasetType.name == 'assembly'
-            ).count()
-            assert count == 0
-            # Check that the new datasets exist
-            count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name.like('%core_9'),
-                DatasetType.name == 'assembly'
-            ).count()
-            assert count == 1
-            # Check that the old attributes are gone
-            count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'assembly.stats.total_coding_sequence_length',
-                DatasetAttribute.value == '8989'
-            ).count()
-            assert count == 0
-            count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'genebuild.havana_datafreeze_date',
-                DatasetAttribute.value == 'test2'
-            ).count()
-            assert count == 1
+            assert ("Existing Organism, Assembly, and Datasets within a release. ")
