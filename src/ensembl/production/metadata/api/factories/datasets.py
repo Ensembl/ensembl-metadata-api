@@ -19,7 +19,7 @@ from sqlalchemy.sql import func
 
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.models import Dataset, Genome, GenomeDataset, \
-    DatasetType, DatasetStatus, EnsemblRelease
+    DatasetType, DatasetStatus, EnsemblRelease, DatasetSource
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
 logger = logging.getLogger(__name__)
@@ -55,8 +55,10 @@ class DatasetFactory:
                                                release=release)
         return self.query_all_child_datasets(dataset_uuid, session)
 
+
     def create_dataset(self, session, genome_input, dataset_source, dataset_type, dataset_attributes, name, label,
-                       version, status=DatasetStatus.SUBMITTED, parent=None, release=None):
+                       version, status=DatasetStatus.SUBMITTED, parent=None, release=None, source_type=None,
+                       is_current=False):
         # Check if genome_input is a UUID (string) or a Genome object
         if isinstance(status, str):
             status = DatasetStatus(status)
@@ -70,6 +72,21 @@ class DatasetFactory:
         else:
             raise ValueError("Invalid genome input. Must be either a UUID string or a Genome object. "
                              f"Got {genome_input}/{genome_input.__class__}")
+        # Create Dataset source if it does not exist
+        if isinstance(dataset_source, str):
+            if source_type is None or dataset_source is None:
+                raise ValueError(
+                    "Invalid Source input. Must be either a string and source_type or DatasetSource object. "
+                    f"Got {dataset_source}/{dataset_source.__class__} for dataset_source and "
+                    f"{source_type}/{source_type.__class__} for source_type")
+            test = session.query(DatasetSource).filter(DatasetSource.name == dataset_source).one_or_none()
+            if test is None:
+                dataset_source = DatasetSource(type=source_type, name=dataset_source)
+            else:
+                dataset_source = test
+        # Query Dataset type
+        if isinstance(dataset_type, str):
+            dataset_type = session.query(DatasetType).filter(DatasetType.name == dataset_type).one()
 
         new_dataset = Dataset(
             dataset_uuid=str(uuid.uuid4()),
@@ -95,6 +112,8 @@ class DatasetFactory:
                 is_current=False,
             )
             if release is not None:
+                if isinstance(release, str):
+                    release = session.query(EnsemblRelease).filter(EnsemblRelease.version == release).one()
                 logger.debug(f"Attaching {new_dataset.dataset_uuid} to release {release.release_id}")
                 new_genome_dataset.release_id = release.release_id
             session.add(new_genome_dataset)
