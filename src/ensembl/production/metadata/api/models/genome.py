@@ -68,8 +68,12 @@ class Genome(LoadAble, Base):
         except TypeError as e:
             logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
             raise RuntimeError(e)
-        common_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/{genebuild_source_name}"
+        base_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/"
+        common_path = f"{base_path}{genebuild_source_name}"
+        
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in root_datasets}
+        unique_dataset_types.add('vep_genome')
+        unique_dataset_types.add('vep_annotation')
 
         if 'regulatory_features' in unique_dataset_types or 'regulation_build' in unique_dataset_types:
             unique_dataset_types.discard('regulatory_features')
@@ -97,10 +101,12 @@ class Genome(LoadAble, Base):
         # Defining path templates
         path_templates = {
             'genebuild': f"{common_path}/geneset/{genebuild_version}",
-            'assembly': f"{common_path}/genome",
+            'assembly': f"{base_path}/genome",
             'homologies': f"{common_path}/homology/{genebuild_version}",
             'regulation': f"{common_path}/regulation",
             'variation': f"{common_path}/variation/{genebuild_version}"
+            'vep_genome': f"{base_path}/vep/genome",
+            'vep_annotation': f"{base_path}/vep/{genebuild_source_name}/geneset/{genebuild_version}",
         }
 
         # Check for invalid dataset type early
