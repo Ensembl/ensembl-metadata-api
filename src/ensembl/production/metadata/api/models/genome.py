@@ -68,8 +68,8 @@ class Genome(LoadAble, Base):
         except TypeError as e:
             logger.fatal(f"For genome {self.genome_uuid}, can't find genebuild_version directory")
             raise RuntimeError(e)
-        base_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}/"
-        common_path = f"{base_path}{genebuild_source_name}"
+        base_path = f"{self.organism.scientific_name.replace(' ', '_')}/{self.assembly.accession}"
+        common_path = f"{base_path}/{genebuild_source_name}"
         
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in root_datasets}
         unique_dataset_types.add('vep_genome')
