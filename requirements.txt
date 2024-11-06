@@ -10,7 +10,7 @@ charset-normalizer==3.3.2
     # via requests
 ensembl-py==2.1.3
     # via -r requirements.in
-ensembl-utils==0.4.4
+ensembl-utils==0.5.1
     # via -r requirements.in
 exceptiongroup==1.2.2
     # via pytest

@@ -1,5 +1,5 @@
 ensembl-py >= 2.1.0
-ensembl-utils >= 0.4.2
+ensembl-utils >= 0.5.0
 mysqlclient >= 1.4.6, < 2.3.0
 grpcio
 protobuf
