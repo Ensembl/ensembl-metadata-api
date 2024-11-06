@@ -104,7 +104,7 @@ class Genome(LoadAble, Base):
             'assembly': f"{base_path}/genome",
             'homologies': f"{common_path}/homology/{genebuild_version}",
             'regulation': f"{common_path}/regulation",
-            'variation': f"{common_path}/variation/{genebuild_version}"
+            'variation': f"{common_path}/variation/{genebuild_version}",
             'vep_genome': f"{base_path}/vep/genome",
             'vep_annotation': f"{base_path}/vep/{genebuild_source_name}/geneset/{genebuild_version}",
         }
