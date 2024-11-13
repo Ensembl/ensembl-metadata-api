@@ -508,12 +508,15 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 level = (session.execute(db.select(CoordSystem.name).filter(
                     CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
                 tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")
-            assembly = Assembly(
+                accession_body = self.get_meta_single_meta_key(species_id,
+                                                               "assembly.accession_body") if self.get_meta_single_meta_key(
+                    species_id, "assembly.accession_body") else "INSDC"
+                assembly = Assembly(
                 ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
                 accession=self.get_meta_single_meta_key(species_id, "assembly.accession"),
                 level=level,
                 name=self.get_meta_single_meta_key(species_id, "assembly.name"),
-                accession_body=self.get_meta_single_meta_key(species_id, "assembly.provider"),
+                    accession_body=accession_body,
                 assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
                 tol_id=tol_id,
                 alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
