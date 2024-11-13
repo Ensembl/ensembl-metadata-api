@@ -512,19 +512,19 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                                "assembly.accession_body") if self.get_meta_single_meta_key(
                     species_id, "assembly.accession_body") else "INSDC"
                 assembly = Assembly(
-                ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
-                accession=self.get_meta_single_meta_key(species_id, "assembly.accession"),
-                level=level,
-                name=self.get_meta_single_meta_key(species_id, "assembly.name"),
+                    ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
+                    accession=self.get_meta_single_meta_key(species_id, "assembly.accession"),
+                    level=level,
+                    name=self.get_meta_single_meta_key(species_id, "assembly.name"),
                     accession_body=accession_body,
-                assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
-                tol_id=tol_id,
-                alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
-                created=func.now(),
-                assembly_uuid=str(uuid.uuid4()),
-                url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
-                is_reference=is_reference
-            )
+                    assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
+                    tol_id=tol_id,
+                    alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
+                    created=func.now(),
+                    assembly_uuid=str(uuid.uuid4()),
+                    url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
+                    is_reference=is_reference
+                )
             dataset_factory = DatasetFactory(self.metadata_uri)
             dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "assembly").first()
             (dataset_uuid, assembly_dataset, assembly_dataset_attributes,
