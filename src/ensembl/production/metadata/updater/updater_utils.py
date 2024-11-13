@@ -14,7 +14,7 @@ from ensembl.production.metadata.api.models import Attribute, DatasetAttribute
 
 
 def update_attributes(dataset, attributes, session, replace=False):
-    # TODO If attributes already exist, update them. Add option to replace all.
+    # TODO If attributes already exist, update them.
     dataset_attributes = []
     if replace:
         for dataset_attribute in dataset.dataset_attributes:

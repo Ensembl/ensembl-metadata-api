@@ -502,7 +502,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             assembly_sequences = assembly.assembly_sequences
             return assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source
         else:
-            attributes = self.get_meta_list_from_prefix_meta_key(species_id, "assembly")
+            attributes = self.get_meta_list_from_prefix_meta_key(species_id, "assembly.")
             is_reference = 1 if self.get_meta_single_meta_key(species_id, "assembly.is_reference") else 0
             with self.db.session_scope() as session:
                 level = (session.execute(db.select(CoordSystem.name).filter(
