@@ -63,6 +63,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeBySpecificKeywordRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
                 _registered_method=True)
+        self.GetGenomesByReleaseVersion = channel.unary_stream(
+                '/ensembl_metadata.EnsemblMetadata/GetGenomesByReleaseVersion',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeByReleaseVersionRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
+                _registered_method=True)
         self.GetGenomesByAssemblyAccessionID = channel.unary_stream(
                 '/ensembl_metadata.EnsemblMetadata/GetGenomesByAssemblyAccessionID',
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.AssemblyAccessionIDRequest.SerializeToString,
@@ -197,6 +202,13 @@ class EnsemblMetadataServicer(object):
 
     def GetGenomesBySpecificKeyword(self, request, context):
         """Retrieve genomes by keyword search
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetGenomesByReleaseVersion(self, request, context):
+        """Retrieve genomes by release version
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -362,6 +374,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
             'GetGenomesBySpecificKeyword': grpc.unary_stream_rpc_method_handler(
                     servicer.GetGenomesBySpecificKeyword,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeBySpecificKeywordRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.SerializeToString,
+            ),
+            'GetGenomesByReleaseVersion': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetGenomesByReleaseVersion,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeByReleaseVersionRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.SerializeToString,
             ),
             'GetGenomesByAssemblyAccessionID': grpc.unary_stream_rpc_method_handler(
@@ -598,6 +615,33 @@ class EnsemblMetadata(object):
             target,
             '/ensembl_metadata.EnsemblMetadata/GetGenomesBySpecificKeyword',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeBySpecificKeywordRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetGenomesByReleaseVersion(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/ensembl_metadata.EnsemblMetadata/GetGenomesByReleaseVersion',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeByReleaseVersionRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.Genome.FromString,
             options,
             channel_credentials,

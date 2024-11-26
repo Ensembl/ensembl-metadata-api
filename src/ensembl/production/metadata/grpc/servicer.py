@@ -84,6 +84,13 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
             request.release_version
         )
 
+    def GetGenomesByReleaseVersion(self, request, context):
+        logger.debug(f"Received RPC for GetGenomesByReleaseVersion with request: {request}")
+        return utils.get_genomes_by_release_version_iterator(
+            self.db,
+            request.release_version
+        )
+
     def GetGenomeByName(self, request, context):
         logger.debug(f"Received RPC for GetGenomeByName with request: {request}")
         return utils.get_genome_by_name(self.db, request.ensembl_name, request.site_name, request.release_version)

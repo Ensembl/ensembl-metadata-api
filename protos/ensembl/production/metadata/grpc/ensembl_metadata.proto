@@ -46,6 +46,9 @@ service EnsemblMetadata {
   // Retrieve genomes by keyword search
   rpc GetGenomesBySpecificKeyword(GenomeBySpecificKeywordRequest) returns (stream Genome) {}
 
+  // Retrieve genomes by release version
+  rpc GetGenomesByReleaseVersion(GenomeByReleaseVersionRequest) returns (stream Genome) {}
+
   // Retrieve all genomes for a give assembly accession ID
   rpc GetGenomesByAssemblyAccessionID(AssemblyAccessionIDRequest) returns (stream Genome) {}
 
@@ -399,6 +402,13 @@ message GenomeBySpecificKeywordRequest {
   string scientific_parlance_name = 7;  // XOR
   string species_taxonomy_id = 8;       // XOR
   double release_version = 9;           // Optional
+}
+
+/*
+Get genome by release version request
+ */
+ message GenomeByReleaseVersionRequest {
+  double release_version = 1; // Optional
 }
 
 /*
