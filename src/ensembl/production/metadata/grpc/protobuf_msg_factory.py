@@ -276,6 +276,7 @@ def create_brief_genome_details(data=None):
         return ensembl_metadata_pb2.BriefGenomeDetails()
 
     assembly = create_assembly(data)
+    taxon = create_taxon(data)
     organism = create_organism(data)
     release = create_release(data)
 
@@ -283,6 +284,7 @@ def create_brief_genome_details(data=None):
         genome_uuid=data.Genome.genome_uuid,
         created=str(data.Genome.created),
         assembly=assembly,
+        taxon=taxon,
         organism=organism,
         release=release,
     )
