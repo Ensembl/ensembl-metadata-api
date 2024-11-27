@@ -363,16 +363,16 @@ def get_genomes_by_release_version_iterator(
 ):
     if (not release_version):
         logger.warning("Missing required release_version")
-        return msg_factory.create_genome()
+        return msg_factory.create_brief_genome_details()
 
     genome_results = db_conn.fetch_genome_by_release_version(release_version)
 
     if len(genome_results) > 0:
         for genome_row in genome_results:
-            yield msg_factory.create_genome(data=genome_row)
+            yield msg_factory.create_brief_genome_details(data=genome_row)
     else:
         logger.debug("No genomes were found.")
-        return msg_factory.create_genome()
+        return msg_factory.create_brief_genome_details()
 
 
 def get_genome_by_name(db_conn, biosample_id, site_name, release_version):

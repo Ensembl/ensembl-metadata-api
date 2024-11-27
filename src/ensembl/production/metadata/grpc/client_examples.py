@@ -32,7 +32,8 @@ from ensembl_metadata_pb2 import (
     GenomeAssemblySequenceRegionRequest,
     GenomeTagRequest,
     FTPLinksRequest,
-    ReleaseVersionRequest
+    ReleaseVersionRequest,
+    GenomeByReleaseVersionRequest
 )
 
 
@@ -102,6 +103,14 @@ def get_genome_by_keyword(stub):
     get_genomes_by_specific_keyword(stub, request6)
     print("**** Search by species_taxonomy_id ****")
     get_genomes_by_specific_keyword(stub, request7)
+
+
+def get_genomes_by_release_version(stub):
+    genome_request = GenomeByReleaseVersionRequest(release_version="110.1")
+    print("**** Get genomes by release_version ****")
+    genomes = stub.GetGenomesByReleaseVersion(genome_request)
+    for genome in genomes:
+        print(genome)
 
 
 def list_genome_sequences(stub):
@@ -509,6 +518,8 @@ def run():
         get_genomes(stub)
         print("-------------- Get Genome By Keyword --------------")
         get_genome_by_keyword(stub)
+        print("-------------- Get Genome By release_version --------------")
+        get_genomes_by_release_version(stub)
         print("-------------- List Genome Sequences --------------")
         list_genome_sequences(stub)
         print("-------------- List Genome Assembly Sequences --------------")

@@ -47,7 +47,7 @@ service EnsemblMetadata {
   rpc GetGenomesBySpecificKeyword(GenomeBySpecificKeywordRequest) returns (stream Genome) {}
 
   // Retrieve genomes by release version
-  rpc GetGenomesByReleaseVersion(GenomeByReleaseVersionRequest) returns (stream Genome) {}
+  rpc GetGenomesByReleaseVersion(GenomeByReleaseVersionRequest) returns (stream BriefGenomeDetails) {}
 
   // Retrieve all genomes for a give assembly accession ID
   rpc GetGenomesByAssemblyAccessionID(AssemblyAccessionIDRequest) returns (stream Genome) {}
@@ -408,7 +408,7 @@ message GenomeBySpecificKeywordRequest {
 Get genome by release version request
  */
  message GenomeByReleaseVersionRequest {
-  double release_version = 1; // Optional
+  double release_version = 1; // Mandatory
 }
 
 /*
