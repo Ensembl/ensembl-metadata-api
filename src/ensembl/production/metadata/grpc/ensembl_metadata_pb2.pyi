@@ -25,6 +25,28 @@ class Genome(_message.Message):
     release: Release
     def __init__(self, genome_uuid: _Optional[str] = ..., assembly: _Optional[_Union[Assembly, _Mapping]] = ..., taxon: _Optional[_Union[Taxon, _Mapping]] = ..., created: _Optional[str] = ..., organism: _Optional[_Union[Organism, _Mapping]] = ..., attributes_info: _Optional[_Union[AttributesInfo, _Mapping]] = ..., related_assemblies_count: _Optional[int] = ..., release: _Optional[_Union[Release, _Mapping]] = ...) -> None: ...
 
+class BriefGenomeDetails(_message.Message):
+    __slots__ = ("genome_uuid", "assembly", "created", "organism", "release")
+    GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
+    ASSEMBLY_FIELD_NUMBER: _ClassVar[int]
+    CREATED_FIELD_NUMBER: _ClassVar[int]
+    ORGANISM_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_FIELD_NUMBER: _ClassVar[int]
+    genome_uuid: str
+    assembly: Assembly
+    created: str
+    organism: Organism
+    release: Release
+    def __init__(self, genome_uuid: _Optional[str] = ..., assembly: _Optional[_Union[Assembly, _Mapping]] = ..., created: _Optional[str] = ..., organism: _Optional[_Union[Organism, _Mapping]] = ..., release: _Optional[_Union[Release, _Mapping]] = ...) -> None: ...
+
+class AttributesInfoByGenome(_message.Message):
+    __slots__ = ("genome_uuid", "attributes_info")
+    GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
+    ATTRIBUTES_INFO_FIELD_NUMBER: _ClassVar[int]
+    genome_uuid: str
+    attributes_info: AttributesInfo
+    def __init__(self, genome_uuid: _Optional[str] = ..., attributes_info: _Optional[_Union[AttributesInfo, _Mapping]] = ...) -> None: ...
+
 class Species(_message.Message):
     __slots__ = ("genome_uuid", "taxon_id", "scientific_name", "scientific_parlance_name", "genbank_common_name", "synonym")
     GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
@@ -188,11 +210,11 @@ class Attribute(_message.Message):
     def __init__(self, name: _Optional[str] = ..., label: _Optional[str] = ..., description: _Optional[str] = ..., type: _Optional[str] = ...) -> None: ...
 
 class AttributesInfo(_message.Message):
-    __slots__ = ("genebuild_method", "genebuild_method_display", "genebuild_last_geneset_update", "genebuild_version", "genebuild_provider_name", "genebuild_provider_url", "genebuild_sample_gene", "genebuild_sample_location", "assembly_level", "assembly_date", "assembly_provider_name", "assembly_provider_url", "variation_sample_variant")
+    __slots__ = ("genebuild_method", "genebuild_method_display", "genebuild_last_geneset_update", "genebuild_provider_version", "genebuild_provider_name", "genebuild_provider_url", "genebuild_sample_gene", "genebuild_sample_location", "assembly_level", "assembly_date", "assembly_provider_name", "assembly_provider_url", "variation_sample_variant")
     GENEBUILD_METHOD_FIELD_NUMBER: _ClassVar[int]
     GENEBUILD_METHOD_DISPLAY_FIELD_NUMBER: _ClassVar[int]
     GENEBUILD_LAST_GENESET_UPDATE_FIELD_NUMBER: _ClassVar[int]
-    GENEBUILD_VERSION_FIELD_NUMBER: _ClassVar[int]
+    GENEBUILD_PROVIDER_VERSION_FIELD_NUMBER: _ClassVar[int]
     GENEBUILD_PROVIDER_NAME_FIELD_NUMBER: _ClassVar[int]
     GENEBUILD_PROVIDER_URL_FIELD_NUMBER: _ClassVar[int]
     GENEBUILD_SAMPLE_GENE_FIELD_NUMBER: _ClassVar[int]
@@ -205,7 +227,7 @@ class AttributesInfo(_message.Message):
     genebuild_method: str
     genebuild_method_display: str
     genebuild_last_geneset_update: str
-    genebuild_version: str
+    genebuild_provider_version: str
     genebuild_provider_name: str
     genebuild_provider_url: str
     genebuild_sample_gene: str
@@ -215,36 +237,7 @@ class AttributesInfo(_message.Message):
     assembly_provider_name: str
     assembly_provider_url: str
     variation_sample_variant: str
-    def __init__(self, genebuild_method: _Optional[str] = ..., genebuild_method_display: _Optional[str] = ..., genebuild_last_geneset_update: _Optional[str] = ..., genebuild_version: _Optional[str] = ..., genebuild_provider_name: _Optional[str] = ..., genebuild_provider_url: _Optional[str] = ..., genebuild_sample_gene: _Optional[str] = ..., genebuild_sample_location: _Optional[str] = ..., assembly_level: _Optional[str] = ..., assembly_date: _Optional[str] = ..., assembly_provider_name: _Optional[str] = ..., assembly_provider_url: _Optional[str] = ..., variation_sample_variant: _Optional[str] = ...) -> None: ...
-
-class DatasetInfos(_message.Message):
-    __slots__ = ("genome_uuid", "dataset_type", "dataset_infos")
-    class DatasetInfo(_message.Message):
-        __slots__ = ("dataset_uuid", "dataset_name", "name", "type", "dataset_version", "dataset_label", "version", "value")
-        DATASET_UUID_FIELD_NUMBER: _ClassVar[int]
-        DATASET_NAME_FIELD_NUMBER: _ClassVar[int]
-        NAME_FIELD_NUMBER: _ClassVar[int]
-        TYPE_FIELD_NUMBER: _ClassVar[int]
-        DATASET_VERSION_FIELD_NUMBER: _ClassVar[int]
-        DATASET_LABEL_FIELD_NUMBER: _ClassVar[int]
-        VERSION_FIELD_NUMBER: _ClassVar[int]
-        VALUE_FIELD_NUMBER: _ClassVar[int]
-        dataset_uuid: str
-        dataset_name: str
-        name: str
-        type: str
-        dataset_version: str
-        dataset_label: str
-        version: float
-        value: str
-        def __init__(self, dataset_uuid: _Optional[str] = ..., dataset_name: _Optional[str] = ..., name: _Optional[str] = ..., type: _Optional[str] = ..., dataset_version: _Optional[str] = ..., dataset_label: _Optional[str] = ..., version: _Optional[float] = ..., value: _Optional[str] = ...) -> None: ...
-    GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
-    DATASET_TYPE_FIELD_NUMBER: _ClassVar[int]
-    DATASET_INFOS_FIELD_NUMBER: _ClassVar[int]
-    genome_uuid: str
-    dataset_type: str
-    dataset_infos: _containers.RepeatedCompositeFieldContainer[DatasetInfos.DatasetInfo]
-    def __init__(self, genome_uuid: _Optional[str] = ..., dataset_type: _Optional[str] = ..., dataset_infos: _Optional[_Iterable[_Union[DatasetInfos.DatasetInfo, _Mapping]]] = ...) -> None: ...
+    def __init__(self, genebuild_method: _Optional[str] = ..., genebuild_method_display: _Optional[str] = ..., genebuild_last_geneset_update: _Optional[str] = ..., genebuild_provider_version: _Optional[str] = ..., genebuild_provider_name: _Optional[str] = ..., genebuild_provider_url: _Optional[str] = ..., genebuild_sample_gene: _Optional[str] = ..., genebuild_sample_location: _Optional[str] = ..., assembly_level: _Optional[str] = ..., assembly_date: _Optional[str] = ..., assembly_provider_name: _Optional[str] = ..., assembly_provider_url: _Optional[str] = ..., variation_sample_variant: _Optional[str] = ...) -> None: ...
 
 class GenomeSequence(_message.Message):
     __slots__ = ("accession", "name", "sequence_location", "length", "chromosomal")
@@ -290,20 +283,43 @@ class GenomeAssemblySequenceRegion(_message.Message):
     chromosomal: bool
     def __init__(self, name: _Optional[str] = ..., md5: _Optional[str] = ..., length: _Optional[int] = ..., sha512t24u: _Optional[str] = ..., chromosomal: bool = ...) -> None: ...
 
+class DatasetInfo(_message.Message):
+    __slots__ = ("dataset_uuid", "dataset_name", "attribute_name", "attribute_type", "dataset_version", "dataset_label", "release_version", "attribute_value", "dataset_type_topic", "dataset_source_type", "dataset_type_name", "release_date", "release_type")
+    DATASET_UUID_FIELD_NUMBER: _ClassVar[int]
+    DATASET_NAME_FIELD_NUMBER: _ClassVar[int]
+    ATTRIBUTE_NAME_FIELD_NUMBER: _ClassVar[int]
+    ATTRIBUTE_TYPE_FIELD_NUMBER: _ClassVar[int]
+    DATASET_VERSION_FIELD_NUMBER: _ClassVar[int]
+    DATASET_LABEL_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_VERSION_FIELD_NUMBER: _ClassVar[int]
+    ATTRIBUTE_VALUE_FIELD_NUMBER: _ClassVar[int]
+    DATASET_TYPE_TOPIC_FIELD_NUMBER: _ClassVar[int]
+    DATASET_SOURCE_TYPE_FIELD_NUMBER: _ClassVar[int]
+    DATASET_TYPE_NAME_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_DATE_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_TYPE_FIELD_NUMBER: _ClassVar[int]
+    dataset_uuid: str
+    dataset_name: str
+    attribute_name: str
+    attribute_type: str
+    dataset_version: str
+    dataset_label: str
+    release_version: float
+    attribute_value: str
+    dataset_type_topic: str
+    dataset_source_type: str
+    dataset_type_name: str
+    release_date: str
+    release_type: str
+    def __init__(self, dataset_uuid: _Optional[str] = ..., dataset_name: _Optional[str] = ..., attribute_name: _Optional[str] = ..., attribute_type: _Optional[str] = ..., dataset_version: _Optional[str] = ..., dataset_label: _Optional[str] = ..., release_version: _Optional[float] = ..., attribute_value: _Optional[str] = ..., dataset_type_topic: _Optional[str] = ..., dataset_source_type: _Optional[str] = ..., dataset_type_name: _Optional[str] = ..., release_date: _Optional[str] = ..., release_type: _Optional[str] = ...) -> None: ...
+
 class Datasets(_message.Message):
     __slots__ = ("genome_uuid", "datasets")
-    class DatasetsEntry(_message.Message):
-        __slots__ = ("key", "value")
-        KEY_FIELD_NUMBER: _ClassVar[int]
-        VALUE_FIELD_NUMBER: _ClassVar[int]
-        key: str
-        value: DatasetInfos
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[DatasetInfos, _Mapping]] = ...) -> None: ...
     GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
     DATASETS_FIELD_NUMBER: _ClassVar[int]
     genome_uuid: str
-    datasets: _containers.MessageMap[str, DatasetInfos]
-    def __init__(self, genome_uuid: _Optional[str] = ..., datasets: _Optional[_Mapping[str, DatasetInfos]] = ...) -> None: ...
+    datasets: _containers.RepeatedCompositeFieldContainer[DatasetInfo]
+    def __init__(self, genome_uuid: _Optional[str] = ..., datasets: _Optional[_Iterable[_Union[DatasetInfo, _Mapping]]] = ...) -> None: ...
 
 class GenomeUUID(_message.Message):
     __slots__ = ("genome_uuid",)
@@ -353,6 +369,28 @@ class ReleaseVersion(_message.Message):
     release_version: float
     def __init__(self, release_version: _Optional[float] = ...) -> None: ...
 
+class DatasetAttributeValue(_message.Message):
+    __slots__ = ("attribute_name", "attribute_value", "dataset_version", "dataset_uuid", "dataset_type")
+    ATTRIBUTE_NAME_FIELD_NUMBER: _ClassVar[int]
+    ATTRIBUTE_VALUE_FIELD_NUMBER: _ClassVar[int]
+    DATASET_VERSION_FIELD_NUMBER: _ClassVar[int]
+    DATASET_UUID_FIELD_NUMBER: _ClassVar[int]
+    DATASET_TYPE_FIELD_NUMBER: _ClassVar[int]
+    attribute_name: str
+    attribute_value: str
+    dataset_version: str
+    dataset_uuid: str
+    dataset_type: str
+    def __init__(self, attribute_name: _Optional[str] = ..., attribute_value: _Optional[str] = ..., dataset_version: _Optional[str] = ..., dataset_uuid: _Optional[str] = ..., dataset_type: _Optional[str] = ...) -> None: ...
+
+class DatasetAttributesValues(_message.Message):
+    __slots__ = ("attributes", "release_version")
+    ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_VERSION_FIELD_NUMBER: _ClassVar[int]
+    attributes: _containers.RepeatedCompositeFieldContainer[DatasetAttributeValue]
+    release_version: float
+    def __init__(self, attributes: _Optional[_Iterable[_Union[DatasetAttributeValue, _Mapping]]] = ..., release_version: _Optional[float] = ...) -> None: ...
+
 class GenomeUUIDRequest(_message.Message):
     __slots__ = ("genome_uuid", "release_version")
     GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
@@ -361,13 +399,33 @@ class GenomeUUIDRequest(_message.Message):
     release_version: float
     def __init__(self, genome_uuid: _Optional[str] = ..., release_version: _Optional[float] = ...) -> None: ...
 
-class GenomeByKeywordRequest(_message.Message):
-    __slots__ = ("keyword", "release_version")
-    KEYWORD_FIELD_NUMBER: _ClassVar[int]
+class GenomeBySpecificKeywordRequest(_message.Message):
+    __slots__ = ("tolid", "assembly_accession_id", "assembly_name", "ensembl_name", "common_name", "scientific_name", "scientific_parlance_name", "species_taxonomy_id", "release_version")
+    TOLID_FIELD_NUMBER: _ClassVar[int]
+    ASSEMBLY_ACCESSION_ID_FIELD_NUMBER: _ClassVar[int]
+    ASSEMBLY_NAME_FIELD_NUMBER: _ClassVar[int]
+    ENSEMBL_NAME_FIELD_NUMBER: _ClassVar[int]
+    COMMON_NAME_FIELD_NUMBER: _ClassVar[int]
+    SCIENTIFIC_NAME_FIELD_NUMBER: _ClassVar[int]
+    SCIENTIFIC_PARLANCE_NAME_FIELD_NUMBER: _ClassVar[int]
+    SPECIES_TAXONOMY_ID_FIELD_NUMBER: _ClassVar[int]
     RELEASE_VERSION_FIELD_NUMBER: _ClassVar[int]
-    keyword: str
+    tolid: str
+    assembly_accession_id: str
+    assembly_name: str
+    ensembl_name: str
+    common_name: str
+    scientific_name: str
+    scientific_parlance_name: str
+    species_taxonomy_id: str
     release_version: float
-    def __init__(self, keyword: _Optional[str] = ..., release_version: _Optional[float] = ...) -> None: ...
+    def __init__(self, tolid: _Optional[str] = ..., assembly_accession_id: _Optional[str] = ..., assembly_name: _Optional[str] = ..., ensembl_name: _Optional[str] = ..., common_name: _Optional[str] = ..., scientific_name: _Optional[str] = ..., scientific_parlance_name: _Optional[str] = ..., species_taxonomy_id: _Optional[str] = ..., release_version: _Optional[float] = ...) -> None: ...
+
+class GenomeByReleaseVersionRequest(_message.Message):
+    __slots__ = ("release_version",)
+    RELEASE_VERSION_FIELD_NUMBER: _ClassVar[int]
+    release_version: float
+    def __init__(self, release_version: _Optional[float] = ...) -> None: ...
 
 class GenomeNameRequest(_message.Message):
     __slots__ = ("ensembl_name", "site_name", "release_version")
@@ -498,3 +556,17 @@ class ReleaseVersionRequest(_message.Message):
     dataset_type: str
     release_version: float
     def __init__(self, genome_uuid: _Optional[str] = ..., dataset_type: _Optional[str] = ..., release_version: _Optional[float] = ...) -> None: ...
+
+class DatasetAttributesValuesRequest(_message.Message):
+    __slots__ = ("genome_uuid", "dataset_type", "attribute_name", "release_version", "latest_only")
+    GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
+    DATASET_TYPE_FIELD_NUMBER: _ClassVar[int]
+    ATTRIBUTE_NAME_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_VERSION_FIELD_NUMBER: _ClassVar[int]
+    LATEST_ONLY_FIELD_NUMBER: _ClassVar[int]
+    genome_uuid: str
+    dataset_type: str
+    attribute_name: _containers.RepeatedScalarFieldContainer[str]
+    release_version: float
+    latest_only: bool
+    def __init__(self, genome_uuid: _Optional[str] = ..., dataset_type: _Optional[str] = ..., attribute_name: _Optional[_Iterable[str]] = ..., release_version: _Optional[float] = ..., latest_only: bool = ...) -> None: ...
