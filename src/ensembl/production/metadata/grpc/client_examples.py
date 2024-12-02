@@ -106,7 +106,7 @@ def get_genome_by_keyword(stub):
 
 
 def get_genomes_by_release_version(stub):
-    genome_request = GenomeByReleaseVersionRequest(release_version="110.1")
+    genome_request = GenomeByReleaseVersionRequest(release_version=110.1)
     print("**** Get genomes by release_version ****")
     genomes = stub.GetGenomesByReleaseVersion(genome_request)
     for genome in genomes:
