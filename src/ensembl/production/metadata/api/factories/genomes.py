@@ -39,7 +39,6 @@ class GenomeInputFilters:
     metadata_db_uri: str
     genome_uuid: List[str] = field(default_factory=list)
     dataset_uuid: List[str] = field(default_factory=list)
-    division: List[str] = field(default_factory=list)
     dataset_type: str = "assembly"
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
@@ -66,17 +65,9 @@ class GenomeFactory:
     def _apply_filters(query, filters):
 
         if filters.organism_group_type:
+            query = query.join(Organism.organism_group_members)
+            query = query.join(OrganismGroupMember.organism_group)
             query = query.filter(OrganismGroup.type == filters.organism_group_type)
-
-        if filters.run_all:
-            filters.division = [
-                'EnsemblBacteria',
-                'EnsemblVertebrates',
-                'EnsemblPlants',
-                'EnsemblProtists',
-                'EnsemblMetazoa',
-                'EnsemblFungi',
-            ]
 
         if filters.genome_uuid:
             query = query.filter(Genome.genome_uuid.in_(filters.genome_uuid))
@@ -126,8 +117,6 @@ class GenomeFactory:
             .select_from(Genome) \
             .join(Genome.assembly) \
             .join(Genome.organism) \
-            .join(Organism.organism_group_members) \
-            .join(OrganismGroupMember.organism_group) \
             .join(Genome.genome_datasets) \
             .join(GenomeDataset.dataset) \
             .join(Dataset.dataset_source) \
