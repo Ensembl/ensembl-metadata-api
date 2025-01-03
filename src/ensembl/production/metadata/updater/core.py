@@ -551,11 +551,12 @@ class CoreMetaUpdater(BaseMetaUpdater):
         provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
         last_geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
 
-        provider_name_attr = aliased(DatasetAttribute)
-        last_geneset_update_attr = aliased(DatasetAttribute)
+        provider_name_attr = aliased(DatasetAttribute, name="provider_name_attr")
+        last_geneset_update_attr = aliased(DatasetAttribute, name="last_geneset_update_attr")
 
+        # Query for an existing combination
         existing_combination = (
-            meta_session.query(Genome)
+            meta_session.query(Genome.genome_id)
             .join(GenomeDataset, Genome.genome_id == GenomeDataset.genome_id)
             .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
             .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
@@ -563,19 +564,19 @@ class CoreMetaUpdater(BaseMetaUpdater):
             .join(last_geneset_update_attr, Dataset.dataset_id == last_geneset_update_attr.dataset_id)
             .filter(
                 Dataset.name == "genebuild",
-                Assembly.accession == assembly_accession,  # Correctly linking the assembly_accession
+                Assembly.accession == assembly_accession,
                 provider_name_attr.value == provider_name,
                 last_geneset_update_attr.value == last_geneset_update,
                 provider_name_attr.attribute.has(Attribute.name == "genebuild.provider_name"),
                 last_geneset_update_attr.attribute.has(Attribute.name == "genebuild.last_geneset_update"),
             )
-            .exists()
         )
-        if meta_session.query(existing_combination).scalar():
-            exceptions.MetaException(
-                "genebuild.provider_name, genebuild.last_geneset_update, and assembly.accession can"
-                " not match existing records. If this is an update, please update genebuild.last_geneset_update with the "
-                "current date. "
+
+        test_for_existing = meta_session.query(existing_combination.exists()).scalar()
+        # Check if the combination exists
+        if test_for_existing:
+            raise exceptions.MetaException(
+                "genebuild.provider_name, genebuild.last_geneset_update, and assembly.accession cannot match existing records."
             )
 
         # The genebuild accession is formed by combining the assembly accession and the genebuild version

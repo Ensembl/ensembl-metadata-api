@@ -12,17 +12,16 @@
 
 
 import json
-import sys
 
 from ensembl.utils.database import DBConnection
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
+from ensembl.production.metadata.api.models import EnsemblRelease
 
 
 def main(json_input, release_id, conn_uri, status="Submitted"):
     with open(json_input, 'r') as f:
         data = json.load(f)
-    release = release_id
     metadata_db = DBConnection(conn_uri)
 
     with metadata_db.session_scope() as session:
@@ -36,6 +35,7 @@ def main(json_input, release_id, conn_uri, status="Submitted"):
             label = item["label"]
             version = item.get("version", None)
             dataset_factory = DatasetFactory(conn_uri)
+            release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == release_id).one_or_none()
             # Create the main dataset
             dataset_uuid, new_dataset, new_dataset_attributes, new_genome_dataset = dataset_factory.create_dataset(
                 session=session,
@@ -67,12 +67,14 @@ def main(json_input, release_id, conn_uri, status="Submitted"):
 
 if __name__ == "__main__":
     # Expecting JSON input, release id, and connection URI as command-line arguments
-    if len(sys.argv) < 4:
-        print("Usage: python create_datasets.py <json_input> <release_id> <conn_uri> <status(optional)>")
-        sys.exit(1)
+    # if len(sys.argv) < 4:
+    #     print("Usage: python create_datasets.py <json_input> <release_id> <conn_uri> <status(optional)>")
+    #     sys.exit(1)
 
-    json_input = sys.argv[1]
-    release_id = sys.argv[2]
-    conn_uri = sys.argv[3]
-
+    # json_input = sys.argv[1]
+    # release_id = sys.argv[2]
+    # conn_uri = sys.argv[3]
+    json_input = "/home/danielp/PycharmProjects/ensembl-metadata-api/src/ensembl/production/metadata/scripts/human_pangenome_variation_stats.json"
+    release_id = 4
+    conn_uri = ""
     main(json_input, release_id, conn_uri)
