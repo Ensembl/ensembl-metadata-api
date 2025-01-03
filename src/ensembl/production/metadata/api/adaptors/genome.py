@@ -432,6 +432,38 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(genome_query).all()
 
+
+    def fetch_genome_by_release_version(self, release_version):
+        """
+        Fetches genomes based on a specific release version.
+
+        Args:            
+            release_version (Float): Release version to filter by.
+
+        Returns:
+            list: A list of fetched genomes matching the release version.
+        """
+
+        genome_query = db.select(Genome, Assembly, Organism, EnsemblRelease).select_from(Genome) \
+            .join(Organism, Genome.organism_id == Organism.organism_id) \
+            .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+        genome_query = genome_query.add_columns(EnsemblSite) \
+            .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id) \
+            .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
+            .join(EnsemblSite,
+                  EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
+        if not cfg.allow_unreleased:
+            logger.debug("NOT Allowed Unreleased")
+            genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        if release_version is not None and release_version > 0:
+            genome_query = genome_query.where(EnsemblRelease.version == release_version)        
+
+        logger.debug(f"by release version: {release_version}")
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            return session.execute(genome_query).all()
+            
+
     def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None, assembly_accession=None,
                         assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
         """

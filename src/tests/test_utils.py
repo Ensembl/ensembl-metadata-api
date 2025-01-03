@@ -354,7 +354,7 @@ class TestUtils:
             ))
         logger.debug(f"Initial {output}")
         output = json.loads(output)
-        expected_keys = ['assembly', 'created', 'genomeUuid', 'organism', 'release']
+        expected_keys = ['assembly', 'taxon', 'created', 'genomeUuid', 'organism', 'release']
         logger.debug(f"Output {output}")
         if actual is not None:
             assert len(output.keys()) == len(expected_keys)
