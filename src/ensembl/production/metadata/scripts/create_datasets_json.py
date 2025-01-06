@@ -66,15 +66,12 @@ def main(json_input, release_id, conn_uri, status="Submitted"):
 
 
 if __name__ == "__main__":
-    # Expecting JSON input, release id, and connection URI as command-line arguments
-    # if len(sys.argv) < 4:
-    #     print("Usage: python create_datasets.py <json_input> <release_id> <conn_uri> <status(optional)>")
-    #     sys.exit(1)
+    #Expecting JSON input, release id, and connection URI as command-line arguments
+    if len(sys.argv) < 4:
+        print("Usage: python create_datasets.py <json_input> <release_id> <conn_uri> <status(optional)>")
+        sys.exit(1)
 
-    # json_input = sys.argv[1]
-    # release_id = sys.argv[2]
-    # conn_uri = sys.argv[3]
-    json_input = "/home/danielp/PycharmProjects/ensembl-metadata-api/src/ensembl/production/metadata/scripts/human_pangenome_variation_stats.json"
-    release_id = 4
-    conn_uri = ""
+    json_input = sys.argv[1]
+    release_id = sys.argv[2]
+    conn_uri = sys.argv[3]
     main(json_input, release_id, conn_uri)
