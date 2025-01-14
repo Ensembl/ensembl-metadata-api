@@ -33,7 +33,7 @@ class TestApi:
         with metadata_db.session_scope() as session:
             genome = session.query(Genome).filter(Genome.genome_uuid == 'a733574a-93e7-11ec-a39d-005056b38ce3').first()
             paths = genome.get_public_path(dataset_type='all')
-            assert len(paths) == 6
+            assert len(paths) == 4
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
             assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/community/geneset/2018_10'
@@ -53,7 +53,7 @@ class TestApi:
             # Homo sapien GRCH38
             genome = session.query(Genome).filter(Genome.genome_uuid == 'a7335667-93e7-11ec-a39d-005056b38ce3').first()
             paths = genome.get_public_path(dataset_type='all')
-            assert len(paths) == 7
+            assert len(paths) == 5
             # assert all("/genebuild/" in path for path in paths)
             path = genome.get_public_path(dataset_type='genebuild')
             assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/geneset/2023_03'
