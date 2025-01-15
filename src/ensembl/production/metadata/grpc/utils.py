@@ -15,17 +15,26 @@ import uuid
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.models import Genome
-from ensembl.production.metadata.api.adaptors import GenomeAdaptor
+from ensembl.production.metadata.api.adaptors import GenomeAdaptor, BaseAdaptor
 from ensembl.production.metadata.api.adaptors import ReleaseAdaptor
 from ensembl.production.metadata.grpc.config import MetadataConfig
 
 logger = logging.getLogger(__name__)
 
 
-def connect_to_db():
-    conn = GenomeAdaptor(
+from typing import Type
+
+def connect_to_db(adaptor_class: Type[BaseAdaptor], **kwargs):
+    """
+    Connect to the database using the specified adaptor class.
+
+    :param adaptor_class: The class of the adaptor to instantiate (e.g., GenomeAdaptor, VepAdaptor).
+    :param kwargs: Additional arguments to pass to the adaptor's constructor.
+    :return: An instance of the specified adaptor class.
+    """
+    conn = adaptor_class(
         metadata_uri=MetadataConfig().metadata_uri,
-        taxonomy_uri=MetadataConfig().taxon_uri
+        **kwargs
     )
     return conn
 
@@ -645,3 +654,19 @@ def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_ve
 
     logger.debug("No attribute values were found.")
     return msg_factory.create_attribute_value()
+
+
+def get_vep_paths_by_uuid(db_conn, genome_uuid):
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
+        return msg_factory.create_vep_file_paths()
+
+    try:
+        vep_paths = db_conn.fetch_vep_locations(genome_uuid=genome_uuid)
+        if vep_paths:
+            return msg_factory.create_vep_file_paths(vep_paths)
+    except (ValueError, RuntimeError) as error:
+        logger.error(error)
+
+    return msg_factory.create_vep_paths()
+

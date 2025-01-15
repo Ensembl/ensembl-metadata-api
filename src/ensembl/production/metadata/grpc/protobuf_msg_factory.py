@@ -520,3 +520,12 @@ def create_attribute_value(data=None, attribute_names=None, latest_only=False):
         attributes=attributes_list,
         release_version=data[0].release.version
     )
+
+def create_vep_file_paths(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.VepFilePaths()
+
+    return ensembl_metadata_pb2.VepFilePaths(
+        faa_location=data['faa_location'],
+        gff_location=data['gff_location']
+    )

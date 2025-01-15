@@ -106,6 +106,9 @@ service EnsemblMetadata {
 
   // Get attributes by genome UUID
   rpc GetAttributesValuesByUUID(DatasetAttributesValuesRequest) returns (DatasetAttributesValues) {}
+
+  // Get VEP Paths by genome UUID
+  rpc GetVepFilePathsByUUID(GenomeUUIDRequest) returns (VepFilePaths) {}
 }
 
 /*
@@ -326,6 +329,15 @@ message Datasets {
 }
 
 /*
+VEP paths associated to the provided genome_uuid
+This response will expand in the future
+ */
+message VepFilePaths {
+  string faa_location = 1;
+  string gff_location = 2;
+}
+
+/*
 Genome UUID
  */
 message GenomeUUID {
@@ -384,7 +396,7 @@ If release_version is not given, the current version is used.
  */
 message GenomeUUIDRequest {
   string genome_uuid = 1;     // Mandatory
-  double release_version = 3; // Optional
+  double release_version = 2; // Optional
 }
 
 /*
