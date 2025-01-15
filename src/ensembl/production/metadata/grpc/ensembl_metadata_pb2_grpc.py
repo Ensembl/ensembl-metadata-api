@@ -165,7 +165,7 @@ class EnsemblMetadataStub(object):
                 _registered_method=True)
         self.GetVepFilePathsByUUID = channel.unary_unary(
                 '/ensembl_metadata.EnsemblMetadata/GetVepFilePathsByUUID',
-                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDOnlyRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.VepFilePaths.FromString,
                 _registered_method=True)
 
@@ -490,7 +490,7 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
             ),
             'GetVepFilePathsByUUID': grpc.unary_unary_rpc_method_handler(
                     servicer.GetVepFilePathsByUUID,
-                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.FromString,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDOnlyRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.VepFilePaths.SerializeToString,
             ),
     }
@@ -1198,7 +1198,7 @@ class EnsemblMetadata(object):
             request,
             target,
             '/ensembl_metadata.EnsemblMetadata/GetVepFilePathsByUUID',
-            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDOnlyRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.VepFilePaths.FromString,
             options,
             channel_credentials,

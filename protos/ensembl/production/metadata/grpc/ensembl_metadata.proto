@@ -108,7 +108,7 @@ service EnsemblMetadata {
   rpc GetAttributesValuesByUUID(DatasetAttributesValuesRequest) returns (DatasetAttributesValues) {}
 
   // Get VEP Paths by genome UUID
-  rpc GetVepFilePathsByUUID(GenomeUUIDRequest) returns (VepFilePaths) {}
+  rpc GetVepFilePathsByUUID(GenomeUUIDOnlyRequest) returns (VepFilePaths) {}
 }
 
 /*
@@ -398,6 +398,14 @@ message GenomeUUIDRequest {
   string genome_uuid = 1;     // Mandatory
   double release_version = 2; // Optional
 }
+
+/*
+Genome UUID filter without release
+ */
+message GenomeUUIDOnlyRequest {
+  string genome_uuid = 1;     // Mandatory
+}
+
 
 /*
 Genome specific keyword filter.

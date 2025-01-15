@@ -668,5 +668,5 @@ def get_vep_paths_by_uuid(db_conn, genome_uuid):
     except (ValueError, RuntimeError) as error:
         logger.error(error)
 
-    return msg_factory.create_vep_paths()
+    return msg_factory.create_vep_file_paths()
 
