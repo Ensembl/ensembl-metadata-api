@@ -72,8 +72,6 @@ class Genome(LoadAble, Base):
         common_path = f"{base_path}/{genebuild_source_name}"
         
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in root_datasets}
-        unique_dataset_types.add('vep_genome')
-        unique_dataset_types.add('vep_annotation')
 
         if 'regulatory_features' in unique_dataset_types or 'regulation_build' in unique_dataset_types:
             unique_dataset_types.discard('regulatory_features')
@@ -105,8 +103,6 @@ class Genome(LoadAble, Base):
             'homologies': f"{common_path}/homology/{genebuild_version}",
             'regulation': f"{common_path}/regulation",
             'variation': f"{common_path}/variation/{genebuild_version}",
-            'vep_genome': f"{base_path}/vep/genome",
-            'vep_annotation': f"{base_path}/vep/{genebuild_source_name}/geneset/{genebuild_version}",
         }
 
         # Check for invalid dataset type early

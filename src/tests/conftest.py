@@ -22,6 +22,7 @@ import sqlalchemy as db
 from _pytest.config import Config
 from grpc_reflection.v1alpha import reflection
 
+from ensembl.production.metadata.api.adaptors.vep import VepAdaptor
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.factories.genomes import GenomeFactory
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
@@ -47,6 +48,14 @@ def genome_conn(test_dbs):
         taxonomy_uri=test_dbs["ncbi_taxonomy"].dbc.url
     )
     yield genome_conn
+
+@pytest.fixture(scope="function")
+def vep_conn(test_dbs):
+    vep_conn = VepAdaptor(
+        metadata_uri=test_dbs["ensembl_genome_metadata"].dbc.url,
+        file="all"
+    )
+    yield vep_conn
 
 
 @pytest.fixture(scope="function")

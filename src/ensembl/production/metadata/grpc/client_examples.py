@@ -497,6 +497,22 @@ def get_brief_genome_details_by_uuid(stub):
     print(brief_genome_details2)
 
 
+def get_vep_file_paths_by_uuid(stub):
+    request1 = GenomeUUIDRequest(
+        genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
+    )
+    vep_paths1 = stub.GetVepFilePathsByUUID(request1)
+    print("**** VEP Paths By genome_uuid ****")
+    print(vep_paths1)
+
+    request2 = GenomeUUIDRequest(
+        genome_uuid="i-dont-exist-as-uuid"
+    )
+    vep_paths2 = stub.GetVepFilePathsByUUID(request2)
+    print("**** VEP Paths By genome_uuid (non existing UUID) ****")
+    print(vep_paths2)
+
+
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
         stub = ensembl_metadata_pb2_grpc.EnsemblMetadataStub(channel)
@@ -548,6 +564,8 @@ def run():
         get_attributes_by_genome_uuid(stub)
         print("-------------- Get Brief Genome Details By UUID --------------")
         get_brief_genome_details_by_uuid(stub)
+        print("-------------- Get VEP File Paths By UUID --------------")
+        get_vep_file_paths_by_uuid(stub)
 
 
 if __name__ == "__main__":
