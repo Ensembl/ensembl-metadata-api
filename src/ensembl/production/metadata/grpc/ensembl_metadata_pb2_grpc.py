@@ -270,6 +270,7 @@ class EnsemblMetadataServicer(object):
 
     def GetRelease(self, request, context):
         """Retrieve release details.
+        TODO: Should return release_type and integrated and partial are both returned when is_current is True
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

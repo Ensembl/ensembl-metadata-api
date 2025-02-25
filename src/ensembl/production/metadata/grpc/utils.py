@@ -286,6 +286,8 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
         if len(genome_uuid_result) > 1:
             logger.warning(f"Multiple results found for genome tag: {genome_uuid_or_tag}. Using the first result.")
 
+        # TODO: [Integrated Release] If it's a Tag, we would like to get the latest integrated release only
+        # Question: Are all genome having tags are in integrated? if so use release_type param
         genome_uuid = genome_uuid_result[0].Genome.genome_uuid
 
     # Fetch genome details using genome_uuid and release_version

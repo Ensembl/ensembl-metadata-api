@@ -71,6 +71,7 @@ service EnsemblMetadata {
   rpc GetGenomeByName(GenomeNameRequest) returns (Genome) {}
 
   // Retrieve release details.
+  // TODO: Should return release_type and integrated and partial are both returned when is_current is True
   rpc GetRelease(ReleaseRequest) returns (stream Release) {}
 
   // Retrieve release details for a genome.
@@ -226,10 +227,11 @@ message Release {
   double release_version = 1;
   string release_date = 2;
   string release_label = 3;
-  bool is_current = 4;
-  string site_name = 5;
-  string site_label = 6;
-  string site_uri = 7;
+  string release_type = 4;
+  bool is_current = 5;
+  string site_name = 6;
+  string site_label = 7;
+  string site_uri = 8;
 }
 
 message Organism {

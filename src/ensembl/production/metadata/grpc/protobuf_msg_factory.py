@@ -343,6 +343,7 @@ def create_release(data=None):
         release_version=data.EnsemblRelease.version,
         release_date=str(data.EnsemblRelease.release_date) if data.EnsemblRelease.release_date else "Unreleased",
         release_label=data.EnsemblRelease.label,
+        release_type=data.EnsemblRelease.release_type,
         is_current=data.EnsemblRelease.is_current,
         site_name=data.EnsemblSite.name,
         site_label=data.EnsemblSite.label,
