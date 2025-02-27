@@ -472,14 +472,18 @@ def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name):
     return msg_factory.create_genome_assembly_sequence_region()
 
 
-def release_iterator(metadata_db, site_name, release_version, current_only):
+def release_iterator(metadata_db, site_name, release_label, current_only):
     conn = ReleaseAdaptor(metadata_uri=MetadataConfig().metadata_uri)
 
-    # set release_version/site_name to None if it's an empty list
-    release_version = release_version or None
+    # set release_label/site_name to None if it's an empty list
+    release_label = release_label or None
     site_name = site_name or None
 
-    release_results = conn.fetch_releases(release_version=release_version, current_only=current_only)
+    release_results = conn.fetch_releases(
+        site_name=site_name,
+        release_label=release_label,
+        current_only=current_only
+    )
 
     for result in release_results:
         logger.debug(

@@ -108,7 +108,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
     def GetRelease(self, request, context):
         logger.debug(f"Received RPC for GetRelease with request: {request}")
         return utils.release_iterator(
-            self.genome_adaptor, request.site_name, request.release_version, request.current_only
+            self.genome_adaptor, request.site_name, request.release_label, request.current_only
         )
 
     def GetReleaseByUUID(self, request, context):
