@@ -523,6 +523,7 @@ class TestUtils:
                 'isCurrent': True,
                 'releaseDate': '2023-10-18',
                 'releaseLabel': 'MVP Beta-1',
+                'releaseType': 'partial',
                 'releaseVersion': 110.1,
                 'siteLabel': 'MVP Ensembl',
                 'siteName': 'Ensembl',
@@ -592,6 +593,7 @@ class TestUtils:
             'release': {
                 'releaseDate': '2023-06-15',
                 'releaseLabel': 'First Beta',
+                'releaseType': 'partial',
                 'releaseVersion': 108.0,
                 'siteLabel': 'MVP Ensembl',
                 'siteName': 'Ensembl',

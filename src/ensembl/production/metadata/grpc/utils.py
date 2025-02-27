@@ -287,7 +287,7 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
             logger.warning(f"Multiple results found for genome tag: {genome_uuid_or_tag}. Using the first result.")
 
         # TODO: [Integrated Release] If it's a Tag, we would like to get the latest integrated release only
-        # Question: Are all genome having tags are in integrated? if so use release_type param
+        # Question: Are all genome linked to a tag/url_name integrated (not partial)? if so use release_type param
         genome_uuid = genome_uuid_result[0].Genome.genome_uuid
 
     # Fetch genome details using genome_uuid and release_version
@@ -475,7 +475,7 @@ def genome_assembly_sequence_region(db_conn, genome_uuid, sequence_region_name):
 def release_iterator(metadata_db, site_name, release_label, current_only):
     conn = ReleaseAdaptor(metadata_uri=MetadataConfig().metadata_uri)
 
-    # set release_label/site_name to None if it's an empty list
+    # set release_label and site_name to None if it's an empty list
     release_label = release_label or None
     site_name = site_name or None
 

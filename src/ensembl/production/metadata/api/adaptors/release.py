@@ -95,13 +95,11 @@ class ReleaseAdaptor(BaseAdaptor):
                 EnsemblRelease.release_type.in_(release_type)
             )
 
-        print(f"$$$$$ release_label ---> {release_label}")
         if release_label is not None:
             release_select = release_select.filter(
                 EnsemblRelease.label.in_(release_label)
             )
 
-        print(f"$$$$$ site_name ---> {site_name}")
         if site_name is not None:
             release_select = release_select.filter(
                 EnsemblSite.name.in_(site_name)
