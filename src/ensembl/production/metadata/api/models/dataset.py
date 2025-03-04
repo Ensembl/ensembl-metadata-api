@@ -33,6 +33,7 @@ class DatasetStatus(enum.Enum):
     PROCESSING = "Processing"
     PROCESSED = "Processed"
     RELEASED = "Released"
+    FAULTY = "Faulty"
 
 
 DatasetStatusType = sqlalchemy.types.Enum(

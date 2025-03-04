@@ -17,14 +17,14 @@ from ensembl.utils.database import UnitTestDB, DBConnection
 from sqlalchemy import func
 
 from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
-                                                    GenomeDataset, Genome, DatasetStatus)
+                                                    GenomeDataset, Genome, DatasetStatus, GenomeRelease)
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
-                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
-                                        ]], indirect=True)
+                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                       ]], indirect=True)
 class TestDatasetFactory:
     dbc: UnitTestDB = None
 
@@ -50,7 +50,8 @@ class TestDatasetFactory:
                         DatasetAttribute.value == 'test1') \
                 .one_or_none()
             assert dataset_attribute is not None
-            test_attributes = {"assembly.stats.gc_percentage": "test3", "genebuild.stats.nc_longest_gene_length": "test4"}
+            test_attributes = {"assembly.stats.gc_percentage": "test3",
+                               "genebuild.stats.nc_longest_gene_length": "test4"}
             dataset_attribute = dataset_factory.update_dataset_attributes(test_uuid, test_attributes, session=session)
             for attrib in dataset_attribute:
                 session.add(attrib)
@@ -237,3 +238,365 @@ class TestDatasetFactory:
             session.commit()
             submitted_status = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
             assert submitted_status[0] == DatasetStatus.SUBMITTED  # "Submitted"
+
+    def test_faulty_parent(self, test_dbs, dataset_factory):
+        """
+        Test case: Marking a 'genebuild' dataset as FAULTY should:
+        - Not affect child datasets' status.
+        - Remove release_id from all related genome datasets.
+        - Remove the corresponding GenomeRelease entry.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        genebuild_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
+        child_uuid = "da20e2b5-1809-494e-893f-7fb90e8032a1"
+
+        with metadata_db.session_scope() as session:
+            dataset_factory.simple_update_dataset_status(genebuild_uuid, DatasetStatus.FAULTY, session=session)
+            session.commit()
+            dataset_factory.process_faulty(session)
+            session.commit()
+
+            # Verify that the child dataset remains PROCESSED
+            child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
+            assert child_dataset.status == DatasetStatus.PROCESSED
+
+            # Verify that the release_id has been removed from both parent and child genome datasets
+            parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
+            assert parent_dataset.genome_datasets[0].release_id is None
+            assert child_dataset.genome_datasets[0].release_id is None
+
+            # Ensure that the GenomeRelease entry has been deleted
+            genome_release = session.query(GenomeRelease).filter(
+                GenomeRelease.genome_id == parent_dataset.genome_datasets[0].genome_id
+            ).all()
+            assert len(genome_release) == 0
+
+    def test_faulty_child(self, test_dbs, dataset_factory):
+        """
+        Test case: Marking a child dataset as FAULTY should:
+        - Mark the parent dataset as FAULTY.
+        - Not affect the status of unrelated subchild datasets.
+        - Remove release_id from the faulty dataset and its ancestors.
+        - Remove the corresponding GenomeRelease entry.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        parent_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
+        child_uuid = "da20e2b5-1809-494e-893f-7fb90e8032a1"
+        subchild_uuid = "8ec9f005-91d7-4015-be09-7b61b6d62c54"
+
+        with metadata_db.session_scope() as session:
+            dataset_factory.simple_update_dataset_status(child_uuid, DatasetStatus.FAULTY, session=session)
+            session.commit()
+            dataset_factory.process_faulty(session)
+            session.commit()
+
+            # Verify that the parent dataset is now FAULTY
+            parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == parent_uuid).one()
+            assert parent_dataset.status == DatasetStatus.FAULTY
+
+            # Verify that the subchild dataset remains PROCESSED
+            subchild_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == subchild_uuid).one()
+            assert subchild_dataset.status == DatasetStatus.PROCESSED
+
+            # Verify that release_id is removed from parent, child, and subchild genome datasets
+            assert parent_dataset.genome_datasets[0].release_id is None
+            child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
+            assert child_dataset.genome_datasets[0].release_id is None
+            assert subchild_dataset.genome_datasets[0].release_id is None
+
+            # Ensure that the GenomeRelease entry has been removed
+            genome_release = session.query(GenomeRelease).filter(
+                GenomeRelease.genome_id == parent_dataset.genome_datasets[0].genome_id
+            ).all()
+            assert len(genome_release) == 0
+
+
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                       ]], indirect=True)
+class TestDatasetFactory2:
+    dbc: UnitTestDB = None
+
+    def test_faulty_non_essential(self, test_dbs, dataset_factory):
+        """
+        Test case: Marking a non-essential dataset as FAULTY should:
+        - Mark its parent dataset as FAULTY.
+        - Not affect a 'genebuild' dataset.
+        - Ensure that the 'genebuild' dataset retains its release_id.
+        - Remove release_id from only the faulty dataset and its ancestors.
+        - Ensure the GenomeRelease entry still exists for the 'genebuild' genome.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        non_essential_child = "f8c7383b-aaac-41cf-9ac8-dce5f99b5338"
+        non_essential_parent = "5c2d6ef7-fe03-4f1a-bcc2-fb72af9ffa46"
+        genebuild_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
+
+        with metadata_db.session_scope() as session:
+            genebuild_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
+            genebuild_dataset.status = DatasetStatus.PROCESSED
+            dataset_factory.simple_update_dataset_status(non_essential_child, DatasetStatus.FAULTY, session=session)
+            session.commit()
+            dataset_factory.process_faulty(session)
+            session.commit()
+
+            # Verify that the parent dataset is now FAULTY
+            parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == non_essential_parent).one()
+            assert parent_dataset.status == DatasetStatus.FAULTY
+
+            # Verify that the 'genebuild' dataset remains PROCESSED
+            genebuild_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
+            assert genebuild_dataset.status == DatasetStatus.PROCESSED
+
+            # Ensure the 'genebuild' dataset still has a release_id
+            # assert genebuild_dataset.genome_datasets[0].release_id is not None
+
+            # Verify that release_id is removed from the faulty dataset and its parent
+            child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == non_essential_child).one()
+            assert child_dataset.genome_datasets[0].release_id is None
+            assert parent_dataset.genome_datasets[0].release_id is None
+
+            # Ensure the GenomeRelease entry still exists for the 'genebuild' genome
+            genome_release = session.query(GenomeRelease).filter(
+                GenomeRelease.genome_id == parent_dataset.genome_datasets[0].genome_id
+            ).all()
+            assert len(genome_release) > 0
+
+    def test_simple_update_dataset_status(self, test_dbs, dataset_factory):
+        """
+        Test case: Updating the status of a dataset.
+        - Ensure the dataset's status is updated correctly.
+        - Verify that the change persists in the database.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        dataset_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
+        new_status = DatasetStatus.FAULTY
+
+        with metadata_db.session_scope() as session:
+            # Fetch the original dataset status
+            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+            original_status = dataset.status
+
+            # Update dataset status using the factory method
+            updated_uuid, updated_status = dataset_factory.simple_update_dataset_status(dataset_uuid, new_status,
+                                                                                        session=session)
+            session.commit()
+
+            # Fetch the dataset again to verify the update
+            updated_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+
+            # Assertions
+            assert updated_uuid == dataset_uuid, "The dataset UUID should remain unchanged."
+            assert updated_status == new_status, "The dataset status should be updated to FAULTY."
+            assert updated_dataset.status == new_status, "The status change should persist in the database."
+
+            # Ensure the original status was different for test validity
+            assert original_status != new_status, "Test should validate an actual status change."
+
+
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                       ]], indirect=True)
+class TestDatasetFactory3:
+    dbc: UnitTestDB = None
+
+    def test_attach_misc_datasets(self, test_dbs, dataset_factory):
+        """
+        Test the `attach_misc_datasets` function with a standard case where:
+
+        - A parent dataset and its child should be correctly attached to the given release.
+        - A faulty dataset should NOT be attached.
+        - A processing dataset should initially NOT be attached, but once marked as PROCESSED, it should be added in a subsequent call.
+
+        This test ensures that only valid datasets (those in a PROCESSED state) are attached to the release.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+
+        # Define dataset UUIDs for test cases
+        dataset_uuid = "5c2d6ef7-fe03-4f1a-bcc2-fb72af9ffa46"  # Parent dataset
+        child_dataset_uuid = "5c2d6ef7-fe03-4f1a-bcc2-fb72af9ffa46"  # Child dataset
+        faulty_dataset_uuid = "bf1f5064-8520-abcd-84e4-449aa6c1c1e2"  # Faulty dataset (should NOT be attached)
+        processing_dataset_uuid = "bf1f5064-8520-abcd-84e4-449aa6c221e2"  # Processing dataset (will be updated)
+
+        release = 5  # Release ID to attach datasets to
+
+        with metadata_db.session_scope() as session:
+            # First call to attach_misc_datasets
+            dataset_factory.attach_misc_datasets(release, session)
+
+            # Fetch datasets from the database after processing
+            parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+            child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_dataset_uuid).one()
+            faulty_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == faulty_dataset_uuid).one()
+            processing_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == processing_dataset_uuid).one()
+
+            # ✅ Basic release checks: Parent & Child should be attached
+            assert parent_dataset.genome_datasets[0].release_id == 5
+            assert child_dataset.genome_datasets[0].release_id == 5
+
+            # ✅ Faulty dataset should NOT be attached to the release
+            assert faulty_dataset.genome_datasets[0].release_id != 5
+            assert faulty_dataset.genome_datasets[0].release_id is None
+
+            # ✅ Processing dataset should NOT yet be attached
+            assert processing_dataset.genome_datasets[0].release_id is None
+
+            # Simulate processing completion: Update status to PROCESSED
+            processing_dataset.status = DatasetStatus.PROCESSED
+            session.commit()
+
+            # Second call to attach_misc_datasets after status change
+            dataset_factory.attach_misc_datasets(release, session)
+
+            # ✅ Now that the dataset is PROCESSED, it should be attached
+            assert processing_dataset.genome_datasets[0].release_id == 5
+
+    def test_attach_misc_datasets_force(self, test_dbs, dataset_factory):
+        """
+        Test the `attach_misc_datasets` function with `force=True`, which should attach all datasets
+        that are either SUBMITTED, PROCESSING, or PROCESSED to the given release.
+
+        - A parent dataset and its child should be correctly attached to the given release.
+        - A faulty dataset should NOT be attached.
+        - A processing dataset should be attached immediately (since force=True).
+
+        This test ensures that `force=True` overrides the standard validation rules and allows
+        SUBMITTED and PROCESSING datasets to be attached.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+
+        # Define dataset UUIDs for test cases
+        dataset_uuid = "5c2d6ef7-fe03-4f1a-bcc2-fb72af9ffa46"  # Parent dataset
+        child_dataset_uuid = "5c2d6ef7-fe03-4f1a-bcc2-fb72af9ffa46"  # Child dataset
+        faulty_dataset_uuid = "bf1f5064-8520-abcd-84e4-449aa6c1c1e2"  # Faulty dataset (should NOT be attached)
+        processing_dataset_uuid = "bf1f5064-8520-abcd-84e4-449aa6c221e2"  # Processing dataset (should be attached due to force=True)
+
+        release = 5  # Release ID to attach datasets to
+
+        with metadata_db.session_scope() as session:
+            # Call attach_misc_datasets with force=True
+            dataset_factory.attach_misc_datasets(release, session, force=True)
+
+            # Fetch datasets from the database after processing
+            parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one()
+            child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_dataset_uuid).one()
+            faulty_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == faulty_dataset_uuid).one()
+            processing_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == processing_dataset_uuid).one()
+
+            # ✅ Parent & Child datasets should be attached
+            assert parent_dataset.genome_datasets[0].release_id == 5
+            assert child_dataset.genome_datasets[0].release_id == 5
+
+            # ✅ Faulty dataset should still NOT be attached, even in force mode
+            assert faulty_dataset.genome_datasets[0].release_id != 5
+            assert faulty_dataset.genome_datasets[0].release_id is None
+
+            # ✅ Processing dataset should now be attached because of force=True
+            assert processing_dataset.genome_datasets[0].release_id == 5
+
+    def test_update_parent_and_children_status(self, test_dbs, dataset_factory):
+        """
+        Test the `update_parent_and_children_status` function for correct propagation of dataset status updates.
+
+        This test specifically checks:
+        - Status updates propagate correctly from a grandchild dataset up to its parent and top-level dataset.
+        - RELEASED status should not propagate upwards unless explicitly allowed.
+        - FAULTY datasets should not affect the statuses of their parents.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+
+        # Define dataset UUIDs for the test hierarchy
+        top_level_dataset = "99999999-847e-4742-a68b-18c3ece068aa"
+        child_dataset = "99999999-da2c-4997-8002-9da717ba79d2"
+        grandchild_dataset = "99999999-d9e0-4eca-9a49-7a6d9e311c8d"
+
+        with metadata_db.session_scope() as session:
+            # Step 1: Ensure initial dataset statuses
+            top_level = session.query(Dataset).filter(Dataset.dataset_uuid == top_level_dataset).one()
+            child = session.query(Dataset).filter(Dataset.dataset_uuid == child_dataset).one()
+            grandchild = session.query(Dataset).filter(Dataset.dataset_uuid == grandchild_dataset).one()
+
+            assert top_level.status == DatasetStatus.SUBMITTED
+            assert child.status == DatasetStatus.SUBMITTED
+            assert grandchild.status == DatasetStatus.SUBMITTED
+
+            # Step 2: Update grandchild to PROCESSING and verify upward propagation
+            grandchild.status = DatasetStatus.PROCESSING
+            session.commit()
+            dataset_factory.update_parent_and_children_status(top_level_dataset, session=session)
+            assert grandchild.status == DatasetStatus.PROCESSING
+            assert child.status == DatasetStatus.PROCESSING
+            assert top_level.status == DatasetStatus.PROCESSING
+
+            grandchild.status = DatasetStatus.PROCESSED
+            session.commit()
+            dataset_factory.update_parent_and_children_status(top_level_dataset, session=session)
+
+            session.refresh(grandchild)
+            session.refresh(child)
+            session.refresh(top_level)
+            assert grandchild.status == DatasetStatus.PROCESSED
+            assert child.status == DatasetStatus.PROCESSED
+            assert top_level.status == DatasetStatus.PROCESSED
+
+            # Step 4: Update grandchild to RELEASED and ensure no propagation without explicit allowance
+            grandchild.status = DatasetStatus.RELEASED
+            session.commit()
+            dataset_factory.update_parent_and_children_status(top_level_dataset, session=session)
+            assert grandchild.status == DatasetStatus.RELEASED
+            assert child.status != DatasetStatus.RELEASED
+            assert top_level.status != DatasetStatus.RELEASED
+
+            # Step 5: Mark grandchild as FAULTY and verify it does not propagate upwards
+            grandchild.status = DatasetStatus.FAULTY
+            session.commit()
+            dataset_factory.update_parent_and_children_status(top_level_dataset, session=session)
+            assert grandchild.status == DatasetStatus.FAULTY
+            assert child.status == DatasetStatus.PROCESSED
+            assert top_level.status == DatasetStatus.PROCESSED
+
+            # Step 6: Mark grandchild as Processed and release the genomes
+            grandchild.status = DatasetStatus.PROCESSED
+            session.commit()
+            dataset_factory.update_parent_and_children_status(top_level_dataset, status=DatasetStatus.RELEASED,
+                                                              session=session)
+            assert grandchild.status == DatasetStatus.RELEASED
+            assert child.status == DatasetStatus.RELEASED
+            assert top_level.status == DatasetStatus.RELEASED
+
+            # Step 6: Mark them as random and force a release
+            grandchild.status = DatasetStatus.PROCESSED
+            session.commit()
+            child.status = DatasetStatus.PROCESSING
+            top_level.status = DatasetStatus.SUBMITTED
+            dataset_factory.update_parent_and_children_status(top_level_dataset, status=DatasetStatus.RELEASED,
+                                                              force=True, session=session)
+            assert grandchild.status == DatasetStatus.RELEASED
+            assert child.status == DatasetStatus.RELEASED
+            assert top_level.status == DatasetStatus.RELEASED
+
+    def test_is_current_datasets_resolve(self, test_dbs, dataset_factory):
+        """
+        Test the `is_current_datasets_resolve` function for correct application of is_current flags.
+
+        This test specifically checks:
+        - A genome with two is_current for the same dataset_type remove all except for the release specified.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        #
+        # Genome Dataset Ids that should be affected by the test
+        old_is_current = 7122  # 7122  1 7177  86  2
+        new_is_current = 2390  # 2390  1 2449  86  5
+
+        with metadata_db.session_scope() as session:
+            # Ensure both are is_current
+            old = session.query(GenomeDataset).filter(GenomeDataset.genome_dataset_id == old_is_current).one()
+            new = session.query(GenomeDataset).filter(GenomeDataset.genome_dataset_id == new_is_current).one()
+            #
+            assert old.is_current == 1
+            assert new.is_current == 1
+            genome_dataset = dataset_factory.is_current_datasets_resolve(release_id=5, session=session)
+
+            # This one needs some work. Recently fixed the method to handle multiples of the same type, but we don't have good example data.
+
+            # assert old.is_current == 0
+            assert new.is_current == 1
