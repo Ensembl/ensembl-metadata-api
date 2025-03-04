@@ -50,7 +50,9 @@ class ReleaseAdaptor(BaseAdaptor):
                        release_id: int | List[int] = None,
                        release_version: float | List[float] = None,
                        current_only: bool = False,
+                       site_name: str = None,
                        release_type: str = None,
+                       release_label: str = None,
                        release_status: str | ReleaseStatus = None):
         """
         Fetches releases based on the provided parameters.
@@ -59,7 +61,9 @@ class ReleaseAdaptor(BaseAdaptor):
             release_id: release internal id (int or list[int])
             release_version (float or list or None): Release version(s) to filter by.
             current_only (bool): Flag indicating whether to fetch only current releases.
+            site_name (str): SIte name to filter by.
             release_type (str): Release type to filter by.
+            release_label (str): Release label to filter by.
             release_status: whether to filter particular release status
 
         Returns:
@@ -89,6 +93,16 @@ class ReleaseAdaptor(BaseAdaptor):
         if release_type is not None:
             release_select = release_select.filter(
                 EnsemblRelease.release_type.in_(release_type)
+            )
+
+        if release_label is not None:
+            release_select = release_select.filter(
+                EnsemblRelease.label.in_(release_label)
+            )
+
+        if site_name is not None:
+            release_select = release_select.filter(
+                EnsemblSite.name.in_(site_name)
             )
 
         release_select = release_select.filter(

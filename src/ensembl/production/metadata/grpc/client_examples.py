@@ -181,33 +181,33 @@ def list_releases(stub):
     for release in releases1:
         print(release)
 
-    request2 = ReleaseRequest(site_name=["rapid"])
+    request2 = ReleaseRequest(site_name=["Ensembl"])
     releases2 = stub.GetRelease(request2)
-    print("**** All Rapid releases ****")
+    print("**** All Ensembl releases ****")
     for release in releases2:
         print(release)
 
-    request3 = ReleaseRequest(site_name=["rapid"], current_only=1)
+    request3 = ReleaseRequest(site_name=["Ensembl"], current_only=1)
     releases3 = stub.GetRelease(request3)
-    print("**** Current Rapid release ****")
+    print("**** Current Ensembl release ****")
     for release in releases3:
         print(release)
 
-    request4 = ReleaseRequest(release_version=[1])
+    request4 = ReleaseRequest(release_label=["2024-09-18"])
     releases4 = stub.GetRelease(request4)
-    print("**** Version 14 ****")
+    print("**** Release 2024-09-18 (partial) ****")
     for release in releases4:
         print(release)
 
-    request5 = ReleaseRequest(release_version=[79])
+    request5 = ReleaseRequest(release_label=["2023-10"])
     releases5 = stub.GetRelease(request5)
-    print("**** Version 79 ****")
+    print("**** Release 2023-10 (integrated) ****")
     for release in releases5:
         print(release)
 
-    request6 = ReleaseRequest(release_version=[1])
+    request6 = ReleaseRequest(release_label=["00-00"])
     releases6 = stub.GetRelease(request6)
-    print("**** Versions 14 and 15 ****")
+    print("**** Release 00-00 (doesn't exist)****")
     for release in releases6:
         print(release)
 

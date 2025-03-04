@@ -226,10 +226,11 @@ message Release {
   double release_version = 1;
   string release_date = 2;
   string release_label = 3;
-  bool is_current = 4;
-  string site_name = 5;
-  string site_label = 6;
-  string site_uri = 7;
+  string release_type = 4;
+  bool is_current = 5;
+  string site_name = 6;
+  string site_label = 7;
+  string site_uri = 8;
 }
 
 message Organism {
@@ -469,7 +470,7 @@ An empty message will return all releases, for all sites.
  */
 message ReleaseRequest {
   repeated string site_name = 1;        // Optional
-  repeated double release_version = 2;  // Optional
+  repeated string release_label = 2;    // Optional
   bool current_only = 3;                // Optional
 }
 
