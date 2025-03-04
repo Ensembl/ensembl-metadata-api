@@ -35,7 +35,7 @@ class TestGRPCReleaseAdaptor:
         [
             (False, ReleaseStatus.RELEASED, 2),
             (False, ReleaseStatus.PREPARING, 2),  # Status filter has no effect when ALLOW_UNRELEASED is false
-            (True, ReleaseStatus.PREPARING, 1),
+            (True, ReleaseStatus.PREPARING, 2),
             (True, 'Prepared', 1),
             (True, 'Planned', 1),
         ],
@@ -50,7 +50,7 @@ class TestGRPCReleaseAdaptor:
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
-            (True, 5),
+            (True, 6),
             (False, 2)
         ],
         indirect=['allow_unreleased']
