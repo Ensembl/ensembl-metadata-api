@@ -19,8 +19,11 @@ greenlet==3.0.3
 grpcio==1.66.1
     # via
     #   -r requirements.in
+    #   grpcio-health-checking
     #   grpcio-reflection
     #   grpcio-tools
+grpcio-health-checking==1.66.1
+    # via -r requirements.in
 grpcio-reflection==1.66.1
     # via -r requirements.in
 grpcio-tools==1.66.1
@@ -38,6 +41,7 @@ pluggy==1.5.0
 protobuf==5.28.0
     # via
     #   -r requirements.in
+    #   grpcio-health-checking
     #   grpcio-reflection
     #   grpcio-tools
 pytest==8.3.3
