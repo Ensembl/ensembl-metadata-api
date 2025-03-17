@@ -130,6 +130,14 @@ message Genome {
 A genome is a collection of datasets for an assembly,
 which may or may not be in the current Ensembl release.
  */
+message NewestGenomeInfo {
+  string genome_uuid = 1;
+  string release_date = 2;
+  string release_label = 3;
+  string release_type = 4;
+  bool is_current = 5;
+}
+
 message BriefGenomeDetails {
   string genome_uuid = 1;
   Assembly assembly = 2;
@@ -137,6 +145,7 @@ message BriefGenomeDetails {
   string created = 4;
   Organism organism = 5;
   Release release = 6;
+  NewestGenomeInfo newest_genome = 7;
 }
 
 message AttributesInfoByGenome {

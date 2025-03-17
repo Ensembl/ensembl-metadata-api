@@ -288,7 +288,7 @@ class GenomeAdaptor(BaseAdaptor):
         logger.debug(f"fetch_genome: {genome_select} / {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
-            return session.execute(genome_select.order_by("production_name", EnsemblRelease.version.desc())).all()
+            return session.execute(genome_select.order_by("production_name", EnsemblRelease.release_date.desc())).all()
 
     def fetch_genomes_by_genome_uuid(self, genome_uuid, site_name=None, release_type=None, release_version=None,
                                      current_only=True):
