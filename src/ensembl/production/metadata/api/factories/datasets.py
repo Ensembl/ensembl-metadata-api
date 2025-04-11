@@ -109,7 +109,7 @@ class DatasetFactory:
             new_genome_dataset = GenomeDataset(
                 genome=genome,
                 dataset=new_dataset,
-                is_current=False,
+                is_current=is_current,
             )
             if release is not None:
                 if isinstance(release, str):
