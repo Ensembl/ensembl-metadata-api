@@ -135,7 +135,7 @@ class DatasetFactory:
             new_genome_dataset = GenomeDataset(
                 genome=genome,
                 dataset=new_dataset,
-                is_current=False,
+                is_current=is_current,
             )
             if release is not None:
                 if isinstance(release, str):
@@ -143,6 +143,7 @@ class DatasetFactory:
                 logger.debug(f"Attaching {new_dataset.dataset_uuid} to release {release.release_id}")
                 new_genome_dataset.release_id = release.release_id
             session.add(new_genome_dataset)
+            session.commit()
             return dataset_uuid, new_dataset, new_dataset_attributes, new_genome_dataset
         else:
             return dataset_uuid, new_dataset, new_dataset_attributes, None
@@ -800,3 +801,4 @@ class DatasetFactory:
         # Execute query and fetch results
         results = query
         return results
+
