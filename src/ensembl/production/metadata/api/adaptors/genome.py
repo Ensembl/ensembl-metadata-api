@@ -188,7 +188,7 @@ class GenomeAdaptor(BaseAdaptor):
         Example usage:
             genome_info = fetch_genomes(genome_id=12345)
         """
-        # Parameter validation
+        # Parameter normalization (to list)
         genome_id = check_parameter(genome_id)
         genome_tag = check_parameter(genome_tag)
         organism_uuid = check_parameter(organism_uuid)
@@ -248,6 +248,7 @@ class GenomeAdaptor(BaseAdaptor):
             # END
             conditional_column = db.case(
                 # literal is used to prevent evaluating use_default_assembly to a boolean (True or False)
+                # question (Andres): why? use_default_assembly is already boolean
                 (db.literal(use_default_assembly) == 1, Assembly.assembly_default),
                 else_=Assembly.name
             )
@@ -313,7 +314,7 @@ class GenomeAdaptor(BaseAdaptor):
     def fetch_genomes_by_scientific_name(
             self,
             scientific_name,
-            allow_unreleased=False,
+            allow_unreleased=False, #note: unused param
             site_name=None,
             release_type=None,
             release_version=None,
