@@ -270,16 +270,6 @@ def create_genome(data=None, attributes=None, count=0, alternative_names=[]):
     )
     return genome
 
-def create_latest_genome(data=None):
-    latest_genome_data = ensembl_metadata_pb2.NewestGenomeInfo(
-        genome_uuid=data.Genome.genome_uuid,
-        release_date=str(data.EnsemblRelease.release_date),
-        release_label=data.EnsemblRelease.label,
-        release_type=data.EnsemblRelease.release_type,
-        is_current=data.EnsemblRelease.is_current,
-    )
-    return latest_genome_data
-
 def create_brief_genome_details(data=None, latest_genome=None):
     if data is None:
         return ensembl_metadata_pb2.BriefGenomeDetails()
