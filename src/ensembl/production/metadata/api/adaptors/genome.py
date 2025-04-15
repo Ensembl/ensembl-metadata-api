@@ -248,7 +248,7 @@ class GenomeAdaptor(BaseAdaptor):
             # END
             conditional_column = db.case(
                 # literal is used to prevent evaluating use_default_assembly to a boolean (True or False)
-                # question (Andres): why? use_default_assembly is already boolean
+                # TODO: check the conditional (use_default_assembly is already a boolean)
                 (db.literal(use_default_assembly) == 1, Assembly.assembly_default),
                 else_=Assembly.name
             )
@@ -311,10 +311,11 @@ class GenomeAdaptor(BaseAdaptor):
         return self.fetch_genomes(taxonomy_id=taxonomy_id, site_name=site_name, release_type=release_type,
                                   release_version=release_version, current_only=current_only)
 
+    # TODO: cleanup (function below not used anywhere)
     def fetch_genomes_by_scientific_name(
             self,
             scientific_name,
-            allow_unreleased=False, #note: unused param
+            allow_unreleased=False, # unused param
             site_name=None,
             release_type=None,
             release_version=None,

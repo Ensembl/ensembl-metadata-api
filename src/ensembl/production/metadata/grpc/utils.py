@@ -287,19 +287,16 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
     # If genome_uuid_or_tag is not a valid UUID, assume it's a tag and fetch genome_uuid
     if not is_valid_uuid(genome_uuid_or_tag):
         logger.debug(f"Invalid genome_uuid {genome_uuid_or_tag}, assuming it's a tag and using it to fetch genome_uuid")
-        # [Integrated Release] If it's a Tag, we would like to get the latest integrated release only
-        # Question: Are all genome linked to a tag/url_name associated to an integrated only (not partial)? if so use release_type param
-        # Answer (from Beth): Yes, however in the world of Archives, we need to keep in mind the combination of release and tag
-        #   that will take the user to the archived version of the genome
+        # For tag (URL name), we only care about the latest integrated release.
+        # For archives, we will need to keep in mind the combination of release and tag
+        # that will take the user to the archived version of the genome.
         genome_results = db_conn.fetch_genomes(
             genome_tag=genome_uuid_or_tag,
             release_type="integrated",
             release_version=release_version
         )
     else:
-        # When we have a valid UUID
         genome_uuid = genome_uuid_or_tag
-        # Fetch genome details using genome_uuid and release_version
         genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
 
     if not genome_results:
