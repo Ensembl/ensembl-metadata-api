@@ -25,19 +25,37 @@ class Genome(_message.Message):
     release: Release
     def __init__(self, genome_uuid: _Optional[str] = ..., assembly: _Optional[_Union[Assembly, _Mapping]] = ..., taxon: _Optional[_Union[Taxon, _Mapping]] = ..., created: _Optional[str] = ..., organism: _Optional[_Union[Organism, _Mapping]] = ..., attributes_info: _Optional[_Union[AttributesInfo, _Mapping]] = ..., related_assemblies_count: _Optional[int] = ..., release: _Optional[_Union[Release, _Mapping]] = ...) -> None: ...
 
+class NewestGenomeInfo(_message.Message):
+    __slots__ = ("genome_uuid", "release_date", "release_label", "release_type", "is_current")
+    GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_DATE_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_LABEL_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_TYPE_FIELD_NUMBER: _ClassVar[int]
+    IS_CURRENT_FIELD_NUMBER: _ClassVar[int]
+    genome_uuid: str
+    release_date: str
+    release_label: str
+    release_type: str
+    is_current: bool
+    def __init__(self, genome_uuid: _Optional[str] = ..., release_date: _Optional[str] = ..., release_label: _Optional[str] = ..., release_type: _Optional[str] = ..., is_current: bool = ...) -> None: ...
+
 class BriefGenomeDetails(_message.Message):
-    __slots__ = ("genome_uuid", "assembly", "created", "organism", "release")
+    __slots__ = ("genome_uuid", "assembly", "taxon", "created", "organism", "release", "latest_genome")
     GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
     ASSEMBLY_FIELD_NUMBER: _ClassVar[int]
+    TAXON_FIELD_NUMBER: _ClassVar[int]
     CREATED_FIELD_NUMBER: _ClassVar[int]
     ORGANISM_FIELD_NUMBER: _ClassVar[int]
     RELEASE_FIELD_NUMBER: _ClassVar[int]
+    LATEST_GENOME_FIELD_NUMBER: _ClassVar[int]
     genome_uuid: str
     assembly: Assembly
+    taxon: Taxon
     created: str
     organism: Organism
     release: Release
-    def __init__(self, genome_uuid: _Optional[str] = ..., assembly: _Optional[_Union[Assembly, _Mapping]] = ..., created: _Optional[str] = ..., organism: _Optional[_Union[Organism, _Mapping]] = ..., release: _Optional[_Union[Release, _Mapping]] = ...) -> None: ...
+    latest_genome: BriefGenomeDetails
+    def __init__(self, genome_uuid: _Optional[str] = ..., assembly: _Optional[_Union[Assembly, _Mapping]] = ..., taxon: _Optional[_Union[Taxon, _Mapping]] = ..., created: _Optional[str] = ..., organism: _Optional[_Union[Organism, _Mapping]] = ..., release: _Optional[_Union[Release, _Mapping]] = ..., latest_genome: _Optional[_Union[BriefGenomeDetails, _Mapping]] = ...) -> None: ...
 
 class AttributesInfoByGenome(_message.Message):
     __slots__ = ("genome_uuid", "attributes_info")
@@ -158,10 +176,11 @@ class Taxon(_message.Message):
     def __init__(self, taxonomy_id: _Optional[int] = ..., scientific_name: _Optional[str] = ..., strain: _Optional[str] = ..., alternative_names: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class Release(_message.Message):
-    __slots__ = ("release_version", "release_date", "release_label", "is_current", "site_name", "site_label", "site_uri")
+    __slots__ = ("release_version", "release_date", "release_label", "release_type", "is_current", "site_name", "site_label", "site_uri")
     RELEASE_VERSION_FIELD_NUMBER: _ClassVar[int]
     RELEASE_DATE_FIELD_NUMBER: _ClassVar[int]
     RELEASE_LABEL_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_TYPE_FIELD_NUMBER: _ClassVar[int]
     IS_CURRENT_FIELD_NUMBER: _ClassVar[int]
     SITE_NAME_FIELD_NUMBER: _ClassVar[int]
     SITE_LABEL_FIELD_NUMBER: _ClassVar[int]
@@ -169,11 +188,12 @@ class Release(_message.Message):
     release_version: float
     release_date: str
     release_label: str
+    release_type: str
     is_current: bool
     site_name: str
     site_label: str
     site_uri: str
-    def __init__(self, release_version: _Optional[float] = ..., release_date: _Optional[str] = ..., release_label: _Optional[str] = ..., is_current: bool = ..., site_name: _Optional[str] = ..., site_label: _Optional[str] = ..., site_uri: _Optional[str] = ...) -> None: ...
+    def __init__(self, release_version: _Optional[float] = ..., release_date: _Optional[str] = ..., release_label: _Optional[str] = ..., release_type: _Optional[str] = ..., is_current: bool = ..., site_name: _Optional[str] = ..., site_label: _Optional[str] = ..., site_uri: _Optional[str] = ...) -> None: ...
 
 class Organism(_message.Message):
     __slots__ = ("common_name", "strain", "scientific_name", "ensembl_name", "scientific_parlance_name", "organism_uuid", "strain_type", "taxonomy_id", "species_taxonomy_id")
@@ -321,6 +341,14 @@ class Datasets(_message.Message):
     datasets: _containers.RepeatedCompositeFieldContainer[DatasetInfo]
     def __init__(self, genome_uuid: _Optional[str] = ..., datasets: _Optional[_Iterable[_Union[DatasetInfo, _Mapping]]] = ...) -> None: ...
 
+class VepFilePaths(_message.Message):
+    __slots__ = ("faa_location", "gff_location")
+    FAA_LOCATION_FIELD_NUMBER: _ClassVar[int]
+    GFF_LOCATION_FIELD_NUMBER: _ClassVar[int]
+    faa_location: str
+    gff_location: str
+    def __init__(self, faa_location: _Optional[str] = ..., gff_location: _Optional[str] = ...) -> None: ...
+
 class GenomeUUID(_message.Message):
     __slots__ = ("genome_uuid",)
     GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
@@ -399,6 +427,12 @@ class GenomeUUIDRequest(_message.Message):
     release_version: float
     def __init__(self, genome_uuid: _Optional[str] = ..., release_version: _Optional[float] = ...) -> None: ...
 
+class GenomeUUIDOnlyRequest(_message.Message):
+    __slots__ = ("genome_uuid",)
+    GENOME_UUID_FIELD_NUMBER: _ClassVar[int]
+    genome_uuid: str
+    def __init__(self, genome_uuid: _Optional[str] = ...) -> None: ...
+
 class GenomeBySpecificKeywordRequest(_message.Message):
     __slots__ = ("tolid", "assembly_accession_id", "assembly_name", "ensembl_name", "common_name", "scientific_name", "scientific_parlance_name", "species_taxonomy_id", "release_version")
     TOLID_FIELD_NUMBER: _ClassVar[int]
@@ -462,14 +496,14 @@ class OrganismIDRequest(_message.Message):
     def __init__(self, organism_uuid: _Optional[str] = ..., group: _Optional[str] = ...) -> None: ...
 
 class ReleaseRequest(_message.Message):
-    __slots__ = ("site_name", "release_version", "current_only")
+    __slots__ = ("site_name", "release_label", "current_only")
     SITE_NAME_FIELD_NUMBER: _ClassVar[int]
-    RELEASE_VERSION_FIELD_NUMBER: _ClassVar[int]
+    RELEASE_LABEL_FIELD_NUMBER: _ClassVar[int]
     CURRENT_ONLY_FIELD_NUMBER: _ClassVar[int]
     site_name: _containers.RepeatedScalarFieldContainer[str]
-    release_version: _containers.RepeatedScalarFieldContainer[float]
+    release_label: _containers.RepeatedScalarFieldContainer[str]
     current_only: bool
-    def __init__(self, site_name: _Optional[_Iterable[str]] = ..., release_version: _Optional[_Iterable[float]] = ..., current_only: bool = ...) -> None: ...
+    def __init__(self, site_name: _Optional[_Iterable[str]] = ..., release_label: _Optional[_Iterable[str]] = ..., current_only: bool = ...) -> None: ...
 
 class GenomeSequenceRequest(_message.Message):
     __slots__ = ("genome_uuid", "chromosomal_only")
