@@ -296,11 +296,12 @@ class TestUtils:
             (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.1, 11, 108.0),
             # Homo sapiens = Released in 110.1
             (False, "65d4f21f-695a-4ed0-be67-5732a551fea4", 108.0, 11, None),
-            # bread_wheat new homologies processed for 110.2
-            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.2, 11, 110.2),
+            # Homo sapiens = Released in 110.2
+            (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", 110.2, 11, 110.2),
             # bread_wheat version unspecified
             (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 7, 108.0),
-            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 11, 110.2)
+            # Homo sapiens version unspecified
+            (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", None, 11, 110.2)
         ],
         indirect=['allow_unreleased']
     )
@@ -336,11 +337,12 @@ class TestUtils:
             (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.1, 11, 108.0),
             # Homo sapiens = Released in 110.1
             (False, "65d4f21f-695a-4ed0-be67-5732a551fea4", 108.0, 11, None),
-            # bread_wheat new homologies processed for 110.2
-            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.2, 11, 110.2),
+            # Homo sapiens = Released in 110.2
+            (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", 110.2, 11, 110.2),
             # bread_wheat version unspecified
             (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 7, 108.0),
-            (True, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 11, 110.2)
+            # Homo sapiens version unspecified
+            (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", None, 11, 110.2)
         ],
         indirect=['allow_unreleased']
     )
