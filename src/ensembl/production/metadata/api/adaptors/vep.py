@@ -64,6 +64,7 @@ class VepAdaptor(BaseAdaptor):
                     Genome.genome_uuid == genome_uuid,
                     Dataset.name == "genebuild",
                 )
+                .distinct()
             )
 
             result = query.one_or_none()
