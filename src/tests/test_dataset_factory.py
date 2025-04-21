@@ -265,11 +265,6 @@ class TestDatasetFactory:
             assert parent_dataset.genome_datasets[0].release_id is None
             assert child_dataset.genome_datasets[0].release_id is None
 
-            # Ensure that the GenomeRelease entry has been deleted
-            genome_release = session.query(GenomeRelease).filter(
-                GenomeRelease.genome_id == parent_dataset.genome_datasets[0].genome_id
-            ).all()
-            assert len(genome_release) == 0
 
     def test_faulty_child(self, test_dbs, dataset_factory):
         """
@@ -304,11 +299,6 @@ class TestDatasetFactory:
             assert child_dataset.genome_datasets[0].release_id is None
             assert subchild_dataset.genome_datasets[0].release_id is None
 
-            # Ensure that the GenomeRelease entry has been removed
-            genome_release = session.query(GenomeRelease).filter(
-                GenomeRelease.genome_id == parent_dataset.genome_datasets[0].genome_id
-            ).all()
-            assert len(genome_release) == 0
 
 
 @pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},

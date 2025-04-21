@@ -22,12 +22,12 @@ import sqlalchemy as db
 from _pytest.config import Config
 from grpc_reflection.v1alpha import reflection
 
+from ensembl.production.metadata.api.adaptors import GenomeAdaptor
+from ensembl.production.metadata.api.adaptors import ReleaseAdaptor
 from ensembl.production.metadata.api.adaptors.vep import VepAdaptor
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.factories.genomes import GenomeFactory
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-from ensembl.production.metadata.api.adaptors import GenomeAdaptor
-from ensembl.production.metadata.api.adaptors import ReleaseAdaptor
 
 
 def pytest_configure(config: Config) -> None:
@@ -79,7 +79,7 @@ def genome_factory():
     return GenomeFactory()
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def dataset_factory(test_dbs):
     yield DatasetFactory(test_dbs["ensembl_genome_metadata"].dbc.url)
 
