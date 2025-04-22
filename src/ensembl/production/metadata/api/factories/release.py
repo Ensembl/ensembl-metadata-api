@@ -132,7 +132,7 @@ class ReleaseFactory:
 
         - Processes faulty datasets
         - Attaches and updates non-released datasets of specific types (vep, variation, etc.)
-        - if not forced checks to see each dataset can be updated to processed
+        - if not forced, checks to see each dataset can be updated to processed
         - Runs final checks before releasing any data or changing is_current status
         - Updates all associated datasets to 'Released' status and attaches them to the release.
         - Marks all associated genomes as current and unmarks outdated genomes.
@@ -232,7 +232,7 @@ class ReleaseFactory:
                 else:
                     print(f"Release {version} has errors: {errors}")
                     input("Are you sure you want to continue? Press any key to continue or Ctrl+C to exit.")
-
+                    print("You are continuing. Good luck with that.")
             # Mark datasets as released and set them as current
             genome_datasets = session.query(GenomeDataset).filter_by(release_id=release_id).all()
             for genome_dataset in genome_datasets:
