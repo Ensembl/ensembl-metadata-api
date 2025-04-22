@@ -273,7 +273,8 @@ class DatasetFactory:
             .where(
                 tuple_(GenomeDataset.genome_id, Dataset.dataset_type_id).in_(genomes_to_fix)
             )
-            .values(is_current=0)
+            .values(is_current=0),
+            execution_options={"synchronize_session": "fetch"}
         )
 
         # Bulk update - Set is_current=1 for the dataset matching the given release_id
@@ -283,7 +284,8 @@ class DatasetFactory:
                 tuple_(GenomeDataset.genome_id, Dataset.dataset_type_id).in_(genomes_to_fix),
                 GenomeDataset.release_id == release_id
             )
-            .values(is_current=1)
+            .values(is_current=1),
+            execution_options={"synchronize_session": "fetch"}
         )
 
         session.commit()
