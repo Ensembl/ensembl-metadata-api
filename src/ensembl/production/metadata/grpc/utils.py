@@ -304,10 +304,15 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
         return msg_factory.create_brief_genome_details()
 
     if len(genome_results) > 1:
-        logger.warning(
-            f"Multiple results found for Genome UUID/Release version: {genome_uuid_or_tag}/{release_version}. "
-            f"Using the first result.")
-    
+        logger.warning(f"Multiple results found for Genome UUID/Release version: {genome_uuid_or_tag}/{release_version}")
+        # means that this genome is released in both a partial and integrated release
+        # we get the integrated release specifically since it's the one we are interested in
+        genome_results = db_conn.fetch_genomes(
+            genome_tag=genome_uuid_or_tag,
+            release_type="integrated",
+            release_version=release_version
+        )
+
     # Get the current (requested) genome
     current_genome = genome_results[0]
     assembly_name = current_genome.Assembly.name
