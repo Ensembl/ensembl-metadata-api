@@ -137,6 +137,7 @@ message BriefGenomeDetails {
   string created = 4;
   Organism organism = 5;
   Release release = 6;
+  optional BriefGenomeDetails latest_genome = 7;
 }
 
 message AttributesInfoByGenome {

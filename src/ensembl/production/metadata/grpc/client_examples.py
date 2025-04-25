@@ -486,7 +486,7 @@ def get_brief_genome_details_by_uuid(stub):
         genome_uuid="a7335667-93e7-11ec-a39d-005056b38ce3"
     )
     brief_genome_details1 = stub.GetBriefGenomeDetailsByUUID(request1)
-    print("**** Brief Genome Details: By genome_uuid ****")
+    print("**** Brief Genome Details: By genome_uuid (human)****")
     print(brief_genome_details1)
 
     request2 = GenomeUUIDRequest(
@@ -495,6 +495,13 @@ def get_brief_genome_details_by_uuid(stub):
     brief_genome_details2 = stub.GetBriefGenomeDetailsByUUID(request2)
     print("**** Brief Genome Details: By Tag (grch37) ****")
     print(brief_genome_details2)
+
+    request3 = GenomeUUIDRequest(
+        genome_uuid="8bce37f6-5353-4fb4-962f-f7e9a6c4303d"
+    )
+    brief_genome_details3 = stub.GetBriefGenomeDetailsByUUID(request3)
+    print("**** Brief Genome Details: By outdated genome_uuid (mouse) ****")
+    print(brief_genome_details3)
 
 
 def get_vep_file_paths_by_uuid(stub):

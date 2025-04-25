@@ -269,41 +269,67 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
 
 
 def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_version):
+    """
+    Fetch brief genome details by UUID or tag and release version.
+
+    Args:
+        db_conn: Database connection object.
+        genome_uuid_or_tag: Genome UUID or tag.
+        release_version: Release version to fetch.
+
+    Returns:
+        A dictionary containing brief genome details.
+    """
     if not genome_uuid_or_tag:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_brief_genome_details()
 
-    genome_uuid = genome_uuid_or_tag
     # If genome_uuid_or_tag is not a valid UUID, assume it's a tag and fetch genome_uuid
     if not is_valid_uuid(genome_uuid_or_tag):
         logger.debug(f"Invalid genome_uuid {genome_uuid_or_tag}, assuming it's a tag and using it to fetch genome_uuid")
-        genome_uuid_result = db_conn.fetch_genomes(genome_tag=genome_uuid_or_tag)
-
-        if not genome_uuid_result:
-            logger.error(f"No Genome UUID found. {genome_uuid_or_tag}")
-            return msg_factory.create_brief_genome_details()
-
-        if len(genome_uuid_result) > 1:
-            logger.warning(f"Multiple results found for genome tag: {genome_uuid_or_tag}. Using the first result.")
-
-        # TODO: [Integrated Release] If it's a Tag, we would like to get the latest integrated release only
-        # Question: Are all genome linked to a tag/url_name integrated (not partial)? if so use release_type param
-        genome_uuid = genome_uuid_result[0].Genome.genome_uuid
-
-    # Fetch genome details using genome_uuid and release_version
-    genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
+        # For tag (URL name), we only care about the latest integrated release.
+        # For archives, we will need to keep in mind the combination of release and tag
+        # that will take the user to the archived version of the genome.
+        genome_results = db_conn.fetch_genomes(
+            genome_tag=genome_uuid_or_tag,
+            release_type="integrated",
+            release_version=release_version
+        )
+    else:
+        genome_uuid = genome_uuid_or_tag
+        genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
 
     if not genome_results:
-        logger.error(f"No Genome/Release found: {genome_uuid}/{release_version}")
+        logger.error(f"No Genome/Release found: {genome_uuid_or_tag}/{release_version}")
         return msg_factory.create_brief_genome_details()
 
     if len(genome_results) > 1:
-        logger.warning(
-            f"Multiple results found for Genome UUID/Release version: {genome_uuid}/{release_version}. "
-            f"Using the first result.")
+        logger.warning(f"Multiple results found for Genome UUID/Release version: {genome_uuid_or_tag}/{release_version}")
+        # means that this genome is released in both a partial and integrated release
+        # we get the integrated release specifically since it's the one we are interested in
+        genome_results = db_conn.fetch_genomes(
+            genome_tag=genome_uuid_or_tag,
+            release_type="integrated",
+            release_version=release_version
+        )
 
-    # Return the first result
-    return msg_factory.create_brief_genome_details(data=genome_results[0])
+    # Get the current (requested) genome
+    current_genome = genome_results[0]
+    assembly_name = current_genome.Assembly.name
+    # Fetch all genomes with the same assembly name, sorted by release date
+    all_genomes_with_same_assembly = db_conn.fetch_genomes(assembly_name=assembly_name)
+    
+    # Find the genome with the most recent release date
+    latest_genome = None
+    if all_genomes_with_same_assembly:
+        # First genome should be the latest due to ordering in fetch_genomes
+        if all_genomes_with_same_assembly[0].Genome.genome_uuid != current_genome.Genome.genome_uuid:
+            latest_genome = all_genomes_with_same_assembly[0]
+            logger.debug(f"Found newer genome: {latest_genome.Genome.genome_uuid}")
+    
+    # Return the requested genome together with the latest genome details (or None if current is latest)
+    return msg_factory.create_brief_genome_details(current_genome, latest_genome)
+
 
 def get_attributes_by_genome_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:

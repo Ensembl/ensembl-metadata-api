@@ -270,15 +270,20 @@ def create_genome(data=None, attributes=None, count=0, alternative_names=[]):
     )
     return genome
 
-
-def create_brief_genome_details(data=None):
+def create_brief_genome_details(data=None, latest_genome=None):
     if data is None:
         return ensembl_metadata_pb2.BriefGenomeDetails()
 
+    # current genome
     assembly = create_assembly(data)
     taxon = create_taxon(data)
     organism = create_organism(data)
     release = create_release(data)
+
+    # add latest_genome details
+    latest_genome_data = None
+    if latest_genome and latest_genome.Genome.genome_uuid != data.Genome.genome_uuid:
+        latest_genome_data = create_brief_genome_details(latest_genome, None)
 
     brief_genome_details = ensembl_metadata_pb2.BriefGenomeDetails(
         genome_uuid=data.Genome.genome_uuid,
@@ -287,6 +292,7 @@ def create_brief_genome_details(data=None):
         taxon=taxon,
         organism=organism,
         release=release,
+        latest_genome=latest_genome_data
     )
     return brief_genome_details
 
