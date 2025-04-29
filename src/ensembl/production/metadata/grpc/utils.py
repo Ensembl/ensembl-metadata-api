@@ -292,7 +292,7 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
         # that will take the user to the archived version of the genome.
         genome_results = db_conn.fetch_genomes(
             genome_tag=genome_uuid_or_tag,
-            release_type="integrated",
+            # release_type="integrated", #  Add this once we have tags linked only to integrated releases
             release_version=release_version
         )
     else:
