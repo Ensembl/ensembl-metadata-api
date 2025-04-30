@@ -5,3 +5,4 @@
 9	Division	EnsemblMetazoa	metazoa
 12	Division	EnsemblFungi	fungi
 13	Internal	Populars	popular
+14	Test	EnsemblTest	TestDivision
