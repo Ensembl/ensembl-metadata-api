@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 class DatasetFactory:
 
     def __init__(self, conn_uri=None):
-        super().__init__()
         self.conn_uri = conn_uri
 
     def __get_db_connexion(self):
