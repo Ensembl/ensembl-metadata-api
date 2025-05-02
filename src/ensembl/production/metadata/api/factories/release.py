@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 from ensembl.utils.database import DBConnection
 from sqlalchemy import update
@@ -33,13 +34,10 @@ logger = logging.getLogger(__name__)
 class ReleaseFactory:
 
     def __init__(self, conn_uri):
-        super().__init__()
         self.metadata_uri = conn_uri
         self.gen_factory = GenomeFactory()
         self.ds_factory = DatasetFactory(conn_uri)
 
-    from decimal import Decimal
-    from typing import Optional
 
     def init_release(
             self,
@@ -153,6 +151,8 @@ class ReleaseFactory:
 
             # Retrieve the release
             if release_id is None:
+                # TODO: Check that it is partial a valid release and is not released.
+                # Remove the version
                 release = session.query(EnsemblRelease).filter_by(version=version).one()
                 release_id = release.release_id
             else:
@@ -167,6 +167,7 @@ class ReleaseFactory:
             # Update dataset statuses based on the force flag
             if force:
                 # Update only genomes attached to this release
+                #TODO: DOUBLE CHECK!!
                 datasets = (session.query(Dataset)
                             .join(GenomeDataset)
                             .join(DatasetType)
@@ -288,7 +289,7 @@ class ReleaseFactory:
                               .filter(EnsemblRelease.site_id == site_id)
                               .filter(EnsemblRelease.release_type == "partial")
                               .all())
-
+            #TODO:not integrated
             for other_release in other_releases:
                 other_release.is_current = 0
 
