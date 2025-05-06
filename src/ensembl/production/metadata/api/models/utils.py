@@ -56,3 +56,18 @@ def get_or_new_release(meta_dbc: str, skip_release: EnsemblRelease = None) -> En
         session.add(next_release)
         session.expire_on_commit = False
         return next_release
+
+
+def fetch_proper_dataset(genome_datasets):
+    """
+    Helper function to fetch the dataset we attend to get based on the release_type (partial or integrated).
+
+    * If more than one dataset is available go with the partial dataset.
+    * If only one dataset is available just go with that one
+    Slack discussion: https://genomes-ebi.slack.com/archives/C010QF119N1/p1746094298003789
+    """
+    if len(genome_datasets) > 1:
+        # Todo: WIP
+        genome_datasets[0]
+
+    return genome_datasets[0]
