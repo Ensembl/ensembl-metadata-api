@@ -617,7 +617,7 @@ class TestUtils:
     #     output = json_format.MessageToJson(
     #         utils.get_organisms_group_count(
     #             db_conn=genome_conn,
-    #             release_version=None
+    #             release_label=None
     #         )
     #     )
     #     expected_output = {

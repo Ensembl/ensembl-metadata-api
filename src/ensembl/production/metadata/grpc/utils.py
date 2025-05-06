@@ -552,9 +552,9 @@ def get_dataset_by_genome_and_dataset_type(db_conn, genome_uuid, requested_datas
         return response_data
 
 
-def get_organisms_group_count(db_conn, release_version):
-    count_result = db_conn.fetch_organisms_group_counts(release_version=release_version)
-    response_data = msg_factory.create_organisms_group_count(count_result, release_version)
+def get_organisms_group_count(db_conn, release_label):
+    count_result = db_conn.fetch_organisms_group_counts(release_label=release_label)
+    response_data = msg_factory.create_organisms_group_count(count_result, release_label)
     # logger.debug(f"Response data: \n{response_data}")
     return response_data
 

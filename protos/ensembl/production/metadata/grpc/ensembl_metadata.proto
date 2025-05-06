@@ -356,7 +356,7 @@ message OrganismsGroup {
 
 message OrganismsGroupCount {
   repeated OrganismsGroup organisms_group_count = 1;
-  double release_version = 2;
+  double release_label = 2;
 }
 
 message FTPLink {
@@ -531,7 +531,7 @@ message GenomeInfoRequest {
 Organisms group count request
  */
 message OrganismsGroupRequest {
-  double release_version = 1; // Optional
+  double release_label = 1; // Optional
 }
 
 /*

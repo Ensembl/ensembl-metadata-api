@@ -149,7 +149,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
     def GetOrganismsGroupCount(self, request, context):
         logger.debug(f"Received RPC for GetOrganismsGroupCount with request: {request}")
         return utils.get_organisms_group_count(
-            self.genome_adaptor, request.release_version
+            self.genome_adaptor, request.release_label
         )
 
     def GetGenomeUUIDByTag(self, request, context):
