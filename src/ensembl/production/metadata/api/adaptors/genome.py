@@ -714,9 +714,6 @@ class GenomeAdaptor(BaseAdaptor):
                                                       EnsemblRelease.release_id == GenomeRelease.release_id
                                                       ).filter(OrganismGroup.code == group_code)
 
-            # Ordering is important, this is how we tell the UI what to show first in the species selector
-            query = query.order_by(OrganismGroupMember.order)
-
             # Step 3: Release logic
             if release_label:
                 rel_stmt = select(EnsemblRelease).where(EnsemblRelease.label == release_label)
@@ -758,6 +755,10 @@ class GenomeAdaptor(BaseAdaptor):
                 OrganismAlias.scientific_name,
                 OrganismGroupMember.order
             )
+
+            # Step 5: Ordering
+            #  This is how we tell the UI what to show first in the species selector
+            query = query.order_by(OrganismGroupMember.order)
 
             return session.execute(query).all()
 
