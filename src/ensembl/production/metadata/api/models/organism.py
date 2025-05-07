@@ -29,7 +29,7 @@ class Organism(LoadAble, Base):
     organism_uuid = Column(String(32), unique=True, nullable=False, default=uuid.uuid4)
     taxonomy_id = Column(Integer, nullable=False)
     species_taxonomy_id = Column(Integer)
-    common_name = Column(String(128), nullable=False)
+    common_name = Column(String(128), nullable=True)
     strain = Column(String(128))
     scientific_name = Column(String(128))
     biosample_id = Column(String(128), nullable=False, unique=True)
