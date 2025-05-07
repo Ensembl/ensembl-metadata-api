@@ -335,6 +335,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     NCBITaxaName.taxon_id == taxid,
                     NCBITaxaName.name_class == "genbank common name"
                 ).one_or_none()
+                if common_name is not None:
+                    common_name = common_name.name
         # Ensure that the first character is upper case.
         if common_name is not None:
             common_name = common_name[0].upper() + common_name[1:]
