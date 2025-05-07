@@ -54,7 +54,7 @@ class EnsemblRelease(LoadAble, Base):
 
     release_id = Column(Integer, primary_key=True, nullable=True)
     version = Column(DECIMAL(10, 1), nullable=False)
-    release_date = Column(Date, nullable=False)
+    release_date = Column(Date, nullable=True)
     label = Column(String(64))
     is_current = Column(TINYINT(1), nullable=False, default=0)
     site_id = Column(ForeignKey('ensembl_site.site_id'), index=True)

@@ -13,7 +13,6 @@
 Unit tests for protobuf_msg_factory.py
 """
 import json
-import logging
 from pathlib import Path
 
 import pytest
@@ -34,9 +33,9 @@ class TestClass:
         [
             (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 1, 1, 5, 'SAMN12121739'),
             (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'all', 1, 6, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 2, 1, 19, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 2, 1, 20, 'SAMN12121739'),
             (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 1, 1, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 2, 19, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 2, 20, 'SAMN12121739'),
         ],
         indirect=['allow_unreleased']
     )
@@ -238,7 +237,7 @@ class TestClass:
         "allow_unreleased, expected_count",
         [
             (False, 5),
-            (True, 19)
+            (True, 20)
         ],
         indirect=['allow_unreleased']
     )
