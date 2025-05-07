@@ -69,7 +69,7 @@ class ReleaseFactory:
 
         Raises:
             MissingMetaException: If the specified site does not exist.
-            ValueError: If an invalid `release_date`, `release_type`, or `status` is provided.
+            ValueError: If an invalid `release_date` is not provided.
         """
         db = DBConnection(self.metadata_uri)
         with db.session_scope() as session:
