@@ -613,7 +613,7 @@ class GenomeAdaptor(BaseAdaptor):
             # we pick the integrated genome because it's the one taking precedence
             genomes = [genome for genome in genomes if genome.EnsemblRelease.release_type == "integrated"]
             # later in the code below, we check if this genome has datasets that are released in both and partial,
-            # if it's the case we pick the partial dataset because "if a dataset is provided in a partial release
+            # if it's the case we pick partial dataset because "if a dataset is provided in a partial release
             # for an existing genome we would prefer that dataset"
             # https://genomes-ebi.slack.com/archives/C010QF119N1/p1746101265211759?thread_ts=1746094298.003789&cid=C010QF119N1
 
@@ -683,26 +683,6 @@ class GenomeAdaptor(BaseAdaptor):
                     )
                     genomes_dataset_info.append(genome_item)
 
-                    # genomes_dataset_info.append(
-                    #     GenomeDatasetsListItem(genome=genome_release.Genome,
-                    #                            release=genome_release.EnsemblRelease,
-                    #                            datasets=[
-                    #                                GenomeDatasetItem(
-                    #                                    dataset=gd.dataset,
-                    #                                    dataset_type=gd.dataset.dataset_type,
-                    #                                    dataset_source=gd.dataset.dataset_source,
-                    #                                    release=gd.dataset.genome_datasets[0],  # I've got the feeling
-                    #                                    # that this [0] will give birth to a bug in the future... we
-                    #                                    # will see, it works for now because we have one genome_dataset
-                    #                                    # linked to a dataset, but we can have many in the future
-                    #                                    # we can deal with this later when the need arises
-                    #                                    attributes=[
-                    #                                        DatasetAttributeItem(name=ds.attribute.name, value=ds.value,
-                    #                                                             type=ds.attribute.type,
-                    #                                                             label=ds.attribute.label) for ds in
-                    #                                        gd.dataset.dataset_attributes]
-                    #                                ) for gd in genome_datasets
-                    #                            ]))
                 else:
                     logger.warning(f"No dataset retrieved for genome and parameters")
 
