@@ -16,7 +16,7 @@ from ensembl.utils.database import DBConnection
 from . import EnsemblRelease, ReleaseStatus
 from .dataset import Dataset
 from ...grpc.config import cfg
-
+import logging
 
 def check_release_status(meta_dbc, dataset_uuid):
     with meta_dbc.session_scope() as session:
@@ -51,7 +51,6 @@ def get_or_new_release(meta_dbc: str, skip_release: EnsemblRelease = None) -> En
                 version=float(top_release.version) + float(0.1),
                 site_id=cfg.ensembl_site_id
             )
-        import logging
         logging.debug(f"Next release {next_release}")
         session.add(next_release)
         session.expire_on_commit = False
@@ -63,11 +62,23 @@ def fetch_proper_dataset(genome_datasets):
     Helper function to fetch the dataset we attend to get based on the release_type (partial or integrated).
 
     * If more than one dataset is available go with the partial dataset.
-    * If only one dataset is available just go with that one
+    * If only one dataset is available, return it as is.
     Slack discussion: https://genomes-ebi.slack.com/archives/C010QF119N1/p1746094298003789
     """
     if len(genome_datasets) > 1:
-        # Todo: WIP
-        genome_datasets[0]
+        # This may mean that we are getting both integrated and partial datasets
+        # In this case we make sure we are filtering integrated ones out
+        filtered = [
+            ds for ds in genome_datasets
+            if ds.is_current
+               and ds.dataset.status.value == 'Released'
+               and ds.ensembl_release.release_type == 'partial'
+        ]
+        if filtered:
+            logging.debug(f"Filtered partial datasets: {filtered}")
+            return filtered
+        else:
+            logging.warning("Multiple datasets provided but no partial release found. Returning all.")
 
-    return genome_datasets[0]
+    logging.debug(f"Returning dataset(s): {genome_datasets}")
+    return genome_datasets
