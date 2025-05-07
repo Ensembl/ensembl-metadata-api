@@ -658,15 +658,21 @@ def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_ve
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_attribute_value()
 
-    dataset_results = db_conn.fetch_genome_datasets(
+    genome_datasets_results = db_conn.fetch_genome_datasets(
         genome_uuid=genome_uuid,
         dataset_type_name=dataset_type,
         release_version=release_version
     )
 
-    if len(dataset_results) == 1:
+    if len(genome_datasets_results) > 1:
+        logger.debug("Multiple results returned.")
+        # if we get more than one genome, it means it's attached to both partial and integrated releases
+        # we pick the integrated genome because it's the one taking precedence
+        genome_datasets_results = [gd for gd in genome_datasets_results if gd.release.release_type == 'integrated']
+
+    if len(genome_datasets_results) == 1:
         response_data = msg_factory.create_attribute_value(
-            data=dataset_results,
+            data=genome_datasets_results,
             # There is no point in filtering by attribute_names in the API because it returns the whole dataset object
             # which will contain all the attributes (we should be altering them from within the API)
             attribute_names=attribute_names,
@@ -674,9 +680,6 @@ def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_ve
         )
         logger.debug(f"Response data: \n{response_data}")
         return response_data
-
-    elif len(dataset_results) > 1:
-        logger.debug("Multiple results returned.")
     else:
         logger.debug("Genome not found.")
 

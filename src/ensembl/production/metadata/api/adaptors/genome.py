@@ -609,14 +609,6 @@ class GenomeAdaptor(BaseAdaptor):
             logger.debug(f"genome Dataset query {genome_select}")
             genomes = session.execute(genome_select.order_by(Genome.created.desc()).distinct()).all()
 
-            # if we got more than one genome, it means it's attached to both partial and integrated releases
-            # we pick the integrated genome because it's the one taking precedence
-            genomes = [genome for genome in genomes if genome.EnsemblRelease.release_type == "integrated"]
-            # later in the code below, we check if this genome has datasets that are released in both and partial,
-            # if it's the case we pick partial dataset because "if a dataset is provided in a partial release
-            # for an existing genome we would prefer that dataset"
-            # https://genomes-ebi.slack.com/archives/C010QF119N1/p1746101265211759?thread_ts=1746094298.003789&cid=C010QF119N1
-
             # fetch all genomes datasets
             # filter regarding allow_unreleased / release_version / unreleased_only
             genomes_dataset_info = []
@@ -641,11 +633,14 @@ class GenomeAdaptor(BaseAdaptor):
                                        float(gd.ensembl_release.version) <= release_version]
 
                 if len(genome_datasets) > 1:
+                    logger.debug(f"{len(genome_release)} genome_datasets found")
+                    logger.debug(f"Retrieved genome_datasets {genome_release}")
                     # this means that we have datasets that are released in both and partial,
                     # if it's the case we pick the partial dataset because "if a dataset is provided in a partial release
                     # for an existing genome we would prefer that dataset"
                     # https://genomes-ebi.slack.com/archives/C010QF119N1/p1746101265211759?thread_ts=1746094298.003789&cid=C010QF119N1
-                    genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release.release_type == "partial"]
+                    if not cfg.allow_unreleased:
+                        genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release.release_type == "partial"]
 
                 if len(genome_datasets) > 0:
                     datasets_list = []
