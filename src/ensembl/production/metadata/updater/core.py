@@ -335,9 +335,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     NCBITaxaName.taxon_id == taxid,
                     NCBITaxaName.name_class == "genbank common name"
                 ).one_or_none()
-                common_name = common_name.name if common_name is not None else '-'
         # Ensure that the first character is upper case.
-        common_name = common_name[0].upper() + common_name[1:]
+        if common_name is not None:
+            common_name = common_name[0].upper() + common_name[1:]
         species_taxonomy_id = self.get_meta_single_meta_key(species_id, "organism.species_taxonomy_id")
         if species_taxonomy_id is None:
             species_taxonomy_id = taxid
