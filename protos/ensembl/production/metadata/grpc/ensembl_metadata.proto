@@ -356,7 +356,7 @@ message OrganismsGroup {
 
 message OrganismsGroupCount {
   repeated OrganismsGroup organisms_group_count = 1;
-  double release_label = 2;
+  string release_label = 2;
 }
 
 message FTPLink {
