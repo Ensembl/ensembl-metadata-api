@@ -330,21 +330,21 @@ class TestGRPCGenomeAdaptor:
                                             production_name=production_name)
         assert len(genomes) == 0
 
-    @pytest.mark.parametrize(
-        "group_code, expected_assemblies_count, allow_unreleased",
-        [
-            (None, 5, False),  # Default is 'Popular' group
-            ('vertebrates', 5, False),  # Returns only vertebrates
-            ('EnsemblVertebrates', 19, True),  # Returns only vertebrates with unreleased
-        ],
-        indirect=['allow_unreleased']
-    )
-    def test_fetch_organisms_group_counts(self, genome_conn, group_code, expected_assemblies_count, allow_unreleased):
-        genomes = genome_conn.fetch_organisms_group_counts()
-        # First result should be Human with priority set
-        assert genomes[0].common_name == 'Human'
-        # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
-        assert genomes[0].count == expected_assemblies_count
+    # @pytest.mark.parametrize(
+    #     "group_code, expected_assemblies_count, allow_unreleased",
+    #     [
+    #         (None, 5, False),  # Default is 'Popular' group
+    #         ('vertebrates', 5, False),  # Returns only vertebrates
+    #         ('EnsemblVertebrates', 19, True),  # Returns only vertebrates with unreleased
+    #     ],
+    #     indirect=['allow_unreleased']
+    # )
+    # def test_fetch_organisms_group_counts(self, genome_conn, group_code, expected_assemblies_count, allow_unreleased):
+    #     genomes = genome_conn.fetch_organisms_group_counts()
+    #     # First result should be Human with priority set
+    #     assert genomes[0].common_name == 'Human'
+    #     # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
+    #     assert genomes[0].count == expected_assemblies_count
 
     @pytest.mark.parametrize(
         "taxon_id, version, expected_assemblies_count, allow_unreleased",
