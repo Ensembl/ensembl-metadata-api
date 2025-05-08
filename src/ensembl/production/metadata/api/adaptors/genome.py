@@ -12,17 +12,20 @@
 from __future__ import annotations
 
 import logging
+from operator import and_
 from typing import List, Tuple, NamedTuple
 
 import sqlalchemy as db
-from ensembl.utils.database import DBConnection
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
+from ensembl.utils.database import DBConnection
+from sqlalchemy import select, func, desc, or_
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import aliased
 
+from ensembl.production.metadata.api.adaptors.base import BaseAdaptor, check_parameter, cfg
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
     ReleaseStatus, DatasetStatus
-from ensembl.production.metadata.api.adaptors.base import BaseAdaptor, check_parameter, cfg
 
 logger = logging.getLogger(__name__)
 
@@ -690,43 +693,73 @@ class GenomeAdaptor(BaseAdaptor):
         except Exception as e:
             raise ValueError(str(e))
 
-    def fetch_organisms_group_counts(self, release_version: float = None, group_code: str = 'popular'):
-        import re
-        group_code = re.sub('Ensembl', '', group_code).lower()
-        o_species = aliased(Organism)
-        o = aliased(Organism)
-        query = db.select(
-            o_species.species_taxonomy_id,
-            o_species.common_name,
-            o_species.scientific_name,
-            OrganismGroupMember.order.label('order'),
-            db.func.count().label('count')
-        )
-
-        query = query.join(o, o_species.species_taxonomy_id == o.species_taxonomy_id)
-        query = query.join(Genome, o.organism_id == Genome.organism_id)
-        query = query.join(Assembly, Genome.assembly_id == Assembly.assembly_id)
-        query = query.join(OrganismGroupMember, o_species.organism_id == OrganismGroupMember.organism_id)
-        query = query.join(OrganismGroup,
-                           OrganismGroupMember.organism_group_id == OrganismGroup.organism_group_id)
-        query = query.filter(OrganismGroup.code == group_code)
-
-        query = query.group_by(
-            o_species.species_taxonomy_id,
-            o_species.common_name,
-            o_species.scientific_name,
-            OrganismGroupMember.order
-        )
-        query = query.order_by(OrganismGroupMember.order)
-        logger.debug("ALLOWED UNRELEASED %s", cfg.allow_unreleased)
-        query = query.join(GenomeRelease).join(EnsemblRelease)
-        if not cfg.allow_unreleased:
-            query = query.where(EnsemblRelease.status == ReleaseStatus.RELEASED)
-        if release_version:
-            query = query.filter(EnsemblRelease.version <= release_version)
-        logger.debug(query)
+    def fetch_organisms_group_counts(self, release_label: str = None, group_code: str = 'popular'):
         with self.metadata_db.session_scope() as session:
-            # TODO check if we should return a dictionary instead
+            # Step 1: Alias for organism in group
+            OrganismAlias = aliased(Organism)
+
+            # Step 2: Base query
+            query = db.select(
+                OrganismAlias.species_taxonomy_id,
+                OrganismAlias.common_name,
+                OrganismAlias.scientific_name,
+                OrganismGroupMember.order.label("order"),
+                func.count(func.distinct(Genome.genome_id)).label("count")
+            ).join(OrganismGroupMember, OrganismGroupMember.organism_id == OrganismAlias.organism_id
+                   ).join(OrganismGroup, OrganismGroup.organism_group_id == OrganismGroupMember.organism_group_id
+                          ).join(Organism, Organism.species_taxonomy_id == OrganismAlias.species_taxonomy_id
+                                 ).join(Genome, Genome.organism_id == Organism.organism_id
+                                        ).join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id
+                                               ).join(EnsemblRelease,
+                                                      EnsemblRelease.release_id == GenomeRelease.release_id
+                                                      ).filter(OrganismGroup.code == group_code)
+
+            # Step 3: Release logic
+            if release_label:
+                rel_stmt = select(EnsemblRelease).where(EnsemblRelease.label == release_label)
+                try:
+                    rel_test = session.execute(rel_stmt).scalar_one()
+                except NoResultFound:
+                    raise ValueError(f"Release {release_label} not found")
+
+                if rel_test.status != ReleaseStatus.RELEASED or rel_test.release_type != "Integrated":
+                    raise ValueError(f"Release {release_label} is not a released integrated release")
+
+                query = query.where(GenomeRelease.release_id == rel_test.release_id)
+            else:
+                latest_release_stmt = (
+                    select(EnsemblRelease.release_id)
+                    .where(
+                        EnsemblRelease.status == ReleaseStatus.RELEASED,
+                        EnsemblRelease.release_type == "Integrated"
+                    )
+                    .order_by(desc(EnsemblRelease.release_date))
+                    .limit(1)
+                )
+                latest_release_id = session.execute(latest_release_stmt).scalar_one()
+
+                query = query.where(
+                    or_(
+                        and_(
+                            EnsemblRelease.release_type == "Partial",
+                            GenomeRelease.is_current.is_(True)
+                        ),
+                        EnsemblRelease.release_id == latest_release_id
+                    )
+                )
+
+            # Step 4: Grouping
+            query = query.group_by(
+                OrganismAlias.species_taxonomy_id,
+                OrganismAlias.common_name,
+                OrganismAlias.scientific_name,
+                OrganismGroupMember.order
+            )
+
+            # Step 5: Ordering
+            #  This is how we tell the UI what to show first in the species selector
+            query = query.order_by(OrganismGroupMember.order)
+
             return session.execute(query).all()
 
     def fetch_assemblies_count(self, species_taxonomy_id: int, release_version: float = None):

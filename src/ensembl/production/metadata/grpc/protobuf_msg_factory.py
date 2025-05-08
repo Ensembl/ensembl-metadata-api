@@ -415,7 +415,7 @@ def populate_dataset_info(data=None):
     return ds_obj_list
 
 
-def create_organisms_group_count(data, release_version):
+def create_organisms_group_count(data, release_label):
     if data is None:
         return ensembl_metadata_pb2.OrganismsGroupCount()
 
@@ -432,7 +432,7 @@ def create_organisms_group_count(data, release_version):
 
     return ensembl_metadata_pb2.OrganismsGroupCount(
         organisms_group_count=organisms_list,
-        release_version=release_version
+        release_label=release_label
     )
 
 
