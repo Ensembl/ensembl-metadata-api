@@ -640,7 +640,7 @@ class GenomeAdaptor(BaseAdaptor):
                 if len(genome_datasets) > 1:
                     logger.debug(f"{len(genome_release)} genome_datasets found")
                     logger.debug(f"Retrieved genome_datasets {genome_release}")
-                    # this means that we have datasets that are released in both and partial,
+                    # this means that we have datasets that are released in both integrated and partial,
                     # if it's the case we pick the partial dataset because "if a dataset is provided in a partial release
                     # for an existing genome we would prefer that dataset"
                     # https://genomes-ebi.slack.com/archives/C010QF119N1/p1746101265211759?thread_ts=1746094298.003789&cid=C010QF119N1
@@ -669,7 +669,7 @@ class GenomeAdaptor(BaseAdaptor):
                             # If more than one dataset is available go with the partial dataset.
                             # If only one dataset is available just go with that one
                             # Slack discussion: https://genomes-ebi.slack.com/archives/C010QF119N1/p1746094298003789
-                            # release=gd.dataset.genome_datasets[0],
+                            # Todo: clarify the confusion here (why release is assigned a genome_datasets)
                             release=utils.fetch_proper_dataset(gd.dataset.genome_datasets),
                             attributes=attributes
                         )
