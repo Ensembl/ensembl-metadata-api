@@ -13,19 +13,27 @@ from pathlib import Path
 
 import pytest
 from ensembl.utils.database import UnitTestDB, DBConnection
-
+from collections import namedtuple
 from ensembl.production.metadata.api.exceptions import DatasetFactoryException
 from ensembl.production.metadata.api.factories.genomes import GenomeInputFilters
-from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus
+from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus, OrganismGroup, OrganismGroupMember, \
+    Organism
 
 import logging
 
+from ensembl.production.metadata.scripts.organism_to_organismgroup import process_genomes
+
 logger = logging.getLogger(__name__)
+
+Args = namedtuple('Args', [
+    'metadata_db_uri', 'core_server_uri', 'organism_group_type',
+    'organism_group_name', 'genome_uuid', 'release_id', 'remove', 'raise_error'
+])
 
 
 @pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
-                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
-                                        ]], indirect=True)
+                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                       ]], indirect=True)
 @pytest.fixture(scope="function")
 def genome_filters(test_dbs):
     return {
@@ -54,8 +62,8 @@ def expected_columns():
 
 
 @pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
-                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
-                                        ]], indirect=True)
+                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                       ]], indirect=True)
 class TestGenomeFactory:
     dbc: UnitTestDB = None
 
@@ -202,3 +210,125 @@ class TestGenomeFactory:
         expected_columns.append('updated_dataset_status')
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
+
+    @pytest.mark.parametrize(
+        "genome_uuid, organism_group_type, organism_group_name",
+        [
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "Division", "EnsemblBacteria"),
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "Internal", "Populars"),
+            ("65d4f21f-695a-4ed0-be67-5732a551fea4", "Division", "EnsemblVertebrates"),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", "Division", "EnsemblPlants"),
+            ("a733574a-93e7-11ec-a39d-005056b38ce3", "Division", "EnsemblFungi"),
+            ("a73356e1-93e7-11ec-a39d-005056b38ce3", "Division", "EnsemblProtists")
+        ]
+    )
+    def test_fetch_genomes_by_division_type_organism_group_type(self, test_dbs, genome_factory, genome_filters,
+                                                                genome_uuid, organism_group_type, organism_group_name):
+        genome_filters['genome_uuid'] = [genome_uuid]
+        genome_filters['columns'] = [Genome.genome_uuid.label('genome_uuid'),
+                                     OrganismGroup.name.label('organism_group_name'),
+                                     OrganismGroup.type.label('organism_group_type'),
+                                     ]
+        genome_filters['dataset_status'] = ['Released']
+        genome_filters['division'] = [organism_group_name]
+        genome_filters['organism_group_type'] = organism_group_type
+
+        genome_factory_result = next(genome_factory.get_genomes(**genome_filters))
+
+        assert genome_factory_result['genome_uuid'] == genome_uuid
+        assert genome_factory_result['organism_group_name'] == organism_group_name
+        assert genome_factory_result['organism_group_type'] == organism_group_type
+
+    @pytest.mark.parametrize(
+        "genome_uuid, organism_group_type, organism_group_name",
+        [
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "Division", "EnsemblBacteria"),
+            ("a73351f7-93e7-11ec-a39d-005056b38ce3", "Internal", "Populars"),
+            ("65d4f21f-695a-4ed0-be67-5732a551fea4", "Division", "EnsemblVertebrates"),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", "Division", "EnsemblPlants"),
+            ("a733574a-93e7-11ec-a39d-005056b38ce3", "Division", "EnsemblFungi"),
+            ("a73356e1-93e7-11ec-a39d-005056b38ce3", "Division", "EnsemblProtists")
+        ]
+    )
+    def test_fetch_genomes_by_division_type_organism_group_type(self, test_dbs, genome_factory, genome_filters,
+                                                                genome_uuid, organism_group_type, organism_group_name):
+        genome_filters['genome_uuid'] = [genome_uuid]
+        genome_filters['columns'] = [Genome.genome_uuid.label('genome_uuid'),
+                                     OrganismGroup.name.label('organism_group_name'),
+                                     OrganismGroup.type.label('organism_group_type'),
+                                     ]
+        genome_filters['dataset_status'] = ['Released']
+        genome_filters['division'] = [organism_group_name]
+        genome_filters['organism_group_type'] = organism_group_type
+
+        genome_factory_result = next(genome_factory.get_genomes(**genome_filters))
+
+        assert genome_factory_result['genome_uuid'] == genome_uuid
+        assert genome_factory_result['organism_group_name'] == organism_group_name
+        assert genome_factory_result['organism_group_type'] == organism_group_type
+
+    @pytest.mark.parametrize(
+        "genome_uuid, organism_group_type, organism_group_name",
+        [
+            ("63b4ffbf-0147-4aa7-b0af-7575bb822740", "Division", "EnsemblVertebrates"),
+        ]
+    )
+    def test_fetch_genomes_not_assigned_to_organism_group_type(self, test_dbs, genome_factory, genome_filters,
+                                                               genome_uuid, organism_group_type, organism_group_name):
+
+        #remove genome from organism group and make sure it is not attached to any other organism group
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        args = Args(
+            metadata_db_uri=test_dbs['ensembl_genome_metadata'].dbc.url,
+            core_server_uri=None,
+            organism_group_type=organism_group_type,
+            organism_group_name=organism_group_name,
+            genome_uuid=[genome_uuid],
+            release_id=[],
+            remove=True,
+            raise_error=False
+        )
+
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+
+        with (metadata_db.session_scope() as session):
+            organism_group = session.query(OrganismGroup).filter(
+                OrganismGroup.name == args.organism_group_name,
+                OrganismGroup.type == args.organism_group_type
+            ).one_or_none()
+
+            organism_group_id = organism_group.organism_group_id if organism_group else None
+            assert organism_group_id is not None
+
+            # remove organism from organism group
+            process_genomes(session, args, organism_group_id=organism_group_id)
+            session.commit()
+
+            # Check if the organism group removed
+            query = (
+                session.query(Genome, Organism, OrganismGroup).join(Organism, Organism.organism_id == Genome.organism_id
+                                                                    ).join(OrganismGroupMember,
+                                                                           OrganismGroupMember.organism_id == Organism.organism_id
+                                                                           ).join(OrganismGroup,
+                                                                                  OrganismGroup.organism_group_id == OrganismGroupMember.organism_group_id
+                                                                                  ).filter(
+                    Genome.genome_uuid.in_([args.genome_uuid]),
+                    OrganismGroup.name == args.organism_group_name,
+                )
+            )
+
+            assert query.count() == 0, "Organism group member should be removed and not assigned to any other organism group"
+
+            genome_filters['genome_uuid'] = [genome_uuid]
+            genome_filters['columns'] = [Genome.genome_uuid.label('genome_uuid'),
+                                         OrganismGroup.name.label('organism_group_name'),
+                                         OrganismGroup.type.label('organism_group_type'),
+                                         ]
+            genome_filters['dataset_status'] = ['Processed']
+            genome_filters['division']  = []
+            genome_filters['organism_group_type'] = ''
+            genome_factory_result = next(genome_factory.get_genomes(**genome_filters))
+
+            assert genome_factory_result['genome_uuid'] == genome_uuid, "Genome UUID should match"
+            assert genome_factory_result['organism_group_name'] is None, "Organism group name should be None"
+            assert genome_factory_result['organism_group_type'] is None, "Organism group type should be None"
