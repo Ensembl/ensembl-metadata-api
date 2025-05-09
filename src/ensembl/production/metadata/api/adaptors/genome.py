@@ -25,7 +25,9 @@ from sqlalchemy.orm import aliased
 from ensembl.production.metadata.api.adaptors.base import BaseAdaptor, check_parameter, cfg
 from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
-    ReleaseStatus, DatasetStatus
+    ReleaseStatus, DatasetStatus, utils
+from ensembl.production.metadata.api.adaptors.base import BaseAdaptor, check_parameter, cfg
+
 
 logger = logging.getLogger(__name__)
 
@@ -634,27 +636,53 @@ class GenomeAdaptor(BaseAdaptor):
                 if release_version:
                     genome_datasets = [gd for gd in genome_datasets if
                                        float(gd.ensembl_release.version) <= release_version]
+
+                if len(genome_datasets) > 1:
+                    logger.debug(f"{len(genome_release)} genome_datasets found")
+                    logger.debug(f"Retrieved genome_datasets {genome_release}")
+                    # this means that we have datasets that are released in both integrated and partial,
+                    # if it's the case we pick the partial dataset because "if a dataset is provided in a partial release
+                    # for an existing genome we would prefer that dataset"
+                    # https://genomes-ebi.slack.com/archives/C010QF119N1/p1746101265211759?thread_ts=1746094298.003789&cid=C010QF119N1
+                    if not cfg.allow_unreleased:
+                        genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release.release_type == "partial"]
+
                 if len(genome_datasets) > 0:
-                    genomes_dataset_info.append(
-                        GenomeDatasetsListItem(genome=genome_release.Genome,
-                                               release=genome_release.EnsemblRelease,
-                                               datasets=[
-                                                   GenomeDatasetItem(
-                                                       dataset=gd.dataset,
-                                                       dataset_type=gd.dataset.dataset_type,
-                                                       dataset_source=gd.dataset.dataset_source,
-                                                       release=gd.dataset.genome_datasets[0],  # I've got the feeling
-                                                       # that this [0] will give birth to a bug in the future... we
-                                                       # will see, it works for now because we have one genome_dataset
-                                                       # linked to a dataset, but we can have many in the future
-                                                       # we can deal with this later when the need arises
-                                                       attributes=[
-                                                           DatasetAttributeItem(name=ds.attribute.name, value=ds.value,
-                                                                                type=ds.attribute.type,
-                                                                                label=ds.attribute.label) for ds in
-                                                           gd.dataset.dataset_attributes]
-                                                   ) for gd in genome_datasets
-                                               ]))
+                    datasets_list = []
+                    for gd in genome_datasets:
+                        # Build attributes first
+                        attributes = [
+                            DatasetAttributeItem(
+                                name=ds.attribute.name,
+                                value=ds.value,
+                                type=ds.attribute.type,
+                                label=ds.attribute.label
+                            )
+                            for ds in gd.dataset.dataset_attributes
+                        ]
+
+                        # Build dataset item
+                        dataset_item = GenomeDatasetItem(
+                            dataset=gd.dataset,
+                            dataset_type=gd.dataset.dataset_type,
+                            dataset_source=gd.dataset.dataset_source,
+                            # If more than one dataset is available go with the partial dataset.
+                            # If only one dataset is available just go with that one
+                            # Slack discussion: https://genomes-ebi.slack.com/archives/C010QF119N1/p1746094298003789
+                            # Todo: clarify the confusion here (why release is assigned a genome_datasets)
+                            release=utils.fetch_proper_dataset(gd.dataset.genome_datasets),
+                            attributes=attributes
+                        )
+                        datasets_list.append(dataset_item)
+
+                    # Finally, build the main GenomeDatasetsListItem
+                    genome_item = GenomeDatasetsListItem(
+                        genome=genome_release.Genome,
+                        release=genome_release.EnsemblRelease,
+                        datasets=datasets_list
+                    )
+                    genomes_dataset_info.append(genome_item)
+
                 else:
                     logger.warning(f"No dataset retrieved for genome and parameters")
 
