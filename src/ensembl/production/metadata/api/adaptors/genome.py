@@ -764,7 +764,29 @@ class GenomeAdaptor(BaseAdaptor):
                     .order_by(desc(EnsemblRelease.release_date))
                     .limit(1)
                 )
-                latest_release_id = session.execute(latest_release_stmt).scalar_one()
+                # To make the code backward compatible (in case we don't have any Integrated releases)
+                # We use scalar_one_or_none() instead of scalar_one()
+                latest_release_id = session.execute(latest_release_stmt).scalar_one_or_none()
+                # Check if there are any released integrated releases first
+                if latest_release_id is None:
+                    logger.warning("No released integrated Ensembl release found")
+                    # if not, grab the partial releases instead
+                    # This if condition can be deleted later once we have integrated releases as part production DB
+                    latest_release_stmt = (
+                        select(EnsemblRelease.release_id)
+                        .where(
+                            EnsemblRelease.status == ReleaseStatus.RELEASED,
+                            EnsemblRelease.release_type == "Partial",
+                            GenomeRelease.is_current.is_(True)  # Ensure we only get current partial releases
+                        )
+                        .join(GenomeRelease)  # Join to check is_current
+                        .order_by(desc(EnsemblRelease.release_date))
+                        .limit(1)
+                    )
+                    try:
+                        latest_release_id = session.execute(latest_release_stmt).scalar_one()
+                    except NoResultFound:
+                        raise ValueError("No released Ensembl releases found (neither integrated nor partial)")
 
                 query = query.where(
                     or_(
