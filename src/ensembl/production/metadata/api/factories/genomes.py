@@ -126,6 +126,15 @@ class GenomeFactory:
         if filters.batch_size:
             filters.page = filters.page if filters.page > 0 else 1
             query = query.offset((filters.page - 1) * filters.batch_size).limit(filters.batch_size)
+
+        # check if dataset/genome uuid in column list if not add it as we group by genome uuid and dataset uuid
+        if not any([i.element.table.name == 'dataset' and i.element.name == 'dataset_uuid'
+                    for i in filters.columns]):
+            filters.columns.append(Dataset.dataset_uuid.label('dataset_uuid'))
+        if not any([i.element.table.name == 'genome' and i.element.name == 'genome_uuid'
+                    for i in filters.columns]):
+            filters.columns.append(Genome.genome_uuid.label('genome_uuid'))
+
         logger.debug(f"Filter Query {query}")
         return query
 
