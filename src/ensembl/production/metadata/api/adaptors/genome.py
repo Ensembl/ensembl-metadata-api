@@ -274,7 +274,7 @@ class GenomeAdaptor(BaseAdaptor):
             .join(EnsemblRelease) \
             .join(EnsemblSite)
         if current_only or not cfg.allow_unreleased:
-            genome_select = genome_select.filter(GenomeRelease.is_current == 1)
+            genome_select = genome_select.filter(EnsemblRelease.is_current == 1)
         if not cfg.allow_unreleased:
             # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
             genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
