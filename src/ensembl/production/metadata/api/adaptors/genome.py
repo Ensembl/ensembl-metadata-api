@@ -763,7 +763,7 @@ class GenomeAdaptor(BaseAdaptor):
                 except NoResultFound:
                     raise ValueError(f"Release {release_label} not found")
 
-                if rel_test.status != ReleaseStatus.RELEASED or rel_test.release_type != "Integrated":
+                if rel_test.status != ReleaseStatus.RELEASED or rel_test.release_type != "integrated":
                     raise ValueError(f"Release {release_label} is not a released integrated release")
 
                 query = query.where(GenomeRelease.release_id == rel_test.release_id)
@@ -772,7 +772,7 @@ class GenomeAdaptor(BaseAdaptor):
                     select(EnsemblRelease.release_id)
                     .where(
                         EnsemblRelease.status == ReleaseStatus.RELEASED,
-                        EnsemblRelease.release_type == "Integrated"
+                        EnsemblRelease.release_type == "integrated"
                     )
                     .order_by(desc(EnsemblRelease.release_date))
                     .limit(1)
@@ -789,7 +789,7 @@ class GenomeAdaptor(BaseAdaptor):
                         select(EnsemblRelease.release_id)
                         .where(
                             EnsemblRelease.status == ReleaseStatus.RELEASED,
-                            EnsemblRelease.release_type == "Partial",
+                            EnsemblRelease.release_type == "partial",
                             GenomeRelease.is_current.is_(True)  # Ensure we only get current partial releases
                         )
                         .join(GenomeRelease)  # Join to check is_current
@@ -804,7 +804,7 @@ class GenomeAdaptor(BaseAdaptor):
                 query = query.where(
                     or_(
                         and_(
-                            EnsemblRelease.release_type == "Partial",
+                            EnsemblRelease.release_type == "partial",
                             GenomeRelease.is_current.is_(True)
                         ),
                         EnsemblRelease.release_id == latest_release_id
