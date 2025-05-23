@@ -409,6 +409,7 @@ class DatasetFactory:
         4. If any dataset in the chain has dataset_type.name of 'genebuild' or 'assembly':
            - Remove all genome_dataset.release_id values for the associated genome.
            - Delete all GenomeRelease entries for the affected genomes.
+           - Don't remove any assembly datasets if they are attached to multiple genomes.
 
         Args:
             session (Session): SQLAlchemy session object for database operations.
@@ -469,11 +470,13 @@ class DatasetFactory:
                         if len(assembly_datasets) == 0:
                             genomes_to_remove_release.add(genome_dataset.genome_id)
                             continue
-                        genebuild_datasets = session.query(Dataset).join(GenomeDataset).join(DatasetType).filter(
-                            GenomeDataset.genome_id == genome_dataset.genome_id).filter(
-                            Dataset.status != DatasetStatus.FAULTY).filter(DatasetType.name == "genebuild").all()
-                        if len(genebuild_datasets) == 0:
-                            genomes_to_remove_release.add(genome_dataset.genome_id)
+                            # The following section would reomve the assembly from good genomes with multiple releases.
+                            # Need to combine the two with integrated releases.
+                        # genebuild_datasets = session.query(Dataset).join(GenomeDataset).join(DatasetType).filter(
+                        #     GenomeDataset.genome_id == genome_dataset.genome_id).filter(
+                        #     Dataset.status != DatasetStatus.FAULTY).filter(DatasetType.name == "genebuild").all()
+                        # if len(genebuild_datasets) == 0:
+                        #     genomes_to_remove_release.add(genome_dataset.genome_id)
 
         # Remove genome releases if necessary
         if genomes_to_remove_release:
