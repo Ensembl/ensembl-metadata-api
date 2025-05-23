@@ -756,6 +756,11 @@ class GenomeAdaptor(BaseAdaptor):
                                                       ).filter(OrganismGroup.code == group_code)
 
             # Step 3: Release logic
+            logger.debug("ALLOWED UNRELEASED %s", cfg.allow_unreleased)
+            if not cfg.allow_unreleased:
+                query = query.where(EnsemblRelease.status == ReleaseStatus.RELEASED)
+
+            logger.debug("release_label %s", release_label)
             if release_label:
                 rel_stmt = select(EnsemblRelease).where(EnsemblRelease.label == release_label)
                 try:

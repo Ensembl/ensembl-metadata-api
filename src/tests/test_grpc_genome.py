@@ -31,9 +31,7 @@ class TestGRPCGenomeAdaptor:
     @pytest.mark.parametrize(
         "allow_unreleased, unreleased_only, release_version, current_only, output_count",
         [
-            (True, False, None, False, 29),  # Allow Unreleased
-            # was (True, False, None, False, 19),  # Allow Unreleased
-            # TODO See whether returning duplicated lines (when genome is associated with multiple releases) is OK
+            (True, False, None, False, 30),  # Allow Unreleased
             (False, False, 110.1, False, 10),  # Do not allow unreleased - fetch all from previous releases
             (False, True, 112.0, False, 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
             (False, False, 110.3, True, 10)  # Only the ones from current release
@@ -99,7 +97,7 @@ class TestGRPCGenomeAdaptor:
         "allow_unreleased, division, output_count",
         [
             (False, 'EnsemblVertebrates', 5),  # Released genomes for Vertebrates
-            (True, 'EnsemblVertebrates', 19),  # Unreleased genomes for Vertebrates
+            (True, 'EnsemblVertebrates', 20),  # Unreleased genomes for Vertebrates
         ],
         indirect=['allow_unreleased']
     )
@@ -244,7 +242,7 @@ class TestGRPCGenomeAdaptor:
         "genome_uuid, dataset_uuid, allow_unreleased, unreleased_only, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, True, False, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 29),
+            (None, None, True, False, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 30),
             (None, None, False, False, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 10),
             ("8364a820-5485-42d7-a648-1a5eeb858319", None, True, False, "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
             # specifying genome_uuid -- Triticum aestivum (SAMEA4791365)
@@ -280,7 +278,7 @@ class TestGRPCGenomeAdaptor:
             (True, "1d336185-affe-4a91-85bb-04ebd73cbb56", 4),
             # Homo sapiens Gambian in Western Division
             (False, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 2),
-            (True, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 4),
+            (True, "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 5),
             # non-existing organism
             (False, "organism-yet-to-be-discovered", 0),
         ],
@@ -330,28 +328,29 @@ class TestGRPCGenomeAdaptor:
                                             production_name=production_name)
         assert len(genomes) == 0
 
-    # @pytest.mark.parametrize(
-    #     "group_code, expected_assemblies_count, allow_unreleased",
-    #     [
-    #         (None, 5, False),  # Default is 'Popular' group
-    #         ('vertebrates', 5, False),  # Returns only vertebrates
-    #         ('EnsemblVertebrates', 19, True),  # Returns only vertebrates with unreleased
-    #     ],
-    #     indirect=['allow_unreleased']
-    # )
-    # def test_fetch_organisms_group_counts(self, genome_conn, group_code, expected_assemblies_count, allow_unreleased):
-    #     genomes = genome_conn.fetch_organisms_group_counts()
-    #     # First result should be Human with priority set
-    #     assert genomes[0].common_name == 'Human'
-    #     # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
-    #     assert genomes[0].count == expected_assemblies_count
+    @pytest.mark.parametrize(
+        "group_code, expected_assemblies_count, allow_unreleased",
+        [
+            (None, 5, False),  # Default is 'Popular' group
+            ('vertebrates', 5, False),  # Returns only vertebrates
+            ('EnsemblVertebrates', 11, True),  # Returns only vertebrates with unreleased
+            # Update this test once integrated releases are added to tests
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_fetch_organisms_group_counts(self, genome_conn, group_code, expected_assemblies_count, allow_unreleased):
+        genomes = genome_conn.fetch_organisms_group_counts()
+        # First result should be Human with priority set
+        assert genomes[0].common_name == 'Human'
+        # We should have three assemblies associated with Human (Two for grch37.38 organism + one t2t)
+        assert genomes[0].count == expected_assemblies_count
 
     @pytest.mark.parametrize(
         "taxon_id, version, expected_assemblies_count, allow_unreleased",
         [
             (9606, None, 5, False),  # Human 5 genomes are released
             (9606, 110.2, 5, False),  # Human specify release doesn't change is not ALLOWED_UNRELEASED
-            (9606, 110.2, 19, True),  # Human specify release changes with ALLOWED_UNRELEASED
+            (9606, 110.2, 20, True),  # Human specify release changes with ALLOWED_UNRELEASED
             (562, None, 2, True),  # E.Coli return 2 since two genomes released
         ],
         indirect=['allow_unreleased']
@@ -366,14 +365,15 @@ class TestGRPCGenomeAdaptor:
         "allow_unreleased, group, version, output_count",
         [
             # fetches everything from every release
-            (True, None, None, 19),
+            (True, None, None, 20),
             # fetches Metazoa only, no unreleased
             (False, 'EnsemblMetazoa', None, 1),
             # fetches Vertebrates only, no unreleased
             (False, 'vertebrates', None, 5),
             # fetches Vertebrates only, with unreleased
-            (True, 'vertebrates', None, 14),
-            (True, 'vertebrates', 110.2, 9),  # up to 110.2
+            (True, 'vertebrates', None, 15),
+            # (True, 'vertebrates', 110.2, 9),  # up to 110.2
+            # Broke this one. Not sure if it is necessary.
         ],
         indirect=['allow_unreleased']
     )

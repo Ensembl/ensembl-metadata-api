@@ -13,7 +13,6 @@
 Unit tests for protobuf_msg_factory.py
 """
 import json
-import logging
 from pathlib import Path
 
 import pytest
@@ -34,9 +33,9 @@ class TestClass:
         [
             (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 1, 1, 5, 'SAMN12121739'),
             (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'all', 1, 6, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 2, 1, 19, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 2, 1, 20, 'SAMN12121739'),
             (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 1, 1, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 2, 19, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 2, 20, 'SAMN12121739'),
         ],
         indirect=['allow_unreleased']
     )
@@ -234,35 +233,35 @@ class TestClass:
 
         assert json.loads(actual) == output
 
-    # @pytest.mark.parametrize(
-    #     "allow_unreleased, expected_count",
-    #     [
-    #         (False, 5),
-    #         (True, 19)
-    #     ],
-    #     indirect=['allow_unreleased']
-    # )
-    # def test_create_organisms_group_count(self, genome_conn, expected_count, allow_unreleased):
-    #     input_data = genome_conn.fetch_organisms_group_counts()
-    #     expected_result = {
-    #         "organismsGroupCount": [
-    #             {
-    #                 "speciesTaxonomyId": 9606,
-    #                 "commonName": "Human",
-    #                 "scientificName": "Homo sapiens",
-    #                 "order": 1,
-    #                 "count": expected_count
-    #             }
-    #         ]
-    #     }
-    #     # send just the first element
-    #     output = json_format.MessageToJson(
-    #         msg_factory.create_organisms_group_count(
-    #             data=[input_data[0]],
-    #             release_version=None
-    #         )
-    #     )
-    #     assert json.loads(output) == expected_result
+    @pytest.mark.parametrize(
+        "allow_unreleased, expected_count",
+        [
+            (False, 5),
+            (True, 11)  # Update this test once integrated releases are added to tests
+        ],
+        indirect=['allow_unreleased']
+    )
+    def test_create_organisms_group_count(self, genome_conn, expected_count, allow_unreleased):
+        input_data = genome_conn.fetch_organisms_group_counts()
+        expected_result = {
+            "organismsGroupCount": [
+                {
+                    "speciesTaxonomyId": 9606,
+                    "commonName": "Human",
+                    "scientificName": "Homo sapiens",
+                    "order": 1,
+                    "count": expected_count
+                }
+            ]
+        }
+        # send just the first element
+        output = json_format.MessageToJson(
+            msg_factory.create_organisms_group_count(
+                data=[input_data[0]],
+                release_label=None
+            )
+        )
+        assert json.loads(output) == expected_result
 
     @pytest.mark.parametrize(
         "genome_tag, current_only, expected_output",
