@@ -63,7 +63,6 @@ class DatasetFactory:
         session.commit()
         return dataset.dataset_uuid, dataset.status
 
-    # TODO: Multiple genomes for a single dataset are not incorporated
     def create_all_child_datasets(self, dataset_uuid: str,
                                   session: sqlalchemy.orm.Session = None,
                                   topic: str = 'production_process',
@@ -511,7 +510,6 @@ class DatasetFactory:
         logger.info(f"Updated {len(updated_datasets)} datasets as FAULTY and removed releases where applicable.")
 
     def update_dataset_attributes(self, dataset_uuid, attribute_dict, **kwargs):
-        # TODO ADD DELETE option to kwargs to redo dataset_attributes.
         session = kwargs.get('session')
         if not isinstance(attribute_dict, dict):
             raise TypeError("attribute_dict must be a dictionary")
@@ -550,8 +548,6 @@ class DatasetFactory:
             exist_ds = next((
                 d for d in existing_datasets if d.status in [DatasetStatus.SUBMITTED, DatasetStatus.PROCESSING]), None)
             logger.debug(f"Skipped creation {exist_ds.name} is Submitted/Processing") if exist_ds else None
-            # TODO check if necessary since db constraint is
-            #  in place: constraint uk_genome_dataset UNIQUE KEY (dataset_id, genome_id)
             if len(parent_dataset.genome_datasets) > 1:
                 raise ValueError("More than one genome linked to a genome_dataset")
 
@@ -731,7 +727,6 @@ class DatasetFactory:
                 self.__update_status(session, parent_uuid, DatasetStatus.PROCESSED)  # "Processed")
 
         elif status == DatasetStatus.RELEASED:  # "Released":
-            # TODO: Check that you are top level. Then check all children are ready to release.
             # Get current datasets chain top level.
             top_level_uuid = self.__query_top_level_parent(session, dataset_uuid)
             # Check that all children and sub children etc
@@ -766,8 +761,6 @@ class DatasetFactory:
     def __query_genomes_by_status_and_type(self, session, status, dataset_type):
         if session is None:
             raise ValueError("Session is not provided")
-        # TODO: NO NEED for session here (execute then add result to session)
-        # TODO: reuse GenomeFactory inputFilter and search
         # Filter by Dataset status and DatasetType name
         if isinstance(status, str):
             status = DatasetStatus(status)
