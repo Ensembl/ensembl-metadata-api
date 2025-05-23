@@ -71,6 +71,7 @@ class ReleaseFactory:
             MissingMetaException: If the specified site does not exist.
             ValueError: If an invalid `release_date` is not provided.
         """
+        # TODO: ADD NAME FOR RELEASE AND MODELS
         db = DBConnection(self.metadata_uri)
         with db.session_scope() as session:
             # Validate site
@@ -120,14 +121,14 @@ class ReleaseFactory:
             return release
 
     def set_partial_released(self, version: Decimal = None, release_id=None, release_date: str = None,
-                             site_name: str = "Ensembl",
-                             force: bool = False) -> EnsemblRelease:
+                             site_name: str = "Ensembl", exclude_genomes: list[str] = None,
+                             exclude_datasets: list[str] = None, force: bool = False) -> EnsemblRelease:
         """
 
         To use this factory, just call it with a release. It should work as intended, but  has not been fully tested
         for a non-forced release.
         For a forced release all genome_release entries must be created and set to the proper release.
-
+        - datasets or genomes can be excluded by providing a list of their UUIDs.
         - Processes faulty datasets
         - Attaches and updates non-released datasets of specific types (vep, variation, etc.)
         - if not forced, checks to see each dataset can be updated to processed
@@ -151,13 +152,14 @@ class ReleaseFactory:
 
             # Retrieve the release
             if release_id is None:
-                # TODO: Check that it is partial a valid release and is not released.
                 # Remove the version
                 release = session.query(EnsemblRelease).filter_by(version=version).one()
                 release_id = release.release_id
             else:
                 release = session.query(EnsemblRelease).filter_by(release_id=release_id).one()
-
+                if release.status == "Released":
+                    raise ValueError(f"Release {version} is already released.")
+            logger.info(f"Starting partial release process for version={version}, release_id={release_id}")
             # Process faulty datasets to prevent errors
             df.process_faulty(session)
 
@@ -167,7 +169,6 @@ class ReleaseFactory:
             # Update dataset statuses based on the force flag
             if force:
                 # Update only genomes attached to this release
-                #TODO: DOUBLE CHECK!!
                 datasets = (session.query(Dataset)
                             .join(GenomeDataset)
                             .join(DatasetType)
@@ -187,6 +188,7 @@ class ReleaseFactory:
                                                      session=session,
                                                      force=force,
                                                      status="Processed")
+                logger.info(f"Updated dataset {dataset.dataset_uuid} to 'Processed' status.")
 
             # Attach genomes to the release if they have a processed genebuild dataset
             genomes = (session.query(Genome)
@@ -198,10 +200,13 @@ class ReleaseFactory:
                        .all())
 
             for genome in genomes:
+                if genome.genome_uuid in exclude_genomes:
+                    continue
                 if not session.query(GenomeRelease).filter_by(genome_id=genome.genome_id,
                                                               release_id=release_id).count():
                     session.add(GenomeRelease(genome_id=genome.genome_id, release_id=release_id, is_current=0))
                     session.commit()
+                    logger.info(f"Genome {genome.genome_uuid} has been added to the release.")
 
             # Attach all datasets linked to genomes in this release
             datasets = (session.query(Dataset)
@@ -210,15 +215,16 @@ class ReleaseFactory:
                         .join(GenomeRelease)
                         .filter(GenomeRelease.release_id == release_id)
                         .all())
+            logger.info(f"Found {len(datasets)} datasets linked to genomes in this release.")
             # non forced
             if force is False:
                 for dataset in datasets:
-                    if dataset.status == "Processed":
+                    if dataset.status == "Processed" and dataset.dataset_uuid not in exclude_datasets:
                         for genome_dataset in dataset.genome_datasets:
                             if genome_dataset.release_id is None:
                                 genome_dataset.release_id = release_id
             else:
-                for dataset in datasets:
+                for dataset in datasets and dataset.dataset_uuid not in exclude_datasets:
                     for genome_dataset in dataset.genome_datasets:
                         if genome_dataset.release_id is None:
                             genome_dataset.release_id = release_id
@@ -234,12 +240,14 @@ class ReleaseFactory:
                     print(f"Release {version} has errors: {errors}")
                     input("Are you sure you want to continue? Press any key to continue or Ctrl+C to exit.")
                     print("You are continuing. Good luck with that.")
+                    logger.info(f"Release {version} has errors: {errors}. Continuing with force.")
             # Mark datasets as released and set them as current
             genome_datasets = session.query(GenomeDataset).filter_by(release_id=release_id).all()
             for genome_dataset in genome_datasets:
                 genome_dataset.dataset.status = "Released"
                 genome_dataset.is_current = 1
                 session.commit()
+                logger.info(f"Dataset {genome_dataset.dataset.dataset_uuid} has been marked as released.")
 
             # Ensure only one current dataset per dataset type
             df.is_current_datasets_resolve(release_id, session)
@@ -248,6 +256,7 @@ class ReleaseFactory:
             genome_releases = session.query(GenomeRelease).filter_by(release_id=release_id).all()
             for genome_release in genome_releases:
                 genome_release.is_current = 1
+                logger.info(f"Genome {genome_release.genome.genome_uuid} has been marked as current.")
 
             # Adjust older genome releases to is_current=0
             genome_sets = get_genome_sets_by_assembly_and_provider(session)
@@ -267,7 +276,7 @@ class ReleaseFactory:
                         session.execute(
                             update(GenomeRelease).where(GenomeRelease.genome_release_id == gr.genome_release_id).values(
                                 is_current=0))
-
+                logger.info(f"Genome releases for assembly {assembly_uuid} and provider {provider} have been updated.")
             session.commit()
 
             # Update release information
@@ -278,8 +287,10 @@ class ReleaseFactory:
             release.is_current = 1
             if release_date is None:
                 release.release_date = datetime.now().date()
+                logger.info(f"Release date set to current date: {release.release_date}.")
             else:
                 release.release_date = datetime.strptime(release_date, "%Y-%m-%d").date()
+                logger.info(f"Release date set to specified date: {release.release_date}.")
             release.label = release.release_date
             session.commit()
 
@@ -289,9 +300,9 @@ class ReleaseFactory:
                               .filter(EnsemblRelease.site_id == site_id)
                               .filter(EnsemblRelease.release_type == "partial")
                               .all())
-            #TODO:not integrated
             for other_release in other_releases:
                 other_release.is_current = 0
+                logger.info(f"Release {other_release.version} has been marked as not current.")
 
             return release
 
