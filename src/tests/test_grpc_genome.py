@@ -333,7 +333,8 @@ class TestGRPCGenomeAdaptor:
         [
             (None, 5, False),  # Default is 'Popular' group
             ('vertebrates', 5, False),  # Returns only vertebrates
-            ('EnsemblVertebrates', 20, True),  # Returns only vertebrates with unreleased
+            ('EnsemblVertebrates', 11, True),  # Returns only vertebrates with unreleased
+            # Update this test once integrated releases are added to tests
         ],
         indirect=['allow_unreleased']
     )

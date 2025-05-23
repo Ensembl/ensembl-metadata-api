@@ -237,7 +237,7 @@ class TestClass:
         "allow_unreleased, expected_count",
         [
             (False, 5),
-            (True, 20)
+            (True, 11)  # Update this test once integrated releases are added to tests
         ],
         indirect=['allow_unreleased']
     )
@@ -258,7 +258,7 @@ class TestClass:
         output = json_format.MessageToJson(
             msg_factory.create_organisms_group_count(
                 data=[input_data[0]],
-                release_version=None
+                release_label=None
             )
         )
         assert json.loads(output) == expected_result
