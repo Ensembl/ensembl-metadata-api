@@ -51,7 +51,8 @@ class Attribute(LoadAble, Base):
     label = Column(String(128), nullable=False)
     description = Column(String(255))
     required = Column(TINYINT(1), nullable=False, default=0)
-    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp', 'number'), server_default=text("'string'"))
+    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp', 'number', 'boolean'),
+                  server_default=text("'string'"))
     # One to many relationships
     # attribute_id within dataset attribute
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
