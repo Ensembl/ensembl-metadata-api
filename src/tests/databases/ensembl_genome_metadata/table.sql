@@ -149,6 +149,7 @@ CREATE TABLE ensembl_release
     release_type varchar(16)    not null,
     site_id      int            null,
     status       varchar(12)    not null,
+    name varchar(3) null,
     constraint ensembl_release_version_site_id_b743399a_uniq
         unique (version, site_id),
     constraint ensembl_release_site_id_7c2f537a_fk_ensembl_site_site_id
