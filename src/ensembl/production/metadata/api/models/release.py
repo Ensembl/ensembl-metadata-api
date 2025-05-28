@@ -60,6 +60,7 @@ class EnsemblRelease(LoadAble, Base):
     site_id = Column(ForeignKey('ensembl_site.site_id'), index=True)
     release_type = Column(String(16), nullable=False)
     status = Column(ReleaseStatusType, nullable=False, default=ReleaseStatus.PLANNED)
+    name = Column(String(3), nullable=False)
     # One to many relationships
     # release_id to genome dataset and genome release
     genome_datasets = relationship('GenomeDataset', back_populates='ensembl_release')

@@ -16,7 +16,6 @@ from collections import defaultdict
 
 import sqlalchemy.orm
 from ensembl.utils.database.dbconnection import DBConnection
-from sqlalchemy import update, tuple_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
@@ -232,62 +231,81 @@ class DatasetFactory:
             session.rollback()
             raise RuntimeError(f"Failed to update dataset statuses: {e}")
 
-    def is_current_datasets_resolve(self, release_id, session=None):
+    def is_current_datasets_resolve(self, release_id, session=None, logger=None):
         """
         Ensures that for each (genome_id, dataset_type_id) combination,
         only one GenomeDataset has is_current=1, prioritizing the dataset with the given release_id.
 
         :param session: SQLAlchemy session object
-        :param release_id: The release_id to prioritize when setting is_current=1
+        :param release_id: The release_id to prioritize
+        :param logger: Optional logging.Logger instance
         :return: List of altered GenomeDataset objects
         """
         if not session:
             with self.__get_db_connexion().session_scope() as db_session:
-                return self.is_current_datasets_resolve(release_id=release_id, session=db_session)
+                return self.is_current_datasets_resolve(release_id=release_id, session=db_session, logger=logger)
 
-        genome_type_pairs = (
-            session.query(GenomeDataset.genome_id, Dataset.dataset_type_id)
-            .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
-            .filter(GenomeDataset.is_current == 1)
-            .group_by(GenomeDataset.genome_id, Dataset.dataset_type_id)
-            .having(func.count(GenomeDataset.genome_dataset_id) > 1)
-            .all()
-        )
-
-        # Convert results to a set of (genome_id, dataset_type_id) pairs
-        genomes_to_fix = {(genome_id, dataset_type_id) for genome_id, dataset_type_id in genome_type_pairs}
-
-        if not genomes_to_fix:
-            return []
-
-        # Fetch affected genome_datasets before modification for debugging
-        altered_datasets = session.query(GenomeDataset).join(Dataset).filter(
-            tuple_(GenomeDataset.genome_id, Dataset.dataset_type_id).in_(genomes_to_fix)
-        ).all()
-
-        # Bulk update - Set is_current=0 for all genome-dataset-type combinations in the set
-        session.execute(
-            update(GenomeDataset)
-            .where(
-                tuple_(GenomeDataset.genome_id, Dataset.dataset_type_id).in_(genomes_to_fix)
-            )
-            .values(is_current=0),
-            execution_options={"synchronize_session": "fetch"}
-        )
-
-        # Bulk update - Set is_current=1 for the dataset matching the given release_id
-        session.execute(
-            update(GenomeDataset)
-            .where(
-                tuple_(GenomeDataset.genome_id, Dataset.dataset_type_id).in_(genomes_to_fix),
-                GenomeDataset.release_id == release_id
-            )
-            .values(is_current=1),
-            execution_options={"synchronize_session": "fetch"}
-        )
-
-        session.commit()
-        return altered_datasets
+        log = logger.info if logger else print
+        # TODO: Reimplement this method to manage with unreleased datasets and dataset_types that may have multiple is_current=1 entries correctly
+        # # Step 1: Identify problem pairs
+        # log("Scanning for (genome_id, dataset_type_id) combinations with multiple is_current=1 GenomeDatasets...")
+        # genome_type_pairs = (
+        #     session.query(GenomeDataset.genome_id, Dataset.dataset_type_id)
+        #     .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
+        #     .filter(GenomeDataset.is_current == 1)
+        #     .group_by(GenomeDataset.genome_id, Dataset.dataset_type_id)
+        #     .having(func.count(GenomeDataset.genome_dataset_id) > 1)
+        #     .all()
+        # )
+        #
+        # if not genome_type_pairs:
+        #     log("No duplicates found. Nothing to fix.")
+        #     return []
+        #
+        # altered_datasets = []
+        #
+        # for genome_id, dataset_type_id in genome_type_pairs:
+        #     log(f"Fixing genome_id={genome_id}, dataset_type_id={dataset_type_id}")
+        #
+        #     gds = (
+        #         session.query(GenomeDataset)
+        #         .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
+        #         .filter(
+        #             GenomeDataset.genome_id == genome_id,
+        #             Dataset.dataset_type_id == dataset_type_id
+        #         )
+        #         .all()
+        #     )
+        #
+        #     if not gds:
+        #         log(f"  [WARN] No GenomeDataset found for genome_id={genome_id}, dataset_type_id={dataset_type_id}")
+        #         continue
+        #
+        #     current_gds = [gd for gd in gds if gd.is_current]
+        #     log(f"  Found {len(current_gds)} is_current=1 entries")
+        #
+        #     # Log current entries
+        #     for gd in current_gds:
+        #         log(f"    - GD_ID={gd.genome_dataset_id}, dataset_id={gd.dataset_id}, release_id={gd.release_id}")
+        #
+        #     # Reset all to is_current=0
+        #     for gd in current_gds:
+        #         altered_datasets.append(gd)
+        #         gd.is_current = 0
+        #
+        #     # Set is_current=1 for matching release_id
+        #     matching = [gd for gd in gds if gd.release_id == release_id]
+        #     if len(matching) == 1:
+        #         matching[0].is_current = 1
+        #         log(f"  => Marked GD_ID={matching[0].genome_dataset_id} as current (release_id={release_id})")
+        #     elif len(matching) == 0:
+        #         log(f"  [WARN] No GenomeDataset found with release_id={release_id}")
+        #     else:
+        #         log(f"  [ERROR] Multiple GenomeDatasets found with release_id={release_id}, skipping setting current!")
+        #
+        # session.commit()
+        # log(f"Finished resolving is_current flags. {len(altered_datasets)} entries modified.")
+        # return altered_datasets
 
     def attach_misc_datasets(self, release_id, session=None, force=False):
         """

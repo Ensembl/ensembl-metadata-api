@@ -20,7 +20,7 @@ from decimal import Decimal
 from typing import Optional
 
 from ensembl.utils.database import DBConnection
-from sqlalchemy import update
+from sqlalchemy import update, select, func, cast, Integer
 
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
@@ -46,7 +46,8 @@ class ReleaseFactory:
             label: Optional[str] = None,
             site: str = "Ensembl",
             release_type: str = "partial",
-            status: str = "Planned"
+            status: str = "Planned",
+            name: str = None
     ) -> EnsemblRelease:
         """
         Creates a new Ensembl release entry.
@@ -71,7 +72,6 @@ class ReleaseFactory:
             MissingMetaException: If the specified site does not exist.
             ValueError: If an invalid `release_date` is not provided.
         """
-        # TODO: ADD NAME FOR RELEASE AND MODELS
         db = DBConnection(self.metadata_uri)
         with db.session_scope() as session:
             # Validate site
@@ -91,6 +91,12 @@ class ReleaseFactory:
                     datetime.strptime(release_date, "%Y-%m-%d").date()
                 except ValueError:
                     raise ValueError("Invalid release_date format. Expected YYYY-MM-DD.")
+
+            # Create a name if not provided. It should be one higher than any existing partial release.
+            if not name and release_type == "partial":
+                name = session.scalar(
+                    select(func.max(cast(EnsemblRelease.name, Integer)))
+                ) + 1
 
             # Ensure label is defined
             if label is None:
@@ -113,7 +119,8 @@ class ReleaseFactory:
                 label=label,
                 ensembl_site=site_obj,
                 release_type=release_type,
-                status=status
+                status=status,
+                name=name
             )
             session.add(release)
             session.commit()
@@ -140,6 +147,8 @@ class ReleaseFactory:
         """
         if version is None and release_id is None:
             raise ValueError("Either version or release_id must be provided.")
+        exclude_datasets = exclude_datasets or []
+        exclude_genomes = exclude_genomes or []
         db = DBConnection(self.metadata_uri)
         df = DatasetFactory()
 
@@ -224,10 +233,11 @@ class ReleaseFactory:
                             if genome_dataset.release_id is None:
                                 genome_dataset.release_id = release_id
             else:
-                for dataset in datasets and dataset.dataset_uuid not in exclude_datasets:
-                    for genome_dataset in dataset.genome_datasets:
-                        if genome_dataset.release_id is None:
-                            genome_dataset.release_id = release_id
+                for dataset in datasets:
+                    if dataset.dataset_uuid not in exclude_datasets:
+                        for genome_dataset in dataset.genome_datasets:
+                            if genome_dataset.release_id is None:
+                                genome_dataset.release_id = release_id
             session.commit()
 
             # Final check before committing changes
