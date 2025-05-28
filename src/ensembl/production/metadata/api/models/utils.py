@@ -15,6 +15,7 @@ from ensembl.utils.database import DBConnection
 
 from . import EnsemblRelease, ReleaseStatus
 from .dataset import Dataset
+from .genome import GenomeDataset
 from ...grpc.config import cfg
 import logging
 
@@ -27,8 +28,8 @@ def check_release_status(meta_dbc, dataset_uuid):
 
         # Now we check if there exists a genome dataset with the corresponding dataset_id and a non-null release_id
         result = session.query(
-            session.query(Dataset).filter(Dataset.dataset_id == dataset_id).filter(
-                Dataset.status == "Released").exists()
+            session.query(GenomeDataset).filter(GenomeDataset.dataset_id == dataset_id,
+                                                GenomeDataset.ensembl_release != None).exists()
         ).scalar()
         return result
 

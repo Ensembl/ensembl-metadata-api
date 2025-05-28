@@ -9,6 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import logging
 from pathlib import Path
 
 import pytest
@@ -17,8 +18,6 @@ from ensembl.utils.database import UnitTestDB, DBConnection
 from ensembl.production.metadata.api.exceptions import DatasetFactoryException
 from ensembl.production.metadata.api.factories.genomes import GenomeInputFilters
 from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +74,7 @@ class TestGenomeFactory:
     @pytest.mark.parametrize(
         "batch_size, status, expected_count",
         [
-            (10, 'Submitted', 1),
+            (10, 'Submitted', 2),
             (40, 'Released', 10),
             (50, 'Processed', 8),
         ]
