@@ -15,7 +15,8 @@ from sqlalchemy import and_
 from sqlalchemy.orm import aliased
 
 from ensembl.production.metadata.api.adaptors.base import BaseAdaptor
-from ensembl.production.metadata.api.models import Organism, Assembly, DatasetAttribute, Genome, GenomeDataset, Dataset
+from ensembl.production.metadata.api.models import Organism, Assembly, DatasetAttribute, Genome, GenomeDataset, Dataset, \
+    DatasetType
 
 
 class VepAdaptor(BaseAdaptor):
@@ -88,11 +89,43 @@ class VepAdaptor(BaseAdaptor):
                 f"{scientific_name}/{result.assembly_accession}/vep/"
                 f"{result.annotation_source}/geneset/{last_geneset_update}/genes.gff3.bgz"
             )
+            # genome_features
+            # Query to see if any exist
+            genome_feature_locations = {}
+            genome_feature_datasets = session.query(Dataset).join(GenomeDataset).join(Genome).join(DatasetType).filter(
+                DatasetType.name == "vep_genome_feature",
+                Genome.genome_uuid == genome_uuid
+            ).all()
+            if genome_feature_datasets:
+                for dataset in genome_feature_datasets:
+                    feature_name = dataset.name
+                    feature_location = (f"{scientific_name}/{result.assembly_accession}/vep/"
+                                        f"{result.annotation_source}/geneset/{last_geneset_update}/{feature_name}/*")
+                    genome_feature_locations[feature_name] = feature_location
+
+            # assembly_vep_features
+            assembly_feature_locations = {}
+            # Query to see if any exist
+            assembly_feature_datasets = session.query(Dataset).join(GenomeDataset).join(Genome).filter(
+                Dataset.name == "vep_assembly_feature",
+                Genome.genome_uuid == genome_uuid
+            ).all()
+            if assembly_feature_datasets:
+                for dataset in assembly_feature_datasets:
+                    feature_name = dataset.name
+                    feature_location = f"{scientific_name}/{result.assembly_accession}/vep/genome/{feature_name}/*"
+                    assembly_feature_locations[feature_name] = feature_location
+
 
             # Return based on the `file` argument
             if self.file == "faa_location":
                 return faa_location
             elif self.file == "gff_location":
                 return gff_location
+            elif self.file == "genome_features":
+                return genome_feature_locations
+            elif self.file == "assembly_vep_features":
+                return assembly_feature_locations
             else:
-                return {"faa_location": faa_location, "gff_location": gff_location}
+                return {"faa_location": faa_location, "gff_location": gff_location,
+                        "genome_features": genome_feature_locations, "assembly_vep_features": assembly_feature_locations}
