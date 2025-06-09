@@ -18,7 +18,7 @@ from typing import List, Tuple, NamedTuple
 import sqlalchemy as db
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
 from ensembl.utils.database import DBConnection
-from sqlalchemy import select, func, desc, or_
+from sqlalchemy import select, func, desc, or_, distinct
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import aliased
 
@@ -832,16 +832,39 @@ class GenomeAdaptor(BaseAdaptor):
 
     def fetch_assemblies_count(self, species_taxonomy_id: int, release_version: float = None):
         """
-        Fetch all assemblies for the same species_taxonomy_id
+        Fetch all genomes for the same species_taxonomy_id
         release_version is to return only the ones which were available until this release_version
         Args:
             species_taxonomy_id: int The species taxon_id as per ncbi taxonomy
             release_version: float The EnsemblRelease to filter on
         """
-        query = db.select(db.func.count(Assembly.assembly_id)) \
-            .join(Genome).join(Organism) \
-            .filter(Organism.species_taxonomy_id == species_taxonomy_id)
-        query = query.join(GenomeRelease).join(EnsemblRelease)
+        query = (
+            # count(DISTINCT genome.genome_uuid) because some genome can be linked to both
+            # partial and integrated released which result in duplication when counting
+            select(func.count(distinct(Genome.genome_uuid)))
+            .select_from(Genome)
+            # join out to Organism -> GenomeRelease -> EnsemblRelease
+            .join(Organism, Genome.organism_id == Organism.organism_id)
+            .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
+            .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
+            # filter on the species_taxonomy_id
+            .where(Organism.species_taxonomy_id == species_taxonomy_id)
+        )
+        # Fetch latest partial genomes using GenomeRelease.is_current (/!\ not EnsemblRelease.is_current)
+        latest_partial_genomes = and_(
+            EnsemblRelease.release_type == 'partial',
+            GenomeRelease.is_current == True,
+        )
+        # As of now, we return all integrated releases
+        all_integrated = EnsemblRelease.release_type == 'integrated'
+        # Once we have archives, we will be returning the latest integrated only
+        # latest_integrated = and_(
+        #     EnsemblRelease.release_type == 'integrated',
+        #     EnsemblRelease.is_current == True,
+        # )
+
+        query = query.where(or_(latest_partial_genomes, all_integrated))
+
         logger.debug("ALLOWED UNRELEASED: %s", cfg.allow_unreleased)
         if not cfg.allow_unreleased:
             query = query.where(EnsemblRelease.status == ReleaseStatus.RELEASED)

@@ -350,8 +350,8 @@ class TestGRPCGenomeAdaptor:
         [
             (9606, None, 5, False),  # Human 5 genomes are released
             (9606, 110.2, 5, False),  # Human specify release doesn't change is not ALLOWED_UNRELEASED
-            (9606, 110.2, 20, True),  # Human specify release changes with ALLOWED_UNRELEASED
-            (562, None, 2, True),  # E.Coli return 2 since two genomes released
+            (9606, 110.2, 11, True),  # Human specify release changes with ALLOWED_UNRELEASED
+            (562, None, 1, True),  # E.Coli return 2 since two genomes released
         ],
         indirect=['allow_unreleased']
     )
