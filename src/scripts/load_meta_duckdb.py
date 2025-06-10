@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import argparse
+from urllib.parse import urlparse
+import os
 import duckdb
 
 # This will copy a DB by iterating over all tables and copying everything,
@@ -22,6 +24,13 @@ def main():
     dbuser = args.get("dbuser") or "ensro"
     dbname = args.get("dbname") or "ensembl_genome_metadata"
     outfile = args.get("outfile") or "duck_meta.db"
+
+    if os.environ.get('METADATA_DB') is not None:
+        db = urlparse(os.environ.get('METADATA_DB'))
+        dbhost = db.hostname
+        dbport = db.port
+        dbuser = db.username
+        dbname = db.path[1:]
 
     print(
         (
