@@ -72,7 +72,9 @@ class Genome(LoadAble, Base):
         common_path = f"{base_path}/{genebuild_source_name}"
         
         unique_dataset_types = {gd.dataset.dataset_type.name for gd in root_datasets}
-
+        unique_dataset_types.discard('vep_genome_feature')
+        unique_dataset_types.discard('vep_assembly_feature')
+        
         if 'regulatory_features' in unique_dataset_types or 'regulation_build' in unique_dataset_types:
             unique_dataset_types.discard('regulatory_features')
             unique_dataset_types.discard('regulation_build')
