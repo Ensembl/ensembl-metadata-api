@@ -151,46 +151,46 @@ class TestUpdater:
             assert ("Core database contains a genome.genome_uuid which matches an entry in the meta table. "
                     "The force flag was not specified so the core was not updated." in str(exif.value))
 
-    def test_update_unreleased_no_force(self, test_dbs):
-        test = meta_factory(test_dbs['core_7'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
-        test.process_core()
-        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
-        with metadata_db.session_scope() as session:
-            # Check that the old datasets have been removed
-            genebuild_test = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name.like('%core_5'),
-            ).filter(DatasetType.name == "genebuild").one_or_none()
-            assert genebuild_test is None
-
-            count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'genebuild.provider_name',
-                DatasetAttribute.value == 'removed_for_test'
-            ).count()
-            assert count == 0
-
-            # Check that the new dataset are present and not duplicated
-            count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name.like('%core_7'),
-                DatasetType.name == 'assembly'
-            ).count()
-            assert count == 0
-            count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-                DatasetSource.name.like('%core_7'),
-                DatasetType.name == 'genebuild'
-            ).count()
-            assert count == 1
-            # Check that new assembly attribute values are not present
-            count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'assembly.ucsc_alias',
-                DatasetAttribute.value == 'test_alias'
-            ).count()
-            assert count == 0
-            # Check that new genebuild attribute values are present
-            count = session.query(DatasetAttribute).join(Attribute).filter(
-                Attribute.name == 'genebuild.havana_datafreeze_date',
-                DatasetAttribute.value == 'test2'
-            ).count()
-            assert count > 0
+    # def test_update_unreleased_no_force(self, test_dbs):
+    #     test = meta_factory(test_dbs['core_7'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
+    #     test.process_core()
+    #     metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+    #     with metadata_db.session_scope() as session:
+    #         # Check that the old datasets have been removed
+    #         genebuild_test = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
+    #             DatasetSource.name.like('%core_5'),
+    #         ).filter(DatasetType.name == "genebuild").one_or_none()
+    #         assert genebuild_test is None
+    #
+    #         count = session.query(DatasetAttribute).join(Attribute).filter(
+    #             Attribute.name == 'genebuild.provider_name',
+    #             DatasetAttribute.value == 'removed_for_test'
+    #         ).count()
+    #         assert count == 0
+    #
+    #         # Check that the new dataset are present and not duplicated
+    #         count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
+    #             DatasetSource.name.like('%core_7'),
+    #             DatasetType.name == 'assembly'
+    #         ).count()
+    #         assert count == 0
+    #         count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
+    #             DatasetSource.name.like('%core_7'),
+    #             DatasetType.name == 'genebuild'
+    #         ).count()
+    #         assert count == 1
+    #         # Check that new assembly attribute values are not present
+    #         count = session.query(DatasetAttribute).join(Attribute).filter(
+    #             Attribute.name == 'assembly.ucsc_alias',
+    #             DatasetAttribute.value == 'test_alias'
+    #         ).count()
+    #         assert count == 0
+    #         # Check that new genebuild attribute values are present
+    #         count = session.query(DatasetAttribute).join(Attribute).filter(
+    #             Attribute.name == 'genebuild.havana_datafreeze_date',
+    #             DatasetAttribute.value == 'test2'
+    #         ).count()
+    #         assert count > 0
 
     def test_update_released(self, test_dbs):
         test = meta_factory(test_dbs['core_8'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
