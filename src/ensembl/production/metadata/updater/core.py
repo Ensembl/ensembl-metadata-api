@@ -222,20 +222,24 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 else:
                     logger.info('Rewrite of existing datasets. Only genebuild '
                                 'dataset, dataset attributes are modified.')
+                    raise exceptions.MetadataUpdateException(
+                        "This looks like a reload of data that hasn't been released."
+                        "We are not doing this currently.")
                     # TODO: We need to review this process, because if some Variation / Regulation / Compara datasets
                     #  exists we'll expect either to refuse the updates - imagine this was a fix in sequences! OR we
                     #  decide to delete the other datasets to force their recompute. In this case, we want to rewrite
                     #  the existing datasets with new data, but keep the dataset_uuid Update genebuild_dataset
-                    meta_session.query(DatasetAttribute).filter(
-                        DatasetAttribute.dataset_id == genebuild_dataset.dataset_id).delete()
-                    self.get_or_new_genebuild(species_id,
-                                              meta_session,
-                                              source=dataset_source,
-                                              existing=genebuild_dataset)
-
-                    # #Update assembly_dataset
-                    self.get_or_new_assembly(
-                        species_id, meta_session, source=dataset_source)
+                    # In addition. It does not handle faulty at all.
+                    # meta_session.query(DatasetAttribute).filter(
+                    #     DatasetAttribute.dataset_id == genebuild_dataset.dataset_id).delete()
+                    # self.get_or_new_genebuild(species_id,
+                    #                           meta_session,
+                    #                           source=dataset_source,
+                    #                           existing=genebuild_dataset)
+                    #
+                    # # #Update assembly_dataset
+                    # self.get_or_new_assembly(
+                    #     species_id, meta_session, source=dataset_source)
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
         # Currently impossible with myisam without two phase commit (requires full refactor)
