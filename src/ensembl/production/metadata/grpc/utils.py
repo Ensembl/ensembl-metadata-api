@@ -14,9 +14,9 @@ import logging
 import uuid
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
-from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.api.adaptors import GenomeAdaptor, BaseAdaptor
 from ensembl.production.metadata.api.adaptors import ReleaseAdaptor
+from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.grpc.config import MetadataConfig
 
 logger = logging.getLogger(__name__)
@@ -598,9 +598,13 @@ def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
             return msg_factory.create_paths()
 
         # Find the links for the given dataset.
+        # Find the links for the given dataset.
         # Note: release_version filtration is not implemented in the API yet
         try:
-            links = genome.get_public_path(dataset_type=dataset_type, release=release_version)
+            links = db_conn.get_public_path(
+                genome_uuid=genome_uuid,
+                dataset_type=dataset_type
+            )
         except (ValueError, RuntimeError) as error:
             # log the errors to error log and return empty list of links
             logger.error(f"Error fetching links: {error}")

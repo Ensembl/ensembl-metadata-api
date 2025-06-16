@@ -10,12 +10,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import uuid
-import warnings
 
 from sqlalchemy import Column, Integer, String, Index, ForeignKey
 from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship, synonym
+from sqlalchemy.orm import relationship
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
@@ -39,26 +37,7 @@ class Organism(LoadAble, Base):
     genomes = relationship("Genome", back_populates="organism", cascade="all, delete, delete-orphan")
     organism_group_members = relationship("OrganismGroupMember", back_populates="organism")
     strain_type = Column(String(128), nullable=True, unique=False)
-    ensembl_name = synonym("biosample_id")
 
-    # This is the code for ensembl_name. It should be considered temporary and be removed well before 2025
-    @hybrid_property
-    def ensembl_name(self):
-        warnings.warn(
-            "ensembl_name is deprecated and will be removed in future versions. "
-            "Use biosample_id instead.",
-            DeprecationWarning
-        )
-        return self.biosample_id
-
-    @ensembl_name.setter
-    def ensembl_name(self, value):
-        warnings.warn(
-            "ensembl_name is deprecated and will be removed in future versions. "
-            "Use biosample_id instead.",
-            DeprecationWarning
-        )
-        self.biosample_id = value
 
 
 class OrganismGroup(LoadAble, Base):
