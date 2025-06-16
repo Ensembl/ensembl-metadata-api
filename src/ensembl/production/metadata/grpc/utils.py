@@ -601,7 +601,10 @@ def get_ftp_links(db_conn, genome_uuid, dataset_type, release_version):
         # Find the links for the given dataset.
         # Note: release_version filtration is not implemented in the API yet
         try:
-            links = db_conn.get_public_path(dataset_type=dataset_type)
+            links = db_conn.get_public_path(
+                genome_uuid=genome_uuid,
+                dataset_type=dataset_type
+            )
         except (ValueError, RuntimeError) as error:
             # log the errors to error log and return empty list of links
             logger.error(f"Error fetching links: {error}")
