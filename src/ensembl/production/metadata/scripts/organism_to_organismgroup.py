@@ -19,12 +19,15 @@ logging.basicConfig(
 )
 
 
-def fetch_division_name(core_db_uri: str) -> str:
+def fetch_division_name(core_db_uri: str, production_name: str) -> str:
     """
     Fetch the division name from the core database.
     """
     with DBConnection(core_db_uri).session_scope() as session:
-        query = session.query(Meta).filter(Meta.meta_key == 'species.division').one_or_none()
+        query = session.query(Meta.species_id).filter(Meta.meta_key == 'species.production_name',
+                                                      Meta.meta_value == production_name).one_or_none()
+        query = session.query(Meta).filter(Meta.meta_key == 'species.division',
+                                           Meta.species_id == query.species_id).one_or_none()
         return query.meta_value if query else None
 
 
@@ -92,7 +95,7 @@ def process_genomes(session, args, organism_group_id: int = None):
     for genome, dataset_source in query.all():
         logging.info(f"Processing genome {genome.genome_uuid} for organism {genome.organism_id}")
         if not (args.organism_group_type and args.organism_group_name) and args.core_server_uri:
-            division_name = fetch_division_name(os.path.join(args.core_server_uri, dataset_source.name))
+            division_name = fetch_division_name(os.path.join(args.core_server_uri, dataset_source.name), genome.production_name)
             if division_name:
                 organism_group = session.query(OrganismGroup).filter(OrganismGroup.name == division_name).one_or_none()
                 if organism_group:
