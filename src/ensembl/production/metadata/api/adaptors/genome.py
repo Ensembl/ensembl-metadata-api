@@ -305,7 +305,6 @@ class GenomeAdaptor(BaseAdaptor):
         if release_type is not None:
             genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
         logger.debug(f"fetch_genome: {genome_select} / {release_version}")
-        print(f"fetch_genome: {genome_select} / {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("production_name", EnsemblRelease.release_date.desc())).all()
