@@ -280,11 +280,11 @@ class GenomeAdaptor(BaseAdaptor):
                 or_(
                     and_(
                         GenomeRelease.is_current == 1,
-                        EnsemblRelease.release_type == "Partial",
+                        func.lower(EnsemblRelease.release_type) == "partial",
                     ),
                     and_(
                         EnsemblRelease.is_current == 1,
-                        EnsemblRelease.release_type == "Integrated"
+                        func.lower(EnsemblRelease.release_type) == "integrated"
                     )
                 )
             )
@@ -305,6 +305,7 @@ class GenomeAdaptor(BaseAdaptor):
         if release_type is not None:
             genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
         logger.debug(f"fetch_genome: {genome_select} / {release_version}")
+        print(f"fetch_genome: {genome_select} / {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_select.order_by("production_name", EnsemblRelease.release_date.desc())).all()
@@ -442,7 +443,7 @@ class GenomeAdaptor(BaseAdaptor):
         elif species_taxonomy_id:
             logger.debug(f"species_taxonomy_id: {species_taxonomy_id}")
             genome_query = genome_query.where(
-                db.func.lower(Organism.species_taxonomy_id) == species_taxonomy_id.lower()
+                Organism.species_taxonomy_id == int(species_taxonomy_id)
             )
         else:
             return []
@@ -520,7 +521,7 @@ class GenomeAdaptor(BaseAdaptor):
         # These options are in order of decreasing specificity,
         # and thus the ones later in the list can be redundant.
         if genome_id is not None:
-            seq_select = seq_select.filter(Genome.genome_id == genome_id)
+            seq_select = seq_select.filter(Genome.genome_id.in_(genome_id))
 
         if genome_uuid is not None:
             seq_select = seq_select.filter(Genome.genome_uuid == genome_uuid)
@@ -532,10 +533,10 @@ class GenomeAdaptor(BaseAdaptor):
             seq_select = seq_select.filter(Assembly.assembly_uuid.in_(assembly_uuid))
 
         if assembly_sequence_accession is not None:
-            seq_select = seq_select.filter(AssemblySequence.accession == assembly_sequence_accession)
+            seq_select = seq_select.filter(AssemblySequence.accession.in_(assembly_sequence_accession))
 
         if assembly_sequence_name is not None:
-            seq_select = seq_select.filter(AssemblySequence.name == assembly_sequence_name)
+            seq_select = seq_select.filter(AssemblySequence.name.in_(assembly_sequence_name))
         logger.debug(f'Query {seq_select}')
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
