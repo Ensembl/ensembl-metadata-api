@@ -438,6 +438,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     'nuclear_chromosome': 'SO:0000738',
                     'mitochondrial_chromosome': 'SO:0000737',
                     'chloroplast_chromosome': 'SO:0000745',
+                    'apicoplast_chromosome': 'SO:0001259',
                     None: 'SO:0000738',
                 }
                 # Try to get the sequence location
