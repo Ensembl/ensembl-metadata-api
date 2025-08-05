@@ -23,12 +23,13 @@ from google.protobuf import json_format
 
 from ensembl.production.metadata.api.models import Genome, Dataset
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
+from ensembl.production.metadata.api.factories.utils import format_accession_path
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
-                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"}]],
+                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"}]],
                          indirect=True)
 class TestUtils:
     dbc: UnitTestDB = None
@@ -346,7 +347,8 @@ class TestUtils:
         ],
         indirect=['allow_unreleased']
     )
-    def test_get_brief_genome_details_by_uuid(self, genome_conn, allow_unreleased, genome_uuid, version, expected_count, actual):
+    def test_get_brief_genome_details_by_uuid(self, genome_conn, allow_unreleased, genome_uuid, version, expected_count,
+                                              actual):
 
         output = json_format.MessageToJson(
             utils.get_brief_genome_details_by_uuid(
@@ -378,7 +380,8 @@ class TestUtils:
         ],
         indirect=['allow_unreleased']
     )
-    def test_get_attributes_by_genome_uuid(self, genome_conn, allow_unreleased, genome_uuid, assembly_level, genebuild_sample_gene, version):
+    def test_get_attributes_by_genome_uuid(self, genome_conn, allow_unreleased, genome_uuid, assembly_level,
+                                           genebuild_sample_gene, version):
         output = json_format.MessageToJson(
             utils.get_attributes_by_genome_uuid(
                 db_conn=genome_conn,
@@ -410,7 +413,6 @@ class TestUtils:
         assert [key in output for key in expected_keys]
         assert [key in output['attributesInfo'] for key in expected_attributes_info_keys]
         assert output['attributesInfo']['assemblyLevel'] == assembly_level
-
 
     def test_get_genomes_by_keyword(self, genome_conn):
         output = [
@@ -539,11 +541,11 @@ class TestUtils:
             },
             'relatedAssembliesCount': 5
         }
-        
+
         t = json.loads(output)
-        
+
         assert t["attributesInfo"] == expected_output["attributesInfo"]
-        
+
         assert json.loads(output) == expected_output
 
     def test_get_genomes_by_name_release_unspecified(self, genome_conn):
@@ -661,19 +663,19 @@ class TestUtils:
             # valid genome uuid and no dataset should return all the datasets links of that genome uuid
             ("a733574a-93e7-11ec-a39d-005056b38ce3", 'all', None, {
                 "Links": [
-                    "Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome",
-                    "Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/regulation",
-                    "Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/variation/test_version",
-                    "Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/homology/test_version",
-                    "Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version"
+                    "GCA/000/146/045/2/test_anno_source/genome",
+                    "GCA/000/146/045/2/test_anno_source/regulation",
+                    "GCA/000/146/045/2/test_anno_source/variation/test_version",
+                    "GCA/000/146/045/2/test_anno_source/homology/test_version",
+                    "GCA/000/146/045/2/test_anno_source/genebuild/test_version"
                 ]
             }),
 
             # valid genome uuid and a valid dataset should return corresponding dataset link
             ("a733574a-93e7-11ec-a39d-005056b38ce3", 'assembly', None, {
                 "Links": [
-                    "Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genome",
-                    "Saccharomyces_cerevisiae_S288c/GCA_000146045.2/test_anno_source/genebuild/test_version"
+                    "GCA/000/146/045/2/test_anno_source/genome",
+                    "GCA/000/146/045/2/test_anno_source/genebuild/test_version"
                 ]
             }),
 
@@ -739,23 +741,23 @@ class TestUtils:
         "genome_uuid, expected_output",
         [
             (
-                # Human
-                "65d4f21f-695a-4ed0-be67-5732a551fea4",
-                {
-                    "faaLocation": "Homo_sapiens/GCA_018473295.1/vep/genome/softmasked.fa.bgz",
-                    "gffLocation": "Homo_sapiens/GCA_018473295.1/vep/ensembl/geneset/2022_08/genes.gff3.bgz"
-                }
+                    # Human
+                    "65d4f21f-695a-4ed0-be67-5732a551fea4",
+                    {
+                        "faaLocation": "GCA/018/473/295/1/vep/genome/softmasked.fa.bgz",
+                        "gffLocation": "GCA/018/473/295/1/vep/ensembl/geneset/2022_08/genes.gff3.bgz"
+                    }
             ),
             (
-                # Ecoli
-                "a73351f7-93e7-11ec-a39d-005056b38ce3",
-                {
-                    'faaLocation': 'Escherichia_coli_str_K_12_substr_MG1655_str_K12/GCA_000005845.2/vep/genome/softmasked.fa.bgz',
-                    'gffLocation': 'Escherichia_coli_str_K_12_substr_MG1655_str_K12/GCA_000005845.2/vep/community/geneset/2018_09/genes.gff3.bgz'
-                }
+                    # Ecoli
+                    "a73351f7-93e7-11ec-a39d-005056b38ce3",
+                    {
+                        'faaLocation': 'GCA/000/005/845/2/vep/genome/softmasked.fa.bgz',
+                        'gffLocation': 'GCA/000/005/845/2/vep/community/geneset/2018_09/genes.gff3.bgz'
+                    }
             ),
             (
-                "some-invalid-genome-uuid-000000000000", {}
+                    "some-invalid-genome-uuid-000000000000", {}
             )
         ]
     )
@@ -768,3 +770,19 @@ class TestUtils:
         )
         print(output)
         assert json.loads(output) == expected_output
+
+    def test_format_accession_path_valid(self):
+        assert format_accession_path("GCF_043381705.1") == "GCF/043/381/705/1"
+        assert format_accession_path("GCA_123456789.2") == "GCA/123/456/789/2"
+
+    def test_format_accession_path_invalid_prefix(self):
+        with pytest.raises(ValueError):
+            format_accession_path("XYZ_123456789.1")
+
+    def test_format_accession_path_invalid_format(self):
+        with pytest.raises(ValueError):
+            format_accession_path("GCF123456789.1")
+
+    def test_format_accession_path_long_number(self):
+        with pytest.raises(ValueError):
+            format_accession_path("GCF_1234567890.1")

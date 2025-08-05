@@ -15,6 +15,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import aliased
 
 from ensembl.production.metadata.api.adaptors.base import BaseAdaptor
+from ensembl.production.metadata.api.factories.utils import format_accession_path
 from ensembl.production.metadata.api.models import Organism, Assembly, DatasetAttribute, Genome, GenomeDataset, Dataset
 
 
@@ -74,18 +75,13 @@ class VepAdaptor(BaseAdaptor):
             elif not result.annotation_source or not result.last_geneset_update:
                 raise ValueError(f"Missing annotation source or last geneset update for genome UUID: {genome_uuid}")
 
-            # Format the scientific name
-            scientific_name = result.scientific_name
-            scientific_name = re.sub(r"[^a-zA-Z0-9]+", " ", scientific_name)
-            scientific_name = re.sub(r" +", "_", scientific_name).strip("_")
-
             # Format last geneset update
             last_geneset_update = re.sub(r"-", "_", result.last_geneset_update)
-
+            base_path = format_accession_path(result.assembly_accession)
             # Construct the locations
-            faa_location = f"{scientific_name}/{result.assembly_accession}/vep/genome/softmasked.fa.bgz"
+            faa_location = f"{base_path}/vep/genome/softmasked.fa.bgz"
             gff_location = (
-                f"{scientific_name}/{result.assembly_accession}/vep/"
+                f"{base_path}/vep/"
                 f"{result.annotation_source}/geneset/{last_geneset_update}/genes.gff3.bgz"
             )
 
