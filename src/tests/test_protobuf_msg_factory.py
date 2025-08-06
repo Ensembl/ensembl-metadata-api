@@ -296,16 +296,16 @@ class TestClass:
                 # Human
                 "65d4f21f-695a-4ed0-be67-5732a551fea4",
                 {
-                    "faaLocation": "Homo_sapiens/GCA_018473295.1/vep/genome/softmasked.fa.bgz",
-                    "gffLocation": "Homo_sapiens/GCA_018473295.1/vep/ensembl/geneset/2022_08/genes.gff3.bgz"
+                    "faaLocation": "GCA/018/473/295/1/vep/genome/softmasked.fa.bgz",
+                    "gffLocation": "GCA/018/473/295/1/vep/ensembl/geneset/2022_08/genes.gff3.bgz"
                 }
             ),
             (
                 # Ecoli
                 "a73351f7-93e7-11ec-a39d-005056b38ce3",
                 {
-                    'faaLocation': 'Escherichia_coli_str_K_12_substr_MG1655_str_K12/GCA_000005845.2/vep/genome/softmasked.fa.bgz',
-                    'gffLocation': 'Escherichia_coli_str_K_12_substr_MG1655_str_K12/GCA_000005845.2/vep/community/geneset/2018_09/genes.gff3.bgz'
+                    'faaLocation': 'GCA/000/005/845/2/vep/genome/softmasked.fa.bgz',
+                    'gffLocation': 'GCA/000/005/845/2/vep/community/geneset/2018_09/genes.gff3.bgz'
                 }
             )
         ]
