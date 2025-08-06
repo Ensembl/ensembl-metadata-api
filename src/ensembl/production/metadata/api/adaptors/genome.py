@@ -29,6 +29,8 @@ from ensembl.production.metadata.api.models import Genome, Organism, Assembly, O
     GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
     ReleaseStatus, DatasetStatus, utils, DatasetAttribute, Attribute
 
+from ensembl.production.metadata.api.factories.utils import format_accession_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -929,11 +931,8 @@ class GenomeAdaptor(BaseAdaptor):
             dataset_type = 'regulation'
         match = re.match(r'^(\d{4}-\d{2})', last_geneset_update)  # Match format YYYY-MM
         last_geneset_update = match.group(1).replace('-', '_')
-        scientific_name = re.sub(r'[^a-zA-Z0-9]+', ' ', scientific_name)
-        scientific_name = scientific_name.replace(' ', '_')
-        scientific_name = re.sub(r'^_+|_+$', '', scientific_name)
         genebuild_source_name = genebuild_source_name.lower()
-        base_path = f"{scientific_name}/{accession}"
+        base_path = format_accession_path(accession) # Convert accession to path format
         common_path = f"{base_path}/{genebuild_source_name}"
 
         path_templates = {
