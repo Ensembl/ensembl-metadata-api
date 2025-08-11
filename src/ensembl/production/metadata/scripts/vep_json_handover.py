@@ -142,4 +142,4 @@ if __name__ == "__main__":
     json_input = sys.argv[1]
     release_id = sys.argv[2]
     conn_uri = sys.argv[3]
-    main(json_input, release_id, conn_uri)
+    main(json_input, conn_uri, release_id)
