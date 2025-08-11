@@ -50,8 +50,33 @@ def check_directory(paths: str) -> list:
             raise argparse.ArgumentTypeError(f"The directory '{path}' does not exist.")
     return paths
 
+def variation_tracks(json_input, release_id, destinations):
+    try:
+        with open(json_input, 'r') as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.error(e)
+        raise e
+    try:
+        for item in data:
+            genome_uuid=item
 
-def main(json_input, release_id, destinations, rename_files=None, status="Submitted"):
+            print(data[item]["datafiles"].values())
+            source_files = data[item]["datafiles"].values()
+            for destination in destinations:
+
+                    dest_dir = f"{destination}{genome_uuid}/"
+                    dest_dir = Path(dest_dir)
+                    dest_dir.mkdir(parents=True, exist_ok=True)
+                    for source_file in source_files:
+                        print(source_file)
+                        print(dest_dir)
+                        shutil.copy2(source_file, dest_dir)
+    except:
+        logger.error(e)
+        raise e
+
+def main(json_input, release_id, destinations, rename_files=None):
     try:
         with open(json_input, 'r') as f:
             data = json.load(f)
@@ -105,7 +130,7 @@ if __name__ == "__main__":
         "--dataset_type",
         type=str,
         required=True,
-        help="Fetch Dataset Based on dataset type Ex: genebuild",
+        help="Fetch Dataset Based on dataset type Ex: variation_tracks, vep, regulation",
     )
     parser.add_argument(
         "--json_file_path",
@@ -115,14 +140,18 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--dest_dirs",
+        "--destinations",
         type=check_directory,
         required=True,
-        help="Datafiles destination directory(s). You can seprate directories with "," EX:dir1,dir2",
+        help="Datafiles destination directory(s). You can seprate directories with EX:dir1,dir2",
     )
 
     ARGS = parser.parse_args()
     logger.info(f"Provided Arguments  {ARGS} ")
-
-    main(json_input=ARGS.json_file_path, release_id=ARGS.release_id, destinations=ARGS.destinations, rename_files=ARGS.rename_files)
+    if ARGS.dataset_type == "variation_tracks":
+        print("============")
+        logger.info("================")
+        variation_tracks(json_input=ARGS.json_file_path, release_id=ARGS.release_id, destinations=ARGS.destinations)
+    elif ARGS.dataset_type in ["vep","regulation"]:
+        main(json_input=ARGS.json_file_path, release_id=ARGS.release_id, destinations=ARGS.destinations, rename_files=ARGS.rename_files)
 
