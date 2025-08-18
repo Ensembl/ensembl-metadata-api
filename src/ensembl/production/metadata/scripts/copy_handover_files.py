@@ -16,7 +16,19 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from sqlalchemy.orm import joinedload
+from ensembl.production.metadata.api.adaptors.genome import GenomeAdaptor
 
+from ensembl.utils.database import DBConnection
+from ensembl.production.metadata.api.factories.datasets import DatasetFactory
+from ensembl.production.metadata.api.models import (
+    Dataset,
+    Genome,
+    GenomeDataset,
+    EnsemblRelease,
+    Attribute,
+    DatasetAttribute,
+)
 
 # Configure root logger
 logger = logging.getLogger()
@@ -42,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_directory(paths: str) -> list:
-    paths = paths.split(',')
+    paths = paths.split(",")
     paths = [p.strip() for p in paths]
     print(paths)
     for path in paths:
@@ -61,6 +73,7 @@ def variation_tracks(json_input, release_id, destinations):
         for item in data:
             genome_uuid=item
 
+<<<<<<< Updated upstream
             print(data[item]["datafiles"].values())
             source_files = data[item]["datafiles"].values()
             for destination in destinations:
@@ -77,42 +90,102 @@ def variation_tracks(json_input, release_id, destinations):
         raise e
 
 def main(json_input, release_id, destinations, rename_files=None):
+=======
+def variation_tracks(json_input, release_id, destinations):
+>>>>>>> Stashed changes
     try:
-        with open(json_input, 'r') as f:
+        with open(json_input, "r") as f:
             data = json.load(f)
     except Exception as e:
         logger.error(e)
         raise e
     try:
-            for item in data:
-                genome_uuid = item["genome_uuid"]
-                dataset_source = item["dataset_source"]["name"]
-                source_type = item["dataset_source"]["type"]
-                dataset_type = item["dataset_type"]
-                dataset_attributes = {attr["name"]: attr["value"] for attr in item["dataset_attribute"]}
-                name = item["name"]
-                label = item["label"]
-                version = item.get("version", None)
-                source = Path(item["dataset_source"]["name"])
-                for destination in destinations:
-                    dest_dir = f"{destination}{genome_uuid}/"
-                    dest_dir = Path(dest_dir)
-                    dest_dir.mkdir(parents=True, exist_ok=True)
-                    if name == "regulatory_features":
-                        dest_dir = f"{dest_dir}/regulatory-features{source.suffix}"
-                    shutil.copy2(item["dataset_source"]["name"], dest_dir)
+        for item in data:
+            genome_uuid = item
 
-                    print(f"Copied files from {source} to {dest_dir}.")
+            print(data[item]["datafiles"].values())
+            source_files = data[item]["datafiles"].values()
+            for destination in destinations:
+                dest_dir = f"{destination}{genome_uuid}/"
+                dest_dir = Path(dest_dir)
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                for source_file in source_files:
+                    print(source_file)
+                    print(dest_dir)
+                    shutil.copy2(source_file, dest_dir)
+    except:
+        logger.error(e)
+        raise e
+
+
+def ftp_copy(json_input, destinations, metadata_db):
+    try:
+        with open(json_input, "r") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.error(e)
+        raise e
+    try:
+        print(metadata_db)
+        for item in data:
+            genome_uuid = item["genome_uuid"]
+            dataset_source = item["dataset_source"]["name"]
+            source_type = item["dataset_source"]["type"]
+            dataset_type = item["dataset_type"]
+            name = item["name"]
+            label = item["label"]
+            version = item.get("version", None)
+            source = Path(item["dataset_source"]["name"])
+
+            genome_public_paths = GenomeAdaptor(metadata_db, metadata_db).get_public_path(genome_uuid)
+            destination_postfix = next(
+                (item["path"] for item in genome_public_paths if item["dataset_type"] == dataset_type), None
+            )
+            for destination in destinations:
+                dest_dir = f"{destination}{destination_postfix}/"
+                dest_dir = Path(dest_dir)
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(item["dataset_source"]["name"], dest_dir)
+                print(f"Copied files from {source} to {dest_dir}.")
     except Exception as e:
         logger.error("An Error occurred:")
         logger.error(e)
-        # logger.error()
+
+
+def regulation_copy(json_input, release_id, destinations, rename_files=None):
+    try:
+        with open(json_input, "r") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.error(e)
+        raise e
+    try:
+        for item in data:
+            genome_uuid = item["genome_uuid"]
+            dataset_source = item["dataset_source"]["name"]
+            source_type = item["dataset_source"]["type"]
+            dataset_type = item["dataset_type"]
+            dataset_attributes = {attr["name"]: attr["value"] for attr in item["dataset_attribute"]}
+            name = item["name"]
+            label = item["label"]
+            version = item.get("version", None)
+            source = Path(item["dataset_source"]["name"])
+            for destination in destinations:
+                dest_dir = f"{destination}{genome_uuid}/"
+                dest_dir = Path(dest_dir)
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                # Rename to standard track file name EX: regulatory-features.bb
+                dest_dir = f"{dest_dir}/regulatory-features{source.suffix}"
+                shutil.copy2(item["dataset_source"]["name"], dest_dir)
+
+                print(f"Copied files from {source} to {dest_dir}.")
+    except Exception as e:
+        logger.error("An Error occurred:")
+        logger.error(e)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="File handover script."
-    )
+    parser = argparse.ArgumentParser(description="File handover script.")
     parser.add_argument(
         "--release_id",
         type=str,
@@ -144,14 +217,43 @@ if __name__ == "__main__":
         type=check_directory,
         required=True,
         help="Datafiles destination directory(s). You can seprate directories with EX:dir1,dir2",
+<<<<<<< Updated upstream
+=======
+    )
+
+    parser.add_argument(
+        "--metadata_db_uri",
+        type=str,
+        required=True,
+        help="metadata db mysql uri, ex: mysql://ensro@localhost:3366/ensembl_genome_metadata",
+>>>>>>> Stashed changes
     )
 
     ARGS = parser.parse_args()
     logger.info(f"Provided Arguments  {ARGS} ")
     if ARGS.dataset_type == "variation_tracks":
+<<<<<<< Updated upstream
         print("============")
         logger.info("================")
         variation_tracks(json_input=ARGS.json_file_path, release_id=ARGS.release_id, destinations=ARGS.destinations)
     elif ARGS.dataset_type in ["vep","regulation"]:
         main(json_input=ARGS.json_file_path, release_id=ARGS.release_id, destinations=ARGS.destinations, rename_files=ARGS.rename_files)
 
+=======
+        variation_tracks(
+            json_input=ARGS.json_file_path, release_id=ARGS.release_id, destinations=ARGS.destinations
+        )
+    elif ARGS.dataset_type == "regulation":
+        regulation_copy(
+            json_input=ARGS.json_file_path,
+            release_id=ARGS.release_id,
+            destinations=ARGS.destinations,
+            rename_files=ARGS.rename_files,
+        )
+    elif ARGS.dataset_type in ["vep", "variation"]:
+        ftp_copy(
+            json_input=ARGS.json_file_path, destinations=ARGS.destinations, metadata_db=ARGS.metadata_db_uri
+        )
+    else:
+        raise ("Please spesify a proper dataset type. variation_tracks, vep, variation or regulation")
+>>>>>>> Stashed changes
