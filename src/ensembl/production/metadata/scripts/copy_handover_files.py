@@ -211,4 +211,4 @@ if __name__ == "__main__":
             json_input=ARGS.json_file_path, destinations=ARGS.destinations, metadata_db=ARGS.metadata_db_uri
         )
     else:
-        raise ("Please spesify a proper dataset type. variation_tracks, vep, variation or regulation")
+        raise ("Please specify a proper dataset type. variation_tracks, vep, variation or regulation")
