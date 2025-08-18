@@ -205,7 +205,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dest_dir",
         type=check_directory,
-        required=True,
+        required=False,
         help="Datafiles destination directory.",
     )
 
