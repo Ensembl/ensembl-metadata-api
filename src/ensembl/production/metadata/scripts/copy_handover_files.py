@@ -85,32 +85,6 @@ def variation_tracks(json_input, release_id, destinations):
         raise e
 
 
-def variation_tracks(json_input, release_id, destinations):
-    try:
-        with open(json_input, "r") as f:
-            data = json.load(f)
-    except Exception as e:
-        logger.error(e)
-        raise e
-    try:
-        for item in data:
-            genome_uuid = item
-
-            print(data[item]["datafiles"].values())
-            source_files = data[item]["datafiles"].values()
-            for destination in destinations:
-                dest_dir = f"{destination}{genome_uuid}/"
-                dest_dir = Path(dest_dir)
-                dest_dir.mkdir(parents=True, exist_ok=True)
-                for source_file in source_files:
-                    print(source_file)
-                    print(dest_dir)
-                    shutil.copy2(source_file, dest_dir)
-    except:
-        logger.error(e)
-        raise e
-
-
 def ftp_copy(json_input, destinations, metadata_db):
     try:
         with open(json_input, "r") as f:
@@ -215,7 +189,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--metadata_db_uri",
         type=str,
-        required=True,
+        required=False,
         help="metadata db mysql uri, ex: mysql://ensro@localhost:3366/ensembl_genome_metadata",
     )
 
