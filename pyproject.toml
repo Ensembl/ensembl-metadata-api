@@ -84,6 +84,7 @@ dev = [
 
 [project.scripts]
 ensembl-release = "scripts.release:main"
+ensembl-ftp-export = "ensembl.production.metadata.scripts.ftp_export:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
