@@ -92,7 +92,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
         return result_dict
 
     def process_core(self, **kwargs):
-        # Special case for loading a single species from a collection database. Can be removed in a future release
+        # Special case for loading a single species from a collection database. Use the production name as an argument.
+        # Not implemented in handover.
         sel_species = kwargs.get('organism', None)
         if sel_species:
             with self.db.session_scope() as session:
@@ -101,145 +102,182 @@ class CoreMetaUpdater(BaseMetaUpdater):
                         Meta.meta_value == sel_species).distinct()
                 )
         else:
-            # Normal handling of collections from here
-            # Handle multi-species databases and run an update for each species
+            # Handling of collections from here
             with self.db.session_scope() as session:
                 multi_species = session.execute(
                     select(Meta.species_id).filter(Meta.meta_key == "organism.production_name").distinct()
                 )
         multi_species = [multi_species for multi_species, in multi_species]
 
-        for species in multi_species:
-            self.process_species(species)
+        # Track results for each species
+        successful_species = []
+        failed_species = []
+        already_loaded_species = []
 
-    def process_species(self, species_id):
+        if len(multi_species) > 1:
+            logger.info(f"Processing {len(multi_species)} species in collection database")
+
+        for species_id in multi_species:
+            production_name = self.get_meta_single_meta_key(species_id, "organism.production_name")
+            if len(multi_species) > 1:
+                logger.info(f"Processing species {species_id}: {production_name}")
+
+            try:
+                # Check if this species already has a genome_uuid
+                existing_genome_uuid = self.get_meta_single_meta_key(species_id, "genome.genome_uuid")
+                if existing_genome_uuid is not None:
+                    logger.warning(
+                        f"Species {species_id} ({production_name}) already has genome_uuid: {existing_genome_uuid}")
+                    already_loaded_species.append((species_id, production_name))
+                    continue
+
+                # Process each species in its own transaction
+                with self.metadata_db.session_scope() as meta_session:
+                    self.process_species(species_id, meta_session)
+                    # If we get here without exception, the species was successful
+                    successful_species.append((species_id, production_name))
+                    if len(multi_species) > 1:
+                        logger.info(f"Successfully processed species {species_id}: {production_name}")
+
+            except Exception as e:
+                logger.error(f"Failed to process species {species_id} ({production_name}): {str(e)}")
+                failed_species.append((species_id, production_name, str(e)))
+                # Continue to next species rather than failing entirely
+
+        # Log summary for multi-species databases
+        if len(multi_species) > 1:
+            self._log_processing_summary(successful_species, failed_species, already_loaded_species)
+
+        # If any species failed or were already loaded, raise an exception to prevent ignoring any errors
+        if failed_species or already_loaded_species:
+            error_msg = f"Collection processing completed with issues: {len(failed_species)} failed, {len(already_loaded_species)} already loaded"
+            raise exceptions.MetadataUpdateException(error_msg)
+
+    def _log_processing_summary(self, successful_species, failed_species, already_loaded_species):
+        """Log a summary of collection processing results."""
+        logger.info("=" * 80)
+        logger.info("COLLECTION PROCESSING SUMMARY")
+        logger.info("=" * 80)
+
+        if successful_species:
+            logger.info(f"SUCCESSFULLY PROCESSED ({len(successful_species)} species):")
+            for species_id, production_name in successful_species:
+                logger.info(f"  - {species_id}: {production_name}")
+
+        if already_loaded_species:
+            logger.warning(f"ALREADY LOADED ({len(already_loaded_species)} species):")
+            for species_id, production_name in already_loaded_species:
+                logger.warning(f"  - {species_id}: {production_name}")
+
+        if failed_species:
+            logger.error(f"FAILED TO PROCESS ({len(failed_species)} species):")
+            for species_id, production_name, error in failed_species:
+                logger.error(f"  - {species_id}: {production_name} - {error}")
+
+        logger.info("=" * 80)
+
+    def process_species(self, species_id, meta_session):
         """
         Process an individual species from a core database to update the metadata db.
         This method contains the logic for updating the metadata
         """
+        organism = self.get_or_new_organism(species_id, meta_session)
+        assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source = self.get_or_new_assembly(
+            species_id, meta_session)
+        genebuild_dataset, genebuild_dataset_attributes = self.get_or_new_genebuild(species_id, meta_session,
+                                                                                    dataset_source)
 
-        with self.metadata_db.session_scope() as meta_session:
-            organism = self.get_or_new_organism(species_id, meta_session)
-            assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source = self.get_or_new_assembly(
-                species_id, meta_session)
-            genebuild_dataset, genebuild_dataset_attributes = self.get_or_new_genebuild(species_id, meta_session,
-                                                                                        dataset_source)
-
-            # Checking for an existing genome uuid:
-            old_genome_uuid = self.get_meta_single_meta_key(species_id, "genome.genome_uuid")
-            if old_genome_uuid is not None:
-                old_genome = meta_session.query(Genome).filter(
-                    Genome.genome_uuid == old_genome_uuid).one_or_none()
-                # Logic for existing key in database.
-                if old_genome is not None:
-                    raise exceptions.MetadataUpdateException(
-                        "Core database contains a genome.genome_uuid which matches an entry in the meta table. "
-                        "Please update the genebuild.version, genebuild.last_genset_update, delete the genome.genome_uuid and resubmit.")
-                else:
-                    raise exceptions.MetadataUpdateException(
-                        "Database contains a Genome.genome_uuid, but the corresponding data is not in"
-                        "the meta table. Please remove it from the meta key and resubmit")
-
-            if self.is_object_new(organism):
-                logger.info('New organism')
-                # ###############################Checks that dataset is new ##################
-                if not self.is_object_new(genebuild_dataset):
-                    raise exceptions.MetadataUpdateException(
-                        "New organism, but existing assembly accession and/or genebuild version")
-                ###############################################
-                # Create genome and populate the database with organism, assembly and dataset
-                new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
-                                                                                                species_id,
-                                                                                                organism,
-                                                                                                assembly,
-                                                                                                assembly_dataset,
-                                                                                                genebuild_dataset)
-                self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
-
-            elif self.is_object_new(assembly):
-                logger.info('New assembly')
-
-                # ###############################Checks that dataset and update are new ##################
-                if not self.is_object_new(genebuild_dataset):
-                    raise exceptions.MetadataUpdateException("New assembly, but existing genebuild version")
-                ###############################################
-
-                new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
-                                                                                                species_id,
-                                                                                                organism,
-                                                                                                assembly,
-                                                                                                assembly_dataset,
-                                                                                                genebuild_dataset)
-                self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
-
-                # Create genome and populate the database with assembly and dataset
-            elif self.is_object_new(genebuild_dataset):
-                # Check that genest update or provider name has changed from last time.
-
-                dataset_attr_alias1 = aliased(DatasetAttribute)
-                attribute_alias1 = aliased(Attribute)
-                dataset_attr_alias2 = aliased(DatasetAttribute)
-                attribute_alias2 = aliased(Attribute)
-                provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
-                geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
-                query = meta_session.query(Assembly).join(
-                    Genome, Assembly.genomes
-                ).join(GenomeDataset, Genome.genome_datasets
-                       ).join(Dataset, GenomeDataset.dataset
-                              ).join(dataset_attr_alias1, Dataset.dataset_attributes
-                                     ).join(attribute_alias1, dataset_attr_alias1.attribute
-                                            ).join(dataset_attr_alias2, Dataset.dataset_attributes
-                                                   ).join(attribute_alias2, dataset_attr_alias2.attribute
-                                                          ).filter(Assembly.accession == assembly.accession,
-                                                                   Dataset.dataset_type.has(name="genebuild"),
-                                                                   and_(
-                                                                       attribute_alias1.name == "genebuild.provider_name",
-                                                                       dataset_attr_alias1.value == provider_name,
-                                                                       attribute_alias2.name == "genebuild.last_geneset_update",
-                                                                       dataset_attr_alias2.value == geneset_update
-                                                                   )
-                                                                   )
-                if meta_session.query(query.exists()).scalar():
-                    raise exceptions.MetadataUpdateException(
-                        "genebuild.provider_name or genebuild.last_geneset_update must be updated.")
-
-                logger.info('New genebuild')
-                # Create genome and populate the database with genebuild dataset
-                new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
-                                                                                                species_id,
-                                                                                                organism,
-                                                                                                assembly,
-                                                                                                assembly_dataset,
-                                                                                                genebuild_dataset)
-                self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
-
+        # Checking for an existing genome uuid:
+        old_genome_uuid = self.get_meta_single_meta_key(species_id, "genome.genome_uuid")
+        if old_genome_uuid is not None:
+            old_genome = meta_session.query(Genome).filter(
+                Genome.genome_uuid == old_genome_uuid).one_or_none()
+            if old_genome is not None:
+                raise exceptions.MetadataUpdateException(
+                    f"Species {species_id}: Core database contains a genome.genome_uuid which matches an entry in the meta table.")
             else:
-                # Check if the data has been released:
-                if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid):
-                    raise exceptions.WrongReleaseException(
-                        "Existing Organism, Assembly, and Datasets within a release. "
-                        "Please update genebuild.version and genebuild.last_geneset_update for new release. ")
-                else:
-                    logger.info('Rewrite of existing datasets. Only genebuild '
-                                'dataset, dataset attributes are modified.')
-                    raise exceptions.MetadataUpdateException(
-                        "This looks like a reload of data that hasn't been released."
-                        "We are not doing this currently.")
-                    # TODO: We need to review this process, because if some Variation / Regulation / Compara datasets
-                    #  exists we'll expect either to refuse the updates - imagine this was a fix in sequences! OR we
-                    #  decide to delete the other datasets to force their recompute. In this case, we want to rewrite
-                    #  the existing datasets with new data, but keep the dataset_uuid Update genebuild_dataset
-                    # In addition. It does not handle faulty at all.
-                    # meta_session.query(DatasetAttribute).filter(
-                    #     DatasetAttribute.dataset_id == genebuild_dataset.dataset_id).delete()
-                    # self.get_or_new_genebuild(species_id,
-                    #                           meta_session,
-                    #                           source=dataset_source,
-                    #                           existing=genebuild_dataset)
-                    #
-                    # # #Update assembly_dataset
-                    # self.get_or_new_assembly(
-                    #     species_id, meta_session, source=dataset_source)
+                raise exceptions.MetadataUpdateException(
+                    f"Species {species_id}: Database contains a Genome.genome_uuid, but corresponding data is not in meta table.")
+
+        if self.is_object_new(organism):
+            logger.info(f'Species {species_id}: New organism')
+            if not self.is_object_new(genebuild_dataset):
+                raise exceptions.MetadataUpdateException(
+                    f"Species {species_id}: New organism, but existing assembly accession and/or genebuild version")
+            new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
+                                                                                            species_id,
+                                                                                            organism,
+                                                                                            assembly,
+                                                                                            assembly_dataset,
+                                                                                            genebuild_dataset)
+            self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
+
+
+
+        elif self.is_object_new(assembly):
+            logger.info(f'Species {species_id}: New assembly')
+            if not self.is_object_new(genebuild_dataset):
+                raise exceptions.MetadataUpdateException(
+                    f"Species {species_id}: New assembly, but existing genebuild version")
+            new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
+                                                                                            species_id,
+                                                                                            organism,
+                                                                                            assembly,
+                                                                                            assembly_dataset,
+                                                                                            genebuild_dataset)
+            self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
+
+
+        # Create genome and populate the database with assembly and dataset
+        elif self.is_object_new(genebuild_dataset):
+            # Check that genest update or provider name has changed from last time.
+
+            dataset_attr_alias1 = aliased(DatasetAttribute)
+            attribute_alias1 = aliased(Attribute)
+            dataset_attr_alias2 = aliased(DatasetAttribute)
+            attribute_alias2 = aliased(Attribute)
+            provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
+            geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
+            query = meta_session.query(Assembly).join(
+                Genome, Assembly.genomes
+            ).join(GenomeDataset, Genome.genome_datasets
+                   ).join(Dataset, GenomeDataset.dataset
+                          ).join(dataset_attr_alias1, Dataset.dataset_attributes
+                                 ).join(attribute_alias1, dataset_attr_alias1.attribute
+                                        ).join(dataset_attr_alias2, Dataset.dataset_attributes
+                                               ).join(attribute_alias2, dataset_attr_alias2.attribute
+                                                      ).filter(Assembly.accession == assembly.accession,
+                                                               Dataset.dataset_type.has(name="genebuild"),
+                                                               and_(
+                                                                   attribute_alias1.name == "genebuild.provider_name",
+                                                                   dataset_attr_alias1.value == provider_name,
+                                                                   attribute_alias2.name == "genebuild.last_geneset_update",
+                                                                   dataset_attr_alias2.value == geneset_update
+                                                               )
+                                                               )
+            if meta_session.query(query.exists()).scalar():
+                raise exceptions.MetadataUpdateException(
+                    "genebuild.provider_name or genebuild.last_geneset_update must be updated.")
+
+            logger.info(f'Species {species_id}: New genebuild')
+            new_genome, assembly_genome_dataset, genebuild_genome_dataset = self.new_genome(meta_session,
+                                                                                            species_id,
+                                                                                            organism,
+                                                                                            assembly,
+                                                                                            assembly_dataset,
+                                                                                            genebuild_dataset)
+            self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
+
+
+        else:
+            # Check if the data has been released
+            if check_release_status(self.metadata_db, genebuild_dataset.dataset_uuid):
+                raise exceptions.WrongReleaseException(
+                    f"Species {species_id}: Existing Organism, Assembly, and Datasets within a release.")
+            else:
+                logger.info(f'Species {species_id}: Rewrite of existing datasets attempted')
+                raise exceptions.MetadataUpdateException(
+                    f"Species {species_id}: This looks like a reload of data that hasn't been released.")
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
         # Currently impossible with myisam without two phase commit (requires full refactor)
