@@ -254,8 +254,6 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_genome()
     genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
-    print(f"####### len(genome_results) --> {len(genome_results)}")
-    print(f"{genome_results}")
     if len(genome_results) == 0:
         logger.error(f"No Genome/Release found: {genome_uuid}/{release_version}")
     else:
@@ -362,11 +360,10 @@ def get_genomes_by_specific_keyword_iterator(
     common_name, scientific_name, scientific_parlance_name, species_taxonomy_id,
     release_version=None
 ):
-    # if (not tolid and assembly_accession_id and assembly_name and ensembl_name and
-    #         common_name and scientific_name and scientific_parlance_name and species_taxonomy_id):
-    #     logger.warning("Missing required field")
-    #     return msg_factory.create_genome()
-    print(tolid, assembly_accession_id, assembly_name, ensembl_name)
+    if (not tolid and assembly_accession_id and assembly_name and ensembl_name and
+            common_name and scientific_name and scientific_parlance_name and species_taxonomy_id):
+        logger.warning("Missing required field")
+        return msg_factory.create_genome()
     genome_results = db_conn.fetch_genome_by_specific_keyword(
         tolid, assembly_accession_id, assembly_name, ensembl_name,
         common_name, scientific_name, scientific_parlance_name,
