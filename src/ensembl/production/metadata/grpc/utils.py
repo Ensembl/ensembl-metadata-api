@@ -148,9 +148,9 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
             attribs.extend(dataset.attributes)
 
     # fetch related assemblies count
-    related_assemblies_count = db_conn.fetch_assemblies_count(genome.Organism.taxonomy_id)
+    related_assemblies_count = db_conn.fetch_assemblies_count(genome.Organism.species_taxonomy_id)
 
-    alternative_names = get_alternative_names(db_conn, genome.Organism.taxonomy_id)
+    alternative_names = get_alternative_names(db_conn, genome.Organism.species_taxonomy_id)
 
     return msg_factory.create_genome(
         data=genome,
@@ -254,6 +254,8 @@ def get_genome_by_uuid(db_conn, genome_uuid, release_version):
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_genome()
     genome_results = db_conn.fetch_genomes(genome_uuid=genome_uuid, release_version=release_version)
+    print(f"####### len(genome_results) --> {len(genome_results)}")
+    print(f"{genome_results}")
     if len(genome_results) == 0:
         logger.error(f"No Genome/Release found: {genome_uuid}/{release_version}")
     else:
@@ -360,11 +362,11 @@ def get_genomes_by_specific_keyword_iterator(
     common_name, scientific_name, scientific_parlance_name, species_taxonomy_id,
     release_version=None
 ):
-    if (not tolid and assembly_accession_id and assembly_name and ensembl_name and
-            common_name and scientific_name and scientific_parlance_name and species_taxonomy_id):
-        logger.warning("Missing required field")
-        return msg_factory.create_genome()
-
+    # if (not tolid and assembly_accession_id and assembly_name and ensembl_name and
+    #         common_name and scientific_name and scientific_parlance_name and species_taxonomy_id):
+    #     logger.warning("Missing required field")
+    #     return msg_factory.create_genome()
+    print(tolid, assembly_accession_id, assembly_name, ensembl_name)
     genome_results = db_conn.fetch_genome_by_specific_keyword(
         tolid, assembly_accession_id, assembly_name, ensembl_name,
         common_name, scientific_name, scientific_parlance_name,
