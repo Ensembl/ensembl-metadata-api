@@ -148,9 +148,9 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
             attribs.extend(dataset.attributes)
 
     # fetch related assemblies count
-    related_assemblies_count = db_conn.fetch_assemblies_count(genome.Organism.taxonomy_id)
+    related_assemblies_count = db_conn.fetch_assemblies_count(genome.Organism.species_taxonomy_id)
 
-    alternative_names = get_alternative_names(db_conn, genome.Organism.taxonomy_id)
+    alternative_names = get_alternative_names(db_conn, genome.Organism.species_taxonomy_id)
 
     return msg_factory.create_genome(
         data=genome,
