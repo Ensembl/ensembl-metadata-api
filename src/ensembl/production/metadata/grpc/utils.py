@@ -364,6 +364,7 @@ def get_genomes_by_specific_keyword_iterator(
             common_name and scientific_name and scientific_parlance_name and species_taxonomy_id):
         logger.warning("Missing required field")
         return msg_factory.create_genome()
+
     genome_results = db_conn.fetch_genome_by_specific_keyword(
         tolid, assembly_accession_id, assembly_name, ensembl_name,
         common_name, scientific_name, scientific_parlance_name,
