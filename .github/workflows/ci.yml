@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04  # Equivalent to Travis 'focal'
+
+    strategy:
+      matrix:
+        python-version: [ "3.10", "3.11" ]
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Configure MySQL
+        run: |
+          # Enable local_infile (equivalent to Travis before_script)
+          mysql -h127.0.0.1 -P3306 -uroot -e "SET GLOBAL local_infile=1;"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install with test dependencies using new pyproject.toml structure
+          pip install .[test]
+
+      - name: Run tests
+        run: |
+          echo "DB_HOST $METADATA_URI $TAXONOMY_URI"
+          coverage run -m pytest -c pyproject.toml --server mysql://root@127.0.0.1:3306
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: false

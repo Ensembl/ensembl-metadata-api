@@ -119,3 +119,27 @@ exclude_also = [
 
 [tool.coverage.run]
 source = ["src/ensembl"]
+
+dependencies = [
+    "ensembl-py >= 3.0.0",
+    "grpcio",
+    "protobuf",
+    "grpcio-tools",
+    "grpcio-reflection",
+    "sqlalchemy >= 2.0",
+    "duckdb >= 1.2.0",
+    "duckdb-engine >= 0.17.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pylint",
+    "mypy",
+    "coverage[toml]",
+    "pytest-grpc",
+    "yagrc == 1.1.2",
+]
+dev = [
+    "ensembl-metadata-api[test]", # Include test dependencies
+    "black",
+]
