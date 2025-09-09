@@ -121,6 +121,7 @@ exclude_also = [
 source = ["src/ensembl"]
 
 dependencies = [
+    "ensembl-utils >= 3.0.0",
     "ensembl-py >= 3.0.0",
     "grpcio",
     "protobuf",
