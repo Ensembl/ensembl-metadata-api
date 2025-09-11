@@ -1,0 +1,34 @@
+# .gitlab-ci.yml
+image: python:3.11
+
+variables:
+  MYSQL_ROOT_PASSWORD: ""
+  MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+
+services:
+  - mysql:8.0
+
+stages:
+  - test
+
+before_script:
+  - mysql -h mysql -u root -e "SET GLOBAL local_infile=1;"
+  - python -m pip install --upgrade pip
+  - pip install .[test]
+
+test:
+  stage: test
+  parallel:
+    matrix:
+      - PYTHON_VERSION: [ "3.10", "3.11" ]
+  image: python:${PYTHON_VERSION}
+  script:
+    - echo "DB_HOST $METADATA_URI $TAXONOMY_URI"
+    - coverage run -m pytest -c pyproject.toml --server mysql://root@mysql:3306
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    expire_in: 1 week
