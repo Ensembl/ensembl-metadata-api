@@ -130,14 +130,14 @@ norecursedirs = ["docs", "*.egg_info"]
 [tool.coverage.report]
 exclude_also = [
     # Do not complain about missing debug-only code
-    "def **repr**",
+    "def __repr__",
     "if self\\.debug",
     "if settings\\.DEBUG",
     # Do not complain if tests do not hit defensive assertion code
     "raise AssertionError",
     "raise NotImplementedError",
     # Do not complain if non-runnable code is not run
-    "if **name** == .__main__.:",
+    "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
     "def main",
     "def .*_cli",
