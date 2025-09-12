@@ -60,6 +60,8 @@ dependencies = [
     "duckdb >= 1.2.0",
     "duckdb-engine >= 0.17.0",
     "pymysql",
+    "mysqlclient",
+
 ]
 
 [project.urls]
