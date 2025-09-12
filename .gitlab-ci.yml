@@ -32,3 +32,4 @@ test:
         coverage_format: cobertura
         path: coverage.xml
     expire_in: 1 week
+
