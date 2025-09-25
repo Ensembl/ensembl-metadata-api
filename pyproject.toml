@@ -10,14 +10,26 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools",
+    "wheel",
+]
+
 [project]
 name = "ensembl-metadata-api"
-description = "# Ensembl Metadata API / GRPC API,  SQLAlchemy ORM for the Ensembl Metadata database."
+description = "Ensembl Metadata API"
 requires-python = ">= 3.10"
-version="3.0.0"
-readme = "README.md"
+version = "3.0.0"
+dynamic = ["readme"]
 authors = [
-    {name = "Ensembl", email = "ensembl-production@ebi.ac.uk"},
+    { name = "Alisha Aneja", email = "aaneja@ebi.ac.uk" },
+    { name = "Bilal El Houdaigui", email = "bilal@ebi.ac.uk" },
+    { name = "Daniel Poppleton", email = "danielp@ebi.ac.uk" },
+    { name = "Marc Chakiachvili", email = "mchakiachvili@ebi.ac.uk" },
+    { name = "Sanjay Boddu", email = "sboddu@ebi.ac.uk" },
+    { name = "Vinay Kaikala", email = "vinay@ebi.ac.uk" },
 ]
 license = {text = "Apache License 2.0"}
 keywords = [
@@ -29,42 +41,60 @@ keywords = [
     "grpc"
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Environment :: Console",
-    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
-    "Operating System :: POSIX",
-    "Operating System :: Unix",
+    "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Topic :: Utilities",
-    "Topic :: System :: Distributed Computing",
+]
+dependencies = [
+    "ensembl-utils >= 0.8.0",
+    "ensembl-py >= 3.0.0",
+    "grpcio",
+    "protobuf",
+    "grpcio-tools",
+    "grpcio-reflection",
+    "sqlalchemy >= 2.0",
+    "duckdb >= 1.2.0",
+    "duckdb-engine >= 0.17.0",
+    "pymysql",
+    "mysqlclient",
 ]
 
 [project.urls]
 Homepage = "https://www.ensembl.org"
 Repository = "https://github.com/Ensembl/ensembl-metadata-api"
+"Download" = "https://github.com/Ensembl/ensembl-metadata-api"
 Issues = "https://github.com/Ensembl/ensembl-metadata-api/issues"
+
+[project.optional-dependencies]
+test = [
+    "pylint",
+    "mypy",
+    "coverage[toml]",
+    "pytest-grpc",
+    "yagrc == 1.1.2",
+]
+dev = [
+    "ensembl-metadata-api[test]", # Include test dependencies
+    "black",
+]
 
 [project.scripts]
 ensembl-release = "scripts.release:main"
+ensembl-ftp-export = "ensembl.production.metadata.scripts.ftp_export:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = [
-    "setuptools",
-    "setuptools-scm",
-    "wheel",
-]
+[tool.setuptools.dynamic]
+readme = { file = ["README.md"] }
 
 [tool.black]
 line-length = 110
@@ -82,6 +112,7 @@ disable = [
     "unspecified-encoding",
     "wildcard-import",
 ]
+
 [tool.mypy]
 mypy_path = "src/ensembl"
 explicit_package_bases = true
@@ -97,7 +128,6 @@ addopts = [
     "--tb=native",
 ]
 norecursedirs = ["docs", "*.egg_info"]
-
 
 [tool.coverage.report]
 exclude_also = [

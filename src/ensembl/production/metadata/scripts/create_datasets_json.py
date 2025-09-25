@@ -21,8 +21,14 @@ from ensembl.utils.database import DBConnection
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 
-from ensembl.production.metadata.api.models import Dataset, Genome, GenomeDataset, EnsemblRelease, Attribute, \
-    DatasetAttribute
+from ensembl.production.metadata.api.models import (
+    Dataset,
+    Genome,
+    GenomeDataset,
+    EnsemblRelease,
+    Attribute,
+    DatasetAttribute,
+)
 
 # Configure root logger
 logger = logging.getLogger()
@@ -55,7 +61,7 @@ def check_directory(path: str) -> str:
 
 def main(json_input, release_id, conn_uri, destination, status="Submitted"):
     try:
-        with open(json_input, 'r') as f:
+        with open(json_input, "r") as f:
             data = json.load(f)
         metadata_db = DBConnection(conn_uri)
     except Exception as e:
@@ -73,39 +79,64 @@ def main(json_input, release_id, conn_uri, destination, status="Submitted"):
                 label = item["label"]
                 version = item.get("version", None)
                 dataset_factory = DatasetFactory(conn_uri)
-                release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == release_id).one_or_none()
-                # Create the main dataset
 
-                old_genome_datasets = session.query(GenomeDataset) \
-                    .join(Genome, GenomeDataset.genome_id == Genome.genome_id) \
-                    .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id) \
-                    .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id) \
-                    .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id) \
-                    .filter(Genome.genome_uuid == genome_uuid) \
-                    .filter(Attribute.name.in_(list(dataset_attributes.keys()))) \
-                    .filter(GenomeDataset.is_current==1) \
-                    .all()
+                try:
+                    release = (
+                        session.query(EnsemblRelease).filter(EnsemblRelease.name == release_id).one_or_none()
+                    )
+                    print(release)
+                except Exception as e:
+                    session.rollback()
+                    logger.error("An Error occurred:")
+                    logger.error(e)
+
+                # Create the main dataset
+                try:
+                    old_genome_datasets = (
+                        session.query(GenomeDataset)
+                        .join(Genome, GenomeDataset.genome_id == Genome.genome_id)
+                        .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
+                        .join(DatasetAttribute, DatasetAttribute.dataset_id == Dataset.dataset_id)
+                        .join(Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id)
+                        .filter(Genome.genome_uuid == genome_uuid)
+                        .filter(Attribute.name.in_(list(dataset_attributes.keys())))
+                        .filter(GenomeDataset.is_current == 1)
+                        .all()
+                    )
+                except Exception as e:
+                    session.rollback()
+                    logger.error("An Error occurred:")
+                    logger.error(e)
 
                 for old_genome_dataset in old_genome_datasets:
-                    children = session.query(GenomeDataset) \
-                            .join(Dataset,Dataset.dataset_id==GenomeDataset.dataset_id) \
-                            .filter(Dataset.parent_id == old_genome_dataset.dataset_id) \
-                            .filter(GenomeDataset.is_current == 1) \
-                            .all()
+                    children = (
+                        session.query(GenomeDataset)
+                        .join(Dataset, Dataset.dataset_id == GenomeDataset.dataset_id)
+                        .filter(Dataset.parent_id == old_genome_dataset.dataset_id)
+                        .filter(GenomeDataset.is_current == 1)
+                        .all()
+                    )
                     for child in children:
                         # child_child = session.query(GenomeDataset).join(Dataset,Dataset.parent_id==child.dataset_id).filter(GenomeDataset.is_current == 1).all()
-                        child_child = session.query(GenomeDataset) \
-                            .join(Dataset,Dataset.dataset_id==GenomeDataset.dataset_id) \
-                            .filter(Dataset.parent_id == child.dataset_id) \
-                            .filter(GenomeDataset.is_current == 1) \
+                        child_child = (
+                            session.query(GenomeDataset)
+                            .join(Dataset, Dataset.dataset_id == GenomeDataset.dataset_id)
+                            .filter(Dataset.parent_id == child.dataset_id)
+                            .filter(GenomeDataset.is_current == 1)
                             .all()
+                        )
                         child.is_current = 0
-                     #   if child:
+                        #   if child:
                         for ch in child_child:
                             ch.is_current = 0
                     old_genome_dataset.is_current = 0
 
-                dataset_uuid, new_dataset, new_dataset_attributes, new_genome_dataset = dataset_factory.create_dataset(
+                (
+                    dataset_uuid,
+                    new_dataset,
+                    new_dataset_attributes,
+                    new_genome_dataset,
+                ) = dataset_factory.create_dataset(
                     session=session,
                     genome_input=genome_uuid,
                     dataset_source=dataset_source,
@@ -117,8 +148,9 @@ def main(json_input, release_id, conn_uri, destination, status="Submitted"):
                     status=status,
                     source_type=source_type,
                     release=release,
-                    is_current=True
+                    is_current=True,
                 )
+                print(dataset_uuid)
 
                 # Populate child datasets
 
@@ -127,16 +159,12 @@ def main(json_input, release_id, conn_uri, destination, status="Submitted"):
                     session=session,
                     topic="production_process",
                     status=status,
-                    release=release
+                    release=release,
                 )
+                print(children)
                 session.commit()
                 dest_dir = f"{destination}{genome_uuid}/"
                 source = Path(item["dataset_source"]["name"])
-                dest_dir = Path(dest_dir)
-                dest_dir.mkdir(parents=True, exist_ok=True)
-                if name == "regulatory_features":
-                    dest_dir = f"{dest_dir}/regulatory-features{source.suffix}"
-                shutil.copy2(item["dataset_source"]["name"], dest_dir)
 
                 print(f"Created dataset UUID: {dataset_uuid} with children")
     except Exception as e:
@@ -147,9 +175,7 @@ def main(json_input, release_id, conn_uri, destination, status="Submitted"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="File handover script."
-    )
+    parser = argparse.ArgumentParser(description="File handover script.")
     parser.add_argument(
         "--release_id",
         type=str,
@@ -179,7 +205,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dest_dir",
         type=check_directory,
-        required=True,
+        required=False,
         help="Datafiles destination directory.",
     )
 
@@ -187,4 +213,3 @@ if __name__ == "__main__":
     logger.info(f"Provided Arguments  {ARGS} ")
 
     main(ARGS.json_file_path, ARGS.release_id, ARGS.metadata_db_uri, ARGS.dest_dir)
-
