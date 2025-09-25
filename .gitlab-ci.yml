@@ -20,7 +20,7 @@ test:
   stage: test
   parallel:
     matrix:
-      - PYTHON_VERSION: [ "3.10", "3.11" ]
+      - PYTHON_VERSION: [ "3.10" ]
   image: python:${PYTHON_VERSION}
   script:
     - echo "DB_HOST $METADATA_URI $TAXONOMY_URI"

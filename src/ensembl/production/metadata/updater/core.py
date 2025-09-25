@@ -150,7 +150,15 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         # If any species failed or were already loaded, raise an exception to prevent ignoring any errors
         if failed_species or already_loaded_species:
-            error_msg = f"Collection processing completed with issues: {len(failed_species)} failed, {len(already_loaded_species)} already loaded"
+            error_msg = f"""
+            Handover Failed For Genomes With Error:
+            {chr(10).join([f"- {fspecies[1]}: {fspecies[-1]}" for fspecies in failed_species])}
+
+            Collection processing completed with issues:
+            - {len(failed_species)} failed
+            - {len(already_loaded_species)} already loaded
+            """
+
             raise exceptions.MetadataUpdateException(error_msg)
 
     def _log_processing_summary(self, successful_species, failed_species, already_loaded_species):
