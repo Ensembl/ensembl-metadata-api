@@ -21,9 +21,9 @@ import pytest
 from ensembl.utils.database import UnitTestDB, DBConnection
 from google.protobuf import json_format
 
+from ensembl.production.metadata.api.factories.utils import format_accession_path
 from ensembl.production.metadata.api.models import Genome, Dataset
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
-from ensembl.production.metadata.api.factories.utils import format_accession_path
 
 logger = logging.getLogger(__name__)
 
@@ -525,8 +525,8 @@ class TestUtils:
             },
             'release': {
                 'isCurrent': True,
-                'releaseDate': '2023-10-18',
-                'releaseLabel': 'MVP Beta-1',
+                'releaseDate': '2020-10-18',
+                'releaseLabel': '2020-10-18',
                 'releaseType': 'partial',
                 'releaseVersion': 110.1,
                 'siteLabel': 'MVP Ensembl',
@@ -596,7 +596,7 @@ class TestUtils:
             },
             'release': {
                 'releaseDate': '2023-06-15',
-                'releaseLabel': 'First Beta',
+                'releaseLabel': '2023-06-15',
                 'releaseType': 'partial',
                 'releaseVersion': 108.0,
                 'siteLabel': 'MVP Ensembl',
@@ -744,16 +744,16 @@ class TestUtils:
                     # Human
                     "65d4f21f-695a-4ed0-be67-5732a551fea4",
                     {
-                        "faaLocation": "GCA/018/473/295/1/vep/genome/softmasked.fa.bgz",
-                        "gffLocation": "GCA/018/473/295/1/vep/ensembl/geneset/2022_08/genes.gff3.bgz"
+                        'faaLocation': 'GCA/018/473/295/1/genome/unmasked.fa.bgz',
+                        'gffLocation': 'GCA/018/473/295/1/ensembl/2022_08/geneset/genes.gff3.bgz'
                     }
             ),
             (
                     # Ecoli
                     "a73351f7-93e7-11ec-a39d-005056b38ce3",
                     {
-                        'faaLocation': 'GCA/000/005/845/2/vep/genome/softmasked.fa.bgz',
-                        'gffLocation': 'GCA/000/005/845/2/vep/community/geneset/2018_09/genes.gff3.bgz'
+                        'faaLocation': 'GCA/000/005/845/2/genome/unmasked.fa.bgz',
+                        'gffLocation': 'GCA/000/005/845/2/community/2018_09/geneset/genes.gff3.bgz'
                     }
             ),
             (

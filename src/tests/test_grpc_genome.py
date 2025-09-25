@@ -243,13 +243,13 @@ class TestGRPCGenomeAdaptor:
         [
             # nothing specified + allow_unreleased -> fetches everything
             (None, None, True, False, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 30),
-            (None, None, False, False, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 10),
+            (None, None, False, False, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 11),
             ("8364a820-5485-42d7-a648-1a5eeb858319", None, True, False, "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
             # specifying genome_uuid -- Triticum aestivum (SAMEA4791365)
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, True, False, "999315f6-6d25-481f-a017-297f7e1490c8", 2),
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, True, True, "999315f6-6d25-481f-a017-297f7e1490c8", 1),
             # fetch unreleased datasets only
-            (None, None, False, True, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 10),
+            (None, None, False, True, "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 11),
             (None, 'f93d21ca-9a24-4c31-ae11-b0f8d3deab6d', True, True, "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
         ],
         indirect=['allow_unreleased']

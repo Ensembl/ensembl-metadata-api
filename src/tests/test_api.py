@@ -26,6 +26,7 @@ from ensembl.production.metadata.api.adaptors.genome import *
 class TestApi:
     dbc = None  # type: UnitTestDB
 
+    # Basic test to show full funtionality getting the most recent result for everything.
     def test_get_public_path(self, test_dbs):
         genome_adapter = GenomeAdaptor(test_dbs['ensembl_genome_metadata'].dbc.url, test_dbs['ncbi_taxonomy'].dbc.url)
         genome_uuid = 'a733574a-93e7-11ec-a39d-005056b38ce3'
@@ -33,31 +34,42 @@ class TestApi:
         assert len(paths) == 4
         # assert all("/genebuild/" in path for path in paths)
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='genebuild')
-        assert path[0]['path'] == 'GCA/000/146/045/2/community/geneset/2018_10'
+        assert path[0]['path'] == 'GCA/000/146/045/2/community/2018_10/geneset'
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='assembly')
         assert path[0]['path'] == 'GCA/000/146/045/2/genome'
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='variation')
-        assert path[0]['path'] == 'GCA/000/146/045/2/community/variation/2018_10'
+        assert path[0]['path'] == 'GCA/000/146/045/2/community/2018_10/variation/2023_06_15'
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='homologies')
-        assert path[0]['path'] == 'GCA/000/146/045/2/community/homology/2018_10'
-        with pytest.raises(TypeNotFoundException):
-            genome_adapter.get_public_path(genome_uuid, dataset_type='regulatory_features')
-            # assert path[0]['path'] == 'Saccharomyces_cerevisiae_S288c/GCA_000146045.2/ensembl/regulation'
+        assert path[0]['path'] == 'GCA/000/146/045/2/community/2018_10/homology/2023_06_15'
 
-    def test_default_public_path(self, test_dbs):
+    # specific release:
+    def test_public_path_release(self, test_dbs):
         genome_adapter = GenomeAdaptor(test_dbs['ensembl_genome_metadata'].dbc.url, test_dbs['ncbi_taxonomy'].dbc.url)
-        genome_uuid = 'a7335667-93e7-11ec-a39d-005056b38ce3'
-        # Homo sapien GRCH38
-        paths = genome_adapter.get_public_path(genome_uuid, dataset_type='all')
-        assert len(paths) == 5
+        genome_uuid = 'a733574a-93e7-11ec-a39d-005056b38ce3'
+        paths = genome_adapter.get_public_path(genome_uuid, dataset_type='all', release='2021-10-18')
+        assert len(paths) == 3
         # assert all("/genebuild/" in path for path in paths)
+        path = genome_adapter.get_public_path(genome_uuid, dataset_type='genebuild', release='2021-10-18')
+        assert path[0]['path'] == 'GCA/000/146/045/2/community/2018_10/geneset'
+        path = genome_adapter.get_public_path(genome_uuid, dataset_type='assembly', release='2021-10-18')
+        assert path[0]['path'] == 'GCA/000/146/045/2/genome'
+        path = genome_adapter.get_public_path(genome_uuid, dataset_type='variation', release='2021-10-18')
+        assert path[0]['path'] == 'GCA/000/146/045/2/community/2018_10/variation/2020_10_18'
+        with pytest.raises(TypeNotFoundException):
+            path = genome_adapter.get_public_path(genome_uuid, dataset_type='homologies', release='2021-10-18')
+
+    # Basic test to show full funtionality for a genome with limited datasets.
+    def test_get_public_path_limited(self, test_dbs):
+        genome_adapter = GenomeAdaptor(test_dbs['ensembl_genome_metadata'].dbc.url, test_dbs['ncbi_taxonomy'].dbc.url)
+        genome_uuid = 'a733550b-93e7-11ec-a39d-005056b38ce3'
+        # c elegans genome_id=203
+        paths = genome_adapter.get_public_path(genome_uuid, dataset_type='all')
+        assert len(paths) == 3
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='genebuild')
-        assert path[0]['path'] == 'GCA/000/001/405/29/ensembl/geneset/2023_03'
+        assert path[0]['path'] == 'GCA/000/002/985/3/wormbase/2014_10/geneset'
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='assembly')
-        assert path[0]['path'] == 'GCA/000/001/405/29/genome'
-        path = genome_adapter.get_public_path(genome_uuid, dataset_type='variation')
-        assert path[0]['path'] == 'GCA/000/001/405/29/ensembl/variation/2023_03'
+        assert path[0]['path'] == 'GCA/000/002/985/3/genome'
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='homologies')
-        assert path[0]['path'] == 'GCA/000/001/405/29/ensembl/homology/2023_03'
-        path = genome_adapter.get_public_path(genome_uuid, dataset_type='regulatory_features')
-        assert path[0]['path'] == 'GCA/000/001/405/29/ensembl/regulation'
+        assert path[0]['path'] == 'GCA/000/002/985/3/wormbase/2014_10/homology/2023_06_15'
+        with pytest.raises(TypeNotFoundException):
+            genome_adapter.get_public_path(genome_uuid, dataset_type='variation')
