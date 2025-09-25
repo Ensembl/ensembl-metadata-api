@@ -196,7 +196,7 @@ class TestClass:
             (False, 108.0, {
                 "releaseVersion": 108.0,
                 "releaseDate": "2023-06-15",
-                "releaseLabel": "First Beta",
+                "releaseLabel": "2023-06-15",
                 "releaseType": "partial",
                 "isCurrent": False,
                 "siteName": "Ensembl",
@@ -205,8 +205,8 @@ class TestClass:
             }),
             (False, 110.1, {
                 "releaseVersion": 110.1,
-                "releaseDate": "2023-10-18",
-                "releaseLabel": "MVP Beta-1",
+                "releaseDate": "2020-10-18",
+                "releaseLabel": "2020-10-18",
                 "releaseType": "partial",
                 "isCurrent": True,
                 "siteName": "Ensembl",
@@ -215,8 +215,8 @@ class TestClass:
             }),
             (True, 110.3, {
                 "releaseVersion": 110.3,
-                "releaseDate": "Unreleased",
-                "releaseLabel": "MVP Beta-3",
+                "releaseDate": "2022-10-18",
+                "releaseLabel": "2022-10-18",
                 "releaseType": "partial",
                 "isCurrent": False,
                 "siteName": "Ensembl",
@@ -293,20 +293,20 @@ class TestClass:
         "genome_uuid, expected_output",
         [
             (
-                # Human
-                "65d4f21f-695a-4ed0-be67-5732a551fea4",
-                {
-                    "faaLocation": "Homo_sapiens/GCA_018473295.1/vep/genome/softmasked.fa.bgz",
-                    "gffLocation": "Homo_sapiens/GCA_018473295.1/vep/ensembl/geneset/2022_08/genes.gff3.bgz"
-                }
+                    # Human
+                    "65d4f21f-695a-4ed0-be67-5732a551fea4",
+                    {
+                        'faaLocation': 'GCA/018/473/295/1/genome/unmasked.fa.bgz',
+                        'gffLocation': 'GCA/018/473/295/1/ensembl/2022_08/geneset/genes.gff3.bgz'
+                    }
             ),
             (
-                # Ecoli
-                "a73351f7-93e7-11ec-a39d-005056b38ce3",
-                {
-                    'faaLocation': 'Escherichia_coli_str_K_12_substr_MG1655_str_K12/GCA_000005845.2/vep/genome/softmasked.fa.bgz',
-                    'gffLocation': 'Escherichia_coli_str_K_12_substr_MG1655_str_K12/GCA_000005845.2/vep/community/geneset/2018_09/genes.gff3.bgz'
-                }
+                    # Ecoli
+                    "a73351f7-93e7-11ec-a39d-005056b38ce3",
+                    {
+                        'faaLocation': 'GCA/000/005/845/2/genome/unmasked.fa.bgz',
+                        'gffLocation': 'GCA/000/005/845/2/community/2018_09/geneset/genes.gff3.bgz'
+                    }
             )
         ]
     )
@@ -320,5 +320,5 @@ class TestClass:
 
     def test_create_vep_file_paths_invalid_uuid(self, vep_conn):
         invalid_uuid = "some-invalid-genome-uuid-000000000000"
-        with pytest.raises(ValueError, match=f"No data found for genome UUID: {invalid_uuid}"):
+        with pytest.raises(ValueError, match=f"Genome with UUID {invalid_uuid} not found"):
             vep_conn.fetch_vep_locations(invalid_uuid)
