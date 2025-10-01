@@ -12,13 +12,16 @@
 
 
 """
-Generate changelogs for Ensembl releases.
+Generate release statistics for Ensembl releases.
 
-This module provides functionality to generate release changelogs for both
+This module provides functionality to generate release statistics for both
 partial and integrated Ensembl releases, exporting the data to CSV format.
 """
 import csv
+import logging
+import sys
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 from ensembl.utils.database import DBConnection
 from sqlalchemy import distinct
@@ -28,10 +31,23 @@ from ensembl.production.metadata.api.models import (
     Assembly, DatasetStatus, ReleaseStatus
 )
 
+# Constants
+DATASET_TYPE_VARIATION = 'variation'
+DATASET_TYPE_REGULATORY = 'regulatory_features'
+RELEASE_TYPE_PARTIAL = 'partial'
+RELEASE_TYPE_INTEGRATED = 'integrated'
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 
 class StatsGenerator:
     """
-    Generate release stats for Ensembl releases.
+    Generate release statistics for Ensembl releases.
 
     This class builds data structures capable of exporting both partial and
     integrated release information to CSV format. It queries the metadata
@@ -39,40 +55,79 @@ class StatsGenerator:
 
     Attributes:
         metadata_db: Database connection to the Ensembl metadata database
-        output_path: Optional path for output
+        output_path: Optional path for output files
     """
 
-    def __init__(self, metadata_uri, output_path=None):
+    def __init__(self, metadata_uri: str, output_path: Optional[str] = None):
         """
         Initialize the stats generator.
 
         Args:
             metadata_uri: Database URI for the metadata database
-            output_path: Optional output path
-        """
-        self.metadata_db = DBConnection(metadata_uri)
-        self.output_path = output_path
+            output_path: Optional output path for CSV files
 
-    def generate(self):
+        Raises:
+            ValueError: If metadata_uri is empty or invalid
         """
-        Generate the stats and export to CSV.
+        if not metadata_uri or not isinstance(metadata_uri, str):
+            raise ValueError("metadata_uri must be a non-empty string")
+
+        self.metadata_db = DBConnection(metadata_uri)
+        self.output_path = Path(output_path) if output_path else Path.cwd()
+
+        if not self.output_path.exists():
+            try:
+                self.output_path.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                raise ValueError(f"Cannot create output directory {self.output_path}: {e}") from e
+
+    def generate(self) -> None:
+        """
+        Generate the statistics and export to CSV.
 
         Determines the release type (partial or integrated) and calls the
         appropriate data gathering method, then exports the results to CSV.
         """
-        partial_data = self.get_partial_data()
-        integrated_data = self.get_integrated_data()
-        self.export_to_csv(partial_data, integrated_data)
+        logger.info("Starting statistics generation")
 
-    def get_partial_data(self):
+        try:
+            partial_data = self.get_partial_data()
+            logger.info(f"Generated statistics for {len(partial_data)} partial releases")
+
+            integrated_data = self.get_integrated_data()
+            logger.info(f"Generated statistics for {len(integrated_data)} integrated releases")
+
+            self.export_to_csv(partial_data, integrated_data)
+            logger.info("Statistics generation completed successfully")
+        except Exception as e:
+            logger.error(f"Error during statistics generation: {e}")
+            raise
+
+    def get_partial_data(self) -> List[Dict]:
+        """
+        Generate partial release statistics with optimized cumulative calculations.
+
+        Returns:
+            List of dictionaries containing partial release statistics
+        """
         with self.metadata_db.session_scope() as session:
             # Get all partial releases ordered by label - ONLY RELEASED
             releases = session.query(EnsemblRelease).filter(
-                EnsemblRelease.release_type == 'partial',
+                EnsemblRelease.release_type == RELEASE_TYPE_PARTIAL,
                 EnsemblRelease.status == ReleaseStatus.RELEASED
             ).order_by(EnsemblRelease.label).all()
 
+            if not releases:
+                logger.warning("No released partial releases found")
+                return []
+
             partial_data = []
+
+            # Track cumulative totals across releases
+            cumulative_genome_ids = set()
+            cumulative_assembly_ids = set()
+            cumulative_variation_ids = set()
+            cumulative_regulation_ids = set()
 
             for release in releases:
                 # NEW GENOMES: Count genomes in this release
@@ -80,14 +135,13 @@ class StatsGenerator:
                     GenomeRelease.release_id == release.release_id
                 ).count()
 
-                # TOTAL GENOMES: Count unique genomes in this and all previous partial releases
-                total_genomes = session.query(distinct(GenomeRelease.genome_id)).join(
-                    EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id
+                # Get genome IDs for cumulative tracking
+                genome_ids = {gr.genome_id for gr in session.query(
+                    GenomeRelease.genome_id
                 ).filter(
-                    EnsemblRelease.release_type == 'partial',
-                    EnsemblRelease.status == ReleaseStatus.RELEASED,
-                    EnsemblRelease.label <= release.label
-                ).count()
+                    GenomeRelease.release_id == release.release_id
+                ).all()}
+                cumulative_genome_ids.update(genome_ids)
 
                 # NEW ASSEMBLIES: Count unique assemblies with genomes in this release
                 new_assemblies = session.query(distinct(Assembly.assembly_id)).join(
@@ -98,91 +152,61 @@ class StatsGenerator:
                     GenomeRelease.release_id == release.release_id
                 ).count()
 
-                # TOTAL ASSEMBLIES: Count unique assemblies in this and all previous partial releases
-                total_assemblies = session.query(distinct(Assembly.assembly_id)).join(
+                # Get assembly IDs for cumulative tracking
+                assembly_ids = {aid[0] for aid in session.query(
+                    distinct(Assembly.assembly_id)
+                ).join(
                     Genome, Genome.assembly_id == Assembly.assembly_id
                 ).join(
                     GenomeRelease, GenomeRelease.genome_id == Genome.genome_id
-                ).join(
-                    EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id
                 ).filter(
-                    EnsemblRelease.release_type == 'partial',
-                    EnsemblRelease.status == ReleaseStatus.RELEASED,
-                    EnsemblRelease.label <= release.label
-                ).count()
+                    GenomeRelease.release_id == release.release_id
+                ).all()}
+                cumulative_assembly_ids.update(assembly_ids)
 
-                # NEW VARIATION DATASETS: Count variation datasets in this release - ONLY RELEASED
-                new_variation = session.query(GenomeDataset).join(
-                    Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
-                ).join(
-                    DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
-                ).filter(
-                    GenomeDataset.release_id == release.release_id,
-                    DatasetType.name == 'variation',
-                    Dataset.status == DatasetStatus.RELEASED
-                ).count()
+                # NEW VARIATION DATASETS
+                new_variation, variation_ids = self._count_and_get_dataset_ids(
+                    session, release.release_id, DATASET_TYPE_VARIATION
+                )
+                cumulative_variation_ids.update(variation_ids)
 
-                # TOTAL VARIATION DATASETS: Count unique variation datasets in this and all previous partial releases
-                total_variation = session.query(distinct(GenomeDataset.dataset_id)).join(
-                    Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
-                ).join(
-                    DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
-                ).join(
-                    EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id
-                ).filter(
-                    EnsemblRelease.release_type == 'partial',
-                    EnsemblRelease.status == ReleaseStatus.RELEASED,
-                    EnsemblRelease.label <= release.label,
-                    DatasetType.name == 'variation',
-                    Dataset.status == DatasetStatus.RELEASED
-                ).count()
-
-                # NEW REGULATION DATASETS: Count regulation datasets in this release - ONLY RELEASED
-                new_regulation = session.query(GenomeDataset).join(
-                    Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
-                ).join(
-                    DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
-                ).filter(
-                    GenomeDataset.release_id == release.release_id,
-                    DatasetType.name == 'regulatory_features',
-                    Dataset.status == DatasetStatus.RELEASED
-                ).count()
-
-                # TOTAL REGULATION DATASETS: Count unique regulation datasets in this and all previous partial releases
-                total_regulation = session.query(distinct(GenomeDataset.dataset_id)).join(
-                    Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
-                ).join(
-                    DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
-                ).join(
-                    EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id
-                ).filter(
-                    EnsemblRelease.release_type == 'partial',
-                    EnsemblRelease.status == ReleaseStatus.RELEASED,
-                    EnsemblRelease.label <= release.label,
-                    DatasetType.name == 'regulatory_features',
-                    Dataset.status == DatasetStatus.RELEASED
-                ).count()
+                # NEW REGULATION DATASETS
+                new_regulation, regulation_ids = self._count_and_get_dataset_ids(
+                    session, release.release_id, DATASET_TYPE_REGULATORY
+                )
+                cumulative_regulation_ids.update(regulation_ids)
 
                 partial_data.append({
                     'release': release.label,
                     'new_genomes': new_genomes,
-                    'total_genomes': total_genomes,
+                    'total_genomes': len(cumulative_genome_ids),
                     'new_assemblies': new_assemblies,
-                    'total_assemblies': total_assemblies,
+                    'total_assemblies': len(cumulative_assembly_ids),
                     'new_variation_datasets': new_variation,
-                    'total_variation_datasets': total_variation,
+                    'total_variation_datasets': len(cumulative_variation_ids),
                     'new_regulation_datasets': new_regulation,
-                    'total_regulation_datasets': total_regulation,
+                    'total_regulation_datasets': len(cumulative_regulation_ids),
                 })
+
             return partial_data
 
-    def get_integrated_data(self):
+    def get_integrated_data(self) -> List[Dict]:
+        """
+        Generate integrated release statistics using optimized queries.
+
+        Returns:
+            List of dictionaries containing integrated release statistics
+        """
         with self.metadata_db.session_scope() as session:
             # Get all integrated releases - ONLY RELEASED
             releases = session.query(EnsemblRelease).filter(
-                EnsemblRelease.release_type == 'integrated',
+                EnsemblRelease.release_type == RELEASE_TYPE_INTEGRATED,
                 EnsemblRelease.status == ReleaseStatus.RELEASED
             ).order_by(EnsemblRelease.label).all()
+
+            if not releases:
+                logger.warning("No released integrated releases found")
+                return []
 
             integrated_data = []
 
@@ -202,26 +226,14 @@ class StatsGenerator:
                 ).count()
 
                 # Count variation datasets - ONLY RELEASED
-                variation_count = session.query(GenomeDataset).join(
-                    Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
-                ).join(
-                    DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
-                ).filter(
-                    GenomeDataset.release_id == release.release_id,
-                    DatasetType.name == 'variation',
-                    Dataset.status == DatasetStatus.RELEASED
-                ).count()
+                variation_count = self._count_datasets(
+                    session, release.release_id, DATASET_TYPE_VARIATION
+                )
 
                 # Count regulation datasets - ONLY RELEASED
-                regulation_count = session.query(GenomeDataset).join(
-                    Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
-                ).join(
-                    DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
-                ).filter(
-                    GenomeDataset.release_id == release.release_id,
-                    DatasetType.name == 'regulatory_features',
-                    Dataset.status == DatasetStatus.RELEASED
-                ).count()
+                regulation_count = self._count_datasets(
+                    session, release.release_id, DATASET_TYPE_REGULATORY
+                )
 
                 integrated_data.append({
                     'release': release.label,
@@ -230,33 +242,73 @@ class StatsGenerator:
                     'variation_datasets': variation_count,
                     'regulation_datasets': regulation_count,
                 })
-        return integrated_data
 
-    def export_to_csv(self, partial_data, integrated_data):
+            return integrated_data
+
+    def _count_datasets(self, session, release_id: int, dataset_type_name: str) -> int:
         """
-        Export changelog data to CSV file with a commented header.
-
-        Creates a CSV file with a comment line indicating the release, followed
-        by the changelog data. The field names vary depending on whether this is
-        a partial or integrated release (integrated includes a 'status' column).
+        Count datasets of a specific type for a release.
 
         Args:
-            partial_data: List of dictionaries containing partial changelog data
-            integrated_data: List of dictionaries containing integrated changelog data
+            session: Database session
+            release_id: Release ID to query
+            dataset_type_name: Name of the dataset type (e.g., 'variation')
+
+        Returns:
+            Count of datasets
         """
+        return session.query(GenomeDataset).join(
+            Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
+        ).join(
+            DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
+        ).filter(
+            GenomeDataset.release_id == release_id,
+            DatasetType.name == dataset_type_name,
+            Dataset.status == DatasetStatus.RELEASED
+        ).count()
 
-        # Determine output path
-        if self.output_path:
-            output_dir = Path(self.output_path)
-            partial_output_file = output_dir / 'stats.partial.csv'
-            integrated_output_file = output_dir / 'stats.integrated.csv'
-        else:
-            partial_output_file = Path('stats.partial.csv')
-            integrated_output_file = Path('stats.integrated.csv')
+    def _count_and_get_dataset_ids(
+            self, session, release_id: int, dataset_type_name: str
+    ) -> Tuple[int, set]:
+        """
+        Count datasets and return their IDs for a specific type and release.
 
-        # Ensure parent directory exists
-        partial_output_file.parent.mkdir(parents=True, exist_ok=True)
-        integrated_output_file.parent.mkdir(parents=True, exist_ok=True)
+        Args:
+            session: Database session
+            release_id: Release ID to query
+            dataset_type_name: Name of the dataset type
+
+        Returns:
+            Tuple of (count, set of dataset IDs)
+        """
+        results = session.query(GenomeDataset.dataset_id).join(
+            Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
+        ).join(
+            DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
+        ).filter(
+            GenomeDataset.release_id == release_id,
+            DatasetType.name == dataset_type_name,
+            Dataset.status == DatasetStatus.RELEASED
+        ).all()
+
+        dataset_ids = {result[0] for result in results}
+        return len(dataset_ids), dataset_ids
+
+    def export_to_csv(
+            self, partial_data: List[Dict], integrated_data: List[Dict]
+    ) -> None:
+        """
+        Export statistics data to CSV files.
+
+        Creates two CSV files (partial and integrated) with the statistics data.
+
+        Args:
+            partial_data: List of dictionaries containing partial release statistics
+            integrated_data: List of dictionaries containing integrated release statistics
+        """
+        # Define output files
+        partial_output_file = self.output_path / 'stats.partial.csv'
+        integrated_output_file = self.output_path / 'stats.integrated.csv'
 
         # Partial release columns
         partial_fieldnames = [
@@ -270,6 +322,7 @@ class StatsGenerator:
             'new_regulation_datasets',
             'total_regulation_datasets',
         ]
+
         # Integrated release columns
         integrated_fieldnames = [
             'release',
@@ -284,25 +337,34 @@ class StatsGenerator:
         integrated_data_sorted = sorted(integrated_data, key=lambda x: x['release'])
 
         # Write partial file
-        with open(partial_output_file, 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=partial_fieldnames)
-            writer.writeheader()
-            writer.writerows(partial_data_sorted)
-        print(f"Partial stats exported to: {partial_output_file.absolute()}")
+        try:
+            with open(partial_output_file, 'w', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=partial_fieldnames)
+                writer.writeheader()
+                writer.writerows(partial_data_sorted)
+            logger.info(f"Partial stats exported to: {partial_output_file.absolute()}")
+        except Exception as e:
+            logger.error(f"Failed to write partial stats file: {e}")
+            raise
 
         # Write integrated file
-        with open(integrated_output_file, 'w', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=integrated_fieldnames)
-            writer.writeheader()
-            writer.writerows(integrated_data_sorted)
-        print(f"Integrated stats exported to: {integrated_output_file.absolute()}")
+        try:
+            with open(integrated_output_file, 'w', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=integrated_fieldnames)
+                writer.writeheader()
+                writer.writerows(integrated_data_sorted)
+            logger.info(f"Integrated stats exported to: {integrated_output_file.absolute()}")
+        except Exception as e:
+            logger.error(f"Failed to write integrated stats file: {e}")
+            raise
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Main entry point for the script."""
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Generate release stats for Ensembl releases"
+        description="Generate release statistics for Ensembl releases"
     )
     parser.add_argument(
         "--metadata-uri",
@@ -312,20 +374,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output-path",
         default=None,
-        help="Optional output path for the stats files. Filenames will be: stats.partial.csv & stats.integrated.csv"
-             "Defaults to current directory."
+        help="Optional output path for the stats files. Filenames will be: "
+             "stats.partial.csv & stats.integrated.csv. Defaults to current directory."
+    )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level (default: INFO)"
     )
 
     args = parser.parse_args()
 
-    generator = StatsGenerator(
-        metadata_uri=args.metadata_uri,
-        output_path=args.output_path
-    )
+    # Set log level
+    logging.getLogger().setLevel(getattr(logging, args.log_level))
 
     try:
+        generator = StatsGenerator(
+            metadata_uri=args.metadata_uri,
+            output_path=args.output_path
+        )
         generator.generate()
-        print(f"Releases stats successfully")
+        logger.info("Release statistics generated successfully")
+    except ValueError as e:
+        logger.error(f"Configuration error: {e}")
+        sys.exit(1)
     except Exception as e:
-        print(f"Error generating release stats: {e}")
-        exit(1)
+        logger.error(f"Error generating release statistics: {e}", exc_info=True)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
