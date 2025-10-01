@@ -9,53 +9,121 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+
+"""
+Generate changelogs for Ensembl releases.
+
+This module provides functionality to generate release changelogs for both
+partial and integrated Ensembl releases, exporting the data to CSV format.
+"""
+import csv
 from pathlib import Path
 
 from ensembl.utils.database import DBConnection
-from sqlalchemy import select
+from sqlalchemy import select, func
 
-from ensembl.production.metadata.api.models import *
+from ensembl.production.metadata.api.models import (
+    EnsemblRelease, Genome, GenomeDataset, GenomeRelease, Dataset, DatasetType,
+    DatasetAttribute, Attribute
+)
 
 
 class ChangelogGenerator:
     """
-    Independent class for generating release changelog.
-    Builds the Datastructure capable of exporting both partial and integrated data.
+    Generate release changelogs for Ensembl releases.
+
+    This class builds data structures capable of exporting both partial and
+    integrated release information to CSV format. It queries the metadata
+    database to gather genome, dataset, and release information.
+
+    Attributes:
+        metadata_db: Database connection to the Ensembl metadata database
+        release_label: Label identifying the release (e.g., '2024-02' or '2025-05-25')
+        output_path: Optional path for the output CSV file
     """
 
     def __init__(self, metadata_uri, release_label, output_path=None):
+        """
+        Initialize the changelog generator.
+
+        Args:
+            metadata_uri: Database URI for the metadata database
+            release_label: Release label (e.g., '2024-02' or '2025-05-25')
+            output_path: Optional output path for the changelog CSV file
+        """
         self.metadata_db = DBConnection(metadata_uri)
         self.release_label = release_label
         self.output_path = output_path
 
     def generate(self):
+        """
+        Generate the changelog and export to CSV.
+
+        Determines the release type (partial or integrated) and calls the
+        appropriate data gathering method, then exports the results to CSV.
+        """
         release_type = self.verify_release()
+
         if release_type == 'partial':
             data = self.gather_partial_data()
-            self.export_to_csv(data)
         elif release_type == 'integrated':
+            print("WARNING: Integrated release changelog generation has not been "
+                  "extensively tested across multiple releases")
             data = self.gather_integrated_data()
-            self.export_to_csv(data)
+        else:
+            raise ValueError(f"Unknown release type: {release_type}")
+
+        self.export_to_csv(data)
 
     def verify_release(self):
-        release_query = select(EnsemblRelease.release_type
-                               ).where(
+        """
+        Verify that the release exists and return its type.
+
+        Returns:
+            str: Release type ('partial' or 'integrated')
+
+        Raises:
+            Exception: If the release is not found in the database
+        """
+        release_query = select(EnsemblRelease.release_type).where(
             EnsemblRelease.label == self.release_label
         )
 
         with self.metadata_db.session_scope() as session:
-            dataset_results = session.execute(release_query).one_or_none()
-            if dataset_results is None:
-                raise Exception("Release not found. Please use the Release Label. ex: 2024-02 or 2025-05-25")
-            else:
-                return dataset_results[0]
+            result = session.execute(release_query).one_or_none()
+            if result is None:
+                raise Exception(
+                    f"Release not found: {self.release_label}. "
+                    "Please use a valid Release Label (e.g., '2024-02' or '2025-05-25')"
+                )
+            return result[0]
 
     def gather_partial_data(self):
+        """
+        Gather changelog data for a partial release.
+
+        For partial releases, this method collects information about which genomes
+        have updated datasets (genebuild, variation, or regulatory features) in
+        the specified release.
+
+        Returns:
+            list: List of dictionaries containing changelog data with keys:
+                - scientific_name: Species scientific name
+                - common_name: Species common name
+                - assembly_accession: Assembly accession
+                - annotation_provider: Source of annotation
+                - geneset_updated: 1 if genebuild updated, 0 otherwise
+                - variation_updated: 1 if variation updated, 0 otherwise
+                - regulation_updated: 1 if regulation updated, 0 otherwise
+        """
         with self.metadata_db.session_scope() as session:
-            release_query = select(EnsemblRelease.release_id).where(EnsemblRelease.label == self.release_label)
+            # Get the release ID
+            release_query = select(EnsemblRelease.release_id).where(
+                EnsemblRelease.label == self.release_label
+            )
             release_id = session.execute(release_query).scalar_one()
 
-            # First query: Find all genomes with genebuild, variation, or regulation datasets in this release
+            # Find all genomes with relevant datasets in this release
             genome_query = select(Genome).join(
                 GenomeDataset, GenomeDataset.genome_id == Genome.genome_id
             ).join(
@@ -69,16 +137,13 @@ class ChangelogGenerator:
 
             genomes = session.execute(genome_query).scalars().all()
 
-            # Second query: For each genome, gather the required data
+            # Process each genome to build changelog entries
             results = []
             for genome in genomes:
-                # Get organism data (scientific_name, common_name)
                 organism = genome.organism
-
-                # Get assembly data (assembly_accession)
                 assembly = genome.assembly
 
-                # Check which dataset types are present in this release for this genome
+                # Check which dataset types are present for this genome in this release
                 dataset_check_query = select(
                     DatasetType.name,
                     Dataset.dataset_id
@@ -95,8 +160,8 @@ class ChangelogGenerator:
                 dataset_results = session.execute(dataset_check_query).all()
                 datasets_in_release = {name: dataset_id for name, dataset_id in dataset_results}
 
-                # Get annotation_provider from genebuild dataset attributes
-                ###### THIS SECTION SHOULD BE IMPROVED POST SCHEMA CHANGES #####
+                # Get annotation source from genebuild dataset
+                # NOTE: This section should be improved after schema changes
                 annotation_source = None
                 genebuild_query = select(Dataset.dataset_id).join(
                     GenomeDataset, GenomeDataset.dataset_id == Dataset.dataset_id
@@ -106,8 +171,10 @@ class ChangelogGenerator:
                     GenomeDataset.genome_id == genome.genome_id,
                     DatasetType.name == 'genebuild',
                 )
-                genebuild_dataset_id = session.execute(genebuild_query).first()[0]
-                if genebuild_dataset_id:
+
+                genebuild_result = session.execute(genebuild_query).first()
+                if genebuild_result:
+                    genebuild_dataset_id = genebuild_result[0]
                     attr_query = select(DatasetAttribute.value).join(
                         Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id
                     ).where(
@@ -115,12 +182,13 @@ class ChangelogGenerator:
                         Attribute.name == 'genebuild.annotation_source'
                     )
                     annotation_source = session.execute(attr_query).scalar_one_or_none()
-                ###### ABOVE SHOULD BE IMPROVED POST SCHEMA CHANGES #####
 
+                # Build changelog entry
                 result = {
                     'scientific_name': organism.scientific_name,
                     'common_name': organism.common_name,
-                    'assembly_accession': assembly.accession,  # Adjust field name if needed
+                    'assembly_name': assembly.name,
+                    'assembly_accession': assembly.accession,
                     'annotation_provider': annotation_source,
                     'geneset_updated': 1 if 'genebuild' in datasets_in_release else 0,
                     'variation_updated': 1 if 'variation' in datasets_in_release else 0,
@@ -131,8 +199,27 @@ class ChangelogGenerator:
         return results
 
     def gather_integrated_data(self):
+        """
+        Gather changelog data for an integrated release.
+
+        For integrated releases, this method compares the current release to the
+        previous integrated release to determine which genomes are new, removed,
+        updated, or unchanged. It includes the partial release labels for when
+        each dataset was last updated.
+
+        Returns:
+            list: List of dictionaries containing changelog data with keys:
+                - scientific_name: Species scientific name
+                - common_name: Species common name
+                - assembly_accession: Assembly accession
+                - annotation_provider: Source of annotation
+                - geneset_updated: Partial release label when geneset was updated
+                - variation_updated: Partial release label when variation was updated
+                - regulation_updated: Partial release label when regulation was updated
+                - status: One of 'New', 'Removed', 'Updated', or 'Unchanged'
+        """
         with self.metadata_db.session_scope() as session:
-            # Get current integrated release
+            # Get current integrated release information
             current_release_query = select(
                 EnsemblRelease.release_id,
                 EnsemblRelease.version
@@ -142,7 +229,7 @@ class ChangelogGenerator:
             current_release = session.execute(current_release_query).one()
             current_release_id = current_release[0]
 
-            # Get previous integrated release
+            # Get previous integrated release for comparison
             prev_release_query = select(EnsemblRelease.release_id).where(
                 EnsemblRelease.release_type == 'integrated',
                 EnsemblRelease.release_id < current_release_id
@@ -160,8 +247,19 @@ class ChangelogGenerator:
             current_genomes = session.execute(current_genomes_query).scalars().all()
             current_genome_ids = {g.genome_id for g in current_genomes}
 
-            # Build previous genome data for comparison (if exists)
+            # Bulk fetch dataset information for current release
+            current_datasets_bulk = self._get_all_genome_datasets_bulk(
+                session, list(current_genome_ids), current_release_id
+            )
+
+            # Bulk fetch annotation sources for all genomes
+            annotation_sources = self._get_all_annotation_sources_bulk(
+                session, list(current_genome_ids)
+            )
+
+            # Build previous genome data for comparison (if previous release exists)
             prev_genomes = {}
+            prev_genome_ids_list = []
             if prev_release_id:
                 prev_genomes_query = select(Genome.genome_id).join(
                     GenomeRelease, GenomeRelease.genome_id == Genome.genome_id
@@ -169,10 +267,12 @@ class ChangelogGenerator:
                     GenomeRelease.release_id == prev_release_id
                 )
 
-                prev_genome_ids = session.execute(prev_genomes_query).scalars().all()
+                prev_genome_ids_list = session.execute(prev_genomes_query).scalars().all()
 
-                for genome_id in prev_genome_ids:
-                    prev_genomes[genome_id] = self._get_genome_datasets(session, genome_id, prev_release_id)
+                # Bulk fetch dataset information for previous release
+                prev_genomes = self._get_all_genome_datasets_bulk(
+                    session, prev_genome_ids_list, prev_release_id
+                )
 
             results = []
 
@@ -181,17 +281,19 @@ class ChangelogGenerator:
                 organism = genome.organism
                 assembly = genome.assembly
 
-                # Get annotation_provider
-                annotation_source = self._get_annotation_source(session, genome.genome_id)
+                annotation_source = annotation_sources.get(genome.genome_id)
+                current_datasets = current_datasets_bulk.get(genome.genome_id, {
+                    'geneset_updated': None,
+                    'variation_updated': None,
+                    'regulation_updated': None
+                })
 
-                # Get dataset release labels for this genome
-                current_datasets = self._get_genome_datasets(session, genome.genome_id, current_release_id)
-
-                # Determine status
+                # Determine status by comparing to previous release
                 if genome.genome_id not in prev_genomes:
                     status = "New"
                 else:
                     prev_datasets = prev_genomes[genome.genome_id]
+                    # Check if any dataset has been updated
                     if (current_datasets['geneset_updated'] != prev_datasets['geneset_updated'] or
                             current_datasets['variation_updated'] != prev_datasets['variation_updated'] or
                             current_datasets['regulation_updated'] != prev_datasets['regulation_updated']):
@@ -202,6 +304,7 @@ class ChangelogGenerator:
                 result = {
                     'scientific_name': organism.scientific_name,
                     'common_name': organism.common_name,
+                    'assembly_name': assembly.name,
                     'assembly_accession': assembly.accession,
                     'annotation_provider': annotation_source,
                     'geneset_updated': current_datasets['geneset_updated'],
@@ -211,15 +314,15 @@ class ChangelogGenerator:
                 }
                 results.append(result)
 
-            # Add removed genomes
+            # Add genomes that were removed (present in previous but not current)
             if prev_release_id:
-                for genome_id, prev_datasets in prev_genomes.items():
+                for genome_id in prev_genome_ids_list:
                     if genome_id not in current_genome_ids:
-                        # Get genome info
                         removed_genome = session.get(Genome, genome_id)
                         organism = removed_genome.organism
                         assembly = removed_genome.assembly
-                        annotation_source = self._get_annotation_source(session, genome_id)
+                        annotation_source = annotation_sources.get(genome_id)
+                        prev_datasets = prev_genomes[genome_id]
 
                         result = {
                             'scientific_name': organism.scientific_name,
@@ -235,84 +338,182 @@ class ChangelogGenerator:
 
             return results
 
-    def _get_genome_datasets(self, session, genome_id, release_id):
+    def _get_all_genome_datasets_bulk(self, session, genome_ids, release_id):
         """
-        Get the partial release labels for when each dataset type was released.
+        Get dataset information for multiple genomes in bulk queries.
+
+        This method retrieves partial release labels for when each dataset type
+        (genebuild, variation, regulatory_features) was released for each genome.
+        Uses optimized bulk queries to avoid N+1 query problems.
+
+        Args:
+            session: Database session
+            genome_ids: List of genome IDs to query
+            release_id: Release ID to check datasets against
+
+        Returns:
+            dict: Mapping of genome_id to dataset information:
+                {genome_id: {
+                    'geneset_updated': partial_release_label or None,
+                    'variation_updated': partial_release_label or None,
+                    'regulation_updated': partial_release_label or None
+                }}
         """
-        dataset_types = ['genebuild', 'variation', 'regulatory_features']
-        result = {
+        # Initialize result dictionary with None values
+        result = {gid: {
             'geneset_updated': None,
             'variation_updated': None,
             'regulation_updated': None
-        }
+        } for gid in genome_ids}
 
-        for dataset_type in dataset_types:
-            # Get the dataset attached to this genome in this release
-            dataset_query = select(Dataset.dataset_id).join(
-                GenomeDataset, GenomeDataset.dataset_id == Dataset.dataset_id
-            ).join(
-                DatasetType, DatasetType.dataset_type_id == Dataset.dataset_type_id
-            ).where(
-                GenomeDataset.genome_id == genome_id,
-                GenomeDataset.release_id == release_id,
-                DatasetType.name == dataset_type
-            )
-
-            dataset_id = session.execute(dataset_query).scalar_one_or_none()
-
-            if dataset_id:
-                # Find the partial release this dataset was released in
-                partial_release_query = select(EnsemblRelease.label).join(
-                    GenomeDataset, GenomeDataset.release_id == EnsemblRelease.release_id
-                ).where(
-                    GenomeDataset.genome_id == genome_id,
-                    GenomeDataset.dataset_id == dataset_id,
-                    EnsemblRelease.release_type == 'partial'
-                ).order_by(EnsemblRelease.version.desc()).limit(1)
-
-                partial_label = session.execute(partial_release_query).scalar_one_or_none()
-
-                if dataset_type == 'genebuild':
-                    result['geneset_updated'] = partial_label
-                elif dataset_type == 'variation':
-                    result['variation_updated'] = partial_label
-                elif dataset_type == 'regulatory_features':
-                    result['regulation_updated'] = partial_label
-
-        return result
-
-    def _get_annotation_source(self, session, genome_id):
-        """
-        Get annotation source for a genome (from most recent genebuild dataset).
-        """
-        annotation_source = None
-        genebuild_query = select(Dataset.dataset_id).join(
-            GenomeDataset, GenomeDataset.dataset_id == Dataset.dataset_id
+        # Bulk query: Get all datasets for all genomes in one query
+        bulk_query = select(
+            GenomeDataset.genome_id,
+            DatasetType.name,
+            Dataset.dataset_id
+        ).join(
+            Dataset, Dataset.dataset_id == GenomeDataset.dataset_id
         ).join(
             DatasetType, DatasetType.dataset_type_id == Dataset.dataset_type_id
         ).where(
-            GenomeDataset.genome_id == genome_id,
-            DatasetType.name == 'genebuild',
-        ).order_by(Dataset.created.desc()).limit(1)
+            GenomeDataset.genome_id.in_(genome_ids),
+            GenomeDataset.release_id == release_id,
+            DatasetType.name.in_(['genebuild', 'variation', 'regulatory_features'])
+        )
 
-        genebuild_dataset_id = session.execute(genebuild_query).scalar_one_or_none()
+        dataset_results = session.execute(bulk_query).all()
 
-        if genebuild_dataset_id:
-            attr_query = select(DatasetAttribute.value).join(
-                Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id
-            ).where(
-                DatasetAttribute.dataset_id == genebuild_dataset_id,
-                Attribute.name == 'genebuild.annotation_source'
-            )
-            annotation_source = session.execute(attr_query).scalar_one_or_none()
+        # Build lookup structures
+        dataset_info = {}  # {(genome_id, dataset_type): dataset_id}
+        dataset_ids_to_check = set()
 
-        return annotation_source
+        for genome_id, dataset_type, dataset_id in dataset_results:
+            dataset_info[(genome_id, dataset_type)] = dataset_id
+            dataset_ids_to_check.add(dataset_id)
+
+        # If no datasets found, return empty result
+        if not dataset_ids_to_check:
+            return result
+
+        # Bulk query: Get partial release labels for all datasets
+        partial_release_query = select(
+            GenomeDataset.genome_id,
+            GenomeDataset.dataset_id,
+            EnsemblRelease.label
+        ).join(
+            EnsemblRelease, EnsemblRelease.release_id == GenomeDataset.release_id
+        ).where(
+            GenomeDataset.dataset_id.in_(dataset_ids_to_check),
+            GenomeDataset.genome_id.in_(genome_ids),
+            EnsemblRelease.release_type == 'partial'
+        )
+
+        partial_results = session.execute(partial_release_query).all()
+
+        # Build lookup: {(genome_id, dataset_id): label}
+        partial_labels = {}
+        for genome_id, dataset_id, label in partial_results:
+            key = (genome_id, dataset_id)
+            # Keep only the first occurrence (should be most recent if ordered properly)
+            if key not in partial_labels:
+                partial_labels[key] = label
+
+        # Populate final results
+        for (genome_id, dataset_type), dataset_id in dataset_info.items():
+            label = partial_labels.get((genome_id, dataset_id))
+
+            if dataset_type == 'genebuild':
+                result[genome_id]['geneset_updated'] = label
+            elif dataset_type == 'variation':
+                result[genome_id]['variation_updated'] = label
+            elif dataset_type == 'regulatory_features':
+                result[genome_id]['regulation_updated'] = label
+
+        return result
+
+    def _get_all_annotation_sources_bulk(self, session, genome_ids):
+        """
+        Get annotation sources for multiple genomes in bulk queries.
+
+        Retrieves the annotation source from the most recent genebuild dataset
+        for each genome. Uses optimized bulk queries to minimize database calls.
+
+        Args:
+            session: Database session
+            genome_ids: List of genome IDs to query
+
+        Returns:
+            dict: Mapping of genome_id to annotation_source:
+                {genome_id: annotation_source or None}
+        """
+        # Subquery to get the most recent genebuild dataset per genome
+        subq = select(
+            GenomeDataset.genome_id,
+            func.max(Dataset.created).label('max_created')
+        ).join(
+            Dataset, Dataset.dataset_id == GenomeDataset.dataset_id
+        ).join(
+            DatasetType, DatasetType.dataset_type_id == Dataset.dataset_type_id
+        ).where(
+            GenomeDataset.genome_id.in_(genome_ids),
+            DatasetType.name == 'genebuild'
+        ).group_by(GenomeDataset.genome_id).subquery()
+
+        # Get the dataset_ids for the most recent genebuilds
+        dataset_query = select(
+            GenomeDataset.genome_id,
+            Dataset.dataset_id
+        ).join(
+            Dataset, Dataset.dataset_id == GenomeDataset.dataset_id
+        ).join(
+            DatasetType, DatasetType.dataset_type_id == Dataset.dataset_type_id
+        ).join(
+            subq,
+            (GenomeDataset.genome_id == subq.c.genome_id) &
+            (Dataset.created == subq.c.max_created)
+        ).where(
+            DatasetType.name == 'genebuild'
+        )
+
+        dataset_results = session.execute(dataset_query).all()
+        genome_to_dataset = {genome_id: dataset_id for genome_id, dataset_id in dataset_results}
+
+        # If no genebuild datasets found, return empty dict
+        if not genome_to_dataset:
+            return {}
+
+        # Bulk query: Get all annotation sources in one query
+        attr_query = select(
+            DatasetAttribute.dataset_id,
+            DatasetAttribute.value
+        ).join(
+            Attribute, Attribute.attribute_id == DatasetAttribute.attribute_id
+        ).where(
+            DatasetAttribute.dataset_id.in_(genome_to_dataset.values()),
+            Attribute.name == 'genebuild.annotation_source'
+        )
+
+        attr_results = session.execute(attr_query).all()
+        dataset_to_source = {dataset_id: value for dataset_id, value in attr_results}
+
+        # Map annotation sources back to genome_ids
+        result = {}
+        for genome_id, dataset_id in genome_to_dataset.items():
+            result[genome_id] = dataset_to_source.get(dataset_id)
+
+        return result
 
     def export_to_csv(self, data):
         """
-        Export changelog data to CSV file with commented header.
+        Export changelog data to CSV file with a commented header.
+
+        Creates a CSV file with a comment line indicating the release, followed
+        by the changelog data. The field names vary depending on whether this is
+        a partial or integrated release (integrated includes a 'status' column).
+
+        Args:
+            data: List of dictionaries containing changelog data
         """
-        import csv
 
         # Determine output path
         if self.output_path:
@@ -323,12 +524,13 @@ class ChangelogGenerator:
         # Ensure parent directory exists
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # Define the field order - check if status exists in data
+        # Define field order based on release type
         if data and 'status' in data[0]:
-            # Integrated release
+            # Integrated release includes status column
             fieldnames = [
                 'scientific_name',
                 'common_name',
+                'assembly_name',
                 'assembly_accession',
                 'annotation_provider',
                 'geneset_updated',
@@ -337,10 +539,11 @@ class ChangelogGenerator:
                 'status'
             ]
         else:
-            # Partial release
+            # Partial release uses binary flags
             fieldnames = [
                 'scientific_name',
                 'common_name',
+                'assembly_name',
                 'assembly_accession',
                 'annotation_provider',
                 'geneset_updated',
@@ -348,6 +551,7 @@ class ChangelogGenerator:
                 'regulation_updated'
             ]
 
+        # Write CSV file
         with open(output_file, 'w', newline='') as csvfile:
             # Write commented header line
             csvfile.write(f"# Changelog for release {self.release_label}\n")
@@ -379,7 +583,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output-path",
         default=None,
-        help="Optional output path for the changelog file. Defaults to outputing the label in the cwd."
+        help="Optional output path for the changelog file. "
+             "Defaults to '<release_label>.csv' in current directory."
     )
 
     args = parser.parse_args()
