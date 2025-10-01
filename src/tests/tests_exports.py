@@ -13,16 +13,8 @@
 Unit tests for utils.py
 """
 import logging
-from pathlib import Path
-
-import pytest
-from ensembl.utils.database import UnitTestDB
 
 logger = logging.getLogger(__name__)
 
-
-@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
-                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"}]],
-                         indirect=True)
-class TestExports:
-    dbc: UnitTestDB = None
+# TODO create tests for the stats generator and the changlog generator. Wait for the new schema as this will be
+# useless to do now.
