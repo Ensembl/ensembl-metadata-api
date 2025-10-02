@@ -61,6 +61,8 @@ dependencies = [
     "duckdb-engine >= 0.17.0",
     "pymysql",
     "mysqlclient",
+    "pandas", #for ftp_index_generator
+    "pyarrow" #for ftp_index_generator
 ]
 
 [project.urls]
