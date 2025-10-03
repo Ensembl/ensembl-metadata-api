@@ -184,38 +184,78 @@ class FTPIndexGenerator:
                 for provider, provider_data in assembly_data['genebuild_providers'].items():
                     for release, release_data in provider_data.items():
                         for dataset_type, dataset_info in release_data['paths'].items():
-                            for file_category, files in dataset_info['files'].items():
-                                for file_name, file_path in files.items():
-                                    row = {
-                                        # Species information
-                                        'species_key': species_key,
-                                        'taxid': species_data['taxid'],
-                                        'species_taxonomy_id': species_data['species_taxonomy_id'],
-                                        'scientific_name': species_data['scientific_name'],
-                                        'common_name': species_data['common_name'],
-                                        'strain': species_data['strain'],
-                                        'strain_type': species_data['strain_type'],
-                                        'biosample_id': species_data['biosample_id'],
+                            # Handle genebuild and assembly (direct files structure)
+                            if dataset_type in [DATASET_TYPE_GENEBUILD, DATASET_TYPE_ASSEMBLY]:
+                                for file_category, files in dataset_info['files'].items():
+                                    for file_name, file_path in files.items():
+                                        row = {
+                                            # Species information
+                                            'species_key': species_key,
+                                            'taxid': species_data['taxid'],
+                                            'species_taxonomy_id': species_data['species_taxonomy_id'],
+                                            'scientific_name': species_data['scientific_name'],
+                                            'common_name': species_data['common_name'],
+                                            'strain': species_data['strain'],
+                                            'strain_type': species_data['strain_type'],
+                                            'biosample_id': species_data['biosample_id'],
 
-                                        # Assembly information
-                                        'assembly_accession': assembly_key,
-                                        'assembly_name': assembly_data['name'],
-                                        'assembly_level': assembly_data['level'],
+                                            # Assembly information
+                                            'assembly_accession': assembly_key,
+                                            'assembly_name': assembly_data['name'],
+                                            'assembly_level': assembly_data['level'],
 
-                                        # Release information
-                                        'genebuild_provider': provider,
-                                        'release': release,
+                                            # Release information
+                                            'genebuild_provider': provider,
+                                            'release': release,
+                                            'partial_release_label': None,
 
-                                        # Dataset information
-                                        'dataset_type': dataset_type,
-                                        'file_category': file_category,
-                                        'file_name': file_name,
-                                        'file_path': file_path,
+                                            # Dataset information
+                                            'dataset_type': dataset_type,
+                                            'file_category': file_category,
+                                            'file_name': file_name,
+                                            'file_path': file_path,
 
-                                        # Metadata
-                                        'last_updated': metadata['last_updated']
-                                    }
-                                    rows.append(row)
+                                            # Metadata
+                                            'last_updated': metadata['last_updated']
+                                        }
+                                        rows.append(row)
+
+                            # Handle homologies and variation (nested by partial release label)
+                            elif dataset_type in [DATASET_TYPE_HOMOLOGIES, DATASET_TYPE_VARIATION]:
+                                for partial_label, partial_data in dataset_info.items():
+                                    for file_category, files in partial_data['files'].items():
+                                        for file_name, file_path in files.items():
+                                            row = {
+                                                # Species information
+                                                'species_key': species_key,
+                                                'taxid': species_data['taxid'],
+                                                'species_taxonomy_id': species_data['species_taxonomy_id'],
+                                                'scientific_name': species_data['scientific_name'],
+                                                'common_name': species_data['common_name'],
+                                                'strain': species_data['strain'],
+                                                'strain_type': species_data['strain_type'],
+                                                'biosample_id': species_data['biosample_id'],
+
+                                                # Assembly information
+                                                'assembly_accession': assembly_key,
+                                                'assembly_name': assembly_data['name'],
+                                                'assembly_level': assembly_data['level'],
+
+                                                # Release information
+                                                'genebuild_provider': provider,
+                                                'release': release,
+                                                'partial_release_label': partial_label,
+
+                                                # Dataset information
+                                                'dataset_type': dataset_type,
+                                                'file_category': file_category,
+                                                'file_name': file_name,
+                                                'file_path': file_path,
+
+                                                # Metadata
+                                                'last_updated': metadata['last_updated']
+                                            }
+                                            rows.append(row)
 
         df = DataFrame(rows)
 
@@ -226,6 +266,124 @@ class FTPIndexGenerator:
 
         logger.info(f"Flattened metadata into {len(df)} rows")
         return df
+
+    def _get_partial_release_label(self, dataset) -> str:
+        """
+        Get the partial release label for a homology or variation dataset.
+
+        Args:
+            dataset: Dataset object
+
+        Returns:
+            Release label string, or 'unknown' if not found
+        """
+        # Find the GenomeDataset relationship with a partial release
+        for genome_dataset in dataset.genome_datasets:
+            if (genome_dataset.ensembl_release and
+                    genome_dataset.ensembl_release.release_type == 'partial' and
+                    genome_dataset.ensembl_release.label):
+                return genome_dataset.ensembl_release.label
+
+        # Fallback: look for any release with a label
+        for genome_dataset in dataset.genome_datasets:
+            if genome_dataset.ensembl_release and genome_dataset.ensembl_release.label:
+                return genome_dataset.ensembl_release.label
+
+        logger.warning(f"No partial release label found for dataset {dataset.dataset_uuid}")
+        return 'unknown'
+
+    def _generate_path_for_dataset_type(
+            self,
+            genebuild_metadata: Dict,
+            dataset_type: str
+    ) -> Dict[str, str]:
+        """
+        Generate public FTP path for a single dataset type (genebuild or assembly).
+
+        Args:
+            genebuild_metadata: Dictionary containing genebuild metadata
+            dataset_type: Type of dataset
+
+        Returns:
+            Dictionary with 'dataset_type' and 'path' keys
+        """
+        scientific_name = genebuild_metadata.get('scientific_name')
+        accession = genebuild_metadata.get('accession')
+        genebuild_source_name = genebuild_metadata.get('genebuild_source_name')
+        last_geneset_update = genebuild_metadata.get('last_geneset_update')
+
+        # Validate required fields
+        if not all([scientific_name, accession, genebuild_source_name, last_geneset_update]):
+            raise ValueError("Required metadata fields are missing")
+
+        # Format the release date
+        match = re.match(r'^(\d{4}-\d{2})', last_geneset_update)
+        if not match:
+            raise ValueError(f"Invalid last_geneset_update format: {last_geneset_update}")
+        formatted_release = match.group(1).replace('-', '_')
+
+        # Build path
+        genebuild_source_name = genebuild_source_name.lower()
+        base_path = format_accession_path(accession)
+        common_path = f"{base_path}/{genebuild_source_name}/{formatted_release}"
+
+        path_templates = {
+            DATASET_TYPE_GENEBUILD: f"{common_path}/geneset",
+            DATASET_TYPE_ASSEMBLY: f"{common_path}/genome",
+        }
+
+        if dataset_type not in path_templates:
+            raise ValueError(f"Unsupported dataset type: {dataset_type}")
+
+        return {
+            "dataset_type": dataset_type,
+            "path": path_templates[dataset_type]
+        }
+
+    def _generate_path_for_homology_variation(
+            self,
+            genebuild_metadata: Dict,
+            dataset_type: str,
+            partial_release_label: str
+    ) -> str:
+        """
+        Generate public FTP path for homology or variation dataset.
+
+        Args:
+            genebuild_metadata: Dictionary containing genebuild metadata
+            dataset_type: Type of dataset (homologies or variation)
+            partial_release_label: The label from the partial release
+
+        Returns:
+            Path string
+        """
+        accession = genebuild_metadata.get('accession')
+        genebuild_source_name = genebuild_metadata.get('genebuild_source_name')
+        last_geneset_update = genebuild_metadata.get('last_geneset_update')
+
+        if not all([accession, genebuild_source_name, last_geneset_update]):
+            raise ValueError("Required metadata fields are missing")
+
+        # Format the genebuild release date
+        match = re.match(r'^(\d{4}-\d{2})', last_geneset_update)
+        if not match:
+            raise ValueError(f"Invalid last_geneset_update format: {last_geneset_update}")
+        formatted_genebuild_release = match.group(1).replace('-', '_')
+
+        # Build path with both genebuild release and partial release label
+        genebuild_source_name = genebuild_source_name.lower()
+        base_path = format_accession_path(accession)
+        common_path = f"{base_path}/{genebuild_source_name}/{formatted_genebuild_release}"
+
+        path_templates = {
+            DATASET_TYPE_HOMOLOGIES: f"{common_path}/homology/{partial_release_label}",
+            DATASET_TYPE_VARIATION: f"{common_path}/variation/{partial_release_label}",
+        }
+
+        if dataset_type not in path_templates:
+            raise ValueError(f"Unsupported dataset type: {dataset_type}")
+
+        return path_templates[dataset_type]
 
     def build_ftp_metadata_json(self) -> Dict:
         """
@@ -314,6 +472,8 @@ class FTPIndexGenerator:
         ).where(
             Genome.genome_uuid.in_(genome_uuids),
             Dataset.status == DatasetStatus.RELEASED
+        ).options(
+            selectinload(Dataset.genome_datasets).selectinload(GenomeDataset.ensembl_release)
         )
 
         dataset_results = session.execute(datasets_query).all()
@@ -496,33 +656,25 @@ class FTPIndexGenerator:
 
         release_data = assembly_data["genebuild_providers"][provider_for_path][release_key]
 
-        # Get available dataset types
-        dataset_types = set(d['dataset_type_name'] for d in datasets)
+        # Group datasets by type
+        datasets_by_type = {}
+        for dataset_info in datasets:
+            dtype = dataset_info['dataset_type_name']
+            if dtype not in datasets_by_type:
+                datasets_by_type[dtype] = []
+            datasets_by_type[dtype].append(dataset_info)
 
-        seen_homology_paths = set()
+        # Process genebuild and assembly (one per genebuild release)
+        for dataset_type in [DATASET_TYPE_GENEBUILD, DATASET_TYPE_ASSEMBLY]:
+            if dataset_type not in datasets_by_type:
+                continue
 
-        # Use genome_adapter to get paths for all dataset types
-        try:
-            all_paths = self._generate_paths_from_metadata(
-                genebuild_metadata,
-                dataset_types
-            )
-
-            for path_info in all_paths:
-                dataset_type = path_info['dataset_type']
+            try:
+                path_info = self._generate_path_for_dataset_type(
+                    genebuild_metadata, dataset_type
+                )
                 base_path = path_info['path']
 
-                # Skip if this dataset type isn't in our datasets
-                if dataset_type not in dataset_types:
-                    continue
-
-                # Handle homology deduplication
-                if dataset_type == DATASET_TYPE_HOMOLOGIES:
-                    if base_path in seen_homology_paths:
-                        continue
-                    seen_homology_paths.add(base_path)
-
-                # Generate file paths for this dataset type
                 file_paths = self._get_dataset_file_paths(
                     base_path, dataset_type, genome, assembly_data
                 )
@@ -530,11 +682,75 @@ class FTPIndexGenerator:
                 release_data["paths"][dataset_type] = {
                     "files": file_paths
                 }
+            except (ValueError, TypeNotFoundException) as e:
+                logger.warning(f"Error generating path for {dataset_type} in genome {genome_uuid}: {e}")
 
-        except (ValueError, TypeNotFoundException) as e:
-            logger.warning(f"Error generating paths for genome {genome_uuid}: {e}")
-        except Exception as e:
-            logger.error(f"Unexpected error generating paths for genome {genome_uuid}: {e}")
+        # Process homologies (can have multiple per genebuild, grouped by partial release)
+        if DATASET_TYPE_HOMOLOGIES in datasets_by_type:
+            homologies_by_release = {}
+
+            for dataset_info in datasets_by_type[DATASET_TYPE_HOMOLOGIES]:
+                dataset = dataset_info['dataset']
+                partial_release_label = self._get_partial_release_label(dataset)
+
+                if partial_release_label not in homologies_by_release:
+                    homologies_by_release[partial_release_label] = []
+                homologies_by_release[partial_release_label].append(dataset_info)
+
+            # Create structure for each partial release
+            if DATASET_TYPE_HOMOLOGIES not in release_data["paths"]:
+                release_data["paths"][DATASET_TYPE_HOMOLOGIES] = {}
+
+            for partial_label, dataset_list in homologies_by_release.items():
+                try:
+                    base_path = self._generate_path_for_homology_variation(
+                        genebuild_metadata, DATASET_TYPE_HOMOLOGIES, partial_label
+                    )
+
+                    file_paths = self._get_dataset_file_paths(
+                        base_path, DATASET_TYPE_HOMOLOGIES, genome, assembly_data
+                    )
+
+                    release_data["paths"][DATASET_TYPE_HOMOLOGIES][partial_label] = {
+                        "files": file_paths
+                    }
+                except (ValueError, TypeNotFoundException) as e:
+                    logger.warning(
+                        f"Error generating homology path for genome {genome_uuid}, release {partial_label}: {e}")
+
+        # Process variations (can have multiple per genebuild, grouped by partial release)
+        if DATASET_TYPE_VARIATION in datasets_by_type:
+            variations_by_release = {}
+
+            for dataset_info in datasets_by_type[DATASET_TYPE_VARIATION]:
+                dataset = dataset_info['dataset']
+                partial_release_label = self._get_partial_release_label(dataset)
+
+                if partial_release_label not in variations_by_release:
+                    variations_by_release[partial_release_label] = []
+                variations_by_release[partial_release_label].append(dataset_info)
+
+            # Create structure for each partial release
+            if DATASET_TYPE_VARIATION not in release_data["paths"]:
+                release_data["paths"][DATASET_TYPE_VARIATION] = {}
+
+            for partial_label, dataset_list in variations_by_release.items():
+                try:
+                    base_path = self._generate_path_for_homology_variation(
+                        genebuild_metadata, DATASET_TYPE_VARIATION, partial_label
+                    )
+
+                    file_paths = self._get_dataset_file_paths(
+                        base_path, DATASET_TYPE_VARIATION, genome, assembly_data
+                    )
+
+                    release_data["paths"][DATASET_TYPE_VARIATION][partial_label] = {
+                        "files": file_paths
+                    }
+                except (ValueError, TypeNotFoundException) as e:
+                    logger.warning(
+                        f"Error generating variation path for genome {genome_uuid}, release {partial_label}: {e}")
+
 
     def _normalize_species_name(self, scientific_name: str) -> str:
         """
@@ -652,7 +868,7 @@ class FTPIndexGenerator:
 
         path_templates = {
             DATASET_TYPE_GENEBUILD: f"{common_path}/geneset",
-            DATASET_TYPE_ASSEMBLY: f"{base_path}/genome",
+            DATASET_TYPE_ASSEMBLY: f"{common_path}/genome",
             DATASET_TYPE_HOMOLOGIES: f"{common_path}/homology/{formatted_release}",
             DATASET_TYPE_VARIATION: f"{common_path}/variation/{formatted_release}",
         }
