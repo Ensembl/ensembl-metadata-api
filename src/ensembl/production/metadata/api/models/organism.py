@@ -17,14 +17,14 @@ from sqlalchemy.orm import relationship
 
 from ensembl.production.metadata.api.models.base import Base, LoadAble
 
-__all__ = ['Organism', 'OrganismGroup', 'OrganismGroupMember']
+__all__ = ["Organism", "OrganismGroup", "OrganismGroupMember"]
 
 
 class Organism(LoadAble, Base):
     __tablename__ = "organism"
 
     organism_id = Column(Integer, primary_key=True)
-    organism_uuid = Column(String(32), unique=True, nullable=False, default=uuid.uuid4)
+    organism_uuid = Column(String(40), unique=True, nullable=False, default=uuid.uuid4)
     taxonomy_id = Column(Integer, nullable=False)
     species_taxonomy_id = Column(Integer)
     common_name = Column(String(128), nullable=True)
@@ -32,37 +32,36 @@ class Organism(LoadAble, Base):
     scientific_name = Column(String(128))
     biosample_id = Column(String(128), nullable=False, unique=True)
     scientific_parlance_name = Column(String(255))
+    rank = Column(Integer, default=0)
+    strain_type = Column(String(128), nullable=True, unique=False)
     # One to many relationships
     # Organism_id to organism_group_member and genome
     genomes = relationship("Genome", back_populates="organism", cascade="all, delete, delete-orphan")
     organism_group_members = relationship("OrganismGroupMember", back_populates="organism")
-    strain_type = Column(String(128), nullable=True, unique=False)
-
 
 
 class OrganismGroup(LoadAble, Base):
     __tablename__ = "organism_group"
-    __table_args__ = (
-        Index("group_type_name_63c2f6ac_uniq", "type", "name", unique=True),
-    )
+    __table_args__ = (Index("group_type_name_63c2f6ac_uniq", "type", "name", unique=True),)
 
     organism_group_id = Column(Integer, primary_key=True)
-    type = Column(String(32), nullable=False)
+    type = Column(String(32))
     name = Column(String(255), nullable=False)
     code = Column(String(48), unique=True)
     # One to many relationships
     # Organism_group_id to organism_group_member
     organism_group_members = relationship("OrganismGroupMember", back_populates="organism_group")
 
-    # many to one relationships
-    # none
-
 
 class OrganismGroupMember(LoadAble, Base):
     __tablename__ = "organism_group_member"
     __table_args__ = (
-        Index("organism_group_member_organism_id_organism_gro_fe8f49ac_uniq", "organism_id", "organism_group_id",
-              unique=True),
+        Index(
+            "organism_group_member_organism_id_organism_gro_fe8f49ac_uniq",
+            "organism_id",
+            "organism_group_id",
+            unique=True,
+        ),
     )
 
     organism_group_member_id = Column(Integer, primary_key=True)
@@ -70,8 +69,6 @@ class OrganismGroupMember(LoadAble, Base):
     order = Column(Integer, nullable=True)
     organism_id = Column(ForeignKey("organism.organism_id"), nullable=False)
     organism_group_id = Column(ForeignKey("organism_group.organism_group_id"), nullable=False, index=True)
-    # One to many relationships
-    # none
     # many to one relationships
     # Organism_group_id to organism_group_member
     # organism_id to organism
