@@ -384,6 +384,33 @@ def create_release_version(data=None):
     )
     return release
 
+def create_label_version(data=None):
+    """
+    This function will be used by Thoas to determine the MongoDB instance containing
+    the data for a specified genome_uuid. It either constructs a ReleaseLabel
+    instance with the release version obtained from the provided data or returns
+    a default ReleaseLabel instance when data is None or lacks the necessary attributes.
+
+    Args:
+        data (Optional[sqlalchemy.engine.row.Row]): The input data from which the release
+            version is extracted. It's expected to have an attribute 'EnsemblRelease'
+            with a nested attribute 'version'. If None or the 'EnsemblRelease' attribute
+            is absent, a default ReleaseLabel instance is returned.
+
+    Returns:
+        ensembl_metadata_pb2.ReleaseLabel: An instance of the ReleaseLabel message.
+            It contains the release label extracted from the input data if the relevant
+            attributes are present; otherwise, it's a default instance of ReleaseLabel.
+    """
+    if data is None:
+        return ensembl_metadata_pb2.ReleaseLabel()
+    logger.debug(f"Release data {data}")
+    print(f"\n####### Release data {data}")
+    release = ensembl_metadata_pb2.ReleaseLabel(
+        release_label=data.release.label if hasattr(data, 'release') else None,
+    )
+    return release
+
 
 def create_datasets(data=None):
     if data is None:

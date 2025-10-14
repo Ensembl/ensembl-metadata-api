@@ -637,6 +637,24 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
         return response_data
     return msg_factory.create_release_version()
 
+def get_release_label_by_uuid(db_conn, genome_uuid, dataset_type, release_version):
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
+        return msg_factory.create_label_version()
+
+    release_version_result = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
+                                                           dataset_type_name=dataset_type,
+                                                           release_version=release_version)
+
+    if len(release_version_result) == 0:
+        logger.error(f"No result found for {genome_uuid}/{dataset_type}/{release_version}")
+    else:
+        if len(release_version_result) > 1:
+            logger.warning(f"Multiple results returned. {release_version_result}")
+        response_data = msg_factory.create_label_version(release_version_result[0])
+        return response_data
+    return msg_factory.create_label_version()
+
 
 def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names, latest_only):
     """
