@@ -88,6 +88,8 @@ class AssemblySequence(LoadAble, Base):
     additional = Column(TINYINT(1), nullable=False, default=0)
     source = Column(String(128))
     assembly = relationship("Assembly", back_populates="assembly_sequences")
+    sequence_aliases = relationship("SequenceAlias", back_populates="assembly_sequence",
+                                    cascade="all, delete, delete-orphan")
 
 
 class SequenceAlias(LoadAble, Base):
