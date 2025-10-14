@@ -99,5 +99,4 @@ class SequenceAlias(LoadAble, Base):
     assembly_sequence_id = Column(ForeignKey("assembly_sequence.assembly_sequence_id"), nullable=False)
     alias = Column(String(128), nullable=False)
     source = Column(String(128))
-
-    assembly_sequence = relationship("AssemblySequence", back_populates="sequence_alias")
+    assembly_sequence = relationship("AssemblySequence", back_populates="sequence_aliases")

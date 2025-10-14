@@ -65,6 +65,8 @@ class EnsemblRelease(LoadAble, Base):
     # release_id to genome dataset and genome release
     genome_datasets = relationship('GenomeDataset', back_populates='ensembl_release')
     genome_releases = relationship('GenomeRelease', back_populates='ensembl_release')
+    genome_group_members = relationship('GenomeGroupMember', back_populates='ensembl_release')
+
     # many to one relationships
     # Added fileter condition on every join to EnsemblSite for code clarity
     # No other than configure site data should be returned

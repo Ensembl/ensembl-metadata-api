@@ -46,6 +46,9 @@ class Genome(LoadAble, Base):
     genome_releases = relationship(
         "GenomeRelease", back_populates="genome", cascade="all, delete, delete-orphan"
     )
+    genome_group_members = relationship(
+        "GenomeGroupMember", back_populates="genome", cascade="all, delete, delete-orphan"
+    )
     # many to one relationships
     # assembly_id to assembly
     assembly = relationship("Assembly", back_populates="genomes")
@@ -120,4 +123,4 @@ class GenomeGroupMember(LoadAble, Base):
     # many to one relationships
     genome_group = relationship("GenomeGroup", back_populates="genome_group_members")
     genome = relationship("Genome", back_populates="genome_group_members")
-    release = relationship("Release", back_populates="genome_group_members")
+    ensembl_release = relationship("EnsemblRelease", back_populates="genome_group_members")
