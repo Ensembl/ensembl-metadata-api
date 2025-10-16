@@ -4,14 +4,8 @@ dist: focal
 python:
   - '3.10'
   - '3.11'
-services:
-  - mysql
 before_script:
-  # In MySQL 8, local_infile is disabled by default for security reasons.
-  # By adding SET GLOBAL local_infile=1;, we enable this feature at runtime.
-  - mysql -e "SET GLOBAL local_infile=1;"
   - pip install .
   - pip install .[test]
 script:
-  - echo "DB_HOST $METADATA_URI $TAXONOMY_URI"
-  - coverage run -m pytest -c pyproject.toml --server mysql://travis@127.0.0.1:3306
+  - coverage run -m pytest -c pyproject.toml
