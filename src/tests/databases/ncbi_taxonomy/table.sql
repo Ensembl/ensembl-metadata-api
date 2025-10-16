@@ -21,3 +21,4 @@ CREATE TABLE `ncbi_taxa_node` (
   KEY `left_index` (`left_index`),
   KEY `right_index` (`right_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+

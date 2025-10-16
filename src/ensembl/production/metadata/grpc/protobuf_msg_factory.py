@@ -9,10 +9,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import logging
 from datetime import datetime
 
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,6 @@ def create_assembly(data=None):
         ucsc_name=data.Assembly.ucsc_name,
         ensembl_name=data.Assembly.ensembl_name,
         is_reference=data.Assembly.is_reference,
-        url_name=data.Assembly.url_name,
         tol_id=data.Assembly.tol_id,
     )
     return assembly

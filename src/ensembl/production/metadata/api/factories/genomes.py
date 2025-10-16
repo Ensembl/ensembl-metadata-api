@@ -11,9 +11,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-'''
+"""
 Fetch Genome Info From New Metadata Database
-'''
+"""
 
 import argparse
 import json
@@ -30,7 +30,7 @@ from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset,
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -47,21 +47,56 @@ class GenomeInputFilters:
     release_id: int = 0
     batch_size: int = 50
     page: int = 1
-    organism_group_type: str = ''
+    organism_group_type: str = ""
     run_all: int = 0
     update_dataset_status: str = ""
     update_dataset_attribute: dict = field(default_factory=lambda: {})
-    columns: List = field(default_factory=lambda: [Genome.genome_uuid.label('genome_uuid'),
-                                                   Genome.production_name.label('species'),
-                                                   Dataset.dataset_uuid.label('dataset_uuid'),
-                                                   Dataset.status.label('dataset_status'),
-                                                   DatasetSource.name.label('dataset_source'),
-                                                   DatasetType.name.label('dataset_type')
-                                                   ])
+    columns: List = field(
+        default_factory=lambda: [
+            Genome.genome_uuid.label("genome_uuid"),
+            Genome.production_name.label("species"),
+            Dataset.dataset_uuid.label("dataset_uuid"),
+            Dataset.status.label("dataset_status"),
+            DatasetSource.name.label("dataset_source"),
+            DatasetType.name.label("dataset_type"),
+        ]
+    )
 
 
 @dataclass
 class GenomeFactory:
+
+    @staticmethod
+    def _normalize_status_to_enum(status_list):
+        """
+        Convert a list of status strings to DatasetStatus enum values.
+        This ensures compatibility between SQLite and MySQL.
+
+        Args:
+            status_list: List of status strings or enums
+
+        Returns:
+            List of DatasetStatus enum values
+        """
+        if not status_list:
+            return []
+
+        normalized = []
+        for status in status_list:
+            if isinstance(status, DatasetStatus):
+                # Already an enum
+                normalized.append(status)
+            elif isinstance(status, str):
+                # Convert string to enum
+                try:
+                    normalized.append(DatasetStatus(status))
+                except ValueError:
+                    logger.warning(f"Invalid status value: {status}")
+            else:
+                logger.warning(f"Unexpected status type: {type(status)} for value {status}")
+
+        return normalized
+
     @staticmethod
     def _apply_filters(query, filters):
 
@@ -70,12 +105,12 @@ class GenomeFactory:
 
         if filters.run_all:
             filters.division = [
-                'EnsemblBacteria',
-                'EnsemblVertebrates',
-                'EnsemblPlants',
-                'EnsemblProtists',
-                'EnsemblMetazoa',
-                'EnsemblFungi',
+                "EnsemblBacteria",
+                "EnsemblVertebrates",
+                "EnsemblPlants",
+                "EnsemblProtists",
+                "EnsemblMetazoa",
+                "EnsemblFungi",
             ]
 
         if filters.genome_uuid:
@@ -87,9 +122,11 @@ class GenomeFactory:
         if filters.division:
             ensembl_divisions = filters.division
 
-            if filters.organism_group_type == 'DIVISION':
-                pattern = re.compile(r'^(ensembl)?', re.IGNORECASE)
-                ensembl_divisions = ['Ensembl' + pattern.sub('', d).capitalize() for d in ensembl_divisions if d]
+            if filters.organism_group_type == "DIVISION":
+                pattern = re.compile(r"^(ensembl)?", re.IGNORECASE)
+                ensembl_divisions = [
+                    "Ensembl" + pattern.sub("", d).capitalize() for d in ensembl_divisions if d
+                ]
 
             query = query.filter(OrganismGroup.name.in_(ensembl_divisions))
 
@@ -106,129 +143,220 @@ class GenomeFactory:
 
         if filters.release_id:
             query = query.join(Genome.genome_releases)
-            query = query.filter(GenomeDataset.release_id==filters.release_id)
-            query = query.filter(GenomeRelease.release_id==filters.release_id)
+            query = query.filter(GenomeDataset.release_id == filters.release_id)
+            query = query.filter(GenomeRelease.release_id == filters.release_id)
 
         if filters.dataset_type:
-            query = query.filter(Genome.genome_datasets.any(DatasetType.name.in_([filters.dataset_type])))
+            query = query.filter(DatasetType.name == filters.dataset_type)
 
         if filters.dataset_status:
-            query = query.filter(Dataset.status.in_(filters.dataset_status))
+            status_enums = GenomeFactory._normalize_status_to_enum(filters.dataset_status)
+            if status_enums:
+                query = query.filter(Dataset.status.in_(status_enums))
+            else:
+                logger.warning(f"No valid status values to filter on: {filters.dataset_status}")
 
         if filters.batch_size:
             filters.page = filters.page if filters.page > 0 else 1
             query = query.offset((filters.page - 1) * filters.batch_size).limit(filters.batch_size)
+
         logger.debug(f"Filter Query {query}")
         return query
 
     def _build_query(self, filters):
-        query = select(*filters.columns) \
-            .select_from(Genome) \
-            .join(Genome.assembly) \
-            .join(Genome.organism) \
-            .join(Organism.organism_group_members) \
-            .join(OrganismGroupMember.organism_group) \
-            .join(Genome.genome_datasets) \
-            .join(GenomeDataset.dataset) \
-            .join(Dataset.dataset_source) \
-            .join(Dataset.dataset_type) \
-            .group_by(Genome.genome_id, Dataset.dataset_id) \
+        query = (
+            select(*filters.columns)
+            .select_from(Genome)
+            .join(Genome.assembly)
+            .join(Genome.organism)
+            .join(Organism.organism_group_members)
+            .join(OrganismGroupMember.organism_group)
+            .join(Genome.genome_datasets)
+            .join(GenomeDataset.dataset)
+            .join(Dataset.dataset_source)
+            .join(Dataset.dataset_type)
+            .group_by(Genome.genome_id, Dataset.dataset_id)
             .order_by(Genome.genome_uuid)
+        )
 
         return self._apply_filters(query, filters)
 
     def get_genomes(self, **filters: GenomeInputFilters):
 
         filters = GenomeInputFilters(**filters)
-        logger.info(f'Get Genomes with filters {filters}')
+        logger.info(f"Get Genomes with filters {filters}")
 
         with DBConnection(filters.metadata_db_uri).session_scope() as session:
             query = self._build_query(filters)
-            logger.info(f'Executing SQL query: {query}')
-            for genome in session.execute(query).fetchall():
-                genome_info = genome._asdict()
-                dataset_uuid = genome_info.get('dataset_uuid', None)
+            logger.info(f"Executing SQL query: {query}")
 
-                # convert status enum object to string value
-                dataset_status = genome_info.get('dataset_status', None)
+            results = session.execute(query).fetchall()
+            logger.debug(f"Query returned {len(results)} results")
+
+            for genome in results:
+                genome_info = genome._asdict()
+                dataset_uuid = genome_info.get("dataset_uuid", None)
+
+                dataset_status = genome_info.get("dataset_status", None)
                 if dataset_status and isinstance(dataset_status, DatasetStatus):
-                    genome_info['dataset_status'] = dataset_status.value
+                    genome_info["dataset_status"] = dataset_status.value
 
                 if not dataset_uuid:
-                    logger.warning(
-                        f"No dataset uuid found for genome {genome_info} skipping this genome "
-                    )
+                    logger.warning(f"No dataset uuid found for genome {genome_info} skipping this genome ")
                     continue
 
                 if filters.update_dataset_status:
-                    _, status = DatasetFactory(filters.metadata_db_uri) \
-                        .update_dataset_status(dataset_uuid,
-                                               filters.update_dataset_status,
-                                               session=session)
-                    if filters.update_dataset_status == status.value:
+                    update_status = filters.update_dataset_status
+                    if isinstance(update_status, str):
+                        try:
+                            update_status_enum = DatasetStatus(update_status)
+                        except ValueError:
+                            logger.error(f"Invalid update_dataset_status: {update_status}")
+                            genome_info["updated_dataset_status"] = None
+                            yield genome_info
+                            continue
+                    else:
+                        update_status_enum = update_status
+
+                    _, status = DatasetFactory(filters.metadata_db_uri).update_dataset_status(
+                        dataset_uuid, update_status_enum.value, session=session
+                    )
+
+                    if update_status_enum == status:
                         logger.info(
                             f"Updated Dataset status for dataset uuid: {dataset_uuid} from "
-                            f"{filters.update_dataset_status} to {status} for genome {genome_info['genome_uuid']}"
+                            f"{genome_info.get('dataset_status')} to {status.value} "
+                            f"for genome {genome_info['genome_uuid']}"
                         )
-                        genome_info['updated_dataset_status'] = status.value
-
+                        genome_info["updated_dataset_status"] = status.value
                     else:
                         logger.warning(
                             f"Cannot update status for dataset uuid: {dataset_uuid} "
-                            f"{filters.update_dataset_status} to {status}  for genome {genome_info['genome_uuid']}"
+                            f"from {genome_info.get('dataset_status')} to {status.value} "
+                            f"for genome {genome_info['genome_uuid']}"
                         )
-                        genome_info['updated_dataset_status'] = None
+                        genome_info["updated_dataset_status"] = None
+
                 session.flush()
                 yield genome_info
 
 
 def main():
     parser = argparse.ArgumentParser(
-        prog='genomes.py',
-        description='Fetch Ensembl genome info from the new metadata database'
+        prog="genomes.py", description="Fetch Ensembl genome info from the new metadata database"
     )
-    parser.add_argument('--genome_uuid', type=str, nargs='*', default=[], required=False,
-                        help='List of genome UUIDs to filter the query. Default is an empty list.')
-    parser.add_argument('--dataset_uuid', type=str, nargs='*', default=[], required=False,
-                        help='List of dataset UUIDs to filter the query. Default is an empty list.')
-    parser.add_argument('--organism_group_type', type=str, default='DIVISION', required=False,
-                        help='Organism group type to filter the query. Default is "DIVISION"')
-    parser.add_argument('--division', type=str, nargs='*', default=[], required=False,
-                        help='List of organism group names to filter the query. Default is an empty list.')
-    parser.add_argument('--dataset_type', type=str, default="assembly", required=False,
-                        help='List of dataset types to filter the query. Default is an empty list.')
-    parser.add_argument('--species', type=str, nargs='*', default=[], required=False,
-                        help='List of Species Production names to filter the query. Default is an empty list.')
-    parser.add_argument('--antispecies', type=str, nargs='*', default=[], required=False,
-                        help='List of Species Production names to exclude from the query. Default is an empty list.')
-    parser.add_argument('--release_id', type=int, default=0, required=False,
-                        help='Genome_dataset release_id to filter the query. Default is 0 (no filter).')
-    parser.add_argument('--dataset_status', nargs='*', default=["Submitted"],
-                        choices=['Submitted', 'Processing', 'Processed', 'Released'], required=False,
-                        help='List of dataset statuses to filter the query. Default is an empty list.')
-    parser.add_argument('--update_dataset_status', type=str, default="", required=False,
-                        choices=['Submitted', 'Processing', 'Processed', 'Released', ''],
-                        help='Update the status of the selected datasets to the specified value. ')
-    parser.add_argument('--batch_size', type=int, default=50, required=False,
-                        help='Number of results to retrieve per batch. Default is 50.')
-    parser.add_argument('--page', default=1, required=False,
-                        type=lambda x: int(x) if int(x) > 0 else argparse.ArgumentTypeError(
-                            "{x} is not a positive integer"),
-                        help='The page number for pagination. Default is 1.')
-    parser.add_argument('--metadata_db_uri', type=str, required=True,
-                        help='metadata db mysql uri, ex: mysql://ensro@localhost:3366/ensembl_genome_metadata')
-    parser.add_argument('--output', type=str, required=True, help='output file ex: genome_info.json')
+    parser.add_argument(
+        "--genome_uuid",
+        type=str,
+        nargs="*",
+        default=[],
+        required=False,
+        help="List of genome UUIDs to filter the query. Default is an empty list.",
+    )
+    parser.add_argument(
+        "--dataset_uuid",
+        type=str,
+        nargs="*",
+        default=[],
+        required=False,
+        help="List of dataset UUIDs to filter the query. Default is an empty list.",
+    )
+    parser.add_argument(
+        "--organism_group_type",
+        type=str,
+        default="DIVISION",
+        required=False,
+        help='Organism group type to filter the query. Default is "DIVISION"',
+    )
+    parser.add_argument(
+        "--division",
+        type=str,
+        nargs="*",
+        default=[],
+        required=False,
+        help="List of organism group names to filter the query. Default is an empty list.",
+    )
+    parser.add_argument(
+        "--dataset_type",
+        type=str,
+        default="assembly",
+        required=False,
+        help="List of dataset types to filter the query. Default is an empty list.",
+    )
+    parser.add_argument(
+        "--species",
+        type=str,
+        nargs="*",
+        default=[],
+        required=False,
+        help="List of Species Production names to filter the query. Default is an empty list.",
+    )
+    parser.add_argument(
+        "--antispecies",
+        type=str,
+        nargs="*",
+        default=[],
+        required=False,
+        help="List of Species Production names to exclude from the query. Default is an empty list.",
+    )
+    parser.add_argument(
+        "--release_id",
+        type=int,
+        default=0,
+        required=False,
+        help="Genome_dataset release_id to filter the query. Default is 0 (no filter).",
+    )
+    parser.add_argument(
+        "--dataset_status",
+        nargs="*",
+        default=["Submitted"],
+        choices=["Submitted", "Processing", "Processed", "Released"],
+        required=False,
+        help="List of dataset statuses to filter the query. Default is an empty list.",
+    )
+    parser.add_argument(
+        "--update_dataset_status",
+        type=str,
+        default="",
+        required=False,
+        choices=["Submitted", "Processing", "Processed", "Released", ""],
+        help="Update the status of the selected datasets to the specified value. ",
+    )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=50,
+        required=False,
+        help="Number of results to retrieve per batch. Default is 50.",
+    )
+    parser.add_argument(
+        "--page",
+        default=1,
+        required=False,
+        type=lambda x: int(x) if int(x) > 0 else argparse.ArgumentTypeError("{x} is not a positive integer"),
+        help="The page number for pagination. Default is 1.",
+    )
+    parser.add_argument(
+        "--metadata_db_uri",
+        type=str,
+        required=True,
+        help="metadata db mysql uri, ex: mysql://ensro@localhost:3366/ensembl_genome_metadata",
+    )
+    parser.add_argument("--output", type=str, required=True, help="output file ex: genome_info.json")
 
     args = parser.parse_args()
 
     meta_details = re.match(r"mysql:\/\/.*:?(.*?)@(.*?):\d+\/(.*)", args.metadata_db_uri)
-    with open(args.output, 'w') as json_output:
-        logger.info(f'Connecting Metadata Database with  host:{meta_details.group(2)} & dbname:{meta_details.group(3)}')
+    with open(args.output, "w") as json_output:
+        logger.info(
+            f"Connecting Metadata Database with  host:{meta_details.group(2)} & dbname:{meta_details.group(3)}"
+        )
 
         genome_fetcher = GenomeFactory()
 
-        logger.info(f'Writing Results to {args.output}')
-        for genome in genome_fetcher.get_genomes(
+        logger.info(f"Writing Results to {args.output}")
+        for genome in (
+                genome_fetcher.get_genomes(
                 metadata_db_uri=args.metadata_db_uri,
                 update_dataset_status=args.update_dataset_status,
                 genome_uuid=args.genome_uuid,
@@ -241,13 +369,15 @@ def main():
                 batch_size=args.batch_size,
                 release_id=args.release_id,
                 dataset_status=args.dataset_status,
-        ) or []:
+                )
+                or []
+        ):
             json.dump(genome, json_output)
             json_output.write("\n")
 
-        logger.info(f'Completed !')
+        logger.info(f"Completed !")
 
 
 if __name__ == "__main__":
-    logger.info('Fetching Genome Information From New Metadata Database')
+    logger.info("Fetching Genome Information From New Metadata Database")
     main()

@@ -10,6 +10,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import logging
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -41,21 +42,20 @@ class TestReleaseFactory:
         with metadata_db.session_scope() as session:
             last_release = session.query(EnsemblRelease).order_by(EnsemblRelease.version.desc()).first()
             expected_version = Decimal("1.0") if last_release is None else last_release.version + Decimal("0.1")
+        label = "2028-09-11"
+        date = datetime.strptime(label, "%Y-%m-%d").date()
 
-            try:
-                # Call init_release but don't assert on the returned object
-                factory.init_release(label=str(expected_version))
-            except Exception as e:
-                pytest.fail(f"Unexpected exception: {e}")
+        try:
+            factory.init_release(label=label)
+        except Exception as e:
+            pytest.fail(f"Unexpected exception: {e}")
 
-        # ✅ Re-fetch in a new session
         with metadata_db.session_scope() as session:
             release = session.query(EnsemblRelease).filter(EnsemblRelease.version == expected_version).one_or_none()
-
             assert release is not None, "Release was not inserted into the database"
             assert release.version == expected_version
-            assert release.release_date is None  # Should allow NULL
-            assert release.label == str(expected_version)  # Default label behavior
+            assert release.release_date == date
+            assert release.label == label
             assert release.release_type == "partial"
             assert release.status == ReleaseStatus.PLANNED
 

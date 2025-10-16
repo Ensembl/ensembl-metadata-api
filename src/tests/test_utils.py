@@ -523,8 +523,8 @@ class TestUtils:
             },
             'release': {
                 'isCurrent': True,
-                'releaseDate': '2023-10-18',
-                'releaseLabel': 'MVP Beta-1',
+                'releaseDate': '2020-10-18',
+                'releaseLabel': '2020-10-18',
                 'releaseType': 'partial',
                 'releaseVersion': 110.1,
                 'siteLabel': 'MVP Ensembl',
@@ -562,8 +562,7 @@ class TestUtils:
                 'ensemblName': 'WBcel235',
                 'isReference': True,
                 'level': 'chromosome',
-                'name': 'WBcel235',
-                'urlName': 'wbcel235'
+                'name': 'WBcel235'
             },
             'attributesInfo': {
                 'assemblyDate': '2012-12',
@@ -594,7 +593,7 @@ class TestUtils:
             },
             'release': {
                 'releaseDate': '2023-06-15',
-                'releaseLabel': 'First Beta',
+                'releaseLabel': '2023-06-15',
                 'releaseType': 'partial',
                 'releaseVersion': 108.0,
                 'siteLabel': 'MVP Ensembl',
@@ -642,7 +641,7 @@ class TestUtils:
         "genome_tag, expected_output",
         [
             # url_name = GRCh38 => homo_sapien 38
-            ("GRCh38", {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            ("grch38", {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
             # Null
             ("iDontExist", {}),
         ]

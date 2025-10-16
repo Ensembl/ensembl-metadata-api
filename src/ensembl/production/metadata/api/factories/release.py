@@ -86,11 +86,21 @@ class ReleaseFactory:
                 version = round(version, 1)
 
             # Validate release date only if provided
+            release_date_obj = None
             if release_date:
                 try:
-                    datetime.strptime(release_date, "%Y-%m-%d").date()
+                    release_date_obj = datetime.strptime(release_date, "%Y-%m-%d").date()
                 except ValueError:
                     raise ValueError("Invalid release_date format. Expected YYYY-MM-DD.")
+            else:
+                if label:
+                    try:
+                        release_date_obj = datetime.strptime(label, "%Y-%m-%d").date()
+                        release_date = label  # Store the string for later label assignment
+                    except ValueError:
+                        raise ValueError("Invalid label format. Expected YYYY-MM-DD when used as date.")
+                else:
+                    raise ValueError("Either release_date or label must be specified.")
 
             # Create a name if not provided. It should be one higher than any existing partial release.
             if not name and release_type == "partial":
@@ -100,8 +110,6 @@ class ReleaseFactory:
 
             # Ensure label is defined
             if label is None:
-                if release_date is None:
-                    raise ValueError("Either release_date or label must be specified.")
                 label = release_date
 
             # Validate release type
@@ -115,7 +123,7 @@ class ReleaseFactory:
             # Create and store the new release
             release = EnsemblRelease(
                 version=version,
-                release_date=release_date,  # Will be stored as NULL if None
+                release_date=release_date_obj,
                 label=label,
                 ensembl_site=site_obj,
                 release_type=release_type,

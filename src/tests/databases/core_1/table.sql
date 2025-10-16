@@ -1,81 +1,3 @@
-CREATE TABLE coord_system
-(
-    coord_system_id int unsigned auto_increment
-        primary key,
-    species_id      int unsigned default 1                    not null,
-    name            varchar(40)                               not null,
-    version         varchar(255)                              null,
-    `rank`          int                                       not null,
-    attrib          set ('default_version', 'sequence_level') null,
-    constraint name_idx
-        unique (name, version, species_id),
-    constraint rank_idx
-        unique (`rank`, species_id)
-);
-
-CREATE INDEX species_idx
-    on coord_system (species_id);
-
-CREATE TABLE meta
-(
-    meta_id    int auto_increment
-        primary key,
-    species_id int unsigned default 1 null,
-    meta_key   varchar(40)            not null,
-    meta_value varchar(255)           not null,
-    constraint species_key_value_idx
-        unique (species_id, meta_key, meta_value)
-);
-
-CREATE INDEX species_value_idx
-    on meta (species_id, meta_value);
-
-CREATE TABLE seq_region
-(
-    seq_region_id   int unsigned auto_increment
-        primary key,
-    name            varchar(255) not null,
-    coord_system_id int unsigned not null,
-    length          int unsigned not null,
-    constraint name_cs_idx
-        unique (name, coord_system_id)
-);
-
-CREATE INDEX cs_idx
-    on seq_region (coord_system_id);
-
-CREATE TABLE seq_region_attrib
-(
-    seq_region_id  int unsigned      default 0 not null,
-    attrib_type_id smallint unsigned default 0 not null,
-    value          text                        not null,
-    constraint region_attribx
-        unique (seq_region_id, attrib_type_id, value(500))
-);
-
-CREATE INDEX seq_region_idx
-    on seq_region_attrib (seq_region_id);
-
-CREATE INDEX type_val_idx
-    on seq_region_attrib (attrib_type_id, value(40));
-
-CREATE INDEX val_only_idx
-    on seq_region_attrib (value(40));
-
-CREATE TABLE seq_region_synonym
-(
-    seq_region_synonym_id int unsigned auto_increment
-        primary key,
-    seq_region_id         int unsigned not null,
-    synonym               varchar(250) not null,
-    external_db_id        int unsigned null,
-    constraint syn_idx
-        unique (synonym, seq_region_id)
-);
-
-CREATE INDEX seq_region_idx
-    on seq_region_synonym (seq_region_id);
-
 CREATE TABLE `attrib_type` (
   `attrib_type_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(20) NOT NULL DEFAULT '',
@@ -83,4 +5,63 @@ CREATE TABLE `attrib_type` (
   `description` text,
   PRIMARY KEY (`attrib_type_id`),
   UNIQUE KEY `code_idx` (`code`)
-);
+) ENGINE=InnoDB AUTO_INCREMENT=548 DEFAULT CHARSET=latin1;
+
+CREATE TABLE `coord_system`
+(
+    `coord_system_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `species_id`      int(10) unsigned NOT NULL DEFAULT '1',
+    `name`            varchar(40) NOT NULL,
+    `version`         varchar(255) DEFAULT NULL,
+    `rank`            int(11) NOT NULL,
+    `attrib` set('default_version','sequence_level') DEFAULT NULL,
+    PRIMARY KEY (`coord_system_id`),
+    UNIQUE KEY `rank_idx` (`rank`,`species_id`),
+    UNIQUE KEY `name_idx` (`name`,`version`,`species_id`),
+    KEY               `species_idx` (`species_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+
+CREATE TABLE `meta`
+(
+    `meta_id`    int(11) NOT NULL AUTO_INCREMENT,
+    `species_id` int(10) unsigned DEFAULT '1',
+    `meta_key`   varchar(40)  NOT NULL,
+    `meta_value` varchar(255) NOT NULL,
+    PRIMARY KEY (`meta_id`),
+    UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`),
+    KEY          `species_value_idx` (`species_id`,`meta_value`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=latin1;
+
+CREATE TABLE `seq_region`
+(
+    `seq_region_id`   int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `name`            varchar(255) NOT NULL,
+    `coord_system_id` int(10) unsigned NOT NULL,
+    `length`          int(10) unsigned NOT NULL,
+    PRIMARY KEY (`seq_region_id`),
+    UNIQUE KEY `name_cs_idx` (`name`,`coord_system_id`),
+    KEY               `cs_idx` (`coord_system_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+
+CREATE TABLE `seq_region_attrib`
+(
+    `seq_region_id`  int(10) unsigned NOT NULL DEFAULT '0',
+    `attrib_type_id` smallint(5) unsigned NOT NULL DEFAULT '0',
+    `value`          text NOT NULL,
+    UNIQUE KEY `region_attribx` (`seq_region_id`,`attrib_type_id`,`value`(500)),
+    KEY              `seq_region_idx` (`seq_region_id`),
+    KEY              `type_val_idx` (`attrib_type_id`,`value`(40)),
+    KEY              `val_only_idx` (`value`(40))
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `seq_region_synonym`
+(
+    `seq_region_synonym_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `seq_region_id`         int(10) unsigned NOT NULL,
+    `synonym`               varchar(250) NOT NULL,
+    `external_db_id`        int(10) unsigned DEFAULT NULL,
+    PRIMARY KEY (`seq_region_synonym_id`),
+    UNIQUE KEY `syn_idx` (`synonym`,`seq_region_id`),
+    KEY                     `seq_region_idx` (`seq_region_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+

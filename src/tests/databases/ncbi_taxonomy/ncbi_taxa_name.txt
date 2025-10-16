@@ -1,11 +1,11 @@
 562	Achromobacter sp. ATCC 35328	includes
 562	ATCC 11775	type material
-562	"Bacillus coli" Migula 1895	authority
+562	Bacillus coli Migula 1895	authority
 562	Bacillus coli	synonym
 562	bacterium 10a	includes
-562	"Bacterium coli commune" Escherich 1885	authority
+562	Bacterium coli commune Escherich 1885	authority
 562	Bacterium coli commune	synonym
-562	"Bacterium coli" (Migula 1895) Lehmann and Neumann 1896	authority
+562	Bacterium coli (Migula 1895) Lehmann and Neumann 1896	authority
 562	Bacterium coli	synonym
 562	bacterium E3	includes
 562	CCUG 24	type material
@@ -467,3 +467,6 @@
 562	1637691	merged_taxon_id
 562	1806490	merged_taxon_id
 7227	2267365	merged_taxon_id
+666668	carol_jabberwocky	scientific name
+6666666	Jabberwocky	scientific name
+666668	carol_jabberwocky	scientific name

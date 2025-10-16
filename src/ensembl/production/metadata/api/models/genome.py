@@ -27,7 +27,7 @@ class Genome(LoadAble, Base):
     __tablename__ = "genome"
 
     genome_id = Column(Integer, primary_key=True)
-    genome_uuid = Column(String(32), nullable=False, unique=True, default=str(uuid.uuid4))
+    genome_uuid = Column(String(32), nullable=False, unique=True, default=lambda: str(uuid.uuid4()))
     assembly_id = Column(ForeignKey("assembly.assembly_id"), nullable=False, index=True)
     organism_id = Column(ForeignKey("organism.organism_id"), nullable=False, index=True)
     created = Column(DATETIME(fsp=6), nullable=False)

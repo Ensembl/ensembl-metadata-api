@@ -9,14 +9,14 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import re
-from pathlib import Path
-import pytest
 from collections import namedtuple
+from pathlib import Path
+
+import pytest
+from ensembl.utils.database import DBConnection
+
 from ensembl.production.metadata.api.models import OrganismGroup, Genome, Organism, OrganismGroupMember
-from ensembl.production.metadata.scripts.organism_to_organismgroup import process_genomes, \
-    create_or_remove_organism_group
-from ensembl.utils.database import UnitTestDB, DBConnection
+from ensembl.production.metadata.scripts.organism_to_organismgroup import process_genomes
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -77,7 +77,7 @@ class TestAddOrRemoveOrganismGroup:
                                                                  ).join(OrganismGroup,
                                                                         OrganismGroup.organism_group_id == OrganismGroupMember.organism_group_id
                                                                         ).filter(
-                                                                            Genome.genome_uuid.in_([args.genome_uuid]),
+                    Genome.genome_uuid.in_(args.genome_uuid),
                                                                             OrganismGroup.name == args.organism_group_name,
                                                                         )
             )

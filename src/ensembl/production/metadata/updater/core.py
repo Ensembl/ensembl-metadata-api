@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 class CoreMetaUpdater(BaseMetaUpdater):
-    def __init__(self, db_uri, metadata_uri, release=None):
-        super().__init__(db_uri, metadata_uri, release)
+    def __init__(self, db_uri, metadata_uri, taxonomy_uri, release=None):
+        super().__init__(db_uri, metadata_uri, taxonomy_uri, release)
         self.db_type = 'core'
         # Single query to get all of the metadata information.
         self.meta_dict = {}
@@ -318,7 +318,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
         production_name = self.get_meta_single_meta_key(species_id, "organism.production_name")
         genebuild_version = self.get_meta_single_meta_key(species_id, "genebuild.version")
         genebuild_date = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
-        if genebuild_date is None:
+        url_name = self.get_meta_single_meta_key(species_id, "assembly.url_name")
+        annotation_source = self.get_meta_single_meta_key(species_id, "genebuild.annotation_source")
+        if genebuild_date is None:  ##TODO Make this so any of the above are none it fails!
             raise exceptions.MetadataUpdateException(f"Unable to parse genebuild.last_geneset_update from meta")
         # get next release inline to attach the genome to
         planned_release = get_or_new_release(self.metadata_uri)
@@ -329,8 +331,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
             genebuild_date=genebuild_date,
             genebuild_version=genebuild_version,
             created=func.now(),
-            is_best=0,
             production_name=production_name,
+            url_name=url_name,
+            annotation_source=annotation_source
         )
         logger.debug(f"Assigning genome {new_genome.genome_uuid} to {planned_release.version}")
         meta_session.add(new_genome)
@@ -380,7 +383,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         if taxid is None:
             raise exceptions.MissingMetaException("organism.taxid is required")
         if common_name is None:
-            with self.metadata_db.session_scope() as session:
+            with self.taxonomy_db.session_scope() as session:
                 common_name = session.query(NCBITaxaName).filter(
                     NCBITaxaName.taxon_id == taxid,
                     NCBITaxaName.name_class == "genbank common name"
@@ -416,7 +419,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             # If no existing Organism is found, conduct additional checks before creating a new one.
 
             # Check if the new organism's taxonomy ID exists in the taxonomy database.
-            with self.metadata_db.session_scope() as session:
+            with self.taxonomy_db.session_scope() as session:
                 try:
                     Taxonomy.fetch_node_by_id(session, new_organism.taxonomy_id)
                 except NoResultFound:
@@ -572,10 +575,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 accession_body=accession_body,
                 assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
                 tol_id=tol_id,
-                alt_accession=self.get_meta_single_meta_key(species_id, "assembly.alt_accession"),
                 created=func.now(),
                 assembly_uuid=str(uuid.uuid4()),
-                url_name=self.get_meta_single_meta_key(species_id, "assembly.url_name"),
                 is_reference=is_reference
             )
             dataset_factory = DatasetFactory(self.metadata_uri)

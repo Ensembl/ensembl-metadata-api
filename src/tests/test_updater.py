@@ -33,8 +33,7 @@ db_directory = db_directory.resolve()
                                        {'src': Path(__file__).parent / "databases/core_5"},
                                        {'src': Path(__file__).parent / "databases/core_6"},
                                        {'src': Path(__file__).parent / "databases/core_7"},
-                                       {'src': Path(__file__).parent / "databases/core_8"},
-                                       {'src': Path(__file__).parent / "databases/core_9"}
+                                       {'src': Path(__file__).parent / "databases/core_8"}
                                        ]],
                          indirect=True)
 class TestUpdater:
@@ -42,7 +41,8 @@ class TestUpdater:
 
     def test_new_organism(self, test_dbs):
         test = meta_factory(test_dbs['core_1'].dbc.url,
-                            test_dbs['ensembl_genome_metadata'].dbc.url)
+                            test_dbs['ensembl_genome_metadata'].dbc.url,
+                            test_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
 
         # Check for insertion of genome_uuid
@@ -68,7 +68,6 @@ class TestUpdater:
             assert organism.genomes[0].genebuild_date == '2023-01'
             # Test the Assembly
             assert assembly.accession == 'GCF_1111111123.3'
-            assert assembly.alt_accession == 'GCA_0000012345.3'
             # select * from genebuild where version = 999 and name = 'genebuild and label =01
             dataset = session.query(Dataset).where(
                 (Dataset.version == 'ENS01') & (Dataset.name == 'genebuild')
@@ -101,7 +100,9 @@ class TestUpdater:
             assert count == 1
 
     def test_fail_existing_genome_uuid_no_data(self, test_dbs):
-        test = meta_factory(test_dbs['core_2'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
+        test = meta_factory(test_dbs['core_2'].dbc.url,
+                            test_dbs['ensembl_genome_metadata'].dbc.url,
+                            test_dbs['ncbi_taxonomy'].dbc.url)
         with pytest.raises(MetadataUpdateException) as exif:
             test.process_core()
             assert ("Database contains a Genome.genome_uuid, "
@@ -109,35 +110,79 @@ class TestUpdater:
                     "Please remove it from the meta key and resubmit" in str(exif.value))
 
     def test_update_assembly(self, test_dbs):
-        test = meta_factory(test_dbs['core_3'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
+        test = meta_factory(test_dbs['core_3'].dbc.url,
+                            test_dbs['ensembl_genome_metadata'].dbc.url,
+                            test_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
+
+        # Get the genome_uuid that was just inserted
+        core_3_db = DBConnection(test_dbs['core_3'].dbc.url)
+        with core_3_db.session_scope() as core_session:
+            inserted_meta = core_session.query(Meta).filter(
+                Meta.species_id == "1",
+                Meta.meta_key == 'genome.genome_uuid'
+            ).first()
+            inserted_genome_uuid = inserted_meta.meta_value
+
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
-            assert organism.scientific_name == 'carol_jabberwocky'
-            assert organism.genomes[1].assembly.accession == 'weird02'
-            assert organism.genomes[1].genebuild_version == 'ENS01'
-            assert organism.genomes[1].genebuild_date == '2024-02'
+            genome = session.query(Genome).filter(
+                Genome.genome_uuid == inserted_genome_uuid
+            ).one()
 
+            organism = genome.organism
+            assert organism.scientific_name == 'carol_jabberwocky'
+            assert genome.assembly.accession == 'weird02'
+            assert genome.genebuild_version == 'ENS01'
+            assert genome.genebuild_date == '2024-02'
     #
     def test_update_geneset(self, test_dbs):
-        test = meta_factory(test_dbs['core_4'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
+        # Run the update process
+        test = meta_factory(test_dbs['core_4'].dbc.url,
+                            test_dbs['ensembl_genome_metadata'].dbc.url,
+                            test_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
+
+        # Get the genome_uuid that was just inserted into core_4 by the process
+        core_4_db = DBConnection(test_dbs['core_4'].dbc.url)
+        with core_4_db.session_scope() as core_session:
+            inserted_meta = core_session.query(Meta).filter(
+                Meta.species_id == "1",
+                Meta.meta_key == 'genome.genome_uuid'
+            ).first()
+            inserted_genome_uuid = inserted_meta.meta_value
+
+        # Now query the metadata database for THIS SPECIFIC genome
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).where(
-                (Dataset.version == "ENS02") & (Dataset.name == 'genebuild')
+            # Get the genome that was just created
+            genome = session.query(Genome).filter(
+                Genome.genome_uuid == inserted_genome_uuid
+            ).one()
+
+            # Get the genebuild dataset for THIS genome
+            genebuild_genome_dataset = session.query(GenomeDataset).filter(
+                GenomeDataset.genome_id == genome.genome_id
+            ).join(Dataset).filter(
+                Dataset.name == 'genebuild',
+                Dataset.version == 'ENS02'
             ).first()
+
+            assert genebuild_genome_dataset is not None
+            dataset = genebuild_genome_dataset.dataset
+
             assert dataset is not None
             assert re.match(".*_core_4", dataset.dataset_source.name)
             assert dataset.dataset_source.type == "core"
             assert dataset.dataset_type.name == "genebuild"
-            assert dataset.genome_datasets[0].genome.genebuild_version == 'ENS02'
-            assert dataset.genome_datasets[0].genome.genebuild_date == '2023-01'
-            assert dataset.genome_datasets[0].genome.genome_releases is not None
+            assert genome.genebuild_version == 'ENS02'
+            assert genome.genebuild_date == '2023-01'  # From core_4 meta table
+            assert len(genome.genome_releases) > 0
 
     def test_taxonomy_common_name(self, test_dbs):
-        test = meta_factory(test_dbs['core_5'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
+        test = meta_factory(test_dbs['core_5'].dbc.url,
+                            test_dbs['ensembl_genome_metadata'].dbc.url,
+                            test_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
@@ -145,55 +190,18 @@ class TestUpdater:
             assert organism.common_name == 'Sheep'
 
     def test_fail_existing_genome_uuid_data_not_match(self, test_dbs):
-        test = meta_factory(test_dbs['core_6'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
+        test = meta_factory(test_dbs['core_6'].dbc.url,
+                            test_dbs['ensembl_genome_metadata'].dbc.url,
+                            test_dbs['ncbi_taxonomy'].dbc.url)
         with pytest.raises(MetadataUpdateException) as exif:
             test.process_core()
             assert ("Core database contains a genome.genome_uuid which matches an entry in the meta table. "
                     "The force flag was not specified so the core was not updated." in str(exif.value))
 
-    # def test_update_unreleased_no_force(self, test_dbs):
-    #     test = meta_factory(test_dbs['core_7'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
-    #     test.process_core()
-    #     metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
-    #     with metadata_db.session_scope() as session:
-    #         # Check that the old datasets have been removed
-    #         genebuild_test = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-    #             DatasetSource.name.like('%core_5'),
-    #         ).filter(DatasetType.name == "genebuild").one_or_none()
-    #         assert genebuild_test is None
-    #
-    #         count = session.query(DatasetAttribute).join(Attribute).filter(
-    #             Attribute.name == 'genebuild.provider_name',
-    #             DatasetAttribute.value == 'removed_for_test'
-    #         ).count()
-    #         assert count == 0
-    #
-    #         # Check that the new dataset are present and not duplicated
-    #         count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-    #             DatasetSource.name.like('%core_7'),
-    #             DatasetType.name == 'assembly'
-    #         ).count()
-    #         assert count == 0
-    #         count = session.query(Dataset).join(DatasetSource).join(DatasetType).filter(
-    #             DatasetSource.name.like('%core_7'),
-    #             DatasetType.name == 'genebuild'
-    #         ).count()
-    #         assert count == 1
-    #         # Check that new assembly attribute values are not present
-    #         count = session.query(DatasetAttribute).join(Attribute).filter(
-    #             Attribute.name == 'assembly.ucsc_alias',
-    #             DatasetAttribute.value == 'test_alias'
-    #         ).count()
-    #         assert count == 0
-    #         # Check that new genebuild attribute values are present
-    #         count = session.query(DatasetAttribute).join(Attribute).filter(
-    #             Attribute.name == 'genebuild.havana_datafreeze_date',
-    #             DatasetAttribute.value == 'test2'
-    #         ).count()
-    #         assert count > 0
-
     def test_update_released(self, test_dbs):
-        test = meta_factory(test_dbs['core_8'].dbc.url, test_dbs['ensembl_genome_metadata'].dbc.url)
+        test = meta_factory(test_dbs['core_8'].dbc.url,
+                            test_dbs['ensembl_genome_metadata'].dbc.url,
+                            test_dbs['ncbi_taxonomy'].dbc.url)
         with pytest.raises(Exception) as exif:
             test.process_core()
             assert ("Existing Organism, Assembly, and Datasets within a release. ")
