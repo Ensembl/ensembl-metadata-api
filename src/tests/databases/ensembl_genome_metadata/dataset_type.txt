@@ -1,34 +1,34 @@
-1	assembly	Genomic assembly	assembly	Compilation of sequences for a genome	\N	\N	\N	\N
-2	genebuild	Genomic Build	genebuild_annotation	Genomic annotations for an assembly	\N	\N	\N	\N
-3	variation	Variation Annotations	variation_annotation	Variation annotation set	\N	\N	2	\N
-4	evidence	Variation Evidence	production_process	Variation evidence annotation	\N	3	\N	\N
-5	short_variant	Short variants	production_process	Short variant data	\N	3	\N	\N
-6	homologies	Comparative homologies	compara_annotation	Comparative Genomics annotation	\N	\N	2	\N
-7	regulatory_features	Regulatory Annotation	regulation_annotation	Regulatory annotation for an assembly	\N	\N	2	\N
-8	genebuild_compute	External References	production_process	Xref genome annotation for Genebuild	\N	2	\N	\N
-9	genebuild_files	Files dumps	production_process	File Dumps, either internal or for public consumption	\N	2	8	\N
-11	genebuild_web	Web Geneset content	production_process	Web Geneset related content	\N	2	\N	\N
-12	genebuild_prep	Genebuild preparation	production_preparation	Web Content for Geneset publication	\N	2	8,9,11,12	\N
-13	xrefs	External References	production_process	External annotations linking	\N	8	\N	\N
-14	protein_features	Protein Features annotations	production_process	Proteins annotation	\N	8	13	\N
-15	alpha_fold	AlphaFold computation	production_process	Compute Protein structure with Alphafold	\N	8	13	\N
-16	blast	Blast tools	production_process	Blast Indexes files	\N	9	8	\N
-17	ftp_dumps	Public FTP files	production_process	Public FTP flat files geneset dumps	\N	9	8	\N
-18	thoas_dumps	Thoas load flat files	production_process	Dump flat file to load onto THOAS	\N	11	\N	\N
-19	thoas_load	Thoas MongoDB Load	production_preparation	Load dumped files onto THOAS	\N	12	18,23	\N
-20	genebuild_browser_files	Genome Browser BB Geneset files	production_process	Production BigBed for Genome Browser	\N	11	\N	\N
-21	genebuild_track	Geneset Tracks API	production_preparation	Register Geneset Track API BigBed files	\N	12	20	\N
-23	checksums	Sequences Checksums	production_process	Compute core sequence checksums and update metadata	\N	11	\N	\N
-24	refget_load	Refget Loading	production_preparation	Load sequences and their checksum onto Refget app	\N	12	22	\N
-25	homology_compute	Homology annotation	production_process	Compute Genome homology analysis	\N	6	\N	\N
-26	homology_load	Homology dataload	production_preparation	Load homology data onto Compara Service (MongoDB)	\N	6	25	\N
-27	homology_ftp	Homology tsv public files	production_preparation	Dump and sync public TSV homology files	\N	6	25	\N
-28	vep	VEP filesets	variation_annotation	VCF annotation file for geneset	\N	\N	\N	\N
-29	variation_ftp	Public Variation files (vcf)	production_preparation	VCF files for public FTP	\N	3	\N	\N
-31	variation_browser_files	Variation Browser files	production_process	Variation track browser file	\N	3	\N	\N
-32	variation_track	Variation Track	production_preparation	Variation Track API	\N	3	31	\N
-33	regulation_browser_files	Regulation Browser files	production_process	Regulation track browser file	\N	7	\N	\N
-34	regulation_track	Regulation Track	production_preparation	Regulation Track API	\N	7	33	\N
-35	regulation_ftp	Regulation Public files	production_preparation	Regulation public files	\N	7	33	\N
-37	web_genesearch	GeneSearch Index	production_publication	Gene search indexes provisioning	\N	\N	36	\N
-38	web_genomediscovery	Genome Search indexes loading to EBI search	production_publication	Load dumped data from genebuild_web onto EBI Search engine (SpecieSelector)	\N	\N	37	\N
+1	assembly	Genomic assembly	assembly	Compilation of sequences for a genome	\N
+2	genebuild	Genomic Build	genebuild_annotation	Genomic annotations for an assembly	\N
+3	variation	Variation Annotations	variation_annotation	Variation annotation set	\N
+4	evidence	Variation Evidence	production_process	Variation evidence annotation	3
+5	short_variant	Short variants	production_process	Short variant data	3
+6	homologies	Comparative homologies	compara_annotation	Comparative Genomics annotation	\N
+7	regulatory_features	Regulatory Annotation	regulation_annotation	Regulatory annotation for an assembly	\N
+8	genebuild_compute	External References	production_process	Xref genome annotation for Genebuild	2
+9	genebuild_files	Files dumps	production_process	File Dumps, either internal or for public consumption	2
+11	genebuild_web	Web Geneset content	production_process	Web Geneset related content	2
+12	genebuild_prep	Genebuild preparation	production_preparation	Web Content for Geneset publication	2
+13	xrefs	External References	production_process	External annotations linking	8
+14	protein_features	Protein Features annotations	production_process	Proteins annotation	8
+15	alpha_fold	AlphaFold computation	production_process	Compute Protein structure with Alphafold	8
+16	blast	Blast tools	production_process	Blast Indexes files	9
+17	ftp_dumps	Public FTP files	production_process	Public FTP flat files geneset dumps	9
+18	thoas_dumps	Thoas load flat files	production_process	Dump flat file to load onto THOAS	11
+19	thoas_load	Thoas MongoDB Load	production_preparation	Load dumped files onto THOAS	12
+20	genebuild_browser_files	Genome Browser BB Geneset files	production_process	Production BigBed for Genome Browser	11
+21	genebuild_track	Geneset Tracks API	production_preparation	Register Geneset Track API BigBed files	12
+23	checksums	Sequences Checksums	production_process	Compute core sequence checksums and update metadata	11
+24	refget_load	Refget Loading	production_preparation	Load sequences and their checksum onto Refget app	12
+25	homology_compute	Homology annotation	production_process	Compute Genome homology analysis	6
+26	homology_load	Homology dataload	production_preparation	Load homology data onto Compara Service (MongoDB)	6
+27	homology_ftp	Homology tsv public files	production_preparation	Dump and sync public TSV homology files	6
+28	vep	VEP filesets	variation_annotation	VCF annotation file for geneset	\N
+29	variation_ftp	Public Variation files (vcf)	production_preparation	VCF files for public FTP	3
+31	variation_browser_files	Variation Browser files	production_process	Variation track browser file	3
+32	variation_track	Variation Track	production_preparation	Variation Track API	3
+33	regulation_browser_files	Regulation Browser files	production_process	Regulation track browser file	7
+34	regulation_track	Regulation Track	production_preparation	Regulation Track API	7
+35	regulation_ftp	Regulation Public files	production_preparation	Regulation public files	7
+37	web_genesearch	GeneSearch Index	production_publication	Gene search indexes provisioning	\N
+38	web_genomediscovery	Genome Search indexes loading to EBI search	production_publication	Load dumped data from genebuild_web onto EBI Search engine (SpecieSelector)	\N
