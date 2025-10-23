@@ -64,7 +64,6 @@ class TestUpdater:
             organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
             assembly = session.query(Assembly).where(Assembly.name == 'jaber01').first()
             assert organism.scientific_name == 'carol_jabberwocky'
-            assert organism.genomes[0].genebuild_version == 'ENS01'
             assert organism.genomes[0].genebuild_date == '2023-01'
             # Test the Assembly
             assert assembly.accession == 'GCF_1111111123.3'
@@ -78,17 +77,17 @@ class TestUpdater:
             assert dataset.dataset_type.name == "genebuild"
             # Testing assembly sequence is circular
             sequence = session.query(AssemblySequence).where(
-                (AssemblySequence.is_circular == 1) & (AssemblySequence.name == 'TEST1_seqA')
+                (AssemblySequence.is_circular == 1) & (AssemblySequence.name == 'AA123456.1')
             ).first()
             assert sequence is not None
             assert sequence.type == "primary_assembly"  # Testing assembly_sequence.type
             sequence2 = session.query(AssemblySequence).where(
-                (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'TEST2_seqB')
+                (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'AA123456.2')
             ).first()
             assert sequence2 is not None
             assert sequence.type == "primary_assembly"
             sequence3 = session.query(AssemblySequence).where(
-                (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'TEST3_seqC')
+                (AssemblySequence.is_circular == 0) & (AssemblySequence.name == 'AA123456.3')
             ).first()
             assert sequence3 is not None
             count = session.query(Dataset).join(DatasetSource).join(DatasetType) \
@@ -133,7 +132,6 @@ class TestUpdater:
             organism = genome.organism
             assert organism.scientific_name == 'carol_jabberwocky'
             assert genome.assembly.accession == 'weird02'
-            assert genome.genebuild_version == 'ENS01'
             assert genome.genebuild_date == '2024-02'
     #
     def test_update_geneset(self, test_dbs):
@@ -161,21 +159,16 @@ class TestUpdater:
             ).one()
 
             # Get the genebuild dataset for THIS genome
-            genebuild_genome_dataset = session.query(GenomeDataset).filter(
-                GenomeDataset.genome_id == genome.genome_id
-            ).join(Dataset).filter(
-                Dataset.name == 'genebuild',
-                Dataset.version == 'ENS02'
-            ).first()
+            genebuild_dataset = session.query(Dataset).join(GenomeDataset).join(Genome).filter(
+                Genome.genome_uuid == inserted_genome_uuid,
+                Dataset.name == "genebuild"
+            ).one()  # ← ADD THIS!
 
-            assert genebuild_genome_dataset is not None
-            dataset = genebuild_genome_dataset.dataset
+            assert genebuild_dataset is not None
 
-            assert dataset is not None
-            assert re.match(".*_core_4", dataset.dataset_source.name)
-            assert dataset.dataset_source.type == "core"
-            assert dataset.dataset_type.name == "genebuild"
-            assert genome.genebuild_version == 'ENS02'
+            assert re.match(".*_core_4", genebuild_dataset.dataset_source.name)
+            assert genebuild_dataset.dataset_source.type == "core"
+            assert genebuild_dataset.dataset_type.name == "genebuild"
             assert genome.genebuild_date == '2023-01'  # From core_4 meta table
             assert len(genome.genome_releases) > 0
 

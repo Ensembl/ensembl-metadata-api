@@ -17,7 +17,6 @@ from operator import and_
 from typing import List, Tuple, NamedTuple
 
 import sqlalchemy as db
-from ensembl.ncbi_taxonomy.models import NCBITaxaName
 from ensembl.utils.database import DBConnection
 from sqlalchemy import select, func, desc, or_, distinct, case
 from sqlalchemy.exc import NoResultFound
@@ -25,9 +24,7 @@ from sqlalchemy.orm import aliased
 
 from ensembl.production.metadata.api.adaptors.base import BaseAdaptor, check_parameter, cfg
 from ensembl.production.metadata.api.exceptions import TypeNotFoundException
-from ensembl.production.metadata.api.models import Genome, Organism, Assembly, OrganismGroup, OrganismGroupMember, \
-    GenomeRelease, EnsemblRelease, EnsemblSite, AssemblySequence, GenomeDataset, Dataset, DatasetType, DatasetSource, \
-    ReleaseStatus, DatasetStatus, utils, DatasetAttribute, Attribute
+from ensembl.production.metadata.api.models import *
 
 logger = logging.getLogger(__name__)
 
@@ -149,10 +146,13 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(genome_select).all()
 
-    def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None, assembly_uuid=None,
-                      assembly_accession=None, assembly_name=None, use_default_assembly=False, biosample_id=None,
-                      production_name=None, taxonomy_id=None, group=None, unreleased_only=False, site_name=None,
-                      release_type=None, release_version=None, current_only=False):
+    def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None,
+                      assembly_uuid=None, assembly_accession=None, assembly_name=None,
+                      use_default_assembly=False, biosample_id=None, production_name=None,
+                      taxonomy_id=None, group=None, genome_group_id=None, genome_group_name=None,
+                      genome_group_type=None,
+                      genome_group_reference_only=False, unreleased_only=False, site_name=None, release_type=None,
+                      release_version=None, current_only=False):
         """
         Fetches genome information based on the specified parameters.
 
@@ -220,6 +220,32 @@ class GenomeAdaptor(BaseAdaptor):
                 .join(Organism.organism_group_members) \
                 .join(OrganismGroupMember.organism_group) \
                 .filter(OrganismGroup.name.in_(group) | OrganismGroup.code.in_(group))
+
+        # genome group logic
+        if genome_group_id or genome_group_name or genome_group_type or genome_group_reference_only:
+            genome_select = genome_select.join(
+                GenomeGroupMember, Genome.genome_id == GenomeGroupMember.genome_id
+            ).join(
+                GenomeGroup, GenomeGroup.genome_group_id == GenomeGroupMember.genome_group_id
+            )
+
+            if genome_group_id:
+                genome_group_id = check_parameter(genome_group_id)
+                genome_select = genome_select.where(GenomeGroup.genome_group_id.in_(genome_group_id))
+
+            if genome_group_name:
+                genome_group_name = check_parameter(genome_group_name)
+                genome_select = genome_select.where(GenomeGroup.name.in_(genome_group_name))
+
+            if genome_group_type:
+                genome_group_type = check_parameter(genome_group_type)
+                genome_select = genome_select.where(GenomeGroup.type.in_(genome_group_type))
+
+            if genome_group_reference_only:
+                genome_select = genome_select.where(GenomeGroupMember.is_reference == 1)
+
+            if current_only:
+                genome_select = genome_select.where(GenomeGroupMember.is_current == 1)
 
         # Apply additional filters based on the provided parameters
         if genome_id is not None:
@@ -869,6 +895,100 @@ class GenomeAdaptor(BaseAdaptor):
         logger.debug(query)
         with self.metadata_db.session_scope() as session:
             return session.execute(query).scalar()
+
+    def fetch_genome_groups(self, genome_id=None, genome_uuid=None, group_type=None,
+                            is_current=True, release_version=None):
+        """
+        Fetch all genome groups that a genome belongs to.
+
+        Note: This is the inverse of filtering by genome_group in fetch_genomes().
+        """
+
+        query = select(GenomeGroup).join(
+            GenomeGroupMember, GenomeGroup.genome_group_id == GenomeGroupMember.genome_group_id
+        ).join(
+            Genome, Genome.genome_id == GenomeGroupMember.genome_id
+        )
+
+        if genome_id:
+            genome_id = check_parameter(genome_id)
+            query = query.where(Genome.genome_id.in_(genome_id))
+
+        if genome_uuid:
+            genome_uuid = check_parameter(genome_uuid)
+            query = query.where(Genome.genome_uuid.in_(genome_uuid))
+
+        if group_type:
+            group_type = check_parameter(group_type)
+            query = query.where(GenomeGroup.type.in_(group_type))
+
+        if is_current:
+            query = query.where(GenomeGroupMember.is_current == 1)
+
+        if release_version is not None:
+            query = query.join(
+                EnsemblRelease,
+                EnsemblRelease.release_id == GenomeGroupMember.release_id
+            ).where(EnsemblRelease.version <= release_version)
+
+        logger.debug(query)
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            return session.execute(query).scalars().all()
+
+    def fetch_genome_group_members_detailed(self, genome_group_id=None, group_name=None,
+                                            is_current=True, release_version=None):
+        """
+        Fetch genomes and their membership details for a genome group.
+
+        This returns both the genome objects and their membership information (is_reference, etc.)
+
+        Args:
+            genome_group_id (Union[int, List[int]]): The ID(s) of the genome group(s).
+            group_name (Union[str, List[str]]): The name(s) of the genome group(s).
+            is_current (bool): If True, return only current genome group memberships.
+            release_version (float): Return memberships up to this release version.
+
+        Returns:
+            List of tuples (Genome, GenomeGroupMember) with full membership details.
+        """
+        member_select = select(Genome, GenomeGroupMember).join(
+            GenomeGroupMember, Genome.genome_id == GenomeGroupMember.genome_id
+        ).join(
+            GenomeGroup, GenomeGroup.genome_group_id == GenomeGroupMember.genome_group_id
+        )
+
+        # Apply filters
+        if genome_group_id:
+            genome_group_id = check_parameter(genome_group_id)
+            member_select = member_select.where(GenomeGroup.genome_group_id.in_(genome_group_id))
+
+        if group_name:
+            group_name = check_parameter(group_name)
+            member_select = member_select.where(GenomeGroup.name.in_(group_name))
+
+        if is_current:
+            member_select = member_select.where(GenomeGroupMember.is_current == 1)
+
+        # Handle release filtering
+        if release_version is not None:
+            member_select = member_select.join(
+                EnsemblRelease,
+                EnsemblRelease.release_id == GenomeGroupMember.release_id
+            ).where(EnsemblRelease.version <= release_version)
+
+            logger.debug(f"Allow Unreleased {cfg.allow_unreleased}")
+            if not cfg.allow_unreleased:
+                member_select = member_select.where(EnsemblRelease.status == ReleaseStatus.RELEASED)
+
+        # Order by is_reference descending so reference genomes appear first
+        member_select = member_select.order_by(desc(GenomeGroupMember.is_reference))
+
+        logger.debug(member_select)
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            return session.execute(member_select).all()
+
 
     def get_public_path(self, genome_uuid, dataset_type='all', release=None):
         paths = []

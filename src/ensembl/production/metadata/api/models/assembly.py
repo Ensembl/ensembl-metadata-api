@@ -26,7 +26,7 @@ class Assembly(LoadAble, Base):
     assembly_id = Column(Integer, primary_key=True)
     assembly_uuid = Column(String(40), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
     ucsc_name = Column(String(16))
-    accession = Column(String(16), nullable=False, unique=True)
+    accession = Column(String(16), nullable=False)
     level = Column(String(32), nullable=False)
     name = Column(String(128), nullable=False)
     accession_body = Column(String(32))

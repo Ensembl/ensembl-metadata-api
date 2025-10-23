@@ -20,6 +20,7 @@ from ensembl.utils.database import UnitTestDB, DBConnection
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.factories.genomes import GenomeFactory
 from ensembl.production.metadata.api.factories.release import ReleaseFactory
+from ensembl.production.metadata.api.factories.utils import get_genome_sets_by_assembly_and_provider
 from ensembl.production.metadata.api.models import *
 
 logger = logging.getLogger(__name__)
@@ -200,3 +201,21 @@ class TestReleaseFactory:
             factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
             errors = factory.pre_release_check("4")
             assert not errors, f"Unexpected errors found: {errors}"
+
+
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                       ]], indirect=True)
+class TestFactoryUtils:
+    dbc: UnitTestDB = None
+
+    def test_get_genome_sets_by_assembly_and_provider(self, test_dbs) -> None:
+        """
+        Test `get_genome_sets_by_assembly_and_provider.
+        Pretty bad test. We haven't populated the metadata here with an updated genome so it just returns an empty set.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+
+        with metadata_db.session_scope() as session:
+            genome_sets = get_genome_sets_by_assembly_and_provider(session)
+            assert genome_sets == {}
