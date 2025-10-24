@@ -1059,7 +1059,7 @@ class GenomeAdaptor(BaseAdaptor):
         }
 
         # Check for invalid dataset type early
-        if dataset_type not in unique_dataset_type s and dataset_type != 'all':
+        if dataset_type not in unique_dataset_types and dataset_type != 'all':
             raise TypeNotFoundException(f"Dataset Type : {dataset_type} not found in metadata.")
 
         # If 'all', add paths for all unique dataset types
