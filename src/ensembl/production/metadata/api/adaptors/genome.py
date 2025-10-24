@@ -989,8 +989,7 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(member_select).all()
 
-
-    def get_public_path(self, genome_uuid, dataset_type='all', release=None):
+    def get_public_path(self, genome_uuid, dataset_type='all'):
         paths = []
         scientific_name = None
         accession = None
@@ -1060,7 +1059,7 @@ class GenomeAdaptor(BaseAdaptor):
         }
 
         # Check for invalid dataset type early
-        if dataset_type not in unique_dataset_types and dataset_type != 'all':
+        if dataset_type not in unique_dataset_type s and dataset_type != 'all':
             raise TypeNotFoundException(f"Dataset Type : {dataset_type} not found in metadata.")
 
         # If 'all', add paths for all unique dataset types

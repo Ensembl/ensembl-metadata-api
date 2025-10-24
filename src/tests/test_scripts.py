@@ -18,7 +18,6 @@ from ensembl.production.metadata.api.models import Assembly
 from ensembl.production.metadata.scripts.copy_handover_files import *
 from ensembl.production.metadata.scripts.create_datasets_json import *
 from ensembl.production.metadata.scripts.delete_ftp_by_uuid import *
-from ensembl.production.metadata.scripts.load_meta_duckdb import *
 from ensembl.production.metadata.scripts.organism_to_organismgroup import *
 
 db_directory = Path(__file__).parent / 'databases'
@@ -43,7 +42,7 @@ class TestScripts:
         test_dir = tmp_path / "test_dir"
         test_dir.mkdir()
         result = check_directory(str(test_dir))
-        assert result == [str(test_dir)]
+        assert result == str(test_dir)
 
     def test_check_directory_invalid(self, test_dbs):
         """Test check_directory function with invalid directory."""
