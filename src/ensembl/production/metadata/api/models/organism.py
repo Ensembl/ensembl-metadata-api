@@ -34,6 +34,7 @@ class Organism(LoadAble, Base):
     scientific_parlance_name = Column(String(255))
     rank = Column(Integer, default=0)
     strain_type = Column(String(128), nullable=True, unique=False)
+    tol_id = Column(String(32))
     # One to many relationships
     # Organism_id to organism_group_member and genome
     genomes = relationship("Genome", back_populates="organism", cascade="all, delete, delete-orphan")

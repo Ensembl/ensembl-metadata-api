@@ -31,7 +31,6 @@ class Assembly(LoadAble, Base):
     name = Column(String(128), nullable=False)
     accession_body = Column(String(32))
     assembly_default = Column(String(128))
-    tol_id = Column(String(32))
     created = Column(DateTime)
     ensembl_name = Column(String(255), unique=True)
     is_reference = Column(TINYINT(1), nullable=False, default=0)

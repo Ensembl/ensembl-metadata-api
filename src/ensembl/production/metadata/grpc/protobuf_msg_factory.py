@@ -116,7 +116,6 @@ def create_assembly(data=None):
         ucsc_name=data.Assembly.ucsc_name,
         ensembl_name=data.Assembly.ensembl_name,
         is_reference=data.Assembly.is_reference,
-        tol_id=data.Assembly.tol_id,
     )
     return assembly
 

@@ -439,6 +439,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
         biosample_id = self.get_meta_single_meta_key(species_id, "organism.biosample_id")
         if biosample_id is None:
             biosample_id = self.get_meta_single_meta_key(species_id, "organism.production_name")
+        tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")  # This one should be deleted eventually.
+        tol_id = self.get_meta_single_meta_key(species_id, "organism.tol_id")
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
         common_name = self.get_meta_single_meta_key(species_id, "organism.common_name")
@@ -468,7 +470,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
             biosample_id=biosample_id,
             strain=self.get_meta_single_meta_key(species_id, "organism.strain"),
             strain_type=self.get_meta_single_meta_key(species_id, "organism.type"),
-            scientific_parlance_name=self.get_meta_single_meta_key(species_id, "organism.scientific_parlance_name")
+            scientific_parlance_name=self.get_meta_single_meta_key(species_id, "organism.scientific_parlance_name"),
+            tol_id=tol_id
         )
 
         # Query the metadata database to find if an Organism with the same Ensembl name already exists.
@@ -812,7 +815,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
         with self.db.session_scope() as session:
             level = (session.execute(db.select(CoordSystem.name).filter(
                 CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
-            tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")
             accession_body = self.get_meta_single_meta_key(species_id,
                                                            "assembly.accession_body") if self.get_meta_single_meta_key(
                 species_id, "assembly.accession_body") else "INSDC"
@@ -824,7 +826,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
             name=self.get_meta_single_meta_key(species_id, "assembly.name"),
             accession_body=accession_body,
             assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
-            tol_id=tol_id,
             created=func.now(),
             assembly_uuid=str(uuid.uuid4()),
             is_reference=is_reference
@@ -859,7 +860,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
         last_geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
-
+        annotation_source = self.get_meta_single_meta_key(species_id, "genebuild.annotation_source")
         # Query for an existing combination - this is our uniqueness check
         # If this exists, we should NOT create a new one
         existing_combination = (
@@ -880,8 +881,25 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 "Cannot create duplicate genebuild."
             )
 
-        # Create a label for the dataset - this is just for human readability
-        # Old labels stay untouched; new ones use a descriptive format
+        # Check for conflicting annotation source
+        # This isn't persay a strict requirment but it will make the FTP confusing as hell if we allow it.
+        conflicting_combination = (
+            meta_session.query(Genome.genome_id)
+            .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+            .filter(
+                Assembly.accession == assembly_accession,
+                Genome.provider_name != provider_name,
+                Genome.annotation_source == annotation_source,
+            )
+        )
+
+        test_for_conflicting = meta_session.query(conflicting_combination.exists()).scalar()
+        if test_for_conflicting:
+            raise exceptions.MetaException(
+                f"Genebuild already exists for assembly {assembly_accession} "
+                f"existing genebuild with different provider uses an annotation source of '{annotation_source}'. "
+                "Please use a different one."
+            )
         genebuild_label = f"{assembly_accession}_{provider_name}_{last_geneset_update}"
 
         if source is None:
@@ -890,14 +908,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
             dataset_source = source
 
         dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "genebuild").first()
-
-        # Get all genebuild attributes from the core database
         attributes = self.get_meta_list_from_prefix_meta_key(species_id, "genebuild.")
-
-        # Use genebuild_date as the version (more meaningful than arbitrary version numbers)
         dataset_version = last_geneset_update
-
-        # Create new dataset
         dataset_factory = DatasetFactory(self.metadata_uri)
         (dataset_uuid, genebuild_dataset, genebuild_dataset_attributes,
          new_genome_dataset) = dataset_factory.create_dataset(
