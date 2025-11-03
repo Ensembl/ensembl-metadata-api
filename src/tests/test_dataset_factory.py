@@ -101,14 +101,15 @@ class TestDatasetFactory:
         genebuild_uuid = 'a3352834-cea1-40aa-9dad-99981620c36b'
         # Test children creation
         with metadata_db.test_session_scope() as session:
-            genome = Genome(production_name="new_grch37",
-                            assembly_id=40,
-                            created=func.now(),
-                            organism_id=9,
-                            annotation_source="test",
-                            genebuild_date="2026-04",
-                            provider_name="test"
-                            )
+            genome = Genome(
+                production_name="new_grch37",
+                assembly_id=40,
+                created=func.now(),
+                organism_id=9,
+                annotation_source="test",
+                genebuild_date="2026-04",
+                provider_name="test"
+            )
             session.add(genome)
             genebuild = Dataset(
                 dataset_type_id=2,

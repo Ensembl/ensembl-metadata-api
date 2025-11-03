@@ -77,14 +77,10 @@ def _ensure_scalar(value):
     Returns:
         Scalar value or None
     """
-    if value is None:
-        return None
 
-    # Unwrap single-element lists/tuples (pytest parametrization edge case)
     if isinstance(value, (list, tuple)) and len(value) == 1:
         value = value[0]
 
-    # If still a list/tuple, return as-is for IN clause handling
     return value
 
 
@@ -117,7 +113,6 @@ class ReleaseAdaptor(BaseAdaptor):
         """
         release_select = db.select(EnsemblRelease).order_by(EnsemblRelease.version)
 
-        # Handle release_id parameter
         releases_id = check_parameter(release_id)
         if releases_id is not None:
             release_select = release_select.filter(EnsemblRelease.release_id.in_(releases_id))
@@ -135,16 +130,13 @@ class ReleaseAdaptor(BaseAdaptor):
                 release_version = float(release_version)
                 release_select = release_select.filter(EnsemblRelease.version <= release_version)
 
-        # Filter for current releases only
         if current_only:
             release_select = release_select.filter(EnsemblRelease.is_current == 1)
 
-        # Filter by release type
         if release_type is not None:
             release_type = check_parameter(release_type)
             release_select = release_select.filter(EnsemblRelease.release_type.in_(release_type))
 
-        # Filter by release label
         if release_label is not None:
             release_label = check_parameter(release_label)
             release_select = release_select.filter(EnsemblRelease.label.in_(release_label))

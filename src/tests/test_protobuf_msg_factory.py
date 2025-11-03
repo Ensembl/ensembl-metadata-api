@@ -109,12 +109,12 @@ class TestClass:
         output = json_format.MessageToJson(msg_factory.create_stats_by_genome_uuid(input_data)[0])
         output_dict = json.loads(output)
 
-        assert output_dict['genomeUuid'] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
+        assert output_dict["genomeUuid"] == "a73351f7-93e7-11ec-a39d-005056b38ce3"
 
         # Don't assume order - search for the specific statistic
-        stats = output_dict['statistics']
+        stats = output_dict["statistics"]
         assembly_accession_stat = next(
-            (s for s in stats if s['name'] == 'assembly.accession'),
+            (s for s in stats if s["name"] == "assembly.accession"),
             None
         )
 

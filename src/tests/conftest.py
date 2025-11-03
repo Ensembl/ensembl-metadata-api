@@ -37,25 +37,22 @@ def test_dbs(request):
         src_path = db_config["src"]
         db_name = src_path.name
 
-        # Use pre-converted SQLite .db files with temporary copies for isolation
         sqlite_file = src_path.parent / f"{db_name}.db"
 
-        if not sqlite_file.exists():
-            raise FileNotFoundError(
-                f"SQLite database not found: {sqlite_file}\n"
-                f"Please convert it first using your conversion script."
-            )
-
-        # Create temporary copy to ensure test isolation
         temp_dir = tempfile.mkdtemp(prefix=f"pytest_{db_name}_")
         temp_db_file = Path(temp_dir) / f"{db_name}_test.db"
 
         print(f"\n>>> Using SQLite database: {sqlite_file}")
         print(f"    (temporary copy: {temp_db_file})")
 
-        shutil.copy2(sqlite_file, temp_db_file)
+        try:
+            shutil.copy2(sqlite_file, temp_db_file)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                f"SQLite database not found: {sqlite_file}\n"
+                f"Please convert it first using your conversion script."
+            ) from exc
 
-        # Create connection to temporary copy
         db_url = f"sqlite:///{temp_db_file}"
         test_databases[db_name] = type("TestDB", (object,), {
             "dbc": DBConnection(db_url),
@@ -66,12 +63,10 @@ def test_dbs(request):
 
     yield test_databases
 
-    # Cleanup - close SQLite connections and remove temporary files
     for db_name, test_db in test_databases.items():
         if hasattr(test_db.dbc, 'dispose'):
             test_db.dbc.dispose()
 
-    # Remove temporary files and directories
     for temp_file, temp_dir in temp_resources:
         try:
             if temp_file.exists():

@@ -146,13 +146,30 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(genome_select).all()
 
-    def fetch_genomes(self, genome_id=None, genome_uuid=None, genome_tag=None, organism_uuid=None,
-                      assembly_uuid=None, assembly_accession=None, assembly_name=None,
-                      use_default_assembly=False, biosample_id=None, production_name=None,
-                      taxonomy_id=None, group=None, genome_group_id=None, genome_group_name=None,
-                      genome_group_type=None,
-                      genome_group_reference_only=False, unreleased_only=False, site_name=None, release_type=None,
-                      release_version=None, current_only=False):
+    def fetch_genomes(
+            self,
+            genome_id=None,
+            genome_uuid=None,
+            genome_tag=None,
+            organism_uuid=None,
+            assembly_uuid=None,
+            assembly_accession=None,
+            assembly_name=None,
+            use_default_assembly=False,
+            biosample_id=None,
+            production_name=None,
+            taxonomy_id=None,
+            group=None,
+            genome_group_id=None,
+            genome_group_name=None,
+            genome_group_type=None,
+            genome_group_reference_only=False,
+            unreleased_only=False,
+            site_name=None,
+            release_type=None,
+            release_version=None,
+            current_only=False,
+    ):
         """
         Fetches genome information based on the specified parameters.
 
@@ -896,8 +913,9 @@ class GenomeAdaptor(BaseAdaptor):
         with self.metadata_db.session_scope() as session:
             return session.execute(query).scalar()
 
-    def fetch_genome_groups(self, genome_id=None, genome_uuid=None, group_type=None,
-                            is_current=True, release_version=None):
+    def fetch_genome_groups(
+            self, genome_id=None, genome_uuid=None, group_type=None, is_current=True, release_version=None
+    ):
         """
         Fetch all genome groups that a genome belongs to.
 
@@ -914,7 +932,7 @@ class GenomeAdaptor(BaseAdaptor):
             genome_id = check_parameter(genome_id)
             query = query.where(Genome.genome_id.in_(genome_id))
 
-        if genome_uuid:
+        elif genome_uuid:
             genome_uuid = check_parameter(genome_uuid)
             query = query.where(Genome.genome_uuid.in_(genome_uuid))
 
@@ -936,8 +954,9 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(query).scalars().all()
 
-    def fetch_genome_group_members_detailed(self, genome_group_id=None, group_name=None,
-                                            is_current=True, release_version=None):
+    def fetch_genome_group_members_detailed(
+            self, genome_group_id=None, group_name=None, is_current=True, release_version=None
+    ):
         """
         Fetch genomes and their membership details for a genome group.
 

@@ -33,7 +33,7 @@ db_directory = db_directory.resolve()
                                        {'src': Path(__file__).parent / "databases/core_5"},
                                        {'src': Path(__file__).parent / "databases/core_6"},
                                        {'src': Path(__file__).parent / "databases/core_7"},
-                                       {'src': Path(__file__).parent / "databases/core_8"}
+                                       {'src': Path(__file__).parent / "databases/core_8"},
                                        ]],
                          indirect=True)
 class TestUpdater:
@@ -114,7 +114,6 @@ class TestUpdater:
                             test_dbs['ncbi_taxonomy'].dbc.url)
         test.process_core()
 
-        # Get the genome_uuid that was just inserted
         core_3_db = DBConnection(test_dbs['core_3'].dbc.url)
         with core_3_db.session_scope() as core_session:
             inserted_meta = core_session.query(Meta).filter(
@@ -150,19 +149,15 @@ class TestUpdater:
             ).first()
             inserted_genome_uuid = inserted_meta.meta_value
 
-        # Now query the metadata database for THIS SPECIFIC genome
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            # Get the genome that was just created
             genome = session.query(Genome).filter(
                 Genome.genome_uuid == inserted_genome_uuid
             ).one()
-
-            # Get the genebuild dataset for THIS genome
             genebuild_dataset = session.query(Dataset).join(GenomeDataset).join(Genome).filter(
                 Genome.genome_uuid == inserted_genome_uuid,
                 Dataset.name == "genebuild"
-            ).one()  # ← ADD THIS!
+            ).one()
 
             assert genebuild_dataset is not None
 

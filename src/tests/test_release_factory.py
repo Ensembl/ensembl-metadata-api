@@ -46,10 +46,8 @@ class TestReleaseFactory:
         label = "2028-09-11"
         date = datetime.strptime(label, "%Y-%m-%d").date()
 
-        try:
-            factory.init_release(label=label)
-        except Exception as e:
-            pytest.fail(f"Unexpected exception: {e}")
+        factory.init_release(label=label)
+
 
         with metadata_db.session_scope() as session:
             release = session.query(EnsemblRelease).filter(EnsemblRelease.version == expected_version).one_or_none()
@@ -211,7 +209,7 @@ class TestFactoryUtils:
 
     def test_get_genome_sets_by_assembly_and_provider(self, test_dbs) -> None:
         """
-        Test `get_genome_sets_by_assembly_and_provider.
+        Test `get_genome_sets_by_assembly_and_provider'.
         Pretty bad test. We haven't populated the metadata here with an updated genome so it just returns an empty set.
         """
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
