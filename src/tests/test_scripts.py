@@ -1,20 +1,22 @@
 # See the NOTICE file distributed with this work for additional information
-#   regarding copyright ownership.
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#       http://www.apache.org/licenses/LICENSE-2.0
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
+# regarding copyright ownership.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from collections import namedtuple
 from unittest.mock import patch
+from urllib.parse import urlparse
 
 import pytest
 
 from ensembl.production.metadata.api.models import Assembly
+from ensembl.production.metadata.api.models import OrganismGroup
 from ensembl.production.metadata.scripts.copy_handover_files import *
 from ensembl.production.metadata.scripts.create_datasets_json import *
 from ensembl.production.metadata.scripts.delete_ftp_by_uuid import *
@@ -29,11 +31,16 @@ Args = namedtuple('Args', [
     'organism_group_name', 'genome_uuid', 'release_id', 'remove', 'raise_error'
 ])
 
-@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
-                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
-                                       {'src': Path(__file__).parent / "databases/core_1"},
-                                       ]],
-                         indirect=True)
+
+@pytest.mark.parametrize(
+    "test_dbs",
+    [[
+        {"src": db_directory / "ensembl_genome_metadata"},
+        {'src': db_directory / "ncbi_taxonomy"},
+        {'src': db_directory / "core_1"},
+    ]],
+    indirect=True,
+)
 class TestScripts:
     """Test suite for various metadata scripts."""
 
@@ -152,7 +159,7 @@ class TestScripts:
                 "dataset_attribute": [],
                 "name": "test_regulation",
                 "label": "test_label",
-                "version": "1.0"
+                "version": "1.0",
             }
         ]
 
@@ -187,7 +194,6 @@ class TestScripts:
 
         with DBConnection(metadata_uri).session_scope() as session:
             organism = session.query(Organism).first()
-            from ensembl.production.metadata.api.models import OrganismGroup
             org_group = session.query(OrganismGroup).first()
             if organism and org_group:
                 existing = session.query(OrganismGroupMember).filter(
@@ -246,7 +252,6 @@ class TestScripts:
         """Test that DuckDB script reads from environment variable."""
         test_uri = "mysql://testuser:testpass@testhost:3306/testdb"
         monkeypatch.setenv('METADATA_DB', test_uri)
-        from urllib.parse import urlparse
         db = urlparse(os.environ.get('METADATA_DB'))
         assert db.hostname == "testhost"
         assert db.port == 3306

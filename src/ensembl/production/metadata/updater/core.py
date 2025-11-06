@@ -44,7 +44,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def _load_meta_dict(self):
         """Load metadata into meta_dict from the database.
-        Stores all values for each meta_key as a list to handle potential duplicates."""
+        Stores all values for each meta_key as a list to handle potential duplicates.
+        """
         with self.db.session_scope() as session:
             results = session.query(Meta).filter(Meta.meta_value.isnot(None),
                                                  Meta.meta_value.notin_(['', 'Null', 'NULL'])).all()
@@ -95,9 +96,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         if species_meta is None:
             return None
 
-        values = species_meta.get(parameter)
-        if values is None:
-            return None
+        values = species_meta.get(parameter, [None])
 
         if len(values) > 1:
             raise exceptions.MetaException(
@@ -235,8 +234,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
         organism = self.get_or_new_organism(species_id, meta_session)
         assembly, assembly_dataset, assembly_dataset_attributes, assembly_sequences, dataset_source = self.get_or_new_assembly(
             species_id, meta_session)
-        genebuild_dataset, genebuild_dataset_attributes = self._create_genebuild(species_id, meta_session,
-                                                                                    dataset_source)
+        genebuild_dataset, genebuild_dataset_attributes = self._create_genebuild(
+            species_id, meta_session, dataset_source
+        )
 
         # Checking for an existing genome uuid:
         old_genome_uuid = self.get_meta_single_meta_key(species_id, "genome.genome_uuid")
@@ -352,7 +352,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             production_name=production_name,
             url_name=url_name,
             annotation_source=annotation_source,
-            provider_name=provider_name
+            provider_name=provider_name,
         )
         logger.debug(f"Assigning genome {new_genome.genome_uuid} to {planned_release.version}")
         meta_session.add(new_genome)
@@ -406,7 +406,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         genome_group_names = self.get_meta_all_values(species_id, "genome.genome_group")
 
         if not genome_group_names:
-            return
+            return None
 
         for group_name in genome_group_names:
             # Check if the genome group exists
@@ -425,7 +425,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 genome_group=genome_group,
                 ensembl_release=planned_release,
                 is_current=1,
-                is_reference=0
+                is_reference=0,
             )
             meta_session.add(genome_group_member)
             logger.info(f"Added genome {new_genome.genome_uuid} to genome group '{group_name}'")
@@ -471,7 +471,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             strain=self.get_meta_single_meta_key(species_id, "organism.strain"),
             strain_type=self.get_meta_single_meta_key(species_id, "organism.type"),
             scientific_parlance_name=self.get_meta_single_meta_key(species_id, "organism.scientific_parlance_name"),
-            tol_id=tol_id
+            tol_id=tol_id,
         )
 
         # Query the metadata database to find if an Organism with the same Ensembl name already exists.
@@ -543,16 +543,20 @@ class CoreMetaUpdater(BaseMetaUpdater):
             synonym_dict = defaultdict(list)
             accession_info = defaultdict(
                 lambda: {
-                    "length": None, "location": None, "chromosomal": None,
-                    "karyotype_rank": None, "type": None, "is_circular": 0
+                    "length": None,
+                    "location": None,
+                    "chromosomal": None,
+                    "karyotype_rank": None,
+                    "type": None,
+                    "is_circular": 0,
                 })
 
             location_mapping = {
-                'nuclear_chromosome': 'SO:0000738',
-                'mitochondrial_chromosome': 'SO:0000737',
-                'chloroplast_chromosome': 'SO:0000745',
-                'apicoplast_chromosome': 'SO:0001259',
-                None: 'SO:0000738',
+                "nuclear_chromosome": "SO:0000738",
+                "mitochondrial_chromosome": "SO:0000737",
+                "chloroplast_chromosome": "SO:0000745",
+                "apicoplast_chromosome": "SO:0001259",
+                None: "SO:0000738",
             }
 
             for seq_region_name, seq_region_length, coord_system_name, synonym, is_circular in results:
@@ -603,6 +607,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
             return assembly_sequences, sequence_aliases
 
+    ENA_ACCESSION_PATTERNS = [
+        re.compile(r'^[A-Z]{1}[0-9]{5}\.[0-9]+$'),
+        re.compile(r'^[A-Z]{2}[0-9]{6}\.[0-9]+$'),
+        re.compile(r'^[A-Z]{2}[0-9]{8}$'),
+        re.compile(r'^[A-Z]{4}[0-9]{2}S?[0-9]{6,8}$'),
+        re.compile(r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}$'),
+    ]
     def _is_valid_ena_accession(self, identifier):
         """
         Check if an identifier matches ENA sequence identifier rules for annotated sequences.
@@ -617,15 +628,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         Returns:
             bool: True if identifier matches any pattern
         """
-        patterns = [
-            r'^[A-Z]{1}[0-9]{5}\.[0-9]+$',
-            r'^[A-Z]{2}[0-9]{6}\.[0-9]+$',
-            r'^[A-Z]{2}[0-9]{8}$',
-            r'^[A-Z]{4}[0-9]{2}S?[0-9]{6,8}$',
-            r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}$',
-        ]
-
-        return any(re.match(pattern, identifier) for pattern in patterns)
+        return any(pattern.match(identifier) for pattern in ENA_ACCESSION_PATTERNS)
 
     def _get_valid_accession(self, seq_region_name, synonyms):
         """
@@ -704,7 +707,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                      dataset_source)
 
         # No exact match found - either error or force new
-        if force_new_uuid == "1" or force_new_uuid == 1:
+        if int(force_new_uuid) == 1:
             return self._create_new_assembly(species_id, meta_session, dataset_source, assembly_accession)
 
         # Return error describing discrepancies
@@ -722,15 +725,11 @@ class CoreMetaUpdater(BaseMetaUpdater):
         # Filter to assemblies with matching count
         count_matches = [a for a in assemblies if len(a.assembly_sequences) == incoming_count]
 
-        if not count_matches:
-            return None
-
         # From those, find one with matching names
         for assembly in count_matches:
             existing_names = {seq.name for seq in assembly.assembly_sequences}
             if existing_names == incoming_names:
                 return assembly
-
         return None
 
     def _get_incoming_sequence_names(self, species_id):
@@ -801,7 +800,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
         if assembly_dataset is None:
             raise exceptions.MetadataUpdateException(
-                f"Assembly {assembly_accession} exists but no valid (non-faulty) assembly dataset found")
+                f"Assembly {assembly_accession} exists but no valid (non-faulty) assembly dataset found"
+            )
 
         assembly_dataset_attributes = assembly_dataset.dataset_attributes
         assembly_sequences = assembly.assembly_sequences
@@ -815,9 +815,9 @@ class CoreMetaUpdater(BaseMetaUpdater):
         with self.db.session_scope() as session:
             level = (session.execute(db.select(CoordSystem.name).filter(
                 CoordSystem.species_id == species_id).order_by(CoordSystem.rank)).all())[0][0]
-            accession_body = self.get_meta_single_meta_key(species_id,
-                                                           "assembly.accession_body") if self.get_meta_single_meta_key(
-                species_id, "assembly.accession_body") else "INSDC"
+            accession_body = self.get_meta_single_meta_key(species_id, "assembly.accession_body")
+            if not accession_body:
+                accession_body = "INSDC"
 
         assembly = Assembly(
             ucsc_name=self.get_meta_single_meta_key(species_id, "assembly.ucsc_alias"),
@@ -828,7 +828,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             assembly_default=self.get_meta_single_meta_key(species_id, "assembly.default"),
             created=func.now(),
             assembly_uuid=str(uuid.uuid4()),
-            is_reference=is_reference
+            is_reference=is_reference,
         )
 
         dataset_factory = DatasetFactory(self.metadata_uri)

@@ -209,7 +209,7 @@ class TestFactoryUtils:
 
     def test_get_genome_sets_by_assembly_and_provider(self, test_dbs) -> None:
         """
-        Test `get_genome_sets_by_assembly_and_provider'.
+        Test 'get_genome_sets_by_assembly_and_provider'.
         Pretty bad test. We haven't populated the metadata here with an updated genome so it just returns an empty set.
         """
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
