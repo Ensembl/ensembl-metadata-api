@@ -60,13 +60,13 @@ class TestGRPCReleaseAdaptor:
         logger.debug("Results: %s", releases)
         assert len(releases) == expected_count
         assert [release.EnsemblSite.name == 'Ensembl' for release in releases]
-        assert releases[1].EnsemblRelease.label == 'MVP Beta-1'
+        assert releases[1].EnsemblRelease.label == '2020-10-18'
 
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, release_name",
         [
-            (False, 'a73351f7-93e7-11ec-a39d-005056b38ce3', 'First Beta'),
-            (True, '75b7ac15-6373-4ad5-9fb7-23813a5355a4', 'MVP Beta-2')
+            (False, 'a73351f7-93e7-11ec-a39d-005056b38ce3', '2023-06-15'),
+            (True, '75b7ac15-6373-4ad5-9fb7-23813a5355a4', '2021-10-18')
         ],
         indirect=['allow_unreleased']
     )
@@ -84,9 +84,10 @@ class TestGRPCReleaseAdaptor:
         "allow_unreleased, dataset_uuid, release_name, release_status",
         [
             (False, '8801edaf-86ec-4799-8fd4-a59077f04c05', None, None),  # No release returned is not allowed
-            (False, '08543d8d-2110-46f3-a9b6-ac58c4af8202', 'MVP Beta-1', 'Released'),  # No release returned is not allowed
-            (True, 'd57040b6-0ef5-4e6b-97ef-be0ad94d3a61', 'MVP Beta-2', 'Prepared'),  # Processed Beta-2
-            (True, 'd641779c-2add-46ce-acf4-a2b6f15274b1', 'MVP Beta-3', 'Preparing'),  # Processed Beta-2
+            (False, '08543d8d-2110-46f3-a9b6-ac58c4af8202', '2020-10-18', 'Released'),
+            # No release returned is not allowed
+            (True, 'd57040b6-0ef5-4e6b-97ef-be0ad94d3a61', '2021-10-18', 'Prepared'),  # Processed Beta-2
+            (True, 'd641779c-2add-46ce-acf4-a2b6f15274b1', '2022-10-18', 'Preparing'),  # Processed Beta-2
         ],
         indirect=['allow_unreleased']
     )

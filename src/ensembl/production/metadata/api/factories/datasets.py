@@ -686,15 +686,6 @@ class DatasetFactory:
             all_child_datasets.extend(sub_children)
         return all_child_datasets
 
-    def __query_depends_on(self, session, dataset_uuid):
-        dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one_or_none()
-        dataset_type = dataset.dataset_type
-        dependent_types = dataset_type.depends_on.split(',') if dataset_type.depends_on else []
-        dependent_datasets_info = []
-        for dtype in dependent_types:
-            new_uuid, new_status = self.__query_related_genome_by_type(session, dataset_uuid, dtype)
-            dependent_datasets_info.append((new_uuid, new_status))
-        return dependent_datasets_info
 
     def __update_status(self, session, dataset_uuid, status):
         # Processed to Released. Only accept top level. Check that all assembly and genebuild datsets (all the way down) are processed.
@@ -720,10 +711,6 @@ class DatasetFactory:
             if current_dataset.status == DatasetStatus.RELEASED:  # "Released":  # and it is not top level.
                 return updated_datasets
             # Check the dependents
-            dependents = self.__query_depends_on(session, dataset_uuid)
-            for uuid, dep_status in dependents:
-                if dep_status not in (DatasetStatus.PROCESSED, DatasetStatus.RELEASED):  # ("Processed", "Released"):
-                    return updated_datasets
             current_dataset.status = DatasetStatus.PROCESSING  # "Processing"
             parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
             if parent_uuid is not None:
