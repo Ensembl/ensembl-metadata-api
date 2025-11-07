@@ -401,7 +401,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             scientific_name=self.get_meta_single_meta_key(species_id, "organism.scientific_name"),
             biosample_id=biosample_id,
             strain=self.get_meta_single_meta_key(species_id, "organism.strain"),
-            strain_type=self.get_meta_single_meta_key(species_id, "organism.type"),
+            strain_type=self.get_meta_single_meta_key(species_id, "organism.strain_type"),
             scientific_parlance_name=self.get_meta_single_meta_key(species_id, "organism.scientific_parlance_name")
         )
 
