@@ -396,9 +396,10 @@ class DatasetFactory:
                         continue  # ✅ Skip updating or inserting for this dataset
 
                     # Check if GenomeDataset exists for this dataset & genome
-                    genome_dataset = session.query(GenomeDataset).filter(
+                    genome_dataset = session.query(GenomeDataset).join(EnsemblRelease).filter(
                         GenomeDataset.dataset_id == dataset_obj.dataset_id,
-                        GenomeDataset.genome_id == genome_id
+                        GenomeDataset.genome_id == genome_id,
+                        EnsemblRelease.release_type != "integrated"
                     ).one_or_none()
 
                     if genome_dataset:

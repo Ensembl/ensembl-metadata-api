@@ -469,7 +469,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             scientific_name=self.get_meta_single_meta_key(species_id, "organism.scientific_name"),
             biosample_id=biosample_id,
             strain=self.get_meta_single_meta_key(species_id, "organism.strain"),
-            strain_type=self.get_meta_single_meta_key(species_id, "organism.type"),
+            strain_type=self.get_meta_single_meta_key(species_id, "organism.strain_type"),
             scientific_parlance_name=self.get_meta_single_meta_key(species_id, "organism.scientific_parlance_name"),
             tol_id=tol_id,
         )
@@ -607,13 +607,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
             return assembly_sequences, sequence_aliases
 
-    ENA_ACCESSION_PATTERNS = [
-        re.compile(r'^[A-Z]{1}[0-9]{5}\.[0-9]+$'),
-        re.compile(r'^[A-Z]{2}[0-9]{6}\.[0-9]+$'),
-        re.compile(r'^[A-Z]{2}[0-9]{8}$'),
-        re.compile(r'^[A-Z]{4}[0-9]{2}S?[0-9]{6,8}$'),
-        re.compile(r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}$'),
-    ]
+
     def _is_valid_ena_accession(self, identifier):
         """
         Check if an identifier matches ENA sequence identifier rules for annotated sequences.
@@ -628,6 +622,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
         Returns:
             bool: True if identifier matches any pattern
         """
+        ENA_ACCESSION_PATTERNS = [
+            re.compile(r'^[A-Z]{1}[0-9]{5}\.[0-9]+$'),
+            re.compile(r'^[A-Z]{2}[0-9]{6}\.[0-9]+$'),
+            re.compile(r'^[A-Z]{2}[0-9]{8}$'),
+            re.compile(r'^[A-Z]{4}[0-9]{2}S?[0-9]{6,8}$'),
+            re.compile(r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}$'),
+        ]
         return any(pattern.match(identifier) for pattern in ENA_ACCESSION_PATTERNS)
 
     def _get_valid_accession(self, seq_region_name, synonyms):

@@ -11,6 +11,7 @@
 
 from typing import Optional, List
 
+from ensembl.utils.database import DBConnection
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
@@ -216,7 +217,8 @@ class GenomeSearchQueryHelper:
 class GenomeSearchIndexer:
     """Service for generating genome search documents"""
 
-    def __init__(self, session: Session):
+    def __init__(self, metadata_uri: str):
+        self.metadata_db = DBConnection(metadata_uri, pool_size=cfg.pool_size, pool_recycle=cfg.pool_recycle)
         self.session = session
         self.query_helper = GenomeSearchQueryHelper(session)
 
