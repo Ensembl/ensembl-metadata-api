@@ -705,3 +705,48 @@ def get_vep_paths_by_uuid(db_conn, genome_uuid):
 
     return msg_factory.create_vep_file_paths()
 
+
+def get_genome_groups_by_reference(db_conn, group_type):
+    if not group_type:
+        group_type = 'structural_variant'
+        logger.warning("Missing or Empty Group type field.")
+
+    # The logic calling the ORM and fetching data from the DB
+    # will go here, we are returning dummy data for now
+
+    dummy_data = [
+        {
+            "group_id": 100,
+            "group_type": group_type,
+            "group_name": "",
+            "reference_genome": {
+                "genome_uuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+                "common_name": "Human",
+                "scientific_name": "Homo sapiens",
+                "assembly_name": "GRCh38.p14",
+                "is_reference": 1,
+                "release": {
+                    "release_name": "2025-02",
+                    "release_type": "integrated"
+                }
+            }
+        },
+        {
+            "group_id": 101,
+            "group_type": group_type,
+            "group_name": "",
+            "reference_genome": {
+                "genome_uuid": "4c07817b-c7c5-463f-8624-982286bc4355",
+                "common_name": "Human",
+                "scientific_name": "Homo sapiens",
+                "assembly_name": "T2T-CHM13v2.0",
+                "is_reference": 0,
+                "release": {
+                    "release_name": "2025-02",
+                    "release_type": "integrated"
+                }
+            }
+        },
+    ]
+
+    return msg_factory.create_genome_groups_by_reference(dummy_data)

@@ -109,6 +109,9 @@ service EnsemblMetadata {
 
   // Get VEP Paths by genome UUID
   rpc GetVepFilePathsByUUID(GenomeUUIDOnlyRequest) returns (VepFilePaths) {}
+
+  // Get Genome groups with reference
+  rpc GetGenomeGroupsWithReference(GroupTypeRequest) returns (GenomeGroupsWithReference) {}
 }
 
 /*
@@ -386,6 +389,31 @@ message DatasetAttributesValues {
 }
 
 
+message ReferenceGenome {
+  string genome_uuid = 1;
+  string common_name = 2;
+  string scientific_name = 3;
+  string assembly_name = 4;
+  bool is_reference = 5;
+  ReleaseInfo release = 6;
+}
+
+message ReleaseInfo {
+  string release_name = 1;
+  string release_type = 2;
+}
+
+message GroupInfo {
+  int32 group_id = 1;
+  string group_type = 2;
+  string group_name = 3;
+  ReferenceGenome reference_genome = 4;
+}
+
+message GenomeGroupsWithReference {
+  repeated GroupInfo genome_groups = 1;
+}
+
 /*
 The messages below are used to request data - required-ness is not enforced
 by protocol buffers, but in practice some fields are mandatory in order to
@@ -568,4 +596,13 @@ message DatasetAttributesValuesRequest {
   repeated string attribute_name = 3; // Optional
   double release_version = 4;         // Optional
   bool latest_only = 5;               // Optional, default is False
+}
+
+
+/*
+Genome Groups Request
+ */
+message GroupTypeRequest {
+  string group_type = 1;     // Optional, default to structural_variant? (for now?)
+  string release_label = 2;  // Optional, default to latest integrated + is_current partials
 }

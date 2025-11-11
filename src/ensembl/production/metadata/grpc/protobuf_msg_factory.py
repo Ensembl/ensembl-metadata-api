@@ -536,3 +536,12 @@ def create_vep_file_paths(data=None):
         faa_location=data['faa_location'],
         gff_location=data['gff_location']
     )
+
+
+def create_genome_groups_by_reference(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.GenomeGroupsWithReference()
+
+    return ensembl_metadata_pb2.GenomeGroupsWithReference(
+        genome_groups=data
+    )

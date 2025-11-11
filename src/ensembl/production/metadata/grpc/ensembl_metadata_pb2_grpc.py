@@ -168,6 +168,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDOnlyRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.VepFilePaths.FromString,
                 _registered_method=True)
+        self.GetGenomeGroupsWithReference = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetGenomeGroupsWithReference',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GroupTypeRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeGroupsWithReference.FromString,
+                _registered_method=True)
 
 
 class EnsemblMetadataServicer(object):
@@ -360,6 +365,13 @@ class EnsemblMetadataServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetGenomeGroupsWithReference(self, request, context):
+        """
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_EnsemblMetadataServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -492,6 +504,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetVepFilePathsByUUID,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDOnlyRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.VepFilePaths.SerializeToString,
+            ),
+            'GetGenomeGroupsWithReference': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetGenomeGroupsWithReference,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GroupTypeRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeGroupsWithReference.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -1200,6 +1217,33 @@ class EnsemblMetadata(object):
             '/ensembl_metadata.EnsemblMetadata/GetVepFilePathsByUUID',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeUUIDOnlyRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.VepFilePaths.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetGenomeGroupsWithReference(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/ensembl_metadata.EnsemblMetadata/GetGenomeGroupsWithReference',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GroupTypeRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeGroupsWithReference.FromString,
             options,
             channel_credentials,
             insecure,
