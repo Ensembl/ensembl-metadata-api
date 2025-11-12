@@ -706,13 +706,14 @@ def get_vep_paths_by_uuid(db_conn, genome_uuid):
     return msg_factory.create_vep_file_paths()
 
 
-def get_genome_groups_by_reference(db_conn, group_type):
+def get_genome_groups_by_reference(db_conn, group_type, release_label):
     if not group_type:
         group_type = 'structural_variant'
         logger.warning("Missing or Empty Group type field.")
 
     # The logic calling the ORM and fetching data from the DB
     # will go here, we are returning dummy data for now
+    # /!\ Remember to handle the release label
 
     dummy_data = [
         {
@@ -752,13 +753,14 @@ def get_genome_groups_by_reference(db_conn, group_type):
     return msg_factory.create_genome_groups_by_reference(dummy_data)
 
 
-def get_genomes_in_group(db_conn, group_id):
+def get_genomes_in_group(db_conn, group_id, release_label):
     if not group_id:
         logger.warning("Missing or Empty Group type field.")
         return msg_factory.create_genomes_in_group()
 
     # The logic calling the ORM and fetching data from the DB using group_id
     # will go here, we are returning dummy data for now
+    # /!\ Remember to handle the release label
 
     # Todo: remove this once we have the data
     dummy_data = [
