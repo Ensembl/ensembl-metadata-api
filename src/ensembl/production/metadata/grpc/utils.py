@@ -707,9 +707,9 @@ def get_vep_paths_by_uuid(db_conn, genome_uuid):
 
 
 def get_genome_groups_by_reference(db_conn, group_type, release_label):
-    if not group_type:
-        group_type = 'structural_variant'
-        logger.warning("Missing or Empty Group type field.")
+    if not group_type or group_type != 'structural_variant': # accepting only structural_variant for now
+        logger.warning("Missing or Wrong Group type field.")
+        return msg_factory.create_genome_groups_by_reference()
 
     # The logic calling the ORM and fetching data from the DB
     # will go here, we are returning dummy data for now

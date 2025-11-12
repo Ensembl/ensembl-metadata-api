@@ -610,7 +610,7 @@ message DatasetAttributesValuesRequest {
 Genome Groups Request
  */
 message GroupTypeRequest {
-  string group_type = 1;     // Optional, default to structural_variant? (for now?)
+  string group_type = 1;     // Mandatory, e.g structural_variant
   string release_label = 2;  // Optional, default to latest integrated + is_current partials
 }
 
