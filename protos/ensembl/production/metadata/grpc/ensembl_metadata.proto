@@ -405,6 +405,7 @@ message GenomeInGroup {
 message ReleaseInfo {
   string release_name = 1;
   string release_type = 2;
+  bool is_current = 3;
 }
 
 message GroupInfo {

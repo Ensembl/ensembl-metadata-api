@@ -728,7 +728,8 @@ def get_genome_groups_by_reference(db_conn, group_type, release_label):
                 "is_reference": 1,
                 "release": {
                     "release_name": "2025-02",
-                    "release_type": "integrated"
+                    "release_type": "integrated",
+                    "is_current": 1
                 }
             }
         },
@@ -744,7 +745,8 @@ def get_genome_groups_by_reference(db_conn, group_type, release_label):
                 "is_reference": 0,
                 "release": {
                     "release_name": "2025-02",
-                    "release_type": "integrated"
+                    "release_type": "integrated",
+                    "is_current": 1
                 }
             }
         },
@@ -773,7 +775,8 @@ def get_genomes_in_group(db_conn, group_id, release_label):
             "is_group_reference": 1,
             "release": {
                 "release_name": "2025-02",
-                "release_type": "integrated"
+                "release_type": "integrated",
+                "is_current": 1
             }
         },
         {
@@ -785,7 +788,8 @@ def get_genomes_in_group(db_conn, group_id, release_label):
             "is_group_reference": 1,
             "release": {
                 "release_name": "2025-02",
-                "release_type": "integrated"
+                "release_type": "integrated",
+                "is_current": 1
             }
         }
     ]
