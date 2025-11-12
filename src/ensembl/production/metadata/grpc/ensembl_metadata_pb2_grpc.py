@@ -173,6 +173,11 @@ class EnsemblMetadataStub(object):
                 request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GroupTypeRequest.SerializeToString,
                 response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeGroupsWithReference.FromString,
                 _registered_method=True)
+        self.GetGenomesInGroup = channel.unary_unary(
+                '/ensembl_metadata.EnsemblMetadata/GetGenomesInGroup',
+                request_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomesInGroupRequest.SerializeToString,
+                response_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomesInGroup.FromString,
+                _registered_method=True)
 
 
 class EnsemblMetadataServicer(object):
@@ -366,7 +371,14 @@ class EnsemblMetadataServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetGenomeGroupsWithReference(self, request, context):
+        """Get Genome groups with reference
         """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetGenomesInGroup(self, request, context):
+        """Get Genomes In Group by group id
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -509,6 +521,11 @@ def add_EnsemblMetadataServicer_to_server(servicer, server):
                     servicer.GetGenomeGroupsWithReference,
                     request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GroupTypeRequest.FromString,
                     response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeGroupsWithReference.SerializeToString,
+            ),
+            'GetGenomesInGroup': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetGenomesInGroup,
+                    request_deserializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomesInGroupRequest.FromString,
+                    response_serializer=ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomesInGroup.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -1244,6 +1261,33 @@ class EnsemblMetadata(object):
             '/ensembl_metadata.EnsemblMetadata/GetGenomeGroupsWithReference',
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GroupTypeRequest.SerializeToString,
             ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomeGroupsWithReference.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetGenomesInGroup(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/ensembl_metadata.EnsemblMetadata/GetGenomesInGroup',
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomesInGroupRequest.SerializeToString,
+            ensembl_dot_production_dot_metadata_dot_grpc_dot_ensembl__metadata__pb2.GenomesInGroup.FromString,
             options,
             channel_credentials,
             insecure,

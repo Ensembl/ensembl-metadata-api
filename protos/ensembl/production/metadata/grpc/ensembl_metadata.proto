@@ -112,6 +112,9 @@ service EnsemblMetadata {
 
   // Get Genome groups with reference
   rpc GetGenomeGroupsWithReference(GroupTypeRequest) returns (GenomeGroupsWithReference) {}
+
+  // Get Genomes In Group by group id
+  rpc GetGenomesInGroup(GenomesInGroupRequest) returns (GenomesInGroup) {}
 }
 
 /*
@@ -388,14 +391,15 @@ message DatasetAttributesValues {
   double release_version = 2;
 }
 
-
-message ReferenceGenome {
+// TODO: Nah! I don't like this, this file needs some tidying up
+message GenomeInGroup {
   string genome_uuid = 1;
   string common_name = 2;
   string scientific_name = 3;
   string assembly_name = 4;
   bool is_reference = 5;
-  ReleaseInfo release = 6;
+  bool is_group_reference = 6;
+  ReleaseInfo release = 7;
 }
 
 message ReleaseInfo {
@@ -404,16 +408,20 @@ message ReleaseInfo {
 }
 
 message GroupInfo {
-  int32 group_id = 1;
+  string group_id = 1;
   string group_type = 2;
   string group_name = 3;
-  ReferenceGenome reference_genome = 4;
+  GenomeInGroup reference_genome = 4;
 }
 
 message GenomeGroupsWithReference {
   repeated GroupInfo genome_groups = 1;
 }
 
+
+message GenomesInGroup {
+  repeated GenomeInGroup genomes = 1;
+}
 /*
 The messages below are used to request data - required-ness is not enforced
 by protocol buffers, but in practice some fields are mandatory in order to
@@ -598,11 +606,19 @@ message DatasetAttributesValuesRequest {
   bool latest_only = 5;               // Optional, default is False
 }
 
-
 /*
 Genome Groups Request
  */
 message GroupTypeRequest {
   string group_type = 1;     // Optional, default to structural_variant? (for now?)
+  string release_label = 2;  // Optional, default to latest integrated + is_current partials
+}
+
+
+/*
+Genomes in Group Request
+ */
+message GenomesInGroupRequest {
+  string group_id = 1;       // Mandatory, might be a UUID, for now mocking using "grch38-group" and "t2t-group" values
   string release_label = 2;  // Optional, default to latest integrated + is_current partials
 }

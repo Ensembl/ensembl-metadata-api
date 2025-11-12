@@ -545,3 +545,12 @@ def create_genome_groups_by_reference(data=None):
     return ensembl_metadata_pb2.GenomeGroupsWithReference(
         genome_groups=data
     )
+
+
+def create_genomes_in_group(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.GenomesInGroup()
+
+    return ensembl_metadata_pb2.GenomesInGroup(
+        genomes=data
+    )

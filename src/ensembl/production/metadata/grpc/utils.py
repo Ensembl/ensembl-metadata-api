@@ -716,7 +716,7 @@ def get_genome_groups_by_reference(db_conn, group_type):
 
     dummy_data = [
         {
-            "group_id": 100,
+            "group_id": "grch38-group",
             "group_type": group_type,
             "group_name": "",
             "reference_genome": {
@@ -732,7 +732,7 @@ def get_genome_groups_by_reference(db_conn, group_type):
             }
         },
         {
-            "group_id": 101,
+            "group_id": "t2t-group",
             "group_type": group_type,
             "group_name": "",
             "reference_genome": {
@@ -750,3 +750,49 @@ def get_genome_groups_by_reference(db_conn, group_type):
     ]
 
     return msg_factory.create_genome_groups_by_reference(dummy_data)
+
+
+def get_genomes_in_group(db_conn, group_id):
+    if not group_id:
+        logger.warning("Missing or Empty Group type field.")
+        return msg_factory.create_genomes_in_group()
+
+    # The logic calling the ORM and fetching data from the DB using group_id
+    # will go here, we are returning dummy data for now
+
+    # Todo: remove this once we have the data
+    dummy_data = [
+        {
+            "genome_uuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+            "common_name": "Human",
+            "scientific_name": "Homo sapiens",
+            "assembly_name": "GRCh38.p14",
+            "is_reference": 1,
+            "is_group_reference": 1,
+            "release": {
+                "release_name": "2025-02",
+                "release_type": "integrated"
+            }
+        },
+        {
+            "genome_uuid": "4c07817b-c7c5-463f-8624-982286bc4355",
+            "common_name": "Human",
+            "scientific_name": "Homo sapiens",
+            "assembly_name": "T2T-CHM13v2.0",
+            "is_reference": 0,
+            "is_group_reference": 1,
+            "release": {
+                "release_name": "2025-02",
+                "release_type": "integrated"
+            }
+        }
+    ]
+
+    if group_id == "t2t-group":
+        dummy_data[0]['is_group_reference'] = 0
+        dummy_data[1]['is_group_reference'] = 1
+    elif group_id not in ['t2t-group', 'grch38-group']:
+        logger.warning("Invalid Group type field.")
+        return msg_factory.create_genomes_in_group()
+
+    return msg_factory.create_genomes_in_group(dummy_data)

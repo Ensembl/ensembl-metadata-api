@@ -185,3 +185,8 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
             self.genome_adaptor, request.group_type
         )
 
+    def GetGenomesInGroup(self, request, context):
+        logger.debug(f"Received RPC for GetGenomesInGroup with request: {request}")
+        return utils.get_genomes_in_group(
+            self.genome_adaptor, request.group_id
+        )
