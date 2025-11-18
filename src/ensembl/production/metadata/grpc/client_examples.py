@@ -522,7 +522,7 @@ def get_vep_file_paths_by_uuid(stub):
     print(vep_paths2)
 
 def get_genome_groups_with_reference(stub):
-    request1 = GroupTypeRequest()
+    request1 = GroupTypeRequest(group_type="structural_variant")
     genome_groups = stub.GetGenomeGroupsWithReference(request1)
     print("**** Genome Groups With Reference (Mock) ****")
     print(genome_groups)

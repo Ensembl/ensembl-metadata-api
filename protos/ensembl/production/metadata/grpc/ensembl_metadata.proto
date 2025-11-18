@@ -391,28 +391,11 @@ message DatasetAttributesValues {
   double release_version = 2;
 }
 
-// TODO: Nah! I don't like this, this file needs some tidying up
-message GenomeInGroup {
-  string genome_uuid = 1;
-  string common_name = 2;
-  string scientific_name = 3;
-  string assembly_name = 4;
-  bool is_reference = 5;
-  bool is_group_reference = 6;
-  ReleaseInfo release = 7;
-}
-
-message ReleaseInfo {
-  string release_label = 1;
-  string release_type = 2;
-  bool is_current = 3;
-}
-
 message GroupInfo {
   string group_id = 1;
   string group_type = 2;
   string group_name = 3;
-  GenomeInGroup reference_genome = 4;
+  BriefGenomeDetails reference_genome = 4;
 }
 
 message GenomeGroupsWithReference {
@@ -421,7 +404,7 @@ message GenomeGroupsWithReference {
 
 
 message GenomesInGroup {
-  repeated GenomeInGroup genomes = 1;
+  repeated BriefGenomeDetails genomes = 1;
 }
 /*
 The messages below are used to request data - required-ness is not enforced
