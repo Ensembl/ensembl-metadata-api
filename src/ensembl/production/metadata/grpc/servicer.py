@@ -178,3 +178,15 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         return utils.get_vep_paths_by_uuid(
             self.vep_adaptor, request.genome_uuid
         )
+
+    def GetGenomeGroupsWithReference(self, request, context):
+        logger.debug(f"Received RPC for GetGenomeGroupsWithReference with request: {request}")
+        return utils.get_genome_groups_by_reference(
+            self.genome_adaptor, request.group_type, request.release_label
+        )
+
+    def GetGenomesInGroup(self, request, context):
+        logger.debug(f"Received RPC for GetGenomesInGroup with request: {request}")
+        return utils.get_genomes_in_group(
+            self.genome_adaptor, request.group_id, request.release_label
+        )
