@@ -22,9 +22,6 @@ from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatu
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
-                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
-                                        ]], indirect=True)
 @pytest.fixture(scope="function")
 def genome_filters(test_dbs):
     return {
