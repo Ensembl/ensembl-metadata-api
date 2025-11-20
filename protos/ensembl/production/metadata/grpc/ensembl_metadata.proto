@@ -551,7 +551,7 @@ message GenomeInfoRequest {
 Organisms group count request
  */
 message OrganismsGroupRequest {
-  double release_label = 1; // Optional
+  string release_label = 1; // Optional
 }
 
 /*
