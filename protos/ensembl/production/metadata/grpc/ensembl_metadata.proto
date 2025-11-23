@@ -115,6 +115,9 @@ service EnsemblMetadata {
 
   // Get Genomes In Group by group id
   rpc GetGenomesInGroup(GenomesInGroupRequest) returns (GenomesInGroup) {}
+
+  // Get Genome counts
+  rpc GetGenomeCounts(GenomeCountsRequest) returns (GenomeCounts) {}
 }
 
 /*
@@ -402,10 +405,20 @@ message GenomeGroupsWithReference {
   repeated GroupInfo genome_groups = 1;
 }
 
-
 message GenomesInGroup {
   repeated BriefGenomeDetails genomes = 1;
 }
+
+message TopRightGroupsCount {
+  string label = 1;
+  int32 count =2;
+}
+
+message GenomeCounts {
+  int32 total = 1;
+  repeated TopRightGroupsCount counts = 2;
+}
+
 /*
 The messages below are used to request data - required-ness is not enforced
 by protocol buffers, but in practice some fields are mandatory in order to
@@ -605,4 +618,8 @@ Genomes in Group Request
 message GenomesInGroupRequest {
   string group_id = 1;       // Mandatory, might be a UUID, for now mocking using "grch38-group" and "t2t-group" values
   string release_label = 2;  // Optional, default to latest integrated + is_current partials
+}
+
+message GenomeCountsRequest {
+  string release_label = 1; // Optional
 }

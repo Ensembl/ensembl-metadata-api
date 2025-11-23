@@ -963,3 +963,38 @@ def get_genomes_in_group(
             release_label,
         )
         return msg_factory.create_genomes_in_group([])
+
+
+def get_genome_counts(db_conn: Any, release_label: str | None):
+
+    try:
+        # The logic calling the ORM and fetching data from the DB
+        # will go here. For now, we return dummy data.
+        dummy_data = {
+            "total_genomes": 4218,
+            "counts": [
+                {
+                    "label": "Animals",
+                    "count": 4127,
+                },
+                {
+                    "label": "Green Plants",
+                    "count": 475,
+                },
+                {
+                    "label": "Fungi",
+                    "count": 116,
+                }
+            ]
+        }
+
+        return msg_factory.create_genome_counts(dummy_data)
+
+    except Exception:
+        # Dummy error handling until ORM logic is implemented.
+        logger.exception(
+            "Unexpected error while fetching genomes in group "
+            "(release_label=%r)",release_label
+        )
+        return msg_factory.create_genome_counts([])
+
