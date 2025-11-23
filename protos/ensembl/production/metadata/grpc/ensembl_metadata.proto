@@ -402,9 +402,13 @@ message GenomeGroupsWithReference {
   repeated GroupInfo genome_groups = 1;
 }
 
+message SVGenomeInGroup {
+  BriefGenomeDetails genome = 1;
+  bool is_group_reference = 2;
+}
 
 message GenomesInGroup {
-  repeated BriefGenomeDetails genomes = 1;
+  repeated SVGenomeInGroup genomes = 1;
 }
 /*
 The messages below are used to request data - required-ness is not enforced
