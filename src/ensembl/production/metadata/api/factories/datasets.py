@@ -391,22 +391,20 @@ class DatasetFactory:
                 for child_uuid in child_uuids:
                     dataset_obj = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
 
-                    # Skip if dataset is FAULTY or RELEASED
                     if dataset_obj.status in (DatasetStatus.FAULTY, DatasetStatus.RELEASED):
-                        continue  # ✅ Skip updating or inserting for this dataset
+                        continue
 
-                    # Check if GenomeDataset exists for this dataset & genome
-                    genome_dataset = session.query(GenomeDataset).join(EnsemblRelease).filter(
+                    genome_dataset = session.query(GenomeDataset).outerjoin(
+                        EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id
+                    ).filter(
                         GenomeDataset.dataset_id == dataset_obj.dataset_id,
                         GenomeDataset.genome_id == genome_id,
-                        EnsemblRelease.release_type != "integrated"
+                        (EnsemblRelease.release_type != "integrated") | (GenomeDataset.release_id.is_(None))
                     ).one_or_none()
 
                     if genome_dataset:
-                        # ✅ Update release_id even if it was attached to a previous release
                         genome_dataset.release_id = release_id
                     else:
-                        # ✅ If it doesn’t exist, create a new one
                         new_gd = GenomeDataset(
                             genome_id=genome_id,
                             dataset=dataset_obj,

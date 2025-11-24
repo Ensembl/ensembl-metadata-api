@@ -90,11 +90,11 @@ class TestUtils:
         output = [
             json.loads(json_format.MessageToJson(response)) for response in
             utils.get_genomes_from_assembly_accession_iterator(
-                db_conn=genome_conn, assembly_accession="GCA_000005845.2", release_version=None
+                db_conn=genome_conn, assembly_accession="GCA_000005845.2"
             )
         ]
 
-        assert len(output) == expected_count
+        assert len(output) == 1
 
     @pytest.mark.parametrize(
         "assembly_accession, release_version",

@@ -119,8 +119,6 @@ class TestStatsGenerator:
 
         assert isinstance(integrated_data, list)
 
-        # Don't actually have any integrated data in the test db.
-        # TODO: Add some integrated data.
         if len(integrated_data) > 0:
             first_release = integrated_data[0]
             required_keys = [
@@ -135,22 +133,22 @@ class TestStatsGenerator:
             assert isinstance(first_release['variation_datasets'], int)
             assert isinstance(first_release['regulation_datasets'], int)
 
-            assert len(integrated_data) == 0
-            assert integrated_data[0]['release'] == '2025-01'
-            assert integrated_data[0]['genomes'] == 12
+            assert len(integrated_data) == 1
+            assert integrated_data[0]['release'] == '2025-07'
+            assert integrated_data[0]['genomes'] == 10
 
-    # def test_get_integrated_data_specific_values(self, test_dbs):
-    #     """Test get_integrated_data returns specific expected values from test database."""
-    #     metadata_uri = test_dbs['ensembl_genome_metadata'].dbc.url
-    #     generator = StatsGenerator(metadata_uri)
-    #
-    #     integrated_data = generator.get_integrated_data()
-    #
-    #     assert len(integrated_data) == 2
-    #     if len(integrated_data) >= 1:
-    #         assert integrated_data[0]['release'] == '112'
-    #         assert integrated_data[0]['genomes'] == 50
-    #         assert integrated_data[0]['assemblies'] == 45
+    def test_get_integrated_data_specific_values(self, test_dbs):
+        """Test get_integrated_data returns specific expected values from test database."""
+        metadata_uri = test_dbs['ensembl_genome_metadata'].dbc.url
+        generator = StatsGenerator(metadata_uri)
+
+        integrated_data = generator.get_integrated_data()
+
+        assert len(integrated_data) == 1
+        if len(integrated_data) >= 1:
+            assert integrated_data[0]['release'] == '2025-07'
+            assert integrated_data[0]['genomes'] == 10
+            assert integrated_data[0]['assemblies'] == 10
 
     def test_count_datasets(self, test_dbs):
         """Test _count_datasets returns correct count for a specific release and dataset type."""
