@@ -35,7 +35,8 @@ from ensembl_metadata_pb2 import (
     ReleaseVersionRequest,
     GenomeByReleaseVersionRequest,
     GroupTypeRequest,
-    GenomesInGroupRequest
+    GenomesInGroupRequest,
+    GenomeCountsRequest,
 )
 
 
@@ -538,6 +539,12 @@ def get_genomes_in_groups(stub):
     print("**** Genomes in Group 't2t-group' (Mock) ****")
     print(genomes_in_group2)
 
+def get_genome_counts(stub):
+    request1 = GenomeCountsRequest()
+    genome_counts = stub.GetGenomeCounts(request1)
+    print("**** Genome Counts (Mock) ****")
+    print(genome_counts)
+
 
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -596,6 +603,8 @@ def run():
         get_genome_groups_with_reference(stub)
         print("-------------- Get Genomes in Groups --------------")
         get_genomes_in_groups(stub)
+        print("-------------- Get Genome Counts --------------")
+        get_genome_counts(stub)
 
 
 if __name__ == "__main__":
