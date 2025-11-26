@@ -46,6 +46,10 @@ class GenomeSearchDocument(BaseModel):
     organism_id: int
     rank: int = 0
 
+    # Additional taxonomy fields
+    lineage_taxids: list[int]
+    lineage_name: list[str]
+
     # Complex derived fields from datasets
     contig_n50: int
     coding_genes: int
