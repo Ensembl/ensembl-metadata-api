@@ -971,11 +971,11 @@ def get_genome_counts(db_conn: Any, release_label: str | None):
         # The logic calling the ORM and fetching data from the DB
         # will go here. For now, we return dummy data.
         dummy_data = {
-            "total_genomes": 4218,
+            "total_genomes": 4758,
             "counts": [
                 {
                     "label": "Animals",
-                    "count": 4758,
+                    "count": 4127,
                 },
                 {
                     "label": "Green Plants",
