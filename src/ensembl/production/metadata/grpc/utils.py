@@ -975,7 +975,7 @@ def get_genome_counts(db_conn: Any, release_label: str | None):
             "counts": [
                 {
                     "label": "Animals",
-                    "count": 4127,
+                    "count": 4758,
                 },
                 {
                     "label": "Green Plants",
@@ -984,6 +984,14 @@ def get_genome_counts(db_conn: Any, release_label: str | None):
                 {
                     "label": "Fungi",
                     "count": 116,
+                },
+                {
+                    "label": "Bacteria",
+                    "count": 1,
+                },
+                {
+                    "label": "Others",
+                    "count": 39,
                 }
             ]
         }
