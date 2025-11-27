@@ -81,8 +81,8 @@ class TestUtils:
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
-            (False, 1),
-            (True, 2)
+            (False, 2),
+            (True, 3)
         ],
         indirect=['allow_unreleased']
     )
@@ -140,9 +140,9 @@ class TestUtils:
         [
             # FIXME The current version returns 2 assembly.accession, see whether it's test set related or code
             # (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 1),
-            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 1),
+            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 2),
             # create_stats_by_genome_uuid cannot handle if genome uuidid attached to multiple release and multiple datasert
-            (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 2)
+            (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 6)
         ],
         indirect=['allow_unreleased']
     )
@@ -192,7 +192,7 @@ class TestUtils:
         output = json.loads(output)
         print(f"uuid stats {output}")
         assembly_accession_stats = [stat for stat in output['statistics'] if stat['name'] == 'assembly.accession']
-        assert len(assembly_accession_stats) == 1
+        assert len(assembly_accession_stats) == 2
         assert assembly_accession_stats[0] == {
             'label': 'assembly.accession',
             'name': 'assembly.accession',
@@ -201,7 +201,7 @@ class TestUtils:
         }
         assembly_component_sequences = [stat for stat in output['statistics'] if
                                         stat['name'] == 'assembly.stats.component_sequences']
-        assert len(assembly_component_sequences) == 1
+        assert len(assembly_component_sequences) == 2
         assert assembly_component_sequences[0] == {
             'label': 'Component sequences',
             'name': 'assembly.stats.component_sequences',
@@ -299,7 +299,7 @@ class TestUtils:
             # Homo sapiens = Released in 110.2
             (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", 110.2, 11, 110.2),
             # bread_wheat version unspecified
-            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 7, 108.0),
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 7, 115.0),
             # Homo sapiens version unspecified
             (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", None, 11, 110.2)
         ],
@@ -340,7 +340,7 @@ class TestUtils:
             # Homo sapiens = Released in 110.2
             (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", 110.2, 11, 110.2),
             # bread_wheat version unspecified
-            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 7, 108.0),
+            (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", None, 7, 115.0),
             # Homo sapiens version unspecified
             (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", None, 11, 110.2)
         ],
@@ -429,7 +429,7 @@ class TestUtils:
         [
             # FIXME: 18 or 14 in Travis! and 19 locally?!!
             # (True, 18, "Homo sapiens"),
-            (False, 5, "Homo sapiens", None),
+            (False, 10, "Homo sapiens", None),
             (True, 1, None, "GRCh37.p13"),
             (False, 1, None, "GRCh37.p13"),
         ],

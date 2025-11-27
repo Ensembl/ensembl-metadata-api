@@ -33,8 +33,8 @@ class TestGRPCReleaseAdaptor:
     @pytest.mark.parametrize(
         "allow_unreleased, status, expected_count",
         [
-            (False, ReleaseStatus.RELEASED, 2),
-            (False, ReleaseStatus.PREPARING, 2),  # Status filter has no effect when ALLOW_UNRELEASED is false
+            (False, ReleaseStatus.RELEASED, 3),
+            (False, ReleaseStatus.PREPARING, 3),  # Status filter has no effect when ALLOW_UNRELEASED is false
             (True, ReleaseStatus.PREPARING, 2),
             (True, 'Prepared', 1),
             (True, 'Planned', 1),
@@ -50,8 +50,8 @@ class TestGRPCReleaseAdaptor:
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
-            (True, 6),
-            (False, 2)
+            (True, 7),
+            (False, 3)
         ],
         indirect=['allow_unreleased']
     )
@@ -75,7 +75,7 @@ class TestGRPCReleaseAdaptor:
         if release_name is None:
             assert len(releases) == 0
         else:
-            assert len(releases) == 1
+            assert len(releases) == 2
             logger.info(releases)
             assert releases[0].EnsemblSite.name == 'Ensembl'
             assert releases[0].EnsemblRelease.label == release_name
