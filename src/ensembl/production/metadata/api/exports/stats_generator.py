@@ -17,6 +17,7 @@ Generate release statistics for Ensembl releases.
 This module provides functionality to generate release statistics for both
 partial and integrated Ensembl releases, exporting the data to CSV format.
 """
+import argparse
 import csv
 import logging
 import sys
@@ -361,7 +362,6 @@ class StatsGenerator:
 
 def main() -> None:
     """Main entry point for the script."""
-    import argparse
 
     parser = argparse.ArgumentParser(
         description="Generate release statistics for Ensembl releases"
