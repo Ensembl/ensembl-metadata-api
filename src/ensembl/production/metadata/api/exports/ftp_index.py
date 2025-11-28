@@ -582,7 +582,6 @@ def main() -> None:
     try:
         exporter = FTPMetadataExporter(metadata_uri=args.metadata_uri)
         metadata = exporter.export_to_json(args.output_path)
-        print(f"Found {len(metadata['species'])} species with released datasets")
         print(f"Metadata exported to {args.output_path}")
     except ValueError as e:
         print(e)
