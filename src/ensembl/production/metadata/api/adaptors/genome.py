@@ -311,21 +311,36 @@ class GenomeAdaptor(BaseAdaptor):
             .join(GenomeRelease) \
             .join(EnsemblRelease) \
             .join(EnsemblSite)
-        if current_only or not cfg.allow_unreleased:
+        if current_only:
             # This filter will allow us to fetch genomes present in the integrated release
             # and having genome_release.is_current = 0 (see ENSPLAT-169 for more details)
+            Er_2 = aliased(EnsemblRelease)
+            Gr_2 = aliased(GenomeRelease)
+            genome_select = genome_select\
+                .join(Gr_2, GenomeRelease.genome_id == Gr_2.genome_id) \
+                .join(Er_2, Gr_2.release_id == Er_2.release_id)
             genome_select = genome_select.where(
-                or_(
                     and_(
-                        GenomeRelease.is_current == 1,
-                        func.lower(EnsemblRelease.release_type) == "partial",
-                    ),
-                    and_(
-                        EnsemblRelease.is_current == 1,
-                        func.lower(EnsemblRelease.release_type) == "integrated"
+                        and_(
+                            Gr_2.is_current == 1,
+                            and_(
+                            GenomeRelease.is_current == 1,
+                                and_(
+                                    EnsemblRelease.is_current == 1,
+                                    GenomeRelease.release_id != Gr_2.release_id
+                                )
+                            )
+                        ),
+                        or_(
+                            EnsemblRelease.release_date > Er_2.release_date,
+                            and_(
+                                EnsemblRelease.release_date == Er_2.release_date,
+                                func.lower(EnsemblRelease.release_type) == "integrated"
+                            )
+                        )
                     )
-                )
             )
+            
         if not cfg.allow_unreleased:
             # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
             genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
