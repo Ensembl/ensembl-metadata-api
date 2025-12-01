@@ -321,27 +321,36 @@ class GenomeAdaptor(BaseAdaptor):
                                 EnsemblRelease.is_current == 1
                             )
                         )    
-            else:  
+            else: 
+                # We join two pairs of genome_release-ensembl_release they should be with 
+                # - Both pairs should have either genome is current or ensembl is currrent and be different releases
+                # - We select those pairs where EnsemblRelease (that gives selected fileds) is earlier or no other current release
+                # - If dates are equal we select integrated
                 Er_2 = aliased(EnsemblRelease)
                 Gr_2 = aliased(GenomeRelease)
                 genome_select = genome_select\
                 .join(Gr_2, GenomeRelease.genome_id == Gr_2.genome_id) \
                 .join(Er_2, Gr_2.release_id == Er_2.release_id)
- 
                 genome_select = genome_select.where(
                         and_(
                             and_(
-                                Gr_2.is_current == 1,
-                                and_(
-                                GenomeRelease.is_current == 1,
+                                    GenomeRelease.release_id != Gr_2.release_id,
                                     and_(
-                                        EnsemblRelease.is_current == 1,
-                                        GenomeRelease.release_id != Gr_2.release_id
+                                        or_(
+                                            Er_2.is_current == 1,
+                                            Gr_2.is_current == 1,
+                                        ),
+                                        or_(
+                                            EnsemblRelease.is_current == 1,
+                                            GenomeRelease.is_current == 1,
+                                        )
                                     )
-                                )
                             ),
                             or_(
-                                EnsemblRelease.release_date > Er_2.release_date,
+                                or_(
+                                    EnsemblRelease.release_date > Er_2.release_date,
+                                    Er_2.release_date is None 
+                                ),
                                 and_(
                                     EnsemblRelease.release_date == Er_2.release_date,
                                     func.lower(EnsemblRelease.release_type) == "integrated"
