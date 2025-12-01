@@ -50,24 +50,21 @@ class TestGRPCGenomeAdaptor:
         assert len(test) == output_count
 
     @pytest.mark.parametrize(
-        "allow_unreleased, release_version, current_only, output_count",
+        "release_version, current_only, output_count",
         [
-            (True, 108.0, False, 1),  # Released/Unreleased has no effect on released genome TRUE
-            (False, 108.0, False, 1),  # Released/Unreleased has no effect on released genome FALSE
-            (False, 110.1, False, 1),  # Wrong Release specified, not current release only
-            (False, 108.0, False, 1),  # Right Release with current False
-            (False, 108.0, True, 1),  # Right Release with only_current True
+            (110.1, False, 1),  # Wrong Release specified, not current release only
+            (108.0, False, 1),  # Right Release with current False
+            (108.0, True, 0),  # Right Release with only_current True
             # wrong release version with is current true :##########################################
             # checks given release is current or any release less than given release
             #Todo: genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-            (False, 110.1, True, 1),  # Wrong Release with only_current True
+            (110.1, True, 0),  # Wrong Release with only_current True
             #########################################################################################
-            (True, 110.2, False, 2),  # Unreleased should return 2
-            (False, 110.2, True, 1)  # Unreleased should return 2
-        ],
-        indirect=['allow_unreleased']
+            (110.2, False, 2),  # Unreleased should return 2
+            (110.2, True, 0)  # Unreleased should return 2
+        ]
     )
-    def test_fetch_with_celegans_all_args(self, genome_conn, allow_unreleased, release_version,
+    def test_fetch_with_celegans_all_args(self, genome_conn, release_version,
                                           current_only, output_count):
         """ Version is not right """
         celegans = genome_conn.fetch_genomes(genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",

@@ -306,7 +306,6 @@ class GenomeAdaptor(BaseAdaptor):
 
         if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
-        logger.debug(f"ALLOW_UNRELEASED is set to {cfg.allow_unreleased}...")
         genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
             .join(GenomeRelease) \
             .join(EnsemblRelease) \
@@ -314,37 +313,43 @@ class GenomeAdaptor(BaseAdaptor):
         if current_only:
             # This filter will allow us to fetch genomes present in the integrated release
             # and having genome_release.is_current = 0 (see ENSPLAT-169 for more details)
-            Er_2 = aliased(EnsemblRelease)
-            Gr_2 = aliased(GenomeRelease)
-            genome_select = genome_select\
+           
+            if release_type is not None:
+                genome_select = genome_select.where(
+                        and_(
+                                func.lower(EnsemblRelease.release_type) == release_type,
+                                EnsemblRelease.is_current == 1
+                            )
+                        )    
+            else:  
+                Er_2 = aliased(EnsemblRelease)
+                Gr_2 = aliased(GenomeRelease)
+                genome_select = genome_select\
                 .join(Gr_2, GenomeRelease.genome_id == Gr_2.genome_id) \
                 .join(Er_2, Gr_2.release_id == Er_2.release_id)
-            genome_select = genome_select.where(
-                    and_(
+ 
+                genome_select = genome_select.where(
                         and_(
-                            Gr_2.is_current == 1,
                             and_(
-                            GenomeRelease.is_current == 1,
+                                Gr_2.is_current == 1,
                                 and_(
-                                    EnsemblRelease.is_current == 1,
-                                    GenomeRelease.release_id != Gr_2.release_id
+                                GenomeRelease.is_current == 1,
+                                    and_(
+                                        EnsemblRelease.is_current == 1,
+                                        GenomeRelease.release_id != Gr_2.release_id
+                                    )
                                 )
-                            )
-                        ),
-                        or_(
-                            EnsemblRelease.release_date > Er_2.release_date,
-                            and_(
-                                EnsemblRelease.release_date == Er_2.release_date,
-                                func.lower(EnsemblRelease.release_type) == "integrated"
+                            ),
+                            or_(
+                                EnsemblRelease.release_date > Er_2.release_date,
+                                and_(
+                                    EnsemblRelease.release_date == Er_2.release_date,
+                                    func.lower(EnsemblRelease.release_type) == "integrated"
+                                )
                             )
                         )
                     )
-            )
-            
-        if not cfg.allow_unreleased:
-            # TODO See whether GRPC is supposed to return "non current" genome for a genome_release
-            genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-        elif unreleased_only:
+        if unreleased_only:
             # fetch only unreleased ones
             genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
 
@@ -355,8 +360,6 @@ class GenomeAdaptor(BaseAdaptor):
         if site_name is not None:
             genome_select = genome_select.add_columns(EnsemblSite).filter(EnsemblSite.name == site_name)
 
-        if release_type is not None:
-            genome_select = genome_select.filter(EnsemblRelease.release_type == release_type)
         logger.debug(f"fetch_genome: {genome_select} / {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
@@ -666,12 +669,7 @@ class GenomeAdaptor(BaseAdaptor):
                 organism_uuid = check_parameter(organism_uuid)
                 genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
             # We have to fetch from DB
-            if not cfg.allow_unreleased:
-                genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-                # only released datasets
-                # genome_select = genome_select.filter(Dataset.status == DatasetStatus.RELEASED,
-                #                                    GenomeDataset.is_current == 1)
-            elif unreleased_only:
+            if unreleased_only:
                 genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
                 genome_select = genome_select.filter(Dataset.status != DatasetStatus.RELEASED)
             else:
@@ -692,17 +690,12 @@ class GenomeAdaptor(BaseAdaptor):
                     genome_datasets = [gd for gd in genome_datasets if
                                        gd.dataset.dataset_type.name == dataset_type_name]
                 # filter release / unreleased
-                if not cfg.allow_unreleased:
-                    # TODO see to add is_current as well
-                    genome_datasets = [gd for gd in genome_datasets if gd.dataset.status == DatasetStatus.RELEASED]
-                    # TODO Get only the first one when allow_unreleased
-                elif unreleased_only:
+                if unreleased_only:
                     genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release is None or
                                        gd.ensembl_release.status != DatasetStatus.RELEASED]
                 if release_version:
                     genome_datasets = [gd for gd in genome_datasets if
                                        float(gd.ensembl_release.version) <= release_version]
-
                 if len(genome_datasets) > 1:
                     logger.debug(f"{len(genome_release)} genome_datasets found")
                     logger.debug(f"Retrieved genome_datasets {genome_release}")
@@ -712,7 +705,6 @@ class GenomeAdaptor(BaseAdaptor):
                     # https://genomes-ebi.slack.com/archives/C010QF119N1/p1746101265211759?thread_ts=1746094298.003789&cid=C010QF119N1
                     if not cfg.allow_unreleased:
                         genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release.release_type == "partial"]
-
                 if len(genome_datasets) > 0:
                     datasets_list = []
                     for gd in genome_datasets:
@@ -1010,10 +1002,6 @@ class GenomeAdaptor(BaseAdaptor):
                 EnsemblRelease,
                 EnsemblRelease.release_id == GenomeGroupMember.release_id
             ).where(EnsemblRelease.version <= release_version)
-
-            logger.debug(f"Allow Unreleased {cfg.allow_unreleased}")
-            if not cfg.allow_unreleased:
-                member_select = member_select.where(EnsemblRelease.status == ReleaseStatus.RELEASED)
 
         # Order by is_reference descending so reference genomes appear first
         member_select = member_select.order_by(desc(GenomeGroupMember.is_reference))
