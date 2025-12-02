@@ -560,7 +560,6 @@ def create_genome_counts(data=None):
     if data is None:
         return ensembl_metadata_pb2.GenomeCounts()
 
-    print(data)
     return ensembl_metadata_pb2.GenomeCounts(
         total=data["total_genomes"],
         counts=data["counts"]

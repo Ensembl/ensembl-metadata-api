@@ -409,14 +409,14 @@ message GenomesInGroup {
   repeated BriefGenomeDetails genomes = 1;
 }
 
-message TopRightGroupsCount {
+message TaxonomyGroupCount {
   string label = 1;
   int32 count =2;
 }
 
 message GenomeCounts {
   int32 total = 1;
-  repeated TopRightGroupsCount counts = 2;
+  repeated TaxonomyGroupCount counts = 2;
 }
 
 /*
