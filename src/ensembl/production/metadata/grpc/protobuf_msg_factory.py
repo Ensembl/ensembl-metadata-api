@@ -554,3 +554,13 @@ def create_genomes_in_group(data=None):
     return ensembl_metadata_pb2.GenomesInGroup(
         genomes=data
     )
+
+
+def create_genome_counts(data=None):
+    if data is None:
+        return ensembl_metadata_pb2.GenomeCounts()
+
+    return ensembl_metadata_pb2.GenomeCounts(
+        total=data["total_genomes"],
+        counts=data["counts"]
+    )
