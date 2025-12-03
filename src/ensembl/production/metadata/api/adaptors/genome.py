@@ -668,6 +668,7 @@ class GenomeAdaptor(BaseAdaptor):
                 organism_uuid = check_parameter(organism_uuid)
                 genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
             # We have to fetch from DB
+            #TODO: we have two different status - dataset and genome checked for the same condition. Not sure if it is expected
             if status == GenomeStatus.RELEASED:
                  genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
             if status == GenomeStatus.UNRELEASED_ONLY:
