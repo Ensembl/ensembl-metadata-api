@@ -29,52 +29,49 @@ class TestGRPCGenomeAdaptor:
     dbc: UnitTestDB = None
 
     @pytest.mark.parametrize(
-        "allow_unreleased, unreleased_only, release_version, current_only, output_count",
+        "release_version, status, output_count",
         [
-            (True, False, None, False, 30),  # Allow Unreleased
-            (False, False, 110.1, False, 10),  # Do not allow unreleased - fetch all from previous releases
-            (False, True, 112.0, False, 10),  # unreleased_only has no effect when ALLOW_UNRELEASED is False
-            (False, False, 110.3, True, 10)  # Only the ones from current release
-        ],
-        indirect=['allow_unreleased']
+            (None, "All", 40),  # Allow Unreleased
+            (110.1, "Released", 10),  # Do not allow unreleased - fetch all from previous releases
+            (115.0, "Current", 10)  # Only the ones from current release
+        ]
     )
-    def test_fetch_genomes_release(self, genome_conn, allow_unreleased, unreleased_only, release_version,
-                                   current_only, output_count):
+    def test_fetch_genomes_release(self, genome_conn, release_version,
+                                   status, output_count):
         """
         Test fetching all released genomes
         - Unreleased_only: should have no effect on results
         - Current_only: Should filter against only release 110.1 (current)
         """
-        test = genome_conn.fetch_genomes(unreleased_only=unreleased_only, current_only=current_only,
-                                         release_version=release_version)
+        test = genome_conn.fetch_genomes(release_version=release_version, status = status)
         assert len(test) == output_count
 
     @pytest.mark.parametrize(
-        "release_version, current_only, output_count",
+        "release_version, status, output_count",
         [
-            (110.1, False, 1),  # Wrong Release specified, not current release only
-            (108.0, False, 1),  # Right Release with current False
-            (108.0, True, 0),  # Right Release with only_current True
+            (110.1, "Unreleased_only", 0),  # Wrong Release specified, not current release only
+            (108.0, "All", 1),  # Right Release with current False
+            (108.0, "Current", 0),  # Right Release with only_current True
             # wrong release version with is current true :##########################################
             # checks given release is current or any release less than given release
             #Todo: genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
-            (110.1, True, 0),  # Wrong Release with only_current True
+            (110.1, "Current", 0),  # Wrong Release with only_current True
             #########################################################################################
-            (110.2, False, 2),  # Unreleased should return 2
-            (110.2, True, 0)  # Unreleased should return 2
+            (110.2, "Unreleased_only", 1),  # Unreleased should return 2
+            (110.2, "All", 2)  # Unreleased should return 2
         ]
     )
     def test_fetch_with_celegans_all_args(self, genome_conn, release_version,
-                                          current_only, output_count):
+                                          status, output_count):
         """ Version is not right """
         celegans = genome_conn.fetch_genomes(genome_uuid="a733550b-93e7-11ec-a39d-005056b38ce3",
                                              assembly_accession="GCA_000002985.3", assembly_name="WBcel235",
                                              biosample_id="SAMN04256190", taxonomy_id="6239", group="EnsemblMetazoa",
                                              site_name="Ensembl", release_type="partial",
-                                             release_version=release_version, current_only=current_only)
+                                             release_version=release_version, status=status)
 
         assert len(celegans) == output_count
-        if output_count == 1:
+        if output_count == 2:
             assert celegans[0].Organism.biosample_id == 'SAMN04256190'
             assert celegans[0].EnsemblRelease.version == 108.0
 
