@@ -110,22 +110,20 @@ class TestGRPCGenomeAdaptor:
             assert genomes[0].Organism.scientific_name == 'Triticum aestivum'
 
     @pytest.mark.parametrize(
-        "allow_unreleased, output_count",
-        [(True, 1), (False, 0)],
-        indirect=['allow_unreleased']
+        "status, output_count",
+        [("All", 1), ("Released", 0)]
     )
-    def test_fetch_genome_by_ensembl_and_assembly_name(self, genome_conn, allow_unreleased, output_count):
-        genomes = genome_conn.fetch_genomes(assembly_name='R64-1-1', biosample_id='SAMEA3184125')
+    def test_fetch_genome_by_ensembl_and_assembly_name(self, genome_conn, output_count, status):
+        genomes = genome_conn.fetch_genomes(assembly_name='R64-1-1', biosample_id='SAMEA3184125', status=status)
         if output_count:
             assert genomes[0].Organism.scientific_name == 'Saccharomyces cerevisiae S288c'
 
     @pytest.mark.parametrize(
-        "allow_unreleased, output_count",
-        [(True, 1), (False, 0)],
-        indirect=['allow_unreleased']
+        "status, output_count",
+        [("All", 1), ("Released", 0)]
     )
-    def test_fetch_genomes_by_assembly_accession(self, genome_conn, allow_unreleased, output_count):
-        genomes = genome_conn.fetch_genomes_by_assembly_accession('GCA_000005845.2')
+    def test_fetch_genomes_by_assembly_accession(self, genome_conn, status, output_count):
+        genomes = genome_conn.fetch_genomes_by_assembly_accession('GCA_000005845.2', status=status)
         if output_count:
             assert genomes[0].Organism.scientific_name == 'Escherichia coli str. K-12 substr. MG1655 str. K12'
 
@@ -147,37 +145,34 @@ class TestGRPCGenomeAdaptor:
         assert len(sequences) == 0
 
     @pytest.mark.parametrize(
-        "allow_unreleased, output_count",
-        [(True, 2), (False, 2)],
-        indirect=['allow_unreleased']
+        "status, output_count",
+        [("All", 7), ("Current", 2)]
     )
-    def test_fetch_genomes_by_ensembl_name(self, genome_conn, allow_unreleased, output_count):
-        genomes = genome_conn.fetch_genomes_by_ensembl_name('SAMN17861670')
+    def test_fetch_genomes_by_ensembl_name(self, genome_conn, status, output_count):
+        genomes = genome_conn.fetch_genomes_by_ensembl_name('SAMN17861670', status=status)
         assert len(genomes) == output_count
         if output_count:
             assert genomes[0].Organism.scientific_name == 'Homo sapiens'
 
     @pytest.mark.parametrize(
-        "allow_unreleased, taxon_id, output_count",
+        "status, taxon_id, output_count",
         [
-            (True, 559292, 2),
-            (False, 559292, 1)
-        ], indirect=['allow_unreleased']
+            ("All", 559292, 3),
+            ("Released", 559292, 2)
+        ]
     )
-    def test_fetch_genomes_by_taxonomy_id(self, genome_conn, allow_unreleased, taxon_id, output_count):
-        genomes = genome_conn.fetch_genomes_by_taxonomy_id(taxonomy_id=taxon_id, current_only=False)
+    def test_fetch_genomes_by_taxonomy_id(self, genome_conn, status, taxon_id, output_count):
+        genomes = genome_conn.fetch_genomes_by_taxonomy_id(taxonomy_id=taxon_id, status=status)
         assert len(genomes) == output_count
 
     @pytest.mark.parametrize(
-        "allow_unreleased, output_count",
-        # WAS [(True, 2), (False, 0)],
+        "status, output_count",
         # TODO check consistency Test DB holds 19 genomes of HUMAN (Released)
         #  and 5 Attached to unreleased
-        [(True, 11), (False, 5)],
-        indirect=['allow_unreleased']
+        [("All", 25), ("Released", 10)]
     )
-    def test_fetch_genomes_by_scientific_name(self, genome_conn, allow_unreleased, output_count):
-        genomes = genome_conn.fetch_genomes_by_scientific_name(scientific_name='Homo sapiens')
+    def test_fetch_genomes_by_scientific_name(self, genome_conn, status, output_count):
+        genomes = genome_conn.fetch_genomes_by_scientific_name(scientific_name='Homo sapiens', status=status)
         assert len(genomes) == output_count
         if output_count:
             assert genomes[0].Organism.common_name == 'Human'
