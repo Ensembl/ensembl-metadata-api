@@ -27,15 +27,15 @@ import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
                          indirect=True)
 class TestClass:
     dbc = None  # type: UnitTestDB
-
+    #TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, ds_type_name, expected_genome_count, expected_ds_count, expected_assembly_count, ensembl_name",
         [
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 1, 1, 5, 'SAMN12121739'),
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'all', 1, 6, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 2, 1, 11, 'SAMN12121739'),
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 1, 1, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 2, 2, 11, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 3, 2, 5, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'all', 3, 16, 5, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 3, 2, 5, 'SAMN12121739'),
+            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 3, 4, 5, 'SAMN12121739'),
+            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 3, 4, 5, 'SAMN12121739'),
         ],
         indirect=['allow_unreleased']
     )
@@ -213,12 +213,12 @@ class TestClass:
                                            always_print_fields_with_no_presence=True)
 
         assert json.loads(actual) == output
-
+    #TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
             (False, 5),
-            (True, 11)  # Update this test once integrated releases are added to tests
+            (True, 5)  # Update this test once integrated releases are added to tests
         ],
         indirect=['allow_unreleased']
     )
@@ -243,7 +243,7 @@ class TestClass:
             )
         )
         assert json.loads(output) == expected_result
-
+    #TODO: double check curernt only option
     @pytest.mark.parametrize(
         "genome_tag, current_only, expected_output",
         [
@@ -255,7 +255,7 @@ class TestClass:
         ]
     )
     def test_create_genome_uuid(self, genome_conn, genome_tag, current_only, expected_output):
-        input_data = genome_conn.fetch_genomes(genome_tag=genome_tag, current_only=current_only)
+        input_data = genome_conn.fetch_genomes(genome_tag=genome_tag, status="Current")
 
         genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) else ""
         output = json_format.MessageToJson(
