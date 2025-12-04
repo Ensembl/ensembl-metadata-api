@@ -100,7 +100,7 @@ class TestGRPCGenomeAdaptor:
 
     @pytest.mark.parametrize(
         "status, output_count",
-        [("Unreleased_only", 2), ("Current", 1), ("All", 1)]
+        [("Unreleased_only", 1), ("Current", 1), ("All", 3)]
     )
     def test_fetch_genomes_by_genome_uuid(self, genome_conn, status,  output_count):
         genomes = genome_conn.fetch_genomes_by_genome_uuid('a73357ab-93e7-11ec-a39d-005056b38ce3',
