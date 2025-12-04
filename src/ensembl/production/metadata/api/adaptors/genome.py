@@ -754,7 +754,7 @@ class GenomeAdaptor(BaseAdaptor):
             return genomes_dataset_info
 
     def fetch_genomes_info(self, genome_id=None, genome_uuid=None, biosample_id=None, group=None,
-                           dataset_type_name=None, release_version=None):
+                           dataset_type_name=None, release_version=None, status="All"):
         try:
             # get genome, assembly and organism information
             genomes: List[Tuple[Genome, Organism, Assembly, EnsemblRelease]] = \
@@ -762,7 +762,7 @@ class GenomeAdaptor(BaseAdaptor):
                                    genome_uuid=genome_uuid,
                                    biosample_id=biosample_id,
                                    group=group,
-                                   release_version=release_version)
+                                   release_version=release_version, status=status)
             genomes_uuids = [genome[0].genome_uuid for genome in genomes]
             logger.debug(f"genomes uuids: {genomes_uuids}")
             genomes_datasets = self.fetch_genome_datasets(genome_uuid=genomes_uuids,

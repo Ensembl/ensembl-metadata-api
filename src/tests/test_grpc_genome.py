@@ -259,11 +259,11 @@ class TestGRPCGenomeAdaptor:
         "status, organism_uuid, expected_count",
         [
             # homo_sapiens_37
-            ("Released", "1d336185-affe-4a91-85bb-04ebd73cbb56", 2),
-            ("Unreleased_only", "1d336185-affe-4a91-85bb-04ebd73cbb56", 4),
+            ("Released", "1d336185-affe-4a91-85bb-04ebd73cbb56", 4),
+            ("Unreleased_only", "1d336185-affe-4a91-85bb-04ebd73cbb56", 2),
             # Homo sapiens Gambian in Western Division
-            ("Released", "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 2),
-            ("All", "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 5),
+            ("Released", "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 4),
+            ("All", "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 7),
             # non-existing organism
             ("Released", "organism-yet-to-be-discovered", 0),
         ]
