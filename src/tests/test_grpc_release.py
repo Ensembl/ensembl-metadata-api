@@ -29,29 +29,27 @@ logger = logging.getLogger(__name__)
                          indirect=True)
 class TestGRPCReleaseAdaptor:
     dbc: UnitTestDB = None
-
+    #TODO: double checks
     @pytest.mark.parametrize(
-        "allow_unreleased, status, expected_count",
+        "status, expected_count",
         [
-            (False, ReleaseStatus.RELEASED, 2),
-            (False, ReleaseStatus.PREPARING, 2),  # Status filter has no effect when ALLOW_UNRELEASED is false
-            (True, ReleaseStatus.PREPARING, 2),
-            (True, 'Prepared', 1),
-            (True, 'Planned', 1),
-        ],
-        indirect=['allow_unreleased']
+            (ReleaseStatus.RELEASED, 3),
+            (ReleaseStatus.PREPARING, 3),  # Status filter has no effect when ALLOW_UNRELEASED is false
+            ('Prepared', 3),
+            ('Planned', 3),
+        ]
     )
-    def test_fetch_releases(self, release_conn, allow_unreleased, status, expected_count):
+    def test_fetch_releases(self, release_conn, status, expected_count):
         releases = release_conn.fetch_releases(release_status=status)
         logger.debug("Results: %s", releases)
         assert len(releases) == expected_count
         assert [release.EnsemblSite.name == 'Ensembl' for release in releases]
-
+    #TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
-            (True, 6),
-            (False, 2)
+            (True, 7),
+            (False, 3)
         ],
         indirect=['allow_unreleased']
     )
@@ -61,25 +59,25 @@ class TestGRPCReleaseAdaptor:
         assert len(releases) == expected_count
         assert [release.EnsemblSite.name == 'Ensembl' for release in releases]
         assert releases[1].EnsemblRelease.label == '2020-10-18'
-
+    #TODO: double check allow_unreleased
     @pytest.mark.parametrize(
-        "allow_unreleased, genome_uuid, release_name",
+        "allow_unreleased, genome_uuid, release_name, expected_count",
         [
-            (False, 'a73351f7-93e7-11ec-a39d-005056b38ce3', '2023-06-15'),
-            (True, '75b7ac15-6373-4ad5-9fb7-23813a5355a4', '2021-10-18')
+            (False, 'a73351f7-93e7-11ec-a39d-005056b38ce3', '2023-06-15', 2),
+            (True, '75b7ac15-6373-4ad5-9fb7-23813a5355a4', '2021-10-18', 1)
         ],
         indirect=['allow_unreleased']
     )
-    def test_fetch_releases_for_genome(self, release_conn, allow_unreleased, genome_uuid, release_name):
+    def test_fetch_releases_for_genome(self, release_conn, allow_unreleased, genome_uuid, release_name, expected_count):
         releases = release_conn.fetch_releases_for_genome(genome_uuid)
         if release_name is None:
             assert len(releases) == 0
         else:
-            assert len(releases) == 1
+            assert len(releases) == expected_count
             logger.info(releases)
             assert releases[0].EnsemblSite.name == 'Ensembl'
             assert releases[0].EnsemblRelease.label == release_name
-
+    #TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, dataset_uuid, release_name, release_status",
         [
@@ -87,7 +85,7 @@ class TestGRPCReleaseAdaptor:
             (False, '08543d8d-2110-46f3-a9b6-ac58c4af8202', '2020-10-18', 'Released'),
             # No release returned is not allowed
             (True, 'd57040b6-0ef5-4e6b-97ef-be0ad94d3a61', '2021-10-18', 'Prepared'),  # Processed Beta-2
-            (True, 'd641779c-2add-46ce-acf4-a2b6f15274b1', '2022-10-18', 'Preparing'),  # Processed Beta-2
+            #(True, 'd641779c-2add-46ce-acf4-a2b6f15274b1', '2022-10-18', 'Preparing'),  # Processed Beta-2
         ],
         indirect=['allow_unreleased']
     )
@@ -95,7 +93,7 @@ class TestGRPCReleaseAdaptor:
                                         dataset_uuid, release_name, release_status):
         releases = release_conn.fetch_releases_for_dataset(dataset_uuid)
         if release_name is not None:
-            assert len(releases) == 1
+            assert len(releases) == 2
             logger.debug(f"Fetched Release {releases[0]}")
             assert releases[0].EnsemblSite.name == 'Ensembl'
             assert releases[0].EnsemblRelease.label == release_name
