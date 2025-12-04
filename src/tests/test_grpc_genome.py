@@ -283,7 +283,7 @@ class TestGRPCGenomeAdaptor:
                                expected_output):
         genomes = genome_conn.fetch_genomes(assembly_name=assembly_name, use_default_assembly=use_default_assembly,
                                             production_name=production_name, status = "All")
-        assert len(genomes) == 1
+        assert len(genomes) == 3
         assert genomes[0].Genome.genome_uuid == expected_output
 
     @pytest.mark.parametrize(
@@ -296,7 +296,7 @@ class TestGRPCGenomeAdaptor:
     def test_fetch_genome_uuid_is_current(self, genome_conn, production_name, assembly_name, use_default_assembly,
                                           expected_output):
         genomes = genome_conn.fetch_genomes(assembly_name=assembly_name, use_default_assembly=use_default_assembly,
-                                            production_name=production_name)
+                                            production_name=production_name, status="Current")
         assert len(genomes) == 1
         assert genomes[0].Genome.genome_uuid == expected_output
 
@@ -317,7 +317,7 @@ class TestGRPCGenomeAdaptor:
         [
             (None, 5, "All"),  # Default is 'Popular' group
             ('vertebrates', 5, "All"),  # Returns only vertebrates
-            ('EnsemblVertebrates', 11, "Unreeleased_only"),  # Returns only vertebrates with unreleased
+            ('EnsemblVertebrates', 11, "Unreleased_only"),  # Returns only vertebrates with unreleased
             # Update this test once integrated releases are added to tests
         ]
     )
