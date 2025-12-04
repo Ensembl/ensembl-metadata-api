@@ -27,6 +27,7 @@ class ReleaseStatus(enum.Enum):
     PREPARING = "Preparing"
     PREPARED = "Prepared"
     RELEASED = "Released"
+    ARCHIVED = "Archived"
 
 
 ReleaseStatusType = sqlalchemy.types.Enum(

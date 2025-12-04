@@ -9,8 +9,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import argparse
+import json
 import logging
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional, List, Tuple, Iterator
 
 from ensembl.utils.database import DBConnection
@@ -19,8 +23,14 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, joinedload
 
 from ensembl.production.metadata.api.models import (
-    Genome, Dataset, DatasetAttribute,
-    EnsemblRelease, GenomeRelease, GenomeDataset, ReleaseStatus, DatasetStatus
+    Genome,
+    Dataset,
+    DatasetAttribute,
+    EnsemblRelease,
+    GenomeRelease,
+    GenomeDataset,
+    ReleaseStatus,
+    DatasetStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,14 +40,17 @@ logger = logging.getLogger(__name__)
 # EXCEPTIONS AND ERROR TRACKING
 # ============================================================================
 
+
 class MissingDatasetFieldError(Exception):
     """Raised when a required dataset field is missing"""
+
     pass
 
 
 @dataclass
 class GenomeIndexError:
     """Represents an error that occurred while indexing a genome"""
+
     genome_uuid: str
     release_label: str
     error_message: str
@@ -52,12 +65,14 @@ class IndexingErrorCollection:
 
     def add_error(self, genome_uuid: str, release_label: str, error_message: str, exception: Exception):
         """Add an error to the collection"""
-        self.errors.append(GenomeIndexError(
-            genome_uuid=genome_uuid,
-            release_label=release_label,
-            error_message=error_message,
-            exception=exception
-        ))
+        self.errors.append(
+            GenomeIndexError(
+                genome_uuid=genome_uuid,
+                release_label=release_label,
+                error_message=error_message,
+                exception=exception,
+            )
+        )
 
     def has_errors(self) -> bool:
         """Check if any errors were collected"""
@@ -70,14 +85,14 @@ class IndexingErrorCollection:
 
         summary = [f"\n{'=' * 80}"]
         summary.append(f"INDEXING ERRORS: {len(self.errors)} genome(s) failed to index")
-        summary.append('=' * 80)
+        summary.append("=" * 80)
 
         for i, error in enumerate(self.errors, 1):
             summary.append(f"\n{i}. Genome: {error.genome_uuid} (Release: {error.release_label})")
             summary.append(f"   Error: {error.error_message}")
 
-        summary.append('=' * 80 + '\n')
-        return '\n'.join(summary)
+        summary.append("=" * 80 + "\n")
+        return "\n".join(summary)
 
     def raise_if_errors(self):
         """Raise an exception if there are any errors"""
@@ -88,6 +103,7 @@ class IndexingErrorCollection:
 # ============================================================================
 # PYDANTIC SCHEMAS
 # ============================================================================
+
 
 class GenomeSearchDocument(BaseModel):
     """Schema for genome search indexing"""
@@ -134,6 +150,7 @@ class GenomeSearchDocument(BaseModel):
 # DATASET FIELD EXTRACTOR
 # ============================================================================
 
+
 class DatasetFieldExtractor:
     """Extracts dataset-related fields for a genome/release pair"""
 
@@ -155,17 +172,17 @@ class DatasetFieldExtractor:
         if self._datasets_cache is not None:
             return self._datasets_cache
 
-        if self.release.release_type == 'integrated':
+        if self.release.release_type == "integrated":
             self._datasets_cache = [
-                gd for gd in self.genome.genome_datasets
-                if gd.release_id == self.release.release_id
-                   and gd.dataset.status == DatasetStatus.RELEASED
+                gd
+                for gd in self.genome.genome_datasets
+                if gd.release_id == self.release.release_id and gd.dataset.status == DatasetStatus.RELEASED
             ]
         else:  # partial
             self._datasets_cache = [
-                gd for gd in self.genome.genome_datasets
-                if gd.is_current == 1
-                   and gd.dataset.status == DatasetStatus.RELEASED
+                gd
+                for gd in self.genome.genome_datasets
+                if gd.is_current == 1 and gd.dataset.status == DatasetStatus.RELEASED
             ]
 
         return self._datasets_cache
@@ -192,10 +209,7 @@ class DatasetFieldExtractor:
         """Check if a dataset of the given type exists"""
         relevant_datasets = self._get_relevant_datasets()
 
-        return any(
-            gd.dataset.dataset_type.name == dataset_type_name
-            for gd in relevant_datasets
-        )
+        return any(gd.dataset.dataset_type.name == dataset_type_name for gd in relevant_datasets)
 
     def get_contig_n50(self) -> int:
         """
@@ -204,7 +218,7 @@ class DatasetFieldExtractor:
         Raises:
             MissingDatasetFieldError: If assembly.stats.contig_n50 is not found
         """
-        value = self._get_dataset_attribute('assembly', 'assembly.stats.contig_n50')
+        value = self._get_dataset_attribute("assembly", "assembly.stats.contig_n50")
 
         if value is None:
             raise MissingDatasetFieldError(
@@ -227,7 +241,7 @@ class DatasetFieldExtractor:
         Raises:
             MissingDatasetFieldError: If genebuild.stats.coding_genes is not found
         """
-        value = self._get_dataset_attribute('genebuild', 'genebuild.stats.coding_genes')
+        value = self._get_dataset_attribute("genebuild", "genebuild.stats.coding_genes")
 
         if value is None:
             raise MissingDatasetFieldError(
@@ -245,11 +259,11 @@ class DatasetFieldExtractor:
 
     def has_variation(self) -> bool:
         """Check if genome has variation data"""
-        return self._has_dataset_type('variation')
+        return self._has_dataset_type("variation")
 
     def has_regulation(self) -> bool:
         """Check if genome has regulatory features data"""
-        return self._has_dataset_type('regulatory_features')
+        return self._has_dataset_type("regulatory_features")
 
     def get_genebuild_provider(self) -> str:
         """
@@ -260,7 +274,7 @@ class DatasetFieldExtractor:
         Raises:
             MissingDatasetFieldError: If neither source has a provider name
         """
-        provider = self._get_dataset_attribute('genebuild', 'genebuild.provider_name_display')
+        provider = self._get_dataset_attribute("genebuild", "genebuild.provider_name_display")
 
         if provider:
             return provider
@@ -282,7 +296,7 @@ class DatasetFieldExtractor:
         Raises:
             MissingDatasetFieldError: If genebuild.method_display is not found
         """
-        value = self._get_dataset_attribute('genebuild', 'genebuild.method_display')
+        value = self._get_dataset_attribute("genebuild", "genebuild.method_display")
 
         if value is None:
             raise MissingDatasetFieldError(
@@ -296,6 +310,7 @@ class DatasetFieldExtractor:
 # ============================================================================
 # RELEASE SELECTION HELPER
 # ============================================================================
+
 
 class ReleaseSelector:
     """Handles the complex logic of selecting the appropriate release for a genome"""
@@ -329,14 +344,8 @@ class ReleaseSelector:
             return None
 
         # Separate into integrated and partial
-        integrated_releases = [
-            r for r in released_releases
-            if r.release_type == 'integrated'
-        ]
-        partial_releases = [
-            r for r in released_releases
-            if r.release_type == 'partial' and r.is_current
-        ]
+        integrated_releases = [r for r in released_releases if r.release_type == "integrated"]
+        partial_releases = [r for r in released_releases if r.release_type == "partial" and r.is_current]
 
         # SUPPRESSED GENOME LOGIC
         if genome.suppressed:
@@ -347,13 +356,13 @@ class ReleaseSelector:
             # Rule 2 & 3: Return most recent integrated by label, ignore any partial
             return max(integrated_releases, key=lambda r: r.label)
 
-        # NON-SUPPRESSED GENOME LOGIC (original logic)
+        # NON-SUPPRESSED GENOME LOGIC
         # Case 1: No integrated releases - return partial if exists
         if not integrated_releases:
             return partial_releases[0] if partial_releases else None
 
         # Case 2: Has integrated releases
-        # Get the most recent integrated by label (YYYY-MM format sorts correctly)
+        # Get the most recent integrated by label (YYYY-MM sorted)
         most_recent_integrated = max(integrated_releases, key=lambda r: r.label)
 
         # Check if we should use a partial instead
@@ -362,9 +371,9 @@ class ReleaseSelector:
 
             # Check if any RELEASED dataset is attached to this partial release
             partial_datasets = [
-                gd for gd in genome.genome_datasets
-                if gd.release_id == partial_release.release_id
-                   and gd.dataset.status == DatasetStatus.RELEASED
+                gd
+                for gd in genome.genome_datasets
+                if gd.release_id == partial_release.release_id and gd.dataset.status == DatasetStatus.RELEASED
             ]
 
             # If there are datasets attached to a partial that's newer than the integrated
@@ -379,11 +388,13 @@ class ReleaseSelector:
 # MAIN SERVICE CLASS WITH BATCHING
 # ============================================================================
 
+
 class GenomeSearchIndexer:
     """Service for generating genome search documents"""
 
-    def __init__(self, metadata_uri: str, batch_size: int = 500):
+    def __init__(self, metadata_uri: str, taxonomy_uri: str, batch_size: int = 500):
         self.metadata_db = DBConnection(metadata_uri)
+        self.taxonomy_db = DBConnection(taxonomy_uri)
         self.release_selector = ReleaseSelector()
         self.batch_size = batch_size
 
@@ -396,9 +407,7 @@ class GenomeSearchIndexer:
             session.query(Genome.genome_id)
             .join(GenomeRelease)
             .join(EnsemblRelease)
-            .filter(
-                EnsemblRelease.status == ReleaseStatus.RELEASED
-            )
+            .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
             .distinct()
             .all()
         )
@@ -424,14 +433,13 @@ class GenomeSearchIndexer:
                 .joinedload(GenomeDataset.dataset)
                 .joinedload(Dataset.dataset_attributes)
                 .joinedload(DatasetAttribute.attribute),
-                joinedload(Genome.genome_datasets).joinedload(GenomeDataset.ensembl_release)
+                joinedload(Genome.genome_datasets).joinedload(GenomeDataset.ensembl_release),
             )
             .all()
         )
 
     def get_genomes_with_releases_batched(
-            self,
-            session: Session
+            self, session: Session
     ) -> Iterator[List[Tuple[Genome, EnsemblRelease]]]:
         """
         Get genomes with their selected releases in batches.
@@ -444,10 +452,11 @@ class GenomeSearchIndexer:
 
         # Process in batches
         for i in range(0, total_genomes, self.batch_size):
-            batch_ids = genome_ids[i:i + self.batch_size]
+            batch_ids = genome_ids[i: i + self.batch_size]
             logger.info(
                 f"Processing batch {i // self.batch_size + 1}/{(total_genomes + self.batch_size - 1) // self.batch_size}: "
-                f"genomes {i + 1}-{min(i + self.batch_size, total_genomes)}")
+                f"genomes {i + 1}-{min(i + self.batch_size, total_genomes)}"
+            )
 
             # Load this batch with all relationships
             genomes_batch = self._get_genomes_batch(session, batch_ids)
@@ -467,24 +476,26 @@ class GenomeSearchIndexer:
     def _extract_direct_fields(self, genome: Genome) -> dict:
         """Extract direct fields from Genome/Organism/Assembly"""
         return {
-            'genome_uuid': genome.genome_uuid,
-            'common_name': genome.organism.common_name,
-            'scientific_name': genome.organism.scientific_name,
-            'strain_type': genome.organism.strain_type,
-            'strain': genome.organism.strain,
-            'assembly_name': genome.assembly.name,
-            'accession': genome.assembly.accession,
-            'url_name': genome.url_name,
-            'tol_id': genome.organism.tol_id,
-            'is_reference': bool(genome.assembly.is_reference),
-            'species_taxonomy_id': genome.organism.species_taxonomy_id,
-            'taxonomy_id': genome.organism.taxonomy_id,
-            'scientific_parlance_name': genome.organism.scientific_parlance_name,
-            'organism_id': genome.organism_id,
-            'rank': genome.organism.rank or 0,
+            "genome_uuid": genome.genome_uuid,
+            "common_name": genome.organism.common_name,
+            "scientific_name": genome.organism.scientific_name,
+            "strain_type": genome.organism.strain_type,
+            "strain": genome.organism.strain,
+            "assembly_name": genome.assembly.name,
+            "accession": genome.assembly.accession,
+            "url_name": genome.url_name,
+            "tol_id": genome.organism.tol_id,
+            "is_reference": bool(genome.assembly.is_reference),
+            "species_taxonomy_id": genome.organism.species_taxonomy_id,
+            "taxonomy_id": genome.organism.taxonomy_id,
+            "scientific_parlance_name": genome.organism.scientific_parlance_name,
+            "organism_id": genome.organism_id,
+            "rank": genome.organism.rank or 0,
         }
 
-    def _get_taxonomy_lineage(self, session: Session, taxonomy_id: int) -> Tuple[List[int], List[str]]:
+    def _get_taxonomy_lineage(
+            self, taxonomy_session: Session, taxonomy_id: int
+    ) -> Tuple[List[int], List[str]]:
         """
         Get taxonomy lineage for a given taxonomy_id.
 
@@ -493,7 +504,7 @@ class GenomeSearchIndexer:
             - lineage_names: List of ALL names (all name_classes) for all taxids in lineage
 
         Args:
-            session: Database session
+            taxonomy_session: Taxonomy database session
             taxonomy_id: The taxonomy ID to get lineage for
 
         Returns:
@@ -504,7 +515,7 @@ class GenomeSearchIndexer:
 
         # Get all ancestors
         try:
-            ancestors = Taxonomy.fetch_ancestors(session, taxonomy_id)
+            ancestors = Taxonomy.fetch_ancestors(taxonomy_session, taxonomy_id)
         except NoResultFound:
             # If no ancestors found, just use the current taxon
             ancestors = []
@@ -512,12 +523,14 @@ class GenomeSearchIndexer:
         # Build list of taxon_ids: current + all ancestors
         lineage_taxids = [taxonomy_id]
         for ancestor in ancestors:
-            lineage_taxids.append(ancestor['taxon_id'])
+            lineage_taxids.append(ancestor["taxon_id"])
 
         # Query for ALL names (all name_class values) for all taxon_ids in the lineage
+        # exclude 'import date' entries
         all_names = (
-            session.query(NCBITaxonomy.name)
+            taxonomy_session.query(NCBITaxonomy.name)
             .filter(NCBITaxonomy.taxon_id.in_(lineage_taxids))
+            .filter(NCBITaxonomy.name_class != "import date")
             .distinct()
             .all()
         )
@@ -528,13 +541,16 @@ class GenomeSearchIndexer:
         return (lineage_taxids, lineage_names)
 
     def create_search_document(
-            self,
-            session: Session,
-            genome: Genome,
-            release: EnsemblRelease
+            self, metadata_session: Session, taxonomy_session: Session, genome: Genome, release: EnsemblRelease
     ) -> GenomeSearchDocument:
         """
         Create search document for a genome/release pair.
+
+        Args:
+            metadata_session: Session for metadata database
+            taxonomy_session: Session for taxonomy database
+            genome: Genome object
+            release: EnsemblRelease object
 
         Raises:
             MissingDatasetFieldError: If any required dataset fields are missing
@@ -544,31 +560,200 @@ class GenomeSearchIndexer:
         doc_data = self._extract_direct_fields(genome)
 
         # Add release information
-        doc_data.update({
-            'release_type': release.release_type,
-            'release_label': release.label,
-            'release_id': release.release_id,
-        })
+        doc_data.update(
+            {
+                "release_type": release.release_type,
+                "release_label": release.label,
+                "release_id": release.release_id,
+            }
+        )
 
         # Extract dataset fields - will raise exceptions if required fields are missing
-        dataset_extractor = DatasetFieldExtractor(session, genome, release)
-        doc_data.update({
-            'contig_n50': dataset_extractor.get_contig_n50(),
-            'coding_genes': dataset_extractor.get_coding_genes(),
-            'has_variation': dataset_extractor.has_variation(),
-            'has_regulation': dataset_extractor.has_regulation(),
-            'genebuild_provider': dataset_extractor.get_genebuild_provider(),
-            'genebuild_method_display': dataset_extractor.get_genebuild_method_display(),
-        })
+        dataset_extractor = DatasetFieldExtractor(metadata_session, genome, release)
+        doc_data.update(
+            {
+                "contig_n50": dataset_extractor.get_contig_n50(),
+                "coding_genes": dataset_extractor.get_coding_genes(),
+                "has_variation": dataset_extractor.has_variation(),
+                "has_regulation": dataset_extractor.has_regulation(),
+                "genebuild_provider": dataset_extractor.get_genebuild_provider(),
+                "genebuild_method_display": dataset_extractor.get_genebuild_method_display(),
+            }
+        )
 
-        # Add taxonomy lineage
-        lineage_taxids, lineage_names = self._get_taxonomy_lineage(genome.organism.taxonomy_id)
-        doc_data.update({
-            'lineage_taxids': lineage_taxids,
-            'lineage_name': lineage_names,
-        })
+        # Add taxonomy lineage - use taxonomy session
+        lineage_taxids, lineage_names = self._get_taxonomy_lineage(
+            taxonomy_session, genome.organism.taxonomy_id
+        )
+        doc_data.update(
+            {
+                "lineage_taxids": lineage_taxids,
+                "lineage_name": lineage_names,
+            }
+        )
 
         return GenomeSearchDocument(**doc_data)
+
+    def export_to_json(
+            self, output_path: str, raise_on_errors: bool = True, pretty_print: bool = True
+    ) -> int:
+        """
+        Generate search index and export to JSON file.
+        Loads all documents in memory then writes to file.
+
+        Best for smaller datasets or when you need the documents in memory anyway.
+
+        Args:
+            output_path: Path to output JSON file
+            raise_on_errors: If True, raise exception if any errors occurred
+            pretty_print: If True, format JSON with indentation (larger file)
+
+        Returns:
+            Number of successfully indexed documents
+
+        Raises:
+            MissingDatasetFieldError: If raise_on_errors=True and any errors occurred
+        """
+        logger.info(f"Generating search index and exporting to {output_path}")
+
+        # Get all documents
+        documents = self.get_search_index(raise_on_errors=raise_on_errors)
+
+        # Write to file
+        output_file = Path(output_path)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output_file, "w") as f:
+            if pretty_print:
+                json.dump(documents, f, indent=2)
+            else:
+                json.dump(documents, f)
+
+        logger.info(f"Successfully exported {len(documents)} documents to {output_path}")
+        return len(documents)
+
+    def stream_to_json(
+            self, output_path: str, pretty_print: bool = True
+    ) -> Tuple[int, IndexingErrorCollection]:
+        """
+        Generate search index and stream to JSON file.
+        Writes documents as they're generated to minimize memory usage.
+
+        Best for large datasets (20k+ genomes) to avoid loading everything in memory.
+
+        Args:
+            output_path: Path to output JSON file
+            pretty_print: If True, format JSON with indentation (larger file)
+
+        Returns:
+            Tuple of (number of successful documents, error collection)
+        """
+        logger.info(f"Streaming search index to {output_path}")
+
+        error_collection = IndexingErrorCollection()
+        output_file = Path(output_path)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        total = 0
+        indent = 2 if pretty_print else None
+
+        with open(output_file, "w") as f:
+            f.write("[\n" if pretty_print else "[")
+            first = True
+
+            with self.metadata_db.session_scope() as metadata_session:
+                with self.taxonomy_db.session_scope() as taxonomy_session:
+                    for batch in self.get_genomes_with_releases_batched(metadata_session):
+                        for genome, release in batch:
+                            try:
+                                doc = self.create_search_document(
+                                    metadata_session, taxonomy_session, genome, release
+                                )
+
+                                # Write comma before all but first document
+                                if not first:
+                                    f.write(",\n" if pretty_print else ",")
+                                first = False
+
+                                # Write document
+                                if pretty_print:
+                                    # Add indentation for array items
+                                    doc_json = json.dumps(doc.model_dump(), indent=2)
+                                    # Indent each line by 2 spaces
+                                    indented = "\n".join("  " + line for line in doc_json.split("\n"))
+                                    f.write(indented)
+                                else:
+                                    json.dump(doc.model_dump(), f)
+
+                                total += 1
+
+                                # Log progress
+                                if total % 100 == 0:
+                                    logger.info(f"Streamed {total} documents...")
+
+                            except MissingDatasetFieldError as e:
+                                error_collection.add_error(
+                                    genome_uuid=genome.genome_uuid,
+                                    release_label=release.label,
+                                    error_message=str(e),
+                                    exception=e,
+                                )
+                            except Exception as e:
+                                error_collection.add_error(
+                                    genome_uuid=genome.genome_uuid,
+                                    release_label=release.label,
+                                    error_message=f"Unexpected error: {str(e)}",
+                                    exception=e,
+                                )
+
+            f.write("\n]" if pretty_print else "]")
+
+        logger.info(f"Successfully streamed {total} documents to {output_path}")
+
+        if error_collection.has_errors():
+            logger.warning(f"Failed to index {len(error_collection.errors)} genome(s)")
+            print(error_collection.get_summary())
+
+        return total, error_collection
+
+    def export_to_json_auto(
+            self,
+            output_path: str,
+            raise_on_errors: bool = True,
+            pretty_print: bool = True,
+            stream_threshold: int = 5000,
+    ) -> int:
+        """
+        Automatically choose between regular export and streaming based on dataset size.
+
+        Counts genomes first, then uses streaming if above threshold.
+
+        Args:
+            output_path: Path to output JSON file
+            raise_on_errors: If True, raise exception if any errors occurred (non-streaming only)
+            pretty_print: If True, format JSON with indentation
+            stream_threshold: Use streaming if more than this many genomes
+
+        Returns:
+            Number of successfully indexed documents
+        """
+        # Count genomes first
+        with self.metadata_db.session_scope() as session:
+            genome_count = len(self._get_genome_ids_to_process(session))
+
+        logger.info(f"Found {genome_count} genomes to process")
+
+        if genome_count > stream_threshold:
+            logger.info(f"Using streaming mode (>{stream_threshold} genomes)")
+            total, error_collection = self.stream_to_json(output_path, pretty_print)
+
+            if raise_on_errors and error_collection.has_errors():
+                error_collection.raise_if_errors()
+
+            return total
+        else:
+            logger.info(f"Using regular mode (<={stream_threshold} genomes)")
+            return self.export_to_json(output_path, raise_on_errors, pretty_print)
 
     def get_search_index(self, raise_on_errors: bool = True) -> List[dict]:
         """
@@ -591,71 +776,120 @@ class GenomeSearchIndexer:
         search_documents = []
         total_processed = 0
 
-        with self.metadata_db.session_scope() as session:
-            # Process genomes in batches
-            for batch in self.get_genomes_with_releases_batched(session):
-                for genome, release in batch:
-                    try:
-                        doc = self.create_search_document(session, genome, release)
-                        search_documents.append(doc.model_dump())
-                        total_processed += 1
+        with self.metadata_db.session_scope() as metadata_session:
+            with self.taxonomy_db.session_scope() as taxonomy_session:
+                # Process genomes in batches
+                for batch in self.get_genomes_with_releases_batched(metadata_session):
+                    for genome, release in batch:
+                        try:
+                            doc = self.create_search_document(
+                                metadata_session, taxonomy_session, genome, release
+                            )
+                            search_documents.append(doc.model_dump())
+                            total_processed += 1
 
-                        # Log progress periodically
-                        if total_processed % 100 == 0:
-                            logger.info(f"Processed {total_processed} genomes...")
+                            # Log progress periodically
+                            if total_processed % 100 == 0:
+                                logger.info(f"Processed {total_processed} genomes...")
 
-                    except MissingDatasetFieldError as e:
-                        error_collection.add_error(
-                            genome_uuid=genome.genome_uuid,
-                            release_label=release.label,
-                            error_message=str(e),
-                            exception=e
-                        )
-                    except Exception as e:
-                        # Catch any other unexpected errors
-                        error_collection.add_error(
-                            genome_uuid=genome.genome_uuid,
-                            release_label=release.label,
-                            error_message=f"Unexpected error: {str(e)}",
-                            exception=e
-                        )
+                        except MissingDatasetFieldError as e:
+                            error_collection.add_error(
+                                genome_uuid=genome.genome_uuid,
+                                release_label=release.label,
+                                error_message=str(e),
+                                exception=e,
+                            )
+                        except Exception as e:
+                            # Catch any other unexpected errors
+                            error_collection.add_error(
+                                genome_uuid=genome.genome_uuid,
+                                release_label=release.label,
+                                error_message=f"Unexpected error: {str(e)}",
+                                exception=e,
+                            )
 
-            # Report results
-            logger.info(f"Successfully indexed: {len(search_documents)} genome(s)")
-            if error_collection.has_errors():
-                logger.warning(f"Failed to index: {len(error_collection.errors)} genome(s)")
-                print(error_collection.get_summary())
+                # Report results
+                logger.info(f"Successfully indexed: {len(search_documents)} genome(s)")
+                if error_collection.has_errors():
+                    logger.warning(f"Failed to index: {len(error_collection.errors)} genome(s)")
+                    print(error_collection.get_summary())
 
-                # if raise_on_errors:
-                #     error_collection.raise_if_errors()
+                    # if raise_on_errors:
+                    #     error_collection.raise_if_errors()
 
-            return search_documents
+                return search_documents
 
 
 # ============================================================================
 # USAGE
 # ============================================================================
 
-def main():
-    """Example usage"""
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+def main() -> None:
+    """Main entry point for the script."""
+
+    parser = argparse.ArgumentParser(description="Generate genome search index for Ensembl releases")
+    parser.add_argument("--metadata-uri", required=True, help="Database URI for the metadata database")
+    parser.add_argument("--taxonomy-uri", required=True, help="Database URI for the NCBI taxonomy database")
+    parser.add_argument("--output-path", required=True, help="Output path for the search index JSON file")
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=500,
+        help="Number of genomes to process per batch (default: 500). "
+             "Smaller batches use less memory but more queries.",
+    )
+    parser.add_argument(
+        "--stream-threshold",
+        type=int,
+        default=5000,
+        help="Use streaming mode if genome count exceeds this threshold (default: 5000)",
+    )
+    parser.add_argument(
+        "--no-pretty-print", action="store_true", help="Disable JSON pretty printing (creates smaller files)"
+    )
+    parser.add_argument(
+        "--no-raise-on-errors",
+        action="store_true",
+        help="Continue processing even if some genomes fail indexing",
+    )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level (default: INFO)",
     )
 
-    metadata_uri = "mysql://user:pass@host/metadata_db"
+    args = parser.parse_args()
 
-    # You can adjust batch_size based on your memory constraints
-    # Smaller batches = less memory, but more queries
-    # Larger batches = more memory, but fewer queries
-    indexer = GenomeSearchIndexer(metadata_uri, batch_size=500)
+    # Configure logging
+    logging.basicConfig(
+        level=getattr(logging, args.log_level), format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
-    # Option 1: Raise on errors (default)
     try:
-        documents = indexer.get_search_index(raise_on_errors=True)
-        logger.info(f"Generated {len(documents)} search documents")
-        return documents
+        indexer = GenomeSearchIndexer(
+            metadata_uri=args.metadata_uri, taxonomy_uri=args.taxonomy_uri, batch_size=args.batch_size
+        )
+
+        count = indexer.export_to_json_auto(
+            output_path=args.output_path,
+            raise_on_errors=not args.no_raise_on_errors,
+            pretty_print=not args.no_pretty_print,
+            stream_threshold=args.stream_threshold,
+        )
+
+        logger.info(f"Genome search index generated successfully: {count} documents")
+    except ValueError as e:
+        logger.error(f"Configuration error: {e}")
+        sys.exit(1)
     except MissingDatasetFieldError as e:
-        logger.error("Indexing failed due to data quality issues")
-        return []
+        logger.error(f"Data quality error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Error generating genome search index: {e}", exc_info=True)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

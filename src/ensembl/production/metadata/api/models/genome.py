@@ -101,7 +101,7 @@ class GenomeGroup(LoadAble, Base):
     genome_group_id = Column(Integer, primary_key=True)
     type = Column(Enum("compara_reference", "structural_variant", "project"), nullable=False)
     name = Column(String(128), nullable=False, unique=True)
-    label = Column(String(128))
+    label = Column(String(128), nullable=False)
     searchable = Column(TINYINT(1), nullable=False, default=0)
     description = Column(String(255))
 
