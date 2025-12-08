@@ -103,7 +103,8 @@ class TestFTPMetadataExporter:
             ("homo_sapiens", "homo_sapiens"),
             ("Homo. Sapiens", "Homo_Sapiens"),
             ("homo   sapiens", "homo_sapiens"),
-            (" homo sapiens ", "_homo_sapiens_"),
+            (" homo sapiens ", "homo_sapiens"),
+            (" Escherichia coli str. K-12 substr. MG1655 str. K12 ", "Escherichia_coli_str_K_12_substr_MG1655_str_K12")
         ],
     )
     def test_normalize_species_name(self, test_dbs, input_name, expected_name):
