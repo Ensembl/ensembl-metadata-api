@@ -437,9 +437,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
         # Fetch the Ensembl name of the organism from metadata using either 'species.biosample_id'
         # or 'organism.production_name' as the key.
         biosample_id = self.get_meta_single_meta_key(species_id, "organism.biosample_id")
-        if biosample_id is None:
-            biosample_id = self.get_meta_single_meta_key(species_id, "organism.production_name")
-        tol_id = self.get_meta_single_meta_key(species_id, "assembly.tol_id")  # This one should be deleted eventually.
         tol_id = self.get_meta_single_meta_key(species_id, "organism.tol_id")
 
         # Getting the common name from the meta table, otherwise we grab it from ncbi.
