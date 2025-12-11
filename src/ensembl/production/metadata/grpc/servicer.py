@@ -43,7 +43,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
     def GetGenomesByAssemblyAccessionID(self, request, context):
         logger.debug(f"Received RPC for GetGenomesByAssemblyAccessionID with request: {request}")
         return utils.get_genomes_from_assembly_accession_iterator(
-            self.genome_adaptor, request.assembly_accession, request.release_version
+            self.genome_adaptor, request.assembly_accession
         )
 
     def GetSubSpeciesInformation(self, request, context):
@@ -177,4 +177,22 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         logger.debug(f"Received RPC for GetVepFilePathsByUUID with request: {request}")
         return utils.get_vep_paths_by_uuid(
             self.vep_adaptor, request.genome_uuid
+        )
+
+    def GetGenomeGroupsWithReference(self, request, context):
+        logger.debug(f"Received RPC for GetGenomeGroupsWithReference with request: {request}")
+        return utils.get_genome_groups_by_reference(
+            self.genome_adaptor, request.group_type, request.release_label
+        )
+
+    def GetGenomesInGroup(self, request, context):
+        logger.debug(f"Received RPC for GetGenomesInGroup with request: {request}")
+        return utils.get_genomes_in_group(
+            self.genome_adaptor, request.group_id, request.release_label
+        )
+
+    def GetGenomeCounts(self, request, context):
+        logger.debug(f"Received RPC for GetGenomeCounts with request: {request}")
+        return utils.get_genome_counts(
+            self.genome_adaptor, request.release_label
         )

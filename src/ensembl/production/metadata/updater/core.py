@@ -468,7 +468,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             strain=self.get_meta_single_meta_key(species_id, "organism.strain"),
             strain_type=self.get_meta_single_meta_key(species_id, "organism.strain_type"),
             scientific_parlance_name=self.get_meta_single_meta_key(species_id, "organism.scientific_parlance_name"),
-            tol_id=tol_id,
+            tol_id=tol_id
         )
 
         # Query the metadata database to find if an Organism with the same Ensembl name already exists.
