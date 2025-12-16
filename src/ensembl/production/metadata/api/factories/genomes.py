@@ -44,6 +44,7 @@ class GenomeInputFilters:
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
     dataset_status: List[str] = field(default_factory=lambda: ["Submitted"])
+    dataset_version: str = ''
     release_id: int = 0
     batch_size: int = 50
     page: int = 1
@@ -54,6 +55,7 @@ class GenomeInputFilters:
     columns: List = field(default_factory=lambda: [Genome.genome_uuid.label('genome_uuid'),
                                                    Genome.production_name.label('species'),
                                                    Dataset.dataset_uuid.label('dataset_uuid'),
+                                                   Dataset.version.label('dataset_version'),
                                                    Dataset.status.label('dataset_status'),
                                                    DatasetSource.name.label('dataset_source'),
                                                    DatasetType.name.label('dataset_type')
@@ -65,9 +67,6 @@ class GenomeFactory:
     @staticmethod
     def _apply_filters(query, filters):
 
-        if filters.organism_group_type:
-            query = query.filter(OrganismGroup.type == filters.organism_group_type)
-
         if filters.run_all:
             filters.division = [
                 'EnsemblBacteria',
@@ -78,20 +77,27 @@ class GenomeFactory:
                 'EnsemblFungi',
             ]
 
+        if filters.organism_group_type or any(
+                [i.element.table.name in ['organism_group', 'organism_group_member'] for i in filters.columns]):
+            query = query.outerjoin(Organism.organism_group_members).outerjoin(OrganismGroupMember.organism_group)
+
+        if filters.organism_group_type:
+            query = query.filter(OrganismGroup.type == filters.organism_group_type)
+
+        if filters.division and filters.organism_group_type:
+            ensembl_divisions = filters.division
+
+            if filters.organism_group_type == 'Division':
+                pattern = re.compile(r'^(ensembl)?', re.IGNORECASE)
+                ensembl_divisions = ['Ensembl' + pattern.sub('', d).capitalize() for d in ensembl_divisions if d]
+
+            query = query.filter(OrganismGroup.name.in_(ensembl_divisions))
+
         if filters.genome_uuid:
             query = query.filter(Genome.genome_uuid.in_(filters.genome_uuid))
 
         if filters.dataset_uuid:
             query = query.filter(Dataset.dataset_uuid.in_(filters.dataset_uuid))
-
-        if filters.division:
-            ensembl_divisions = filters.division
-
-            if filters.organism_group_type == 'DIVISION':
-                pattern = re.compile(r'^(ensembl)?', re.IGNORECASE)
-                ensembl_divisions = ['Ensembl' + pattern.sub('', d).capitalize() for d in ensembl_divisions if d]
-
-            query = query.filter(OrganismGroup.name.in_(ensembl_divisions))
 
         if filters.species:
             species = set(filters.species) - set(filters.antispecies)
@@ -106,8 +112,7 @@ class GenomeFactory:
 
         if filters.release_id:
             query = query.join(Genome.genome_releases)
-            query = query.filter(GenomeDataset.release_id==filters.release_id)
-            query = query.filter(GenomeRelease.release_id==filters.release_id)
+            query = query.filter(GenomeRelease.release_id == filters.release_id)
 
         if filters.dataset_type:
             query = query.filter(Genome.genome_datasets.any(DatasetType.name.in_([filters.dataset_type])))
@@ -115,9 +120,21 @@ class GenomeFactory:
         if filters.dataset_status:
             query = query.filter(Dataset.status.in_(filters.dataset_status))
 
+        if filters.dataset_version:
+            query = query.filter(Dataset.version == filters.dataset_version)
+
         if filters.batch_size:
             filters.page = filters.page if filters.page > 0 else 1
             query = query.offset((filters.page - 1) * filters.batch_size).limit(filters.batch_size)
+
+        # check if dataset/genome uuid in column list if not add it as we group by genome uuid and dataset uuid
+        if not any([i.element.table.name == 'dataset' and i.element.name == 'dataset_uuid'
+                    for i in filters.columns]):
+            filters.columns.append(Dataset.dataset_uuid.label('dataset_uuid'))
+        if not any([i.element.table.name == 'genome' and i.element.name == 'genome_uuid'
+                    for i in filters.columns]):
+            filters.columns.append(Genome.genome_uuid.label('genome_uuid'))
+
         logger.debug(f"Filter Query {query}")
         return query
 
@@ -126,14 +143,13 @@ class GenomeFactory:
             .select_from(Genome) \
             .join(Genome.assembly) \
             .join(Genome.organism) \
-            .join(Organism.organism_group_members) \
-            .join(OrganismGroupMember.organism_group) \
             .join(Genome.genome_datasets) \
             .join(GenomeDataset.dataset) \
             .join(Dataset.dataset_source) \
-            .join(Dataset.dataset_type) \
-            .group_by(Genome.genome_id, Dataset.dataset_id) \
-            .order_by(Genome.genome_uuid)
+            .join(Dataset.dataset_type)
+            #\
+            # .group_by(Genome.genome_id, Dataset.dataset_id) \
+            # .order_by(Genome.genome_uuid)
 
         return self._apply_filters(query, filters)
 
@@ -154,13 +170,7 @@ class GenomeFactory:
                 if dataset_status and isinstance(dataset_status, DatasetStatus):
                     genome_info['dataset_status'] = dataset_status.value
 
-                if not dataset_uuid:
-                    logger.warning(
-                        f"No dataset uuid found for genome {genome_info} skipping this genome "
-                    )
-                    continue
-
-                if filters.update_dataset_status:
+                if filters.update_dataset_status and dataset_uuid:
                     _, status = DatasetFactory(filters.metadata_db_uri) \
                         .update_dataset_status(dataset_uuid,
                                                filters.update_dataset_status,
@@ -174,7 +184,7 @@ class GenomeFactory:
 
                     else:
                         logger.warning(
-                            f"Cannot update status for dataset uuid: {dataset_uuid} "
+                            f"Cannot update status for dataset uuid: {dataset_uuid} , ensure the column with dataset_uuid declared "
                             f"{filters.update_dataset_status} to {status}  for genome {genome_info['genome_uuid']}"
                         )
                         genome_info['updated_dataset_status'] = None
@@ -191,8 +201,8 @@ def main():
                         help='List of genome UUIDs to filter the query. Default is an empty list.')
     parser.add_argument('--dataset_uuid', type=str, nargs='*', default=[], required=False,
                         help='List of dataset UUIDs to filter the query. Default is an empty list.')
-    parser.add_argument('--organism_group_type', type=str, default='DIVISION', required=False,
-                        help='Organism group type to filter the query. Default is "DIVISION"')
+    parser.add_argument('--organism_group_type', type=str, required=False, default="Division",
+                        help='Organism group type to filter the query. ex:  "DIVISION", check organism_group table for more types')
     parser.add_argument('--division', type=str, nargs='*', default=[], required=False,
                         help='List of organism group names to filter the query. Default is an empty list.')
     parser.add_argument('--dataset_type', type=str, default="assembly", required=False,
@@ -202,10 +212,12 @@ def main():
     parser.add_argument('--antispecies', type=str, nargs='*', default=[], required=False,
                         help='List of Species Production names to exclude from the query. Default is an empty list.')
     parser.add_argument('--release_id', type=int, default=0, required=False,
-                        help='Genome_dataset release_id to filter the query. Default is 0 (no filter).')
+                        help='Genome_dataset release_id to filter the query for released genomes and datasets. Default is 0 (no filter).')
     parser.add_argument('--dataset_status', nargs='*', default=["Submitted"],
                         choices=['Submitted', 'Processing', 'Processed', 'Released'], required=False,
                         help='List of dataset statuses to filter the query. Default is an empty list.')
+    parser.add_argument('--dataset_version', type=str, required=False,
+                        help='Filter the query by dataset version')
     parser.add_argument('--update_dataset_status', type=str, default="", required=False,
                         choices=['Submitted', 'Processing', 'Processed', 'Released', ''],
                         help='Update the status of the selected datasets to the specified value. ')
