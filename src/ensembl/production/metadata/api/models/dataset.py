@@ -139,5 +139,6 @@ class DatasetType(LoadAble, Base):
     topic = Column(String(32), nullable=False)
     description = Column(String(255))
     parent = Column(ForeignKey('dataset_type.dataset_type_id'), name='parent_id', nullable=True, index=True)
+    multiple_current = Column(TINYINT(1), nullable=False, default=0)
     # One to many relationships
     datasets = relationship('Dataset', back_populates='dataset_type')
