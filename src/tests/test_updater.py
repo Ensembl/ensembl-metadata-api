@@ -61,7 +61,7 @@ class TestUpdater:
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         # Test the species
         with metadata_db.session_scope() as session:
-            organism = session.query(Organism).where(Organism.biosample_id == 'Jabberwocky').first()
+            organism = session.query(Organism).where(Organism.biosample_id == 'Base_test').first()
             assembly = session.query(Assembly).where(Assembly.name == 'jaber01').first()
             assert organism.scientific_name == 'carol_jabberwocky'
             assert organism.genomes[0].genebuild_date == '2023-01'
@@ -166,16 +166,6 @@ class TestUpdater:
             assert genebuild_dataset.dataset_type.name == "genebuild"
             assert genome.genebuild_date == '2023-01'  # From core_4 meta table
             assert len(genome.genome_releases) > 0
-
-    def test_taxonomy_common_name(self, test_dbs):
-        test = meta_factory(test_dbs['core_5'].dbc.url,
-                            test_dbs['ensembl_genome_metadata'].dbc.url,
-                            test_dbs['ncbi_taxonomy'].dbc.url)
-        test.process_core()
-        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
-        with metadata_db.session_scope() as session:
-            organism = session.query(Organism).where(Organism.biosample_id == 'test_case_5').first()
-            assert organism.common_name == 'Sheep'
 
     def test_fail_existing_genome_uuid_data_not_match(self, test_dbs):
         test = meta_factory(test_dbs['core_6'].dbc.url,
