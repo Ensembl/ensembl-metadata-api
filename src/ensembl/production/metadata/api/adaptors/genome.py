@@ -11,11 +11,11 @@
 #   limitations under the License.
 from __future__ import annotations
 
+import enum
 import logging
 import re
 from operator import and_
 from typing import List, Tuple, NamedTuple
-import enum
 
 import sqlalchemy as db
 from ensembl.utils.database import DBConnection
@@ -261,7 +261,8 @@ class GenomeAdaptor(BaseAdaptor):
             genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
 
         if genome_tag is not None:
-            genome_select = genome_select.filter(Genome.url_name.in_(genome_tag))
+            genome_select = genome_select.filter(
+                db.or_(Genome.url_name.in_(genome_tag), Organism.tol_id.in_(genome_tag)))
 
         if organism_uuid is not None:
             genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
