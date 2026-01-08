@@ -940,6 +940,258 @@ def get_genomes_in_group(
                     "site_label": "MVP ENsembl",
                     "site_uri": "https://beta.ensembl.org",
                 },
+            },
+            {
+                "genome_uuid": "9d3b2ead-a987-4f08-8d18-10a1eb1e0fb0",
+                "assembly": {
+                    "accession": "GCA_018503275.2",
+                    "name": "NA19240_mat_hprc_f2",
+                    "ucsc_name": "",
+                    "level": "primary_assembly",
+                    "ensembl_name": "",
+                    "assembly_uuid": "561a1451-cfe4-451d-ad8f-00310645e1fd",
+                    "is_reference": False,
+                    "url_name": "",
+                    "tol_id": ""
+                },
+                "taxon": {
+                    "taxonomy_id": 9606,
+                    "scientific_name": "Homo sapiens",
+                    "strain": "Yoruban in Nigeria",
+                    "alternative_names": []
+                },
+                "created": "2025-09-23 19:07:22",
+                "organism": {
+                    "common_name": "Human",
+                    "strain": "Yoruban in Nigeria",
+                    "scientific_name": "Homo sapiens",
+                    "ensembl_name": "SAMN03838746",
+                    "scientific_parlance_name": "Human",
+                    "organism_uuid": "14a967b2-6d62-49f8-b0b7-c3836a87cffa",
+                    "strain_type": "population",
+                    "taxonomy_id": 9606,
+                    "species_taxonomy_id": 9606
+                },
+                "release": {
+                    "release_version": 114.9,
+                    "release_date": "2025-10-21",
+                    "release_label": "2025-10-21",
+                    "release_type": "partial",
+                    "is_current": False,
+                    "site_name": "Ensembl",
+                    "site_label": "MVP ENsembl",
+                    "site_uri": "https://beta.ensembl.org"
+                }
+            },
+            {
+                "genome_uuid": "27be510b-c431-434c-a6f5-158d8c138507",
+                "assembly": {
+                    "accession": "GCA_018506975.2",
+                    "name": "HG00733_mat_hprc_f2",
+                    "ucsc_name": "",
+                    "level": "primary_assembly",
+                    "ensembl_name": "",
+                    "assembly_uuid": "0fb76cdf-6c6b-4c20-beef-7f7d4151651b",
+                    "is_reference": False,
+                    "url_name": "",
+                    "tol_id": ""
+                },
+                "taxon": {
+                    "taxonomy_id": 9606,
+                    "scientific_name": "Homo sapiens",
+                    "strain": "Puerto Rican in Puerto Rico",
+                    "alternative_names": []
+                },
+                "created": "2025-09-23 22:58:45",
+                "organism": {
+                    "common_name": "Human",
+                    "strain": "Puerto Rican in Puerto Rico",
+                    "scientific_name": "Homo sapiens",
+                    "ensembl_name": "SAMN00006581",
+                    "scientific_parlance_name": "Human",
+                    "organism_uuid": "07314e4e-9ac5-4ed7-b2ae-b8e257e1e6d7",
+                    "strain_type": "population",
+                    "taxonomy_id": 9606,
+                    "species_taxonomy_id": 9606
+                },
+                "release": {
+                    "release_version": 114.9,
+                    "release_date": "2025-10-21",
+                    "release_label": "2025-10-21",
+                    "release_type": "partial",
+                    "is_current": False,
+                    "site_name": "Ensembl",
+                    "site_label": "MVP ENsembl",
+                    "site_uri": "https://beta.ensembl.org"
+                }
+            },
+            {
+                "genome_uuid": "7e09bad9-aa22-46e4-ab8f-1b2a64202967",
+                "assembly": {
+                    "accession": "GCA_042077495.1",
+                    "name": "NA19036_hap1_hprc_f2",
+                    "ucsc_name": "",
+                    "level": "primary_assembly",
+                    "ensembl_name": "",
+                    "assembly_uuid": "11ed863b-5b0a-45e6-b3e6-f0788be79706",
+                    "is_reference": False,
+                    "url_name": "",
+                    "tol_id": ""
+                },
+                "taxon": {
+                    "taxonomy_id": 9606,
+                    "scientific_name": "Homo sapiens",
+                    "strain": "",
+                    "alternative_names": []
+                },
+                "created": "2025-03-14 00:00:45",
+                "organism": {
+                    "common_name": "Human",
+                    "strain": "",
+                    "scientific_name": "Homo sapiens",
+                    "ensembl_name": "SAMN41021642",
+                    "scientific_parlance_name": "Human",
+                    "organism_uuid": "eec7d10e-3ef4-4f14-8d2e-3233978dd0ce",
+                    "strain_type": "",
+                    "taxonomy_id": 9606,
+                    "species_taxonomy_id": 9606
+                },
+                "release": {
+                    "release_version": 114.1,
+                    "release_date": "2025-05-28",
+                    "release_label": "2025-05-28",
+                    "release_type": "partial",
+                    "is_current": False,
+                    "site_name": "Ensembl",
+                    "site_label": "MVP ENsembl",
+                    "site_uri": "https://beta.ensembl.org"
+                }
+            },
+            {
+                "genome_uuid": "30094672-c48c-425a-84e0-4049073a68d3",
+                "assembly": {
+                    "accession": "GCA_018469665.2",
+                    "name": "HG01123_mat_hprc_f2",
+                    "ucsc_name": "",
+                    "level": "primary_assembly",
+                    "ensembl_name": "",
+                    "assembly_uuid": "6ab0e3a4-4e11-443d-a18a-81ff1e68d42d",
+                    "is_reference": False,
+                    "url_name": "",
+                    "tol_id": ""
+                },
+                "taxon": {
+                    "taxonomy_id": 9606,
+                    "scientific_name": "Homo sapiens",
+                    "strain": "Colombian in Medellin",
+                    "alternative_names": []
+                },
+                "created": "2025-09-24 11:47:25",
+                "organism": {
+                    "common_name": "Human",
+                    "strain": "Colombian in Medellin",
+                    "scientific_name": "Homo sapiens",
+                    "ensembl_name": "SAMN17861232",
+                    "scientific_parlance_name": "Human",
+                    "organism_uuid": "c9bd9d75-c746-4515-ad37-40d054eeaa91",
+                    "strain_type": "population",
+                    "taxonomy_id": 9606,
+                    "species_taxonomy_id": 9606
+                },
+                "release": {
+                    "release_version": 114.9,
+                    "release_date": "2025-10-21",
+                    "release_label": "2025-10-21",
+                    "release_type": "partial",
+                    "is_current": False,
+                    "site_name": "Ensembl",
+                    "site_label": "MVP ENsembl",
+                    "site_uri": "https://beta.ensembl.org"
+                }
+            },
+            {
+                "genome_uuid": "82b440be-8f7d-47fe-a363-a40cea709ea2",
+                "assembly": {
+                    "accession": "GCA_018472595.2",
+                    "name": "HG00438_pat_hprc_f2",
+                    "ucsc_name": "",
+                    "level": "primary_assembly",
+                    "ensembl_name": "",
+                    "assembly_uuid": "179f190d-17f9-4692-9353-374976c62e20",
+                    "is_reference": False,
+                    "url_name": "",
+                    "tol_id": ""
+                },
+                "taxon": {
+                    "taxonomy_id": 9606,
+                    "scientific_name": "Homo sapiens",
+                    "strain": "Han Chinese South",
+                    "alternative_names": []
+                },
+                "created": "2025-09-25 09:01:42",
+                "organism": {
+                    "common_name": "Human",
+                    "strain": "Han Chinese South",
+                    "scientific_name": "Homo sapiens",
+                    "ensembl_name": "SAMN17861652",
+                    "scientific_parlance_name": "Human",
+                    "organism_uuid": "b6f5e927-22f1-4e12-8bc5-77880de41211",
+                    "strain_type": "population",
+                    "taxonomy_id": 9606,
+                    "species_taxonomy_id": 9606
+                },
+                "release": {
+                    "release_version": 114.9,
+                    "release_date": "2025-10-21",
+                    "release_label": "2025-10-21",
+                    "release_type": "partial",
+                    "is_current": False,
+                    "site_name": "Ensembl",
+                    "site_label": "MVP ENsembl",
+                    "site_uri": "https://beta.ensembl.org"
+                }
+            },
+            {
+                "genome_uuid": "ddfadcb5-3b4a-48ca-9dcd-e75884445bd1",
+                "assembly": {
+                    "accession": "GCA_018472695.2",
+                    "name": "HG01928_mat_hprc_f2",
+                    "ucsc_name": "",
+                    "level": "primary_assembly",
+                    "ensembl_name": "",
+                    "assembly_uuid": "c4b526fd-4919-459f-b25e-9f1f658e0c53",
+                    "is_reference": False,
+                    "url_name": "",
+                    "tol_id": ""
+                },
+                "taxon": {
+                    "taxonomy_id": 9606,
+                    "scientific_name": "Homo sapiens",
+                    "strain": "Peruvian in Lima",
+                    "alternative_names": []
+                },
+                "created": "2025-09-26 17:12:04",
+                "organism": {
+                    "common_name": "Human",
+                    "strain": "Peruvian in Lima",
+                    "scientific_name": "Homo sapiens",
+                    "ensembl_name": "SAMN17861660",
+                    "scientific_parlance_name": "Human",
+                    "organism_uuid": "c0ce970e-a1ab-492e-8838-684854ed22fb",
+                    "strain_type": "population",
+                    "taxonomy_id": 9606,
+                    "species_taxonomy_id": 9606
+                },
+                "release": {
+                    "release_version": 114.9,
+                    "release_date": "2025-10-21",
+                    "release_label": "2025-10-21",
+                    "release_type": "partial",
+                    "is_current": False,
+                    "site_name": "Ensembl",
+                    "site_label": "MVP ENsembl",
+                    "site_uri": "https://beta.ensembl.org"
+                }
             }
         ]
 
