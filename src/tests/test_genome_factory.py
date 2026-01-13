@@ -92,7 +92,7 @@ class TestGenomeFactory:
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
 
         with metadata_db.session_scope() as session:
-            genome = session.query(Genome).filter(Genome.genome_uuid == genome_filters['genome_uuid']).one()
+            genome = session.query(Genome).filter(Genome.genome_uuid == genome_filters['genome_uuid'][0]).one()
             assert genome_factory_result['genome_uuid'] == genome_filters['genome_uuid'][0]
             assert genome.genome_uuid == genome_filters['genome_uuid'][0]
             assert genome.genome_uuid == genome_factory_result['genome_uuid']
@@ -109,7 +109,7 @@ class TestGenomeFactory:
         assert genome_factory_result is not None
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
+            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid'][0]).one()
             assert genome_factory_result['dataset_uuid'] == genome_filters['dataset_uuid'][0]
             assert dataset.dataset_uuid == genome_filters['dataset_uuid'][0]
 
@@ -121,7 +121,7 @@ class TestGenomeFactory:
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset: Dataset = session.query(Dataset).filter(
-                Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
+                Dataset.dataset_uuid == genome_filters['dataset_uuid'][0]).one()
             assert genome_factory_result['dataset_uuid'] == genome_filters['dataset_uuid'][0]
             assert dataset.dataset_uuid == genome_filters['dataset_uuid'][0]
             assert dataset.status.value == genome_factory_result['dataset_status']
@@ -140,15 +140,15 @@ class TestGenomeFactory:
 
         # fetch genomes by status submitted and update to processing
         genome_factory_result = [genome for genome in genome_factory.get_genomes(**genome_filters)][0]
-        logger.debug(f"Factory Results 1 {genome_factory_result}")
+        # logger.debug(f"Factory Results 1 {genome_factory_result}")
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # check genebuild one has been updated to Processing as well
             dataset: Dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
-            logger.debug(f"Dataset 1 {dataset}")
+            # logger.debug(f"Dataset 1 {dataset}")
             assert genome_factory_result['updated_dataset_status'] == dataset.status.value
             dataset: Dataset = session.query(Dataset).filter(Dataset.dataset_uuid == leaf_uuid).one()
-            logger.debug(f"Dataset 1 {dataset}")
+            # logger.debug(f"Dataset 1 {dataset}")
             assert genome_factory_result['updated_dataset_status'] == dataset.status.value
 
         # update dataset status to processed
@@ -157,13 +157,13 @@ class TestGenomeFactory:
 
         # fetch genomes by status processing and update to processed
         genome_factory_result = [genome for genome in genome_factory.get_genomes(**genome_filters)][0]
-        logger.debug(f"Factory Results 2 {genome_factory_result}")
+        # logger.debug(f"Factory Results 2 {genome_factory_result}")
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
-            logger.debug(f"Dataset 2 {dataset}")
+            # logger.debug(f"Dataset 2 {dataset}")
             assert 'Processing' == dataset.status.value
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == leaf_uuid).one()
-            logger.debug(f"Dataset 2b {dataset}")
+            # logger.debug(f"Dataset 2b {dataset}")
             assert genome_factory_result['updated_dataset_status'] == dataset.status.value
 
         # update dataset status to processed
@@ -173,11 +173,11 @@ class TestGenomeFactory:
         # fetch genomes by status processed and update to released
         with pytest.raises(DatasetFactoryException):
             genome_factory_result = [genome for genome in genome_factory.get_genomes(**genome_filters)][0]
-        logger.debug(f"Factory Results 3 {genome_factory_result}")
+        # logger.debug(f"Factory Results 3 {genome_factory_result}")
         # assert nothing happened in DB
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == leaf_uuid).one()
-            logger.debug(f"Dataset 3 {dataset}")
+            # logger.debug(f"Dataset 3 {dataset}")
             assert 'Processed' == dataset.status.value
         # TODO complete the test with all sub datasets updated to processed before moving leaf to
         #  release then asses that genebuild is now released
@@ -198,3 +198,4 @@ class TestGenomeFactory:
         expected_columns.append('updated_dataset_status')
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
+

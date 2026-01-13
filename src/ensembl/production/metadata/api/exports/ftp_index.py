@@ -9,8 +9,10 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import argparse
 import json
 import re
+import sys
 from collections import defaultdict
 from datetime import datetime
 
@@ -558,8 +560,36 @@ class FTPMetadataExporter:
         return file_paths
 
 
+def main() -> None:
+    """Main entry point for the script."""
+
+    parser = argparse.ArgumentParser(
+        description="Generate index files for the ftp"
+    )
+    parser.add_argument(
+        "--metadata-uri",
+        required=True,
+        help="Database URI for the metadata database"
+    )
+    parser.add_argument(
+        "--output-path",
+        default="species.json",
+        help="Optional output path for the stats files. Filenames will be: "
+             "species.json Defaults to current directory."
+    )
+    args = parser.parse_args()
+
+    try:
+        exporter = FTPMetadataExporter(metadata_uri=args.metadata_uri)
+        metadata = exporter.export_to_json(args.output_path)
+        print(f"Metadata exported to {args.output_path}")
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error generating release statistics: {e}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    exporter = FTPMetadataExporter("mysql://user:pass@host:port/database")
-    exporter.export_to_json("ftp_metadata.json")
-    metadata = exporter.export_to_json()
-    print(f"Found {len(metadata['species'])} species with released datasets")
+    main()

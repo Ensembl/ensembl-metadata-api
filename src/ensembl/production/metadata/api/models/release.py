@@ -12,7 +12,7 @@
 import enum
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, Index, DECIMAL, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Index, DECIMAL, Date, ForeignKey, Enum
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import relationship
 
@@ -27,6 +27,7 @@ class ReleaseStatus(enum.Enum):
     PREPARING = "Preparing"
     PREPARED = "Prepared"
     RELEASED = "Released"
+    ARCHIVED = "Archived"
 
 
 ReleaseStatusType = sqlalchemy.types.Enum(
@@ -52,19 +53,21 @@ class EnsemblRelease(LoadAble, Base):
         Index('ensembl_release_version_site_id_b743399a_uniq', 'version', 'site_id', unique=True),
     )
 
-    release_id = Column(Integer, primary_key=True, nullable=True)
+    release_id = Column(Integer, primary_key=True)
     version = Column(DECIMAL(10, 1), nullable=False)
-    release_date = Column(Date, nullable=True)
-    label = Column(String(64))
+    release_date = Column(Date, nullable=False)
+    label = Column(String(64), nullable=False)
     is_current = Column(TINYINT(1), nullable=False, default=0)
     site_id = Column(ForeignKey('ensembl_site.site_id'), index=True)
-    release_type = Column(String(16), nullable=False)
+    release_type = Column(Enum('partial', 'integrated'), nullable=False)
     status = Column(ReleaseStatusType, nullable=False, default=ReleaseStatus.PLANNED)
-    name = Column(String(3), nullable=False)
+    name = Column(String(3))
     # One to many relationships
     # release_id to genome dataset and genome release
     genome_datasets = relationship('GenomeDataset', back_populates='ensembl_release')
     genome_releases = relationship('GenomeRelease', back_populates='ensembl_release')
+    genome_group_members = relationship('GenomeGroupMember', back_populates='ensembl_release')
+
     # many to one relationships
     # Added fileter condition on every join to EnsemblSite for code clarity
     # No other than configure site data should be returned

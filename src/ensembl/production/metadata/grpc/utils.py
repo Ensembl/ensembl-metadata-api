@@ -159,7 +159,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     )
 
 
-def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, release_version):
+def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
     if not assembly_accession:
         logger.warning("Missing or Empty Assembly accession field.")
         return msg_factory.create_genome()

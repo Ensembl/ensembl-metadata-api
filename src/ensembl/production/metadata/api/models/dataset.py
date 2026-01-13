@@ -15,7 +15,7 @@ import logging
 import uuid
 
 import sqlalchemy
-from sqlalchemy import Column, Integer, String, text, ForeignKey, Index, JSON
+from sqlalchemy import Column, Integer, String, text, ForeignKey, Index
 from sqlalchemy.dialects.mysql import DATETIME, TINYINT
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
@@ -34,6 +34,7 @@ class DatasetStatus(enum.Enum):
     PROCESSED = "Processed"
     RELEASED = "Released"
     FAULTY = "Faulty"
+    SUPPRESSED = "Suppressed"
 
 
 DatasetStatusType = sqlalchemy.types.Enum(
@@ -47,22 +48,21 @@ class Attribute(LoadAble, Base):
     __tablename__ = 'attribute'
 
     attribute_id = Column(Integer, primary_key=True)
-    name = Column(String(128), nullable=False)
+    name = Column(String(128), nullable=False, unique=True)
     label = Column(String(128), nullable=False)
     description = Column(String(255))
     required = Column(TINYINT(1), nullable=False, default=0)
-    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp', 'number'), server_default=text("'string'"))
+    required_dataset_type = Column(String(32), nullable=True)
+    type = Column(Enum('string', 'percent', 'float', 'integer', 'bp'), server_default=text("'string'"))
     # One to many relationships
-    # attribute_id within dataset attribute
     dataset_attributes = relationship("DatasetAttribute", back_populates='attribute')
-    # many to one relationships
 
 
 class Dataset(LoadAble, Base):
     __tablename__ = 'dataset'
 
     dataset_id = Column(Integer, primary_key=True)
-    dataset_uuid = Column(String(32), nullable=False, unique=True, default=str(uuid.uuid4))
+    dataset_uuid = Column(String(40), nullable=False, unique=True, default=lambda: str(uuid.uuid4()))
     dataset_type_id = Column(ForeignKey('dataset_type.dataset_type_id'), nullable=False, index=True)
     name = Column(String(128), nullable=False)
     version = Column(String(128))
@@ -70,19 +70,15 @@ class Dataset(LoadAble, Base):
     dataset_source_id = Column(ForeignKey('dataset_source.dataset_source_id'), nullable=False, index=True)
     label = Column(String(128), nullable=False)
     status = Column(DatasetStatusType, server_default=text('Submitted'))
+    parent_id = Column(Integer, ForeignKey('dataset.dataset_id'), nullable=True, index=True)
 
     # One to many relationships
-    # dataset_id to dataset attribute and genome dataset
     dataset_attributes = relationship("DatasetAttribute", back_populates='dataset',
                                       cascade="all, delete, delete-orphan")
     genome_datasets = relationship("GenomeDataset", back_populates='dataset', cascade="all, delete, delete-orphan")
     # many to one relationships
-    # dataset_type_id to dataset_type
     dataset_type = relationship('DatasetType', back_populates="datasets")
-    # dataset_source_id to dataset source
     dataset_source = relationship('DatasetSource', back_populates="datasets")
-    # parent dataset when created
-    parent_id = Column(Integer, ForeignKey('dataset.dataset_id'), nullable=True, index=True)
     children = relationship('Dataset', backref=backref("parent", remote_side=[dataset_id]))
 
     @property
@@ -118,12 +114,8 @@ class DatasetAttribute(LoadAble, Base):
     value = Column(String(255), nullable=False)
     attribute_id = Column(ForeignKey('attribute.attribute_id'), nullable=False, index=True)
     dataset_id = Column(ForeignKey('dataset.dataset_id'), nullable=False, index=True)
-    # One to many relationships
-    # none
     # many to one relationships
-    # dataset_attribute_id to dataset
     attribute = relationship('Attribute', back_populates="dataset_attributes")
-    # attribute_id to attribute
     dataset = relationship('Dataset', back_populates="dataset_attributes")
 
 
@@ -133,27 +125,19 @@ class DatasetSource(LoadAble, Base):
     dataset_source_id = Column(Integer, primary_key=True)
     type = Column(String(32), nullable=False)
     name = Column(String(255), nullable=False, unique=True)
+    location = Column(String(120))
     # One to many relationships
-    # dataset_source_id to dataset
     datasets = relationship('Dataset', back_populates='dataset_source')
-    # many to one relationships
-    # none
-
 
 class DatasetType(LoadAble, Base):
     __tablename__ = 'dataset_type'
 
     dataset_type_id = Column(Integer, primary_key=True)
-    name = Column(String(32), nullable=False)
+    name = Column(String(32), nullable=False, unique=True)
     label = Column(String(128), nullable=False)
     topic = Column(String(32), nullable=False)
     description = Column(String(255))
-    details_uri = Column(String(255))
     parent = Column(ForeignKey('dataset_type.dataset_type_id'), name='parent_id', nullable=True, index=True)
-    depends_on = Column(String(128), default=None)
-    filter_on = Column(JSON, default=None)
+    multiple_current = Column(TINYINT(1), nullable=False, default=0)
     # One to many relationships
-    # dataset_type_id to dataset
     datasets = relationship('Dataset', back_populates='dataset_type')
-    # many to one relationships
-    # none
