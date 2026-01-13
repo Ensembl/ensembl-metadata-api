@@ -15,7 +15,7 @@ import logging
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List, Tuple, Iterator
+from typing import Optional, List, Tuple, Iterator, Union
 
 from ensembl.utils.database import DBConnection
 from pydantic import BaseModel
@@ -105,8 +105,30 @@ class IndexingErrorCollection:
 # ============================================================================
 
 
+class SearchField(BaseModel):
+    """A single field in a search entry"""
+
+    name: str
+    value: Union[str, int, bool, List[int], List[str]]
+
+
+class SearchEntry(BaseModel):
+    """A single search entry with fields array"""
+
+    fields: List[SearchField]
+
+
+class SearchIndex(BaseModel):
+    """The complete search index document"""
+
+    name: str = "ensemblNext"
+    release: str
+    entry_count: int
+    entries: List[SearchEntry]
+
+
 class GenomeSearchDocument(BaseModel):
-    """Schema for genome search indexing"""
+    """Internal schema for genome data before conversion to fields format"""
 
     # Direct fields from Genome/Organism/Assembly
     genome_uuid: str
@@ -122,7 +144,7 @@ class GenomeSearchDocument(BaseModel):
     species_taxonomy_id: int
     taxonomy_id: int
     scientific_parlance_name: Optional[str] = None
-    organism_id: int
+    organism_uuid: str  # Changed from organism_id
     rank: int = 0
 
     # Additional taxonomy fields
@@ -138,12 +160,56 @@ class GenomeSearchDocument(BaseModel):
     genebuild_method_display: str
 
     # Release information
-    release_type: str
-    release_label: str
-    release_id: int
+    first_release_name: str
+    first_release_type: str
+    latest_release_name: str
+    latest_release_type: str
+    is_latest_release_current: int
+    releases: str  # comma-separated list of integrated releases
 
     class Config:
         from_attributes = True
+
+    def to_search_entry(self) -> SearchEntry:
+        """Convert to SearchEntry format with fields array"""
+        # Strip version from accession (e.g., GCA_000005845.2 -> GCA_000005845)
+        unversioned_accession = self.accession.rsplit(".", 1)[0] if "." in self.accession else self.accession
+
+        fields = [
+            SearchField(name="id", value=self.genome_uuid),
+            SearchField(name="common_name", value=self.common_name or ""),
+            SearchField(name="scientific_name", value=self.scientific_name),
+            SearchField(name="assembly", value=self.assembly_name),
+            SearchField(name="assembly_accession", value=self.accession),
+            SearchField(name="unversioned_assembly_accession", value=unversioned_accession),
+            SearchField(name="type_value", value=self.strain or ""),
+            SearchField(name="parlance_name", value=self.scientific_parlance_name or ""),
+            SearchField(name="type_type", value=self.strain_type or ""),
+            SearchField(name="coding_genes", value=str(self.coding_genes)),
+            SearchField(name="n50", value=str(self.contig_n50)),
+            SearchField(name="has_variation", value=self.has_variation),
+            SearchField(name="has_regulation", value=self.has_regulation),
+            SearchField(name="annotation_method", value=self.genebuild_method_display),
+            SearchField(name="annotation_provider", value=self.genebuild_provider),
+            SearchField(name="genome_uuid", value=self.genome_uuid),
+            SearchField(name="url_name", value=self.url_name or ""),
+            SearchField(name="tol_id", value=self.tol_id or ""),
+            SearchField(name="is_reference", value=self.is_reference),
+            SearchField(name="species_taxonomy_id", value=self.species_taxonomy_id),
+            SearchField(name="taxonomy_id", value=self.taxonomy_id),
+            SearchField(name="lineage_taxids", value=self.lineage_taxids),
+            SearchField(name="lineage_name", value=self.lineage_name),
+            SearchField(name="organism_id", value=self.organism_uuid),
+            SearchField(name="rank", value=self.rank),
+            SearchField(name="first_release_name", value=self.first_release_name),
+            SearchField(name="first_release_type", value=self.first_release_type),
+            SearchField(name="latest_release_name", value=self.latest_release_name),
+            SearchField(name="latest_release_type", value=self.latest_release_type),
+            SearchField(name="is_latest_release_current", value=self.is_latest_release_current),
+            SearchField(name="releases", value=self.releases),
+        ]
+
+        return SearchEntry(fields=fields)
 
 
 # ============================================================================
@@ -152,7 +218,11 @@ class GenomeSearchDocument(BaseModel):
 
 
 class DatasetFieldExtractor:
-    """Extracts dataset-related fields for a genome/release pair"""
+    """
+    Extracts dataset-related fields for a genome.
+    Always uses is_current=1 datasets regardless of release.
+    Release is kept for context in error messages.
+    """
 
     def __init__(self, session: Session, genome: Genome, release: EnsemblRelease):
         self.session = session
@@ -162,28 +232,20 @@ class DatasetFieldExtractor:
 
     def _get_relevant_datasets(self) -> List[GenomeDataset]:
         """
-        Get datasets relevant for this genome/release combination.
+        Get datasets relevant for this genome.
 
         Logic:
-        - If integrated release: datasets with release_id matching the release
-        - If partial release: datasets with is_current == 1
-        - ALWAYS filter to only Released datasets
+        - Always return datasets with is_current == 1
+        - Filter to only Released datasets
         """
         if self._datasets_cache is not None:
             return self._datasets_cache
 
-        if self.release.release_type == "integrated":
-            self._datasets_cache = [
-                gd
-                for gd in self.genome.genome_datasets
-                if gd.release_id == self.release.release_id and gd.dataset.status == DatasetStatus.RELEASED
-            ]
-        else:  # partial
-            self._datasets_cache = [
-                gd
-                for gd in self.genome.genome_datasets
-                if gd.is_current == 1 and gd.dataset.status == DatasetStatus.RELEASED
-            ]
+        self._datasets_cache = [
+            gd
+            for gd in self.genome.genome_datasets
+            if gd.is_current == 1 and gd.dataset.status == DatasetStatus.RELEASED
+        ]
 
         return self._datasets_cache
 
@@ -198,7 +260,6 @@ class DatasetFieldExtractor:
             if dataset.dataset_type.name != dataset_type_name:
                 continue
 
-            # Find the attribute in this dataset
             for dataset_attr in dataset.dataset_attributes:
                 if dataset_attr.attribute.name == attribute_name:
                     return dataset_attr.value
@@ -313,75 +374,127 @@ class DatasetFieldExtractor:
 
 
 class ReleaseSelector:
-    """Handles the complex logic of selecting the appropriate release for a genome"""
+    """Handles the logic of selecting the appropriate release for a genome"""
 
     @staticmethod
     def select_release_for_genome(genome: Genome) -> Optional[EnsemblRelease]:
         """
         Select the single appropriate release for a genome.
 
-        Rules for NON-SUPPRESSED genomes:
-        1. If attached to integrated release(s):
-           - Take the most recent Released integrated (by label: YYYY-MM)
-           - BUT if any dataset is attached to a newer partial (Released, is_current),
-             use that partial instead
-        2. If no integrated releases but has a Released partial, use the partial
-        3. Otherwise return None
-
-        Rules for SUPPRESSED genomes:
-        1. Never return a partial-only genome (return None)
-        2. If part of integrated release(s), return the most recent integrated (by label)
-        3. Even if there's newer data in a partial, stick with the integrated
+        Rules:
+        1. If only partial release(s) exist: return it IF genome_release.is_current=1, else None
+        2. If both partial and integrated exist: return the newest integrated (by label)
         """
-        # Get all released releases for this genome through genome_releases
-        released_releases = [
-            gr.ensembl_release
+        # Get all released genome_releases
+        released_genome_releases = [
+            gr
             for gr in genome.genome_releases
             if gr.ensembl_release and gr.ensembl_release.status == ReleaseStatus.RELEASED
         ]
 
-        if not released_releases:
+        if not released_genome_releases:
             return None
 
         # Separate into integrated and partial
-        integrated_releases = [r for r in released_releases if r.release_type == "integrated"]
-        partial_releases = [r for r in released_releases if r.release_type == "partial" and r.is_current]
+        integrated_grs = [
+            gr for gr in released_genome_releases if gr.ensembl_release.release_type == "integrated"
+        ]
+        partial_grs = [gr for gr in released_genome_releases if gr.ensembl_release.release_type == "partial"]
 
-        # SUPPRESSED GENOME LOGIC
-        if genome.suppressed:
-            # Rule 1: If no integrated releases, don't display (return None)
-            if not integrated_releases:
-                return None
+        # If we have integrated releases, return the newest one
+        if integrated_grs:
+            newest_integrated = max(integrated_grs, key=lambda gr: gr.ensembl_release.label)
+            return newest_integrated.ensembl_release
 
-            # Rule 2 & 3: Return most recent integrated by label, ignore any partial
-            return max(integrated_releases, key=lambda r: r.label)
+        # Only partial releases exist - check for is_current=1
+        current_partial_grs = [gr for gr in partial_grs if gr.is_current == 1]
 
-        # NON-SUPPRESSED GENOME LOGIC
-        # Case 1: No integrated releases - return partial if exists
-        if not integrated_releases:
-            return partial_releases[0] if partial_releases else None
+        if current_partial_grs:
+            if len(current_partial_grs) > 1:
+                # Data integrity issue - should never have multiple is_current partials
+                partial_labels = [gr.ensembl_release.label for gr in current_partial_grs]
+                raise ValueError(
+                    f"Data integrity error: Genome {genome.genome_uuid} has multiple is_current=1 "
+                    f"partial releases: {', '.join(partial_labels)}. Only one is_current partial should exist."
+                )
+            return current_partial_grs[0].ensembl_release
 
-        # Case 2: Has integrated releases
-        # Get the most recent integrated by label (YYYY-MM sorted)
-        most_recent_integrated = max(integrated_releases, key=lambda r: r.label)
+        return None
 
-        # Check if we should use a partial instead
-        if partial_releases:
-            partial_release = partial_releases[0]  # Should only be one current partial
+    @staticmethod
+    def get_release_info(
+            genome: Genome,
+    ) -> Tuple[Optional[EnsemblRelease], Optional[EnsemblRelease], List[EnsemblRelease]]:
+        """
+        Get first release, latest release, and all integrated releases for a genome.
 
-            # Check if any RELEASED dataset is attached to this partial release
-            partial_datasets = [
-                gd
-                for gd in genome.genome_datasets
-                if gd.release_id == partial_release.release_id and gd.dataset.status == DatasetStatus.RELEASED
-            ]
+        Returns:
+            (first_release, latest_release, all_integrated_releases)
 
-            # If there are datasets attached to a partial that's newer than the integrated
-            # Compare labels: partial label should be "greater" than integrated label
-            if partial_datasets and partial_release.label > most_recent_integrated.label:
-                return partial_release
+        Rules:
+        - first_release: earliest release (integrated preferred, partial if no integrated)
+        - latest_release: most recent release (integrated preferred, partial if no integrated)
+        - all_integrated_releases: list of ALL integrated releases sorted by label
+        """
+        released_genome_releases = [
+            gr
+            for gr in genome.genome_releases
+            if gr.ensembl_release and gr.ensembl_release.status == ReleaseStatus.RELEASED
+        ]
 
-        return most_recent_integrated
+        if not released_genome_releases:
+            return None, None, []
+
+        integrated_grs = [
+            gr for gr in released_genome_releases if gr.ensembl_release.release_type == "integrated"
+        ]
+        partial_grs = [gr for gr in released_genome_releases if gr.ensembl_release.release_type == "partial"]
+
+        # Get all integrated releases sorted
+        all_integrated = sorted([gr.ensembl_release for gr in integrated_grs], key=lambda r: r.label)
+
+        # Determine first release
+        if integrated_grs:
+            first_release = min(integrated_grs, key=lambda gr: gr.ensembl_release.label).ensembl_release
+        elif partial_grs:
+            first_release = min(partial_grs, key=lambda gr: gr.ensembl_release.label).ensembl_release
+        else:
+            first_release = None
+
+        # Determine latest release
+        if integrated_grs:
+            latest_release = max(integrated_grs, key=lambda gr: gr.ensembl_release.label).ensembl_release
+        elif partial_grs:
+            latest_release = max(partial_grs, key=lambda gr: gr.ensembl_release.label).ensembl_release
+        else:
+            latest_release = None
+
+        return first_release, latest_release, all_integrated
+
+    @staticmethod
+    def get_is_latest_release_current(
+            genome: Genome, selected_release: EnsemblRelease, latest_release: EnsemblRelease
+    ) -> int:
+        """
+        Determine if the latest release is current.
+
+        Rules:
+        - For partial-only genomes: always 1
+        - For genomes with integrated releases: 1 if the selected_release matches the latest_release
+        """
+        # Check if genome has any integrated releases
+        has_integrated = any(
+            gr.ensembl_release.release_type == "integrated"
+            for gr in genome.genome_releases
+            if gr.ensembl_release and gr.ensembl_release.status == ReleaseStatus.RELEASED
+        )
+
+        if not has_integrated:
+            # Partial-only genome
+            return 1
+        else:
+            # Has integrated releases - check if selected matches latest
+            return 1 if selected_release.release_id == latest_release.release_id else 0
 
 
 # ============================================================================
@@ -473,6 +586,21 @@ class GenomeSearchIndexer:
             # Clear session to free memory
             session.expunge_all()
 
+    def _get_newest_partial_release(self, session: Session) -> Optional[str]:
+        """
+        Get the newest partial release label from the database.
+        This will be used as the top-level release in the search index.
+        """
+        newest_partial = (
+            session.query(EnsemblRelease)
+            .filter(EnsemblRelease.release_type == "partial")
+            .filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+            .order_by(EnsemblRelease.label.desc())
+            .first()
+        )
+
+        return newest_partial.label if newest_partial else None
+
     def _extract_direct_fields(self, genome: Genome) -> dict:
         """Extract direct fields from Genome/Organism/Assembly"""
         return {
@@ -489,7 +617,7 @@ class GenomeSearchIndexer:
             "species_taxonomy_id": genome.organism.species_taxonomy_id,
             "taxonomy_id": genome.organism.taxonomy_id,
             "scientific_parlance_name": genome.organism.scientific_parlance_name,
-            "organism_id": genome.organism_id,
+            "organism_uuid": genome.organism.organism_uuid,
             "rank": genome.organism.rank or 0,
         }
 
@@ -526,7 +654,8 @@ class GenomeSearchIndexer:
             lineage_taxids.append(ancestor["taxon_id"])
 
         # Query for ALL names (all name_class values) for all taxon_ids in the lineage
-        # exclude 'import date' entries
+        # exclude 'import date' entries.
+        # TODO: Add more exclusions on here!
         all_names = (
             taxonomy_session.query(NCBITaxonomy.name)
             .filter(NCBITaxonomy.taxon_id.in_(lineage_taxids))
@@ -546,11 +675,14 @@ class GenomeSearchIndexer:
         """
         Create search document for a genome/release pair.
 
+        Note: Dataset fields always come from is_current=1 datasets,
+        regardless of which release is being indexed.
+
         Args:
             metadata_session: Session for metadata database
             taxonomy_session: Session for taxonomy database
             genome: Genome object
-            release: EnsemblRelease object
+            release: EnsemblRelease object (the selected release for indexing)
 
         Raises:
             MissingDatasetFieldError: If any required dataset fields are missing
@@ -559,12 +691,23 @@ class GenomeSearchIndexer:
         # Extract direct fields
         doc_data = self._extract_direct_fields(genome)
 
-        # Add release information
+        # Get release information
+        first_release, latest_release, all_integrated = self.release_selector.get_release_info(genome)
+
+        # Build comma-separated list of integrated release labels
+        releases_str = ",".join([r.label for r in all_integrated]) if all_integrated else ""
+
+        # Calculate is_latest_release_current
+        is_current = self.release_selector.get_is_latest_release_current(genome, release, latest_release)
+
         doc_data.update(
             {
-                "release_type": release.release_type,
-                "release_label": release.label,
-                "release_id": release.release_id,
+                "first_release_name": first_release.label if first_release else "",
+                "first_release_type": first_release.release_type if first_release else "",
+                "latest_release_name": latest_release.label if latest_release else "",
+                "latest_release_type": latest_release.release_type if latest_release else "",
+                "is_latest_release_current": is_current,
+                "releases": releases_str,
             }
         )
 
@@ -594,9 +737,7 @@ class GenomeSearchIndexer:
 
         return GenomeSearchDocument(**doc_data)
 
-    def export_to_json(
-            self, output_path: str, raise_on_errors: bool = True, pretty_print: bool = True
-    ) -> int:
+    def export_to_json(self, output_path: str, raise_on_errors: bool = False, pretty_print: bool = True) -> int:
         """
         Generate search index and export to JSON file.
         Loads all documents in memory then writes to file.
@@ -617,7 +758,7 @@ class GenomeSearchIndexer:
         logger.info(f"Generating search index and exporting to {output_path}")
 
         # Get all documents
-        documents = self.get_search_index(raise_on_errors=raise_on_errors)
+        search_index = self.get_search_index(raise_on_errors=raise_on_errors)
 
         # Write to file
         output_file = Path(output_path)
@@ -625,16 +766,14 @@ class GenomeSearchIndexer:
 
         with open(output_file, "w") as f:
             if pretty_print:
-                json.dump(documents, f, indent=2)
+                json.dump(search_index.model_dump(), f, indent=2)
             else:
-                json.dump(documents, f)
+                json.dump(search_index.model_dump(), f)
 
-        logger.info(f"Successfully exported {len(documents)} documents to {output_path}")
-        return len(documents)
+        logger.info(f"Successfully exported {search_index.entry_count} documents to {output_path}")
+        return search_index.entry_count
 
-    def stream_to_json(
-            self, output_path: str, pretty_print: bool = True
-    ) -> Tuple[int, IndexingErrorCollection]:
+    def stream_to_json(self, output_path: str, pretty_print: bool = True) -> Tuple[int, IndexingErrorCollection]:
         """
         Generate search index and stream to JSON file.
         Writes documents as they're generated to minimize memory usage.
@@ -655,35 +794,51 @@ class GenomeSearchIndexer:
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
         total = 0
-        indent = 2 if pretty_print else None
 
         with open(output_file, "w") as f:
-            f.write("[\n" if pretty_print else "[")
-            first = True
-
             with self.metadata_db.session_scope() as metadata_session:
                 with self.taxonomy_db.session_scope() as taxonomy_session:
+                    # Get the newest partial release for top-level
+                    newest_partial = self._get_newest_partial_release(metadata_session)
+                    if not newest_partial:
+                        raise ValueError("No partial releases found in database")
+
+                    # Write opening with metadata
+                    if pretty_print:
+                        f.write('{\n  "name": "ensemblNext",\n')
+                        f.write(f'  "release": "{newest_partial}",\n')
+                        f.write('  "entry_count": 0,\n')  # Placeholder, will be updated
+                        f.write('  "entries": [\n')
+                    else:
+                        f.write('{"name":"ensemblNext",')
+                        f.write(f'"release":"{newest_partial}",')
+                        f.write('"entry_count":0,')
+                        f.write('"entries":[')
+
+                    first = True
+
                     for batch in self.get_genomes_with_releases_batched(metadata_session):
                         for genome, release in batch:
                             try:
                                 doc = self.create_search_document(
                                     metadata_session, taxonomy_session, genome, release
                                 )
+                                entry = doc.to_search_entry()
 
                                 # Write comma before all but first document
                                 if not first:
                                     f.write(",\n" if pretty_print else ",")
                                 first = False
 
-                                # Write document
+                                # Write entry
                                 if pretty_print:
                                     # Add indentation for array items
-                                    doc_json = json.dumps(doc.model_dump(), indent=2)
-                                    # Indent each line by 2 spaces
-                                    indented = "\n".join("  " + line for line in doc_json.split("\n"))
+                                    entry_json = json.dumps(entry.model_dump(), indent=2)
+                                    # Indent each line by 4 spaces
+                                    indented = "\n".join("    " + line for line in entry_json.split("\n"))
                                     f.write(indented)
                                 else:
-                                    json.dump(doc.model_dump(), f)
+                                    json.dump(entry.model_dump(), f)
 
                                 total += 1
 
@@ -706,7 +861,15 @@ class GenomeSearchIndexer:
                                     exception=e,
                                 )
 
-            f.write("\n]" if pretty_print else "]")
+                    f.write("\n  ]\n}" if pretty_print else "]}")
+
+        # Update entry_count in the file
+        with open(output_file, "r") as f:
+            content = f.read()
+        content = content.replace('"entry_count": 0', f'"entry_count": {total}', 1)
+        content = content.replace('"entry_count":0', f'"entry_count":{total}', 1)
+        with open(output_file, "w") as f:
+            f.write(content)
 
         logger.info(f"Successfully streamed {total} documents to {output_path}")
 
@@ -719,7 +882,7 @@ class GenomeSearchIndexer:
     def export_to_json_auto(
             self,
             output_path: str,
-            raise_on_errors: bool = True,
+            raise_on_errors: bool = False,
             pretty_print: bool = True,
             stream_threshold: int = 5000,
     ) -> int:
@@ -755,7 +918,7 @@ class GenomeSearchIndexer:
             logger.info(f"Using regular mode (<={stream_threshold} genomes)")
             return self.export_to_json(output_path, raise_on_errors, pretty_print)
 
-    def get_search_index(self, raise_on_errors: bool = True) -> List[dict]:
+    def get_search_index(self, raise_on_errors: bool = False) -> SearchIndex:
         """
         Main entry point to generate search index.
 
@@ -767,17 +930,22 @@ class GenomeSearchIndexer:
                            If False, return successfully indexed documents and print errors.
 
         Returns:
-            List of successfully indexed genome documents as dicts
+            SearchIndex object with all successfully indexed documents
 
         Raises:
             MissingDatasetFieldError: If raise_on_errors=True and any errors occurred
         """
         error_collection = IndexingErrorCollection()
-        search_documents = []
+        search_entries = []
         total_processed = 0
 
         with self.metadata_db.session_scope() as metadata_session:
             with self.taxonomy_db.session_scope() as taxonomy_session:
+                # Get the newest partial release for top-level
+                newest_partial = self._get_newest_partial_release(metadata_session)
+                if not newest_partial:
+                    raise ValueError("No partial releases found in database")
+
                 # Process genomes in batches
                 for batch in self.get_genomes_with_releases_batched(metadata_session):
                     for genome, release in batch:
@@ -785,7 +953,8 @@ class GenomeSearchIndexer:
                             doc = self.create_search_document(
                                 metadata_session, taxonomy_session, genome, release
                             )
-                            search_documents.append(doc.model_dump())
+                            entry = doc.to_search_entry()
+                            search_entries.append(entry)
                             total_processed += 1
 
                             # Log progress periodically
@@ -809,15 +978,17 @@ class GenomeSearchIndexer:
                             )
 
                 # Report results
-                logger.info(f"Successfully indexed: {len(search_documents)} genome(s)")
+                logger.info(f"Successfully indexed: {len(search_entries)} genome(s)")
                 if error_collection.has_errors():
                     logger.warning(f"Failed to index: {len(error_collection.errors)} genome(s)")
                     print(error_collection.get_summary())
 
-                    # if raise_on_errors:
-                    #     error_collection.raise_if_errors()
+                    if raise_on_errors:
+                        error_collection.raise_if_errors()
 
-                return search_documents
+                return SearchIndex(
+                    name="ensemblNext", release=newest_partial, entry_count=len(search_entries), entries=search_entries
+                )
 
 
 # ============================================================================
@@ -849,9 +1020,9 @@ def main() -> None:
         "--no-pretty-print", action="store_true", help="Disable JSON pretty printing (creates smaller files)"
     )
     parser.add_argument(
-        "--no-raise-on-errors",
+        "--raise-on-errors",
         action="store_true",
-        help="Continue processing even if some genomes fail indexing",
+        help="Raise exception and stop if any genomes fail indexing (default: continue and dump what succeeded)",
     )
     parser.add_argument(
         "--log-level",
@@ -874,7 +1045,7 @@ def main() -> None:
 
         count = indexer.export_to_json_auto(
             output_path=args.output_path,
-            raise_on_errors=not args.no_raise_on_errors,
+            raise_on_errors=args.raise_on_errors,
             pretty_print=not args.no_pretty_print,
             stream_threshold=args.stream_threshold,
         )
