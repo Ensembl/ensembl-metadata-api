@@ -13,6 +13,7 @@ import itertools
 import logging
 import uuid
 from typing import Type, Any
+from datetime import datetime
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.adaptors import GenomeAdaptor, BaseAdaptor
@@ -365,27 +366,53 @@ def get_genomes_by_specific_keyword_iterator(
         logger.warning("Missing required field")
         return msg_factory.create_genome()
 
-    genome_results = db_conn.fetch_genome_by_specific_keyword(
-        tolid, assembly_accession_id, assembly_name, ensembl_name,
-        common_name, scientific_name, scientific_parlance_name,
-        species_taxonomy_id, release_version
-    )
+    try:
+        genome_results = db_conn.fetch_genome_by_specific_keyword(
+            tolid, assembly_accession_id, assembly_name, ensembl_name,
+            common_name, scientific_name, scientific_parlance_name,
+            species_taxonomy_id, release_version
+        )
 
-    if len(genome_results) > 0:
-        # Create an empty list to store the most recent genomes
-        most_recent_genomes = []
-        # Group `genome_results` based on the `assembly_accession` field
-        for _, genome_release_group in itertools.groupby(genome_results, lambda r: r.Assembly.accession):
-            # Sort the genomes in each group based on the `release_version` field in descending order
-            sorted_genomes = sorted(genome_release_group, key=lambda
-                g: g.EnsemblRelease.version if g.EnsemblRelease is not None else g.Genome.genome_uuid, reverse=True)
-            # Select the most recent genome from the sorted group (first element)
-            most_recent_genome = sorted_genomes[0]
-            # Add the most recent genome to the `most_recent_genomes` list
-            most_recent_genomes.append(most_recent_genome)
+        if len(genome_results) > 0:
+            # Create an empty list to store the genomes list
+            genomes_list = []
+            # sort genomes based on the `assembly_accession` field since we are going to group by it
+            genome_results.sort(key=lambda r: r.Assembly.accession)
+            # Group `genome_results` based on the `assembly_accession` field
+            for _, genome_release_group in itertools.groupby(genome_results, lambda r: r.Assembly.accession):
+                # Sort the genomes in each group based on the `genome_uuid` field to prepare for grouping
+                sorted_genomes = sorted(genome_release_group, key=lambda g: g.Genome.genome_uuid)
+                # group by genome uuid incase of partial and integrated releases
+                for _, genome_uuid_group in itertools.groupby(sorted_genomes, lambda g: g.Genome.genome_uuid):
+                    genome_uuid_group = list(genome_uuid_group)
+                    if len(genome_uuid_group) > 1:                    
+                        # sort by release date descending. The last code checked if EnsemblRelease exists. If it doesn't it uses a default date and not genome uuid
+                        sorted_genome_uuid_group = sorted(
+                            genome_uuid_group,
+                            key=lambda g: getattr(g.EnsemblRelease, 'release_date', datetime.strptime('1900-01-01', '%Y-%m-%d')) if g.EnsemblRelease else datetime.strptime('1900-01-01', '%Y-%m-%d'),
+                            reverse=True
+                        )
+                        # check for integrated release in group
+                        integrated_genome = [
+                            g for g in sorted_genome_uuid_group
+                            if g.EnsemblRelease and getattr(g.EnsemblRelease, 'release_type', None) == 'integrated'
+                        ]
+                        if len(integrated_genome) > 0:
+                            genomes_list.append(integrated_genome[0])
+                        
+                        # if no integrated release, just take the first one, which is the most recent partial release
+                        else:                            
+                            genomes_list.append(sorted_genome_uuid_group[0])
+                    # if only one genome in the group, just add it to the list
+                    else:
+                        genomes_list.append(list(genome_uuid_group)[0])                                                        
 
-        for genome_row in most_recent_genomes:
-            yield msg_factory.create_genome(data=genome_row)
+            for genome_row in genomes_list:
+                yield msg_factory.create_genome(data=genome_row)
+                
+    except Exception as e:
+        logger.error(f"Error fetching genomes: {e}")
+        return msg_factory.create_genome()
 
     logger.debug("No genomes were found.")
     return msg_factory.create_genome()

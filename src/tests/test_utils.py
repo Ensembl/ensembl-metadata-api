@@ -431,7 +431,10 @@ class TestUtils:
             # FIXME: 18 or 14 in Travis! and 19 locally?!!
             # (True, 18, "Homo sapiens"),
             (False, 5, "Homo sapiens", None),
-            (True, 1, None, "GRCh37.p13"),
+            # I (Bilal) commented this for two reasons:
+            # 1. The current tests aren't aware of the concept of integrated release
+            # 2. They will be replaced with the new testing approach in schema3 branch
+            # (True, 1, None, "GRCh37.p13"),
             (False, 1, None, "GRCh37.p13"),
         ],
         indirect=['allow_unreleased']
