@@ -397,17 +397,6 @@ def create_datasets(data=None):
         genome_uuid=data["genome_uuid"], datasets=data['datasets']
     )
 
-def get_available_datasets(data=None):
-    if data is None:
-        return []
-
-    print(f"$$$$$$$$$ data ---> {data}")
-    # print(f"&&&&&&&&& data.datasets ---> {data.datasets}")
-    # for d in data:
-    #     if d.dataset.is_available:
-    #         yield d.dataset
-    return []
-
 
 def populate_dataset_info(data=None):
     if data is None:
