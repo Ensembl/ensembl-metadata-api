@@ -155,7 +155,8 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
         data=genome,
         attributes=attribs,
         count=related_assemblies_count,
-        alternative_names=alternative_names
+        alternative_names=alternative_names,
+        datasets=attrib_data_results[0].datasets
     )
 
 

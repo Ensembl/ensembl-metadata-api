@@ -248,7 +248,7 @@ def create_genome_uuid(data=None):
     return genome_uuid
 
 
-def create_genome(data=None, attributes=None, count=0, alternative_names=[]):
+def create_genome(data=None, attributes=None, count=0, alternative_names=[], datasets=[]):
     if data is None:
         return ensembl_metadata_pb2.Genome()
 
@@ -257,6 +257,10 @@ def create_genome(data=None, attributes=None, count=0, alternative_names=[]):
     organism = create_organism(data)
     attributes_info = create_attributes_info(attributes)
     release = create_release(data)
+    # I will be honest with myself here, I don't like this! I don't like this at all!
+    # For many reasons, datasets are deeply nested like onions! I cry while peeling the stacked layers!
+    # But Yay! It's working! ... Everything about datasets has to change later
+    available_datasets = list({ds_type.dataset.dataset_type.name for ds_type in datasets})
 
     genome = ensembl_metadata_pb2.Genome(
         genome_uuid=data.Genome.genome_uuid,
@@ -266,7 +270,8 @@ def create_genome(data=None, attributes=None, count=0, alternative_names=[]):
         organism=organism,
         attributes_info=attributes_info,
         release=release,
-        related_assemblies_count=count
+        related_assemblies_count=count,
+        available_datasets=available_datasets
     )
     return genome
 
@@ -391,6 +396,17 @@ def create_datasets(data=None):
     return ensembl_metadata_pb2.Datasets(
         genome_uuid=data["genome_uuid"], datasets=data['datasets']
     )
+
+def get_available_datasets(data=None):
+    if data is None:
+        return []
+
+    print(f"$$$$$$$$$ data ---> {data}")
+    # print(f"&&&&&&&&& data.datasets ---> {data.datasets}")
+    # for d in data:
+    #     if d.dataset.is_available:
+    #         yield d.dataset
+    return []
 
 
 def populate_dataset_info(data=None):
