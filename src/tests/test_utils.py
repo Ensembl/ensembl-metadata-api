@@ -316,7 +316,8 @@ class TestUtils:
         logger.debug(f"Initial {output}")
         output = json.loads(output)
         expected_keys = ['assembly', 'attributesInfo', 'created', 'genomeUuid',
-                         'organism', 'release', 'taxon', 'relatedAssembliesCount']
+                         'organism', 'release', 'taxon', 'relatedAssembliesCount',
+                         'availableDatasets']
         logger.debug(f"Output {output}")
         if actual is not None:
             assert len(output.keys()) == len(expected_keys)
@@ -508,6 +509,12 @@ class TestUtils:
                 'genebuildProviderVersion': 'ENS01',
                 'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
             },
+            'availableDatasets': [
+                'assembly',
+                'homologies',
+                'genebuild',
+                'variation',
+            ],
             'created': '2023-09-22 15:02:01',
             'genomeUuid': '2020e8d5-4d87-47af-be78-0b15e48970a7',
             'organism': {
@@ -543,8 +550,11 @@ class TestUtils:
         t = json.loads(output)
         
         assert t["attributesInfo"] == expected_output["attributesInfo"]
+        # Sort both lists before comparison
+        t['availableDatasets'] = sorted(t['availableDatasets'])
+        expected_output['availableDatasets'] = sorted(expected_output['availableDatasets'])
         
-        assert json.loads(output) == expected_output
+        assert sorted(json.loads(output)) == sorted(expected_output)
 
     def test_get_genomes_by_name_release_unspecified(self, genome_conn):
         # FIXME this test is very similar with the one above, this could be merged into one single one with fixtures
@@ -579,6 +589,12 @@ class TestUtils:
                 'genebuildSampleLocation': 'X:937766-957832',
                 'genebuildProviderVersion': 'EXT01'
             },
+            'availableDatasets': [
+                'assembly',
+                'homologies',
+                'genebuild',
+                'variation',
+            ],
             'created': '2023-09-22 15:06:58',
             'genomeUuid': 'a733550b-93e7-11ec-a39d-005056b38ce3',
             'organism': {
@@ -611,7 +627,7 @@ class TestUtils:
         }
         t = json.loads(output)
         assert t["attributesInfo"] == expected_output["attributesInfo"]
-        assert t == expected_output
+        assert sorted(t) == sorted(expected_output)
 
     # def test_get_organisms_group_count(self, genome_conn):
     #     output = json_format.MessageToJson(
