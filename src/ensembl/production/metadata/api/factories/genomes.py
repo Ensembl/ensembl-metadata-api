@@ -15,7 +15,6 @@
 Fetch Genome Info From New Metadata Database
 """
 
-import argparse
 import json
 import logging
 import re
@@ -23,12 +22,15 @@ from dataclasses import dataclass, field
 from typing import List
 
 from ensembl.utils.database import DBConnection
+from ensembl.utils.argparse import ArgumentParser
+
 from sqlalchemy import select
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
+from ensembl.production.metadata.api.models.release import EnsemblRelease
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -41,10 +43,13 @@ class GenomeInputFilters:
     dataset_uuid: List[str] = field(default_factory=list)
     division: List[str] = field(default_factory=list)
     dataset_type: str = "assembly"
+    dataset_name: str = "assembly"
+    dataset_is_current: int = 0
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
-    dataset_status: List[str] = field(default_factory=lambda: ["Submitted"])
+    dataset_status: List[str] = field(default_factory=lambda: [])
     release_id: int = 0
+    release_name: int = 0
     batch_size: int = 50
     page: int = 1
     organism_group_type: str = ""
@@ -58,7 +63,8 @@ class GenomeInputFilters:
             Dataset.dataset_uuid.label("dataset_uuid"),
             Dataset.status.label("dataset_status"),
             DatasetSource.name.label("dataset_source"),
-            DatasetType.name.label("dataset_type"),
+            Dataset.name.label("dataset_name"),
+            DatasetType.name.label("dataset_type")
         ]
     )
 
@@ -100,9 +106,6 @@ class GenomeFactory:
     @staticmethod
     def _apply_filters(query, filters):
 
-        if filters.organism_group_type:
-            query = query.filter(OrganismGroup.type == filters.organism_group_type)
-
         if filters.run_all:
             filters.division = [
                 "EnsemblBacteria",
@@ -112,23 +115,31 @@ class GenomeFactory:
                 "EnsemblMetazoa",
                 "EnsemblFungi",
             ]
+        if filters.division or filters.organism_group_type or any(
+                [i.element.table.name in ['organism_group', 'organism_group_member'] for i in filters.columns]):
+
+            query = query.outerjoin(Organism.organism_group_members).outerjoin(OrganismGroupMember.organism_group)
+            ensembl_divisions = filters.division
+
+            # If organism group type is not specified default to 'Division'
+            if filters.division and not filters.organism_group_type:
+                filters.organism_group_type = 'Division'
+
+            if filters.organism_group_type == 'Division':
+                pattern = re.compile(r'^(ensembl)?', re.IGNORECASE)
+                ensembl_divisions = ['Ensembl' + pattern.sub('', d).capitalize() for d in ensembl_divisions if d]
+
+            if filters.organism_group_type:
+                query = query.filter(OrganismGroup.type == filters.organism_group_type)
+
+            if ensembl_divisions:
+                query = query.filter(OrganismGroup.name.in_(ensembl_divisions))
 
         if filters.genome_uuid:
             query = query.filter(Genome.genome_uuid.in_(filters.genome_uuid))
 
         if filters.dataset_uuid:
             query = query.filter(Dataset.dataset_uuid.in_(filters.dataset_uuid))
-
-        if filters.division:
-            ensembl_divisions = filters.division
-
-            if filters.organism_group_type == "DIVISION":
-                pattern = re.compile(r"^(ensembl)?", re.IGNORECASE)
-                ensembl_divisions = [
-                    "Ensembl" + pattern.sub("", d).capitalize() for d in ensembl_divisions if d
-                ]
-
-            query = query.filter(OrganismGroup.name.in_(ensembl_divisions))
 
         if filters.species:
             species = set(filters.species) - set(filters.antispecies)
@@ -141,13 +152,24 @@ class GenomeFactory:
         elif filters.antispecies:
             query = query.filter(~Genome.production_name.in_(filters.antispecies))
 
-        if filters.release_id:
+        if filters.release_id or filters.release_name :
             query = query.join(Genome.genome_releases)
-            query = query.filter(GenomeDataset.release_id == filters.release_id)
+
+        if filters.release_id:
             query = query.filter(GenomeRelease.release_id == filters.release_id)
+
+        if filters.release_name:
+            query = query.join(GenomeRelease.ensembl_release)
+            query = query.filter(EnsemblRelease.name == filters.release_name)
 
         if filters.dataset_type:
             query = query.filter(DatasetType.name == filters.dataset_type)
+
+        if filters.dataset_name:
+            query = query.filter(Dataset.name == filters.dataset_name)
+
+        if filters.dataset_is_current:
+            query = query.filter(GenomeDataset.is_current == filters.dataset_is_current)
 
         if filters.dataset_status:
             status_enums = GenomeFactory._normalize_status_to_enum(filters.dataset_status)
@@ -169,14 +191,10 @@ class GenomeFactory:
             .select_from(Genome)
             .join(Genome.assembly)
             .join(Genome.organism)
-            .join(Organism.organism_group_members)
-            .join(OrganismGroupMember.organism_group)
             .join(Genome.genome_datasets)
             .join(GenomeDataset.dataset)
-            .join(Dataset.dataset_source)
             .join(Dataset.dataset_type)
-            .group_by(Genome.genome_id, Dataset.dataset_id)
-            .order_by(Genome.genome_uuid)
+            .join(Dataset.dataset_source)
         )
 
         return self._apply_filters(query, filters)
@@ -242,8 +260,8 @@ class GenomeFactory:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        prog="genomes.py", description="Fetch Ensembl genome info from the new metadata database"
+    parser = ArgumentParser(
+        prog="genomes.py", description="Fetch Ensembl genome information from the new metadata database"
     )
     parser.add_argument(
         "--genome_uuid",
@@ -251,7 +269,7 @@ def main():
         nargs="*",
         default=[],
         required=False,
-        help="List of genome UUIDs to filter the query. Default is an empty list.",
+        help="List of genome UUIDs to filter the query",
     )
     parser.add_argument(
         "--dataset_uuid",
@@ -259,14 +277,21 @@ def main():
         nargs="*",
         default=[],
         required=False,
-        help="List of dataset UUIDs to filter the query. Default is an empty list.",
+        help="List of dataset UUIDs to filter the query",
     )
+
+    parser.add_argument(
+        "--dataset_is_current",
+        action="store_true",
+        help="Filter datasets that are marked as current",
+    )
+
     parser.add_argument(
         "--organism_group_type",
         type=str,
-        default="DIVISION",
+        default="",
         required=False,
-        help='Organism group type to filter the query. Default is "DIVISION"',
+        help='Organism group type to filter the query. eg. Division Popular etc.',
     )
     parser.add_argument(
         "--division",
@@ -274,22 +299,31 @@ def main():
         nargs="*",
         default=[],
         required=False,
-        help="List of organism group names to filter the query. Default is an empty list.",
+        help="List of organism group names to filter the query. eg. EnsemblVertebrates, EnsemblPlants etc.",
     )
     parser.add_argument(
         "--dataset_type",
         type=str,
-        default="assembly",
+        default="",
         required=False,
-        help="List of dataset types to filter the query. Default is an empty list.",
+        help="List of dataset types to filter the query. eg. assembly, genebuild, variation etc.",
     )
+
+    parser.add_argument(
+        "--dataset_name",
+        type=str,
+        default="genebuild",
+        required=False,
+        help="List of dataset types to filter the query. eg. assembly, genebuild, variation etc.",
+    )
+
     parser.add_argument(
         "--species",
         type=str,
         nargs="*",
         default=[],
         required=False,
-        help="List of Species Production names to filter the query. Default is an empty list.",
+        help="List of Species Production names to filter the query. eg. homo_sapiens, mus_musculus etc.",
     )
     parser.add_argument(
         "--antispecies",
@@ -297,22 +331,31 @@ def main():
         nargs="*",
         default=[],
         required=False,
-        help="List of Species Production names to exclude from the query. Default is an empty list.",
+        help="List of Species Production names to exclude from the query. eg. homo_sapiens, mus_musculus etc.",
     )
-    parser.add_argument(
+    parser.add_numeric_argument(
         "--release_id",
         type=int,
         default=0,
+        min_value=0,
         required=False,
         help="Genome_dataset release_id to filter the query. Default is 0 (no filter).",
+    )
+    parser.add_numeric_argument(
+        "--release_name",
+        type=int,
+        default=0,
+        min_value=0,
+        required=False,
+        help="Fetch Genomes for a given release.",
     )
     parser.add_argument(
         "--dataset_status",
         nargs="*",
-        default=["Submitted"],
+        default=[],
         choices=["Submitted", "Processing", "Processed", "Released"],
         required=False,
-        help="List of dataset statuses to filter the query. Default is an empty list.",
+        help="List of dataset statuses to filter the query.",
     )
     parser.add_argument(
         "--update_dataset_status",
@@ -322,19 +365,21 @@ def main():
         choices=["Submitted", "Processing", "Processed", "Released", ""],
         help="Update the status of the selected datasets to the specified value. ",
     )
-    parser.add_argument(
+    parser.add_numeric_argument(
         "--batch_size",
         type=int,
-        default=50,
+        default=0,
+        min_value=0,
         required=False,
-        help="Number of results to retrieve per batch. Default is 50.",
+        help="Number of results to retrieve per batch. Default is 0 (no limit).",
     )
-    parser.add_argument(
+    parser.add_numeric_argument(
         "--page",
-        default=1,
+        default=0,
         required=False,
-        type=lambda x: int(x) if int(x) > 0 else argparse.ArgumentTypeError("{x} is not a positive integer"),
-        help="The page number for pagination. Default is 1.",
+        min_value=0,
+        type=int,
+        help="The page number for pagination",
     )
     parser.add_argument(
         "--metadata_db_uri",
@@ -364,10 +409,13 @@ def main():
                 organism_group_type=args.organism_group_type,
                 division=args.division,
                 dataset_type=args.dataset_type,
+                dataset_name=args.dataset_name,
+                dataset_is_current=args.dataset_is_current,
                 species=args.species,
                 antispecies=args.antispecies,
                 batch_size=args.batch_size,
                 release_id=args.release_id,
+                release_name=args.release_name,
                 dataset_status=args.dataset_status,
                 )
                 or []
