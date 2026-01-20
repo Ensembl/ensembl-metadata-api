@@ -410,7 +410,6 @@ def create_label_version(data=None):
     if data is None:
         return ensembl_metadata_pb2.ReleaseLabel()
     logger.debug(f"Release data {data}")
-    print(f"\n####### Release data {data}")
     release = ensembl_metadata_pb2.ReleaseLabel(
         release_label=data.release.label if hasattr(data, 'release') else None,
     )
