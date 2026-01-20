@@ -411,10 +411,10 @@ class FTPMetadataExporter:
 
     def _normalize_species_name(self, scientific_name):
         """Normalize species name by replacing dots with underscores and merging multiple underscores."""
-        normalized = scientific_name.replace(' ', '_')
-        normalized = normalized.replace('.', '_')
-        normalized = re.sub(r'_+', '_', normalized)
-        return normalized
+        scientific_name = re.sub(r'[^a-zA-Z0-9]+', ' ', scientific_name)
+        scientific_name = scientific_name.replace(' ', '_')
+        scientific_name = re.sub(r'^_+|_+$', '', scientific_name)
+        return scientific_name
 
     def _extract_provider_from_path(self, genebuild_metadata):
         """Extract the provider component from the genebuild metadata for use in paths."""

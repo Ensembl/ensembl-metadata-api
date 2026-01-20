@@ -33,7 +33,10 @@ from ensembl_metadata_pb2 import (
     GenomeTagRequest,
     FTPLinksRequest,
     ReleaseVersionRequest,
-    GenomeByReleaseVersionRequest
+    GenomeByReleaseVersionRequest,
+    GroupTypeRequest,
+    GenomesInGroupRequest,
+    GenomeCountsRequest,
 )
 
 
@@ -519,6 +522,29 @@ def get_vep_file_paths_by_uuid(stub):
     print("**** VEP Paths By genome_uuid (non existing UUID) ****")
     print(vep_paths2)
 
+def get_genome_groups_with_reference(stub):
+    request1 = GroupTypeRequest(group_type="structural_variant")
+    genome_groups = stub.GetGenomeGroupsWithReference(request1)
+    print("**** Genome Groups With Reference (Mock) ****")
+    print(genome_groups)
+
+def get_genomes_in_groups(stub):
+    request1 = GenomesInGroupRequest(group_id="grch38-group")
+    genomes_in_group1 = stub.GetGenomesInGroup(request1)
+    print("**** Genomes in Group 'grch38-group' (Mock) ****")
+    print(genomes_in_group1)
+
+    request2 = GenomesInGroupRequest(group_id="t2t-group")
+    genomes_in_group2 = stub.GetGenomesInGroup(request2)
+    print("**** Genomes in Group 't2t-group' (Mock) ****")
+    print(genomes_in_group2)
+
+def get_genome_counts(stub):
+    request1 = GenomeCountsRequest()
+    genome_counts = stub.GetGenomeCounts(request1)
+    print("**** Genome Counts (Mock) ****")
+    print(genome_counts)
+
 
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -573,6 +599,12 @@ def run():
         get_brief_genome_details_by_uuid(stub)
         print("-------------- Get VEP File Paths By UUID --------------")
         get_vep_file_paths_by_uuid(stub)
+        print("-------------- Get Genome Groups with Reference --------------")
+        get_genome_groups_with_reference(stub)
+        print("-------------- Get Genomes in Groups --------------")
+        get_genomes_in_groups(stub)
+        print("-------------- Get Genome Counts --------------")
+        get_genome_counts(stub)
 
 
 if __name__ == "__main__":

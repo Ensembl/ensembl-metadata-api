@@ -60,26 +60,42 @@ def get_or_new_release(meta_dbc: str, skip_release: EnsemblRelease = None) -> En
 
 def fetch_proper_dataset(genome_datasets):
     """
-    Helper function to fetch the dataset we attend to get based on the release_type (partial or integrated).
+    Selects the appropriate dataset(s) based on release type.
 
-    * If more than one dataset is available go with the partial dataset.
-    * If only one dataset is available, return it as is.
-    Slack discussion: https://genomes-ebi.slack.com/archives/C010QF119N1/p1746094298003789
+    Logic:
+      - If more than one dataset is available, prefer those with a partial release.
+      - If only one dataset is available, return it directly.
+
+    Reference: https://genomes-ebi.slack.com/archives/C010QF119N1/p1746094298003789
     """
+    if not genome_datasets:
+        logging.warning("No genome datasets provided.")
+        return []
+
+    # Multiple datasets: prefer partial releases
     if len(genome_datasets) > 1:
-        # This may mean that we are getting both integrated and partial datasets
-        # In this case we make sure we are filtering integrated ones out
-        filtered = [
-            ds for ds in genome_datasets
-            if ds.is_current
-               and ds.dataset.status.value == 'Released'
-               and ds.ensembl_release.release_type == 'partial'
-        ]
+        filtered = []
+        for ds in genome_datasets:
+            try:
+                if (
+                        ds.is_current
+                        and ds.dataset.status.value == 'Released'
+                        and getattr(ds.ensembl_release, "release_type", None) == 'partial'
+                ):
+                    filtered.append(ds)
+            except Exception as e:
+                logging.error(
+                    f"Error processing dataset {getattr(ds, 'id', repr(ds))}: {e}",
+                    exc_info=True
+                )
+
         if filtered:
             logging.debug(f"Filtered partial datasets: {filtered}")
             return filtered
         else:
-            logging.warning("Multiple datasets provided but no partial release found. Returning all.")
+            logging.warning(
+                "Multiple datasets provided but no partial release found. Returning all."
+            )
 
     logging.debug(f"Returning dataset(s): {genome_datasets}")
     return genome_datasets
