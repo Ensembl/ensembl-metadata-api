@@ -87,6 +87,7 @@ dev = [
 ensembl-release = "scripts.release:main"
 ensembl-ftp-export = "ensembl.production.metadata.scripts.ftp_export:main"
 genome-info = "ensembl.production.metadata.api.factories.genomes:main"
+assign-organism-to-organismgroup = "ensembl.production.metadata.scripts.organism_to_organismgroup:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
