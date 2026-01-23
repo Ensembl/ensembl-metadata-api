@@ -1,25 +1,11 @@
-#  See the NOTICE file distributed with this work for additional information
-#  regarding copyright ownership.
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#      http://www.apache.org/licenses/LICENSE-2.0
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-
-import argparse
-import logging
 import os
-
+import logging
+from ensembl.utils.argparse import ArgumentParser
 from ensembl.core.models import Meta
 from ensembl.utils.database import DBConnection
-
-from ensembl.production.metadata.api.models.dataset import Dataset, DatasetSource
-from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
 from ensembl.production.metadata.api.models.organism import OrganismGroup, OrganismGroupMember, Organism
+from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
+from ensembl.production.metadata.api.models.dataset import Dataset, DatasetSource
 
 # Set up the logging configuration
 logging.basicConfig(
@@ -32,12 +18,15 @@ logging.basicConfig(
 )
 
 
-def fetch_division_name(core_db_uri: str) -> str:
+def fetch_division_name(core_db_uri: str, production_name: str) -> str:
     """
     Fetch the division name from the core database.
     """
     with DBConnection(core_db_uri).session_scope() as session:
-        query = session.query(Meta).filter(Meta.meta_key == 'species.division').one_or_none()
+        query = session.query(Meta.species_id).filter(Meta.meta_key == 'species.production_name',
+                                                      Meta.meta_value == production_name).one_or_none()
+        query = session.query(Meta).filter(Meta.meta_key == 'species.division',
+                                           Meta.species_id == query.species_id).one_or_none()
         return query.meta_value if query else None
 
 
@@ -105,7 +94,7 @@ def process_genomes(session, args, organism_group_id: int = None):
     for genome, dataset_source in query.all():
         logging.info(f"Processing genome {genome.genome_uuid} for organism {genome.organism_id}")
         if not (args.organism_group_type and args.organism_group_name) and args.core_server_uri:
-            division_name = fetch_division_name(os.path.join(args.core_server_uri, dataset_source.name))
+            division_name = fetch_division_name(os.path.join(args.core_server_uri, dataset_source.name), genome.production_name)
             if division_name:
                 organism_group = session.query(OrganismGroup).filter(OrganismGroup.name == division_name).one_or_none()
                 if organism_group:
@@ -119,7 +108,7 @@ def process_genomes(session, args, organism_group_id: int = None):
 
 
 def main():
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         prog="update_organism_to_organismgroup.py",
         description="Script to assign/remove organisms to/from organism groups."
     )
