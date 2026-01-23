@@ -24,13 +24,15 @@ from typing import List
 from ensembl.utils.database import DBConnection
 from ensembl.utils.argparse import ArgumentParser
 
-from sqlalchemy import select
+from sqlalchemy import select, exists
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 from ensembl.production.metadata.api.models.release import EnsemblRelease
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.operators import and_
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -42,14 +44,16 @@ class GenomeInputFilters:
     genome_uuid: List[str] = field(default_factory=list)
     dataset_uuid: List[str] = field(default_factory=list)
     division: List[str] = field(default_factory=list)
-    dataset_type: str = "assembly"
-    dataset_name: str = "assembly"
+    dataset_type: str = "genebuild"
+    dataset_names: str = "genebuild"
     dataset_is_current: int = 0
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
     dataset_status: List[str] = field(default_factory=lambda: [])
-    release_id: int = 0
-    release_name: int = 0
+    dataset_release_id: List[int] = field(default_factory=lambda: [])
+    release_id: List[int] = field(default_factory=lambda: [])
+    release_name: List[int] = field(default_factory=lambda: [])
+    release_type: List[str] = field(default_factory=lambda: [])
     batch_size: int = 50
     page: int = 1
     organism_group_type: str = ""
@@ -64,7 +68,9 @@ class GenomeInputFilters:
             Dataset.status.label("dataset_status"),
             DatasetSource.name.label("dataset_source"),
             Dataset.name.label("dataset_name"),
-            DatasetType.name.label("dataset_type")
+            DatasetType.name.label("dataset_type"),
+            EnsemblRelease.name.label("genome_release"),
+            GenomeDataset.release_id.label("dataset_release"),
         ]
     )
 
@@ -105,6 +111,11 @@ class GenomeFactory:
 
     @staticmethod
     def _apply_filters(query, filters):
+
+        # To filter out the duplicate genome_dataset created for integrated release
+        genomes_release = aliased(EnsemblRelease)
+        genomes_dataset_release = aliased(EnsemblRelease)
+        ensembl_release_type_filter = 'integrated'  # by default we remove genome dataset created for integrated release
 
         if filters.run_all:
             filters.division = [
@@ -152,21 +163,49 @@ class GenomeFactory:
         elif filters.antispecies:
             query = query.filter(~Genome.production_name.in_(filters.antispecies))
 
-        if filters.release_id or filters.release_name :
-            query = query.join(Genome.genome_releases)
+        # remove integrated release from both genome and genome dataset
+        if filters.release_type == 'integrated':
+            ensembl_release_type_filter = 'partial'
+
+        # filter and remove the release type
+        query = query.filter(
+            ~exists().where(
+                and_(
+                    genomes_release.release_id == GenomeRelease.release_id,
+                    genomes_release.release_type == ensembl_release_type_filter
+                )
+            )
+        )
+        query = query.filter(
+            ~exists().where(
+                and_(
+                    genomes_dataset_release.release_id == GenomeDataset.release_id,
+                    genomes_dataset_release.release_type == ensembl_release_type_filter
+                )
+            )
+        )
+
+        if filters.release_type:
+            query = query.filter(EnsemblRelease.release_type == filters.release_type)
+
+        if filters.dataset_release_id:
+            query = query.filter(GenomeDataset.release_id.in_(filters.dataset_release_id))
 
         if filters.release_id:
-            query = query.filter(GenomeRelease.release_id == filters.release_id)
+            query = query.filter(GenomeRelease.release_id.in_(filters.release_id))
 
         if filters.release_name:
-            query = query.join(GenomeRelease.ensembl_release)
-            query = query.filter(EnsemblRelease.name == filters.release_name)
+            filter_release_type = EnsemblRelease.name.in_(filters.release_name)
+            if filters.release_type == 'integrated':
+                filter_release_type = GenomeDataset.release_id.in_(filters.release_name)
+
+            query = query.filter(filter_release_type)
 
         if filters.dataset_type:
             query = query.filter(DatasetType.name == filters.dataset_type)
 
-        if filters.dataset_name:
-            query = query.filter(Dataset.name == filters.dataset_name)
+        if filters.dataset_names:
+            query = query.filter(Dataset.name.in_(filters.dataset_names))
 
         if filters.dataset_is_current:
             query = query.filter(GenomeDataset.is_current == filters.dataset_is_current)
@@ -195,6 +234,8 @@ class GenomeFactory:
             .join(GenomeDataset.dataset)
             .join(Dataset.dataset_type)
             .join(Dataset.dataset_source)
+            .join(Genome.genome_releases)
+            .join(GenomeRelease.ensembl_release)
         )
 
         return self._apply_filters(query, filters)
@@ -308,15 +349,14 @@ def main():
         required=False,
         help="List of dataset types to filter the query. eg. assembly, genebuild, variation etc.",
     )
-
     parser.add_argument(
-        "--dataset_name",
+        "--dataset_names",
+        nargs="*",
         type=str,
-        default="genebuild",
+        default=["genebuild"],
         required=False,
         help="List of dataset types to filter the query. eg. assembly, genebuild, variation etc.",
     )
-
     parser.add_argument(
         "--species",
         type=str,
@@ -336,19 +376,40 @@ def main():
     parser.add_numeric_argument(
         "--release_id",
         type=int,
-        default=0,
-        min_value=0,
+        nargs="*",
+        default=[],
         required=False,
-        help="Genome_dataset release_id to filter the query. Default is 0 (no filter).",
+        help="Genome_dataset release_id to filter genomes and datasets.",
     )
     parser.add_numeric_argument(
         "--release_name",
         type=int,
-        default=0,
-        min_value=0,
+        nargs="*",
+        default=[],
         required=False,
-        help="Fetch Genomes for a given release.",
+        help="Fetch Genomes for a given release. "
+             "(for integrated release it filters similar to the dataset_release_id)",
     )
+    parser.add_argument(
+        "--release_type",
+        type=str,
+        default="partial",
+        choices=["partial", 'integrated'],
+        required=False,
+        help="""
+        Fetch genome datasets and apply release-type filtering to eliminate duplicates introduced during 
+        integration release.
+        """,
+    )
+    parser.add_numeric_argument(
+        "--dataset_release_id",
+        type=int,
+        nargs="*",
+        default=[],
+        required=False,
+        help="Datasets are attached to different release ids, filter the query based on dataset release id.",
+    )
+
     parser.add_argument(
         "--dataset_status",
         nargs="*",
@@ -402,21 +463,22 @@ def main():
         logger.info(f"Writing Results to {args.output}")
         for genome in (
                 genome_fetcher.get_genomes(
-                metadata_db_uri=args.metadata_db_uri,
-                update_dataset_status=args.update_dataset_status,
-                genome_uuid=args.genome_uuid,
-                dataset_uuid=args.dataset_uuid,
-                organism_group_type=args.organism_group_type,
-                division=args.division,
-                dataset_type=args.dataset_type,
-                dataset_name=args.dataset_name,
-                dataset_is_current=args.dataset_is_current,
-                species=args.species,
-                antispecies=args.antispecies,
-                batch_size=args.batch_size,
-                release_id=args.release_id,
-                release_name=args.release_name,
-                dataset_status=args.dataset_status,
+                    metadata_db_uri=args.metadata_db_uri,
+                    update_dataset_status=args.update_dataset_status,
+                    genome_uuid=args.genome_uuid,
+                    dataset_uuid=args.dataset_uuid,
+                    organism_group_type=args.organism_group_type,
+                    division=args.division,
+                    dataset_type=args.dataset_type,
+                    dataset_names=args.dataset_names,
+                    dataset_is_current=args.dataset_is_current,
+                    species=args.species,
+                    antispecies=args.antispecies,
+                    batch_size=args.batch_size,
+                    release_id=args.release_id,
+                    release_name=args.release_name,
+                    release_type=args.release_type,
+                    dataset_status=args.dataset_status,
                 )
                 or []
         ):
