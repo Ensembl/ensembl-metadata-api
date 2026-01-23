@@ -29,6 +29,7 @@ def genome_filters(test_dbs):
         'dataset_uuid': [],
         'division': [],
         'dataset_type': '',
+        'dataset_names': [],
         'species': [],
         'antispecies': [],
         'dataset_status': ["Submitted"],
@@ -61,6 +62,7 @@ class TestGenomeFactory:
         assert isinstance(filters.dataset_uuid, list)
         assert isinstance(filters.division, list)
         assert isinstance(filters.dataset_type, str)
+        assert isinstance(filters.dataset_names, list)
         assert isinstance(filters.species, list)
         assert isinstance(filters.antispecies, list)
         assert isinstance(filters.dataset_status, list)
@@ -72,7 +74,7 @@ class TestGenomeFactory:
         "batch_size, status, expected_count",
         [
             (10, 'Submitted', 2),
-            (40, 'Released', 10),
+            (40, 'Released', 20),
             (50, 'Processed', 8),
         ]
     )
@@ -81,6 +83,44 @@ class TestGenomeFactory:
         genome_filters['batch_size'] = batch_size
         genome_filters['dataset_status'] = [status]
         genome_filters['dataset_type'] = 'genebuild'
+
+        fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
+        assert fetched_genome_factory_count == expected_count
+
+    @pytest.mark.parametrize(
+        "release_name, release_type, expected_count",
+        [
+            (1, 'partial', 3),
+            (2, 'partial', 14),
+            (3, 'partial', 2),
+            (4, 'partial', 3),
+        ]
+    )
+    def test_fetch_genomes_by_release_type_and_release_name_params(self, genome_factory, genome_filters, release_name, release_type, expected_count):
+        # fetch genome using genome factory with default filters
+        genome_filters['batch_size'] = 0
+        genome_filters['release_name'] = [release_name]
+        genome_filters['release_type'] = release_type
+        genome_filters['dataset_status'] = []
+        genome_filters['dataset_type'] = 'genebuild'
+        genome_filters['dataset_names'] = ['genebuild']
+        fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
+        assert fetched_genome_factory_count == expected_count
+
+    @pytest.mark.parametrize(
+        "release_type, expected_count",
+        [
+            ('integrated', 10),
+        ]
+    )
+    def test_fetch_integrated_genomes_by_release_typeparams(self, genome_factory, genome_filters,  release_type, expected_count):
+        # fetch genome using genome factory with default filters
+        genome_filters['batch_size'] = 0
+        genome_filters['release_name'] = []
+        genome_filters['release_type'] = release_type
+        genome_filters['dataset_status'] = []
+        genome_filters['dataset_type'] = 'genebuild'
+        genome_filters['dataset_names'] = ['genebuild']
         fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
         assert fetched_genome_factory_count == expected_count
 
