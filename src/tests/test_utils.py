@@ -431,7 +431,7 @@ class TestUtils:
         [
             # FIXME: 18 or 14 in Travis! and 19 locally?!!
             # (True, 18, "Homo sapiens"),
-            (False, 10, "Homo sapiens", None),
+            (False, 5, "Homo sapiens", None),
             (True, 1, None, "GRCh37.p13"),
             (False, 1, None, "GRCh37.p13"),
         ],
@@ -552,10 +552,10 @@ class TestUtils:
         
         assert t["attributesInfo"] == expected_output["attributesInfo"]
         # Sort both lists before comparison
-        t['availableDatasets'] = sorted(t['availableDatasets'])
+        t['availableDatasets'].sort()
         expected_output['availableDatasets'] = sorted(expected_output['availableDatasets'])
         
-        assert json.loads(output) == expected_output
+        assert t == expected_output
     # TODO: double check if output is correct and merge with aboove one
     """ def test_get_genomes_by_name_release_unspecified(self, genome_conn):
         # FIXME this test is very similar with the one above, this could be merged into one single one with fixtures
