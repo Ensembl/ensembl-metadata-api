@@ -1,11 +1,13 @@
-import os
 import logging
-from ensembl.utils.argparse import ArgumentParser
+import os
+
 from ensembl.core.models import Meta
+from ensembl.utils.argparse import ArgumentParser
 from ensembl.utils.database import DBConnection
-from ensembl.production.metadata.api.models.organism import OrganismGroup, OrganismGroupMember, Organism
-from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
+
 from ensembl.production.metadata.api.models.dataset import Dataset, DatasetSource
+from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
+from ensembl.production.metadata.api.models.organism import OrganismGroup, OrganismGroupMember, Organism
 
 # Set up the logging configuration
 logging.basicConfig(
@@ -23,11 +25,17 @@ def fetch_division_name(core_db_uri: str, production_name: str) -> str:
     Fetch the division name from the core database.
     """
     with DBConnection(core_db_uri).session_scope() as session:
-        query = session.query(Meta.species_id).filter(Meta.meta_key == 'species.production_name',
-                                                      Meta.meta_value == production_name).one_or_none()
-        query = session.query(Meta).filter(Meta.meta_key == 'species.division',
-                                           Meta.species_id == query.species_id).one_or_none()
-        return query.meta_value if query else None
+        species_query = session.query(Meta.species_id).filter(
+            Meta.meta_key == 'species.production_name',
+            Meta.meta_value == production_name
+        ).one_or_none()
+        if species_query is None:
+            return None
+        division_query = session.query(Meta).filter(
+            Meta.meta_key == 'species.division',
+            Meta.species_id == species_query.species_id
+        ).one_or_none()
+        return division_query.meta_value if division_query else None
 
 
 def create_or_remove_organism_group(session, organism_id: int, organism_group_id: int, remove: bool = False) -> str:
