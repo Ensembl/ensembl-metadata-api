@@ -38,6 +38,7 @@ from ensembl.production.metadata.api.search.search import (
     DatasetFieldExtractor,
     ReleaseSelector,
     GenomeSearchIndexer,
+    SearchIndex,
 )
 
 db_directory = Path(__file__).parent / "databases"
@@ -182,16 +183,19 @@ class TestGenomeSearchDocument:
             is_reference=True,
             species_taxonomy_id=9606,
             taxonomy_id=9606,
-            organism_id=1,
+            organism_uuid="test-organism-uuid",
+            first_release_name="112",
+            first_release_type="integrated",
+            latest_release_name="112",
+            latest_release_type="integrated",
+            is_latest_release_current=1,
+            releases="112",
             lineage_taxids=[9606, 9605, 9604],
             lineage_name=["Homo sapiens", "Homo", "Hominidae"],
             contig_n50=50000000,
             coding_genes=20000,
             genebuild_provider="Ensembl",
             genebuild_method_display="Import",
-            release_type="integrated",
-            release_label="112",
-            release_id=1,
         )
 
         assert doc.genome_uuid == "test-uuid"
@@ -220,7 +224,13 @@ class TestGenomeSearchDocument:
             species_taxonomy_id=9606,
             taxonomy_id=9606,
             scientific_parlance_name="Human",
-            organism_id=1,
+            organism_uuid="test-organism-uuid",
+            first_release_name="112",
+            first_release_type="integrated",
+            latest_release_name="112",
+            latest_release_type="integrated",
+            is_latest_release_current=1,
+            releases="112",
             rank=10,
             lineage_taxids=[9606],
             lineage_name=["Homo sapiens"],
@@ -230,9 +240,6 @@ class TestGenomeSearchDocument:
             has_regulation=True,
             genebuild_provider="Ensembl",
             genebuild_method_display="Import",
-            release_type="integrated",
-            release_label="112",
-            release_id=1,
         )
 
         assert doc.common_name == "Human"
@@ -261,16 +268,19 @@ class TestGenomeSearchDocument:
                 is_reference="not_a_boolean",  # Should be bool
                 species_taxonomy_id=9606,
                 taxonomy_id=9606,
-                organism_id=1,
+                organism_uuid="test-organism-uuid",
+                first_release_name="112",
+                first_release_type="integrated",
+                latest_release_name="112",
+                latest_release_type="integrated",
+                is_latest_release_current=1,
+                releases="112",
                 lineage_taxids=[9606],
                 lineage_name=["Homo sapiens"],
                 contig_n50=50000000,
                 coding_genes=20000,
                 genebuild_provider="Ensembl",
                 genebuild_method_display="Import",
-                release_type="integrated",
-                release_label="112",
-                release_id=1,
             )
 
     def test_document_model_dump(self, test_dbs):
@@ -283,16 +293,19 @@ class TestGenomeSearchDocument:
             is_reference=True,
             species_taxonomy_id=9606,
             taxonomy_id=9606,
-            organism_id=1,
+            organism_uuid="test-organism-uuid",
+            first_release_name="112",
+            first_release_type="integrated",
+            latest_release_name="112",
+            latest_release_type="integrated",
+            is_latest_release_current=1,
+            releases="112",
             lineage_taxids=[9606],
             lineage_name=["Homo sapiens"],
             contig_n50=50000000,
             coding_genes=20000,
             genebuild_provider="Ensembl",
             genebuild_method_display="Import",
-            release_type="integrated",
-            release_label="112",
-            release_id=1,
         )
 
         data = doc.model_dump()
@@ -345,9 +358,9 @@ class TestDatasetFieldExtractor:
                 datasets = extractor._get_relevant_datasets()
 
                 assert isinstance(datasets, list)
-                # Should only include datasets matching release_id and status RELEASED
+                # Should only include datasets with is_current=1 and status RELEASED
                 for gd in datasets:
-                    assert gd.release_id == release.release_id
+                    assert gd.is_current == 1
                     assert gd.dataset.status == DatasetStatus.RELEASED
 
     def test_get_relevant_datasets_partial_release(self, test_dbs):
@@ -414,7 +427,6 @@ class TestDatasetFieldExtractor:
                     extractor = DatasetFieldExtractor(session, genome, release)
                     value = extractor._get_dataset_attribute("assembly", "assembly.stats.contig_n50")
 
-                    # Should return a value or None
                     assert value is None or isinstance(value, str)
 
     def test_get_dataset_attribute_not_found(self, test_dbs):
@@ -466,7 +478,6 @@ class TestDatasetFieldExtractor:
     def test_get_contig_n50_missing_raises_error(self, test_dbs):
         """Test get_contig_n50 raises error when field is missing."""
         with test_dbs["ensembl_genome_metadata"].dbc.session_scope() as session:
-            # Create mock genome/release without the required attribute
             genome = Mock(spec=Genome)
             genome.genome_uuid = "test-uuid"
             genome.genome_datasets = []
@@ -487,9 +498,9 @@ class TestDatasetFieldExtractor:
     def test_get_contig_n50_invalid_value_raises_error(self, test_dbs):
         """Test get_contig_n50 raises error when value is not convertible to int."""
         with test_dbs["ensembl_genome_metadata"].dbc.session_scope() as session:
-            # Create mock objects with invalid contig_n50 value
             genome = Mock(spec=Genome)
             genome.genome_uuid = "test-uuid"
+            genome.provider_name = None
 
             dataset_attr = Mock(spec=DatasetAttribute)
             dataset_attr.value = "not_a_number"
@@ -508,7 +519,7 @@ class TestDatasetFieldExtractor:
 
             genome_dataset = Mock(spec=GenomeDataset)
             genome_dataset.dataset = dataset
-            genome_dataset.release_id = 1
+            genome_dataset.is_current = 1
 
             genome.genome_datasets = [genome_dataset]
 
@@ -594,7 +605,7 @@ class TestDatasetFieldExtractor:
 
             genome_dataset = Mock(spec=GenomeDataset)
             genome_dataset.dataset = dataset
-            genome_dataset.release_id = 1
+            genome_dataset.is_current = 1
 
             genome.genome_datasets = [genome_dataset]
 
@@ -678,7 +689,6 @@ class TestReleaseSelector:
         """Test select_release_for_genome returns None when genome has no releases."""
         genome = Mock(spec=Genome)
         genome.genome_releases = []
-        genome.suppressed = False
 
         result = ReleaseSelector.select_release_for_genome(genome)
         assert result is None
@@ -686,7 +696,6 @@ class TestReleaseSelector:
     def test_select_release_only_unreleased_returns_none(self, test_dbs):
         """Test select_release_for_genome returns None when only unreleased releases exist."""
         genome = Mock(spec=Genome)
-        genome.suppressed = False
 
         release = Mock(spec=EnsemblRelease)
         release.status = ReleaseStatus.PREPARING
@@ -703,8 +712,6 @@ class TestReleaseSelector:
     def test_select_release_integrated_only(self, test_dbs):
         """Test selecting most recent integrated release when no partial exists."""
         genome = Mock(spec=Genome)
-        genome.suppressed = False
-        genome.genome_datasets = []
 
         release1 = Mock(spec=EnsemblRelease)
         release1.status = ReleaseStatus.RELEASED
@@ -730,67 +737,26 @@ class TestReleaseSelector:
         assert result == release2  # Most recent by label
 
     def test_select_release_partial_only(self, test_dbs):
-        """Test selecting partial release when no integrated releases exist."""
+        """Test selecting partial release when no integrated releases exist and is_current=1."""
         genome = Mock(spec=Genome)
-        genome.suppressed = False
 
         release = Mock(spec=EnsemblRelease)
         release.status = ReleaseStatus.RELEASED
         release.release_type = "partial"
-        release.is_current = True
+        release.label = "2024-01"
 
         gr = Mock(spec=GenomeRelease)
         gr.ensembl_release = release
+        gr.is_current = 1
 
         genome.genome_releases = [gr]
 
         result = ReleaseSelector.select_release_for_genome(genome)
         assert result == release
 
-    def test_select_release_partial_over_integrated_when_newer(self, test_dbs):
-        """Test selecting partial over integrated when partial is newer and has datasets."""
+    def test_select_release_integrated_over_partial(self, test_dbs):
+        """Test selecting integrated over partial when both exist."""
         genome = Mock(spec=Genome)
-        genome.suppressed = False
-
-        integrated = Mock(spec=EnsemblRelease)
-        integrated.status = ReleaseStatus.RELEASED
-        integrated.release_type = "integrated"
-        integrated.label = "2024-01"
-        integrated.release_id = 1
-
-        partial = Mock(spec=EnsemblRelease)
-        partial.status = ReleaseStatus.RELEASED
-        partial.release_type = "partial"
-        partial.label = "2024-03"
-        partial.release_id = 2
-        partial.is_current = True
-
-        # Create a released dataset attached to partial
-        dataset = Mock(spec=Dataset)
-        dataset.status = DatasetStatus.RELEASED
-
-        genome_dataset = Mock(spec=GenomeDataset)
-        genome_dataset.release_id = 2
-        genome_dataset.dataset = dataset
-
-        genome.genome_datasets = [genome_dataset]
-
-        gr1 = Mock(spec=GenomeRelease)
-        gr1.ensembl_release = integrated
-
-        gr2 = Mock(spec=GenomeRelease)
-        gr2.ensembl_release = partial
-
-        genome.genome_releases = [gr1, gr2]
-
-        result = ReleaseSelector.select_release_for_genome(genome)
-        assert result == partial
-
-    def test_select_release_integrated_when_partial_not_newer(self, test_dbs):
-        """Test selecting integrated when partial is not newer."""
-        genome = Mock(spec=Genome)
-        genome.suppressed = False
-        genome.genome_datasets = []
 
         integrated = Mock(spec=EnsemblRelease)
         integrated.status = ReleaseStatus.RELEASED
@@ -801,59 +767,62 @@ class TestReleaseSelector:
         partial = Mock(spec=EnsemblRelease)
         partial.status = ReleaseStatus.RELEASED
         partial.release_type = "partial"
-        partial.label = "2024-01"
+        partial.label = "2024-05"
         partial.release_id = 2
-        partial.is_current = True
 
         gr1 = Mock(spec=GenomeRelease)
         gr1.ensembl_release = integrated
+        gr1.is_current = 0
 
         gr2 = Mock(spec=GenomeRelease)
         gr2.ensembl_release = partial
+        gr2.is_current = 1
 
         genome.genome_releases = [gr1, gr2]
 
         result = ReleaseSelector.select_release_for_genome(genome)
+        # Should return integrated even though partial is newer
         assert result == integrated
 
-    def test_select_release_suppressed_genome_no_integrated_returns_none(self, test_dbs):
-        """Test suppressed genome with only partial release returns None."""
+    def test_select_release_partial_only_not_current_returns_none(self, test_dbs):
+        """Test partial-only genome without is_current=1 returns None."""
         genome = Mock(spec=Genome)
-        genome.suppressed = True
 
         partial = Mock(spec=EnsemblRelease)
         partial.status = ReleaseStatus.RELEASED
         partial.release_type = "partial"
-        partial.is_current = True
+        partial.label = "2024-01"
 
         gr = Mock(spec=GenomeRelease)
         gr.ensembl_release = partial
+        gr.is_current = 0  # Not current
 
         genome.genome_releases = [gr]
 
         result = ReleaseSelector.select_release_for_genome(genome)
         assert result is None
 
-    def test_select_release_suppressed_genome_returns_integrated(self, test_dbs):
-        """Test suppressed genome returns most recent integrated, ignoring partial."""
+    def test_select_release_multiple_integrated_returns_newest(self, test_dbs):
+        """Test returns most recent integrated when multiple exist."""
         genome = Mock(spec=Genome)
-        genome.suppressed = True
 
         integrated1 = Mock(spec=EnsemblRelease)
         integrated1.status = ReleaseStatus.RELEASED
         integrated1.release_type = "integrated"
         integrated1.label = "2024-01"
+        integrated1.release_id = 1
 
         integrated2 = Mock(spec=EnsemblRelease)
         integrated2.status = ReleaseStatus.RELEASED
         integrated2.release_type = "integrated"
         integrated2.label = "2024-03"
+        integrated2.release_id = 2
 
         partial = Mock(spec=EnsemblRelease)
         partial.status = ReleaseStatus.RELEASED
         partial.release_type = "partial"
         partial.label = "2024-05"
-        partial.is_current = True
+        partial.release_id = 3
 
         gr1 = Mock(spec=GenomeRelease)
         gr1.ensembl_release = integrated1
@@ -972,7 +941,7 @@ class TestGenomeSearchIndexer:
                     "is_reference",
                     "species_taxonomy_id",
                     "taxonomy_id",
-                    "organism_id",
+                    "organism_uuid",
                     "rank",
                 ]
                 for key in required_keys:
@@ -1046,7 +1015,6 @@ class TestGenomeSearchIndexer:
 
                             assert isinstance(doc, GenomeSearchDocument)
                             assert doc.genome_uuid == genome.genome_uuid
-                            assert doc.release_label == release.label
                         except MissingDatasetFieldError:
                             # Expected if test data doesn't have all required fields
                             pass
@@ -1062,6 +1030,7 @@ class TestGenomeSearchIndexer:
                 # Create mock genome without required datasets
                 genome = Mock(spec=Genome)
                 genome.genome_uuid = "test-uuid"
+                genome.genome_releases = []
                 genome.genome_datasets = []
                 genome.organism = Mock(spec=Organism)
                 genome.organism.taxonomy_id = 9606
@@ -1073,6 +1042,7 @@ class TestGenomeSearchIndexer:
                 genome.organism.tol_id = None
                 genome.organism.scientific_parlance_name = None
                 genome.organism.rank = 0
+                genome.organism.organism_uuid = "test-organism-uuid"
                 genome.organism_id = 1
                 genome.assembly = Mock(spec=Assembly)
                 genome.assembly.name = "Test"
@@ -1089,20 +1059,20 @@ class TestGenomeSearchIndexer:
                 with pytest.raises(MissingDatasetFieldError):
                     indexer.create_search_document(metadata_session, taxonomy_session, genome, release)
 
-    def test_get_search_index_returns_list(self, test_dbs):
-        """Test get_search_index returns a list of documents."""
+    def test_get_search_index_returns_search_index(self, test_dbs):
+        """Test get_search_index returns a SearchIndex object."""
         metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
         taxonomy_uri = test_dbs["ncbi_taxonomy"].dbc.url
         indexer = GenomeSearchIndexer(metadata_uri, taxonomy_uri)
 
         # Don't raise on errors for this test
-        documents = indexer.get_search_index(raise_on_errors=False)
+        search_index = indexer.get_search_index(raise_on_errors=False)
 
-        assert isinstance(documents, list)
-        if len(documents) > 0:
-            assert isinstance(documents[0], dict)
-            assert "genome_uuid" in documents[0]
-            assert "release_label" in documents[0]
+        assert isinstance(search_index, SearchIndex)
+        assert search_index.name == "ensemblNext"
+        assert isinstance(search_index.release, str)
+        assert isinstance(search_index.entry_count, int)
+        assert isinstance(search_index.entries, list)
 
     def test_get_search_index_raise_on_errors_false(self, test_dbs):
         """Test get_search_index returns partial results when raise_on_errors=False."""
@@ -1111,8 +1081,8 @@ class TestGenomeSearchIndexer:
         indexer = GenomeSearchIndexer(metadata_uri, taxonomy_uri)
 
         # Should not raise even if some genomes fail
-        documents = indexer.get_search_index(raise_on_errors=False)
-        assert isinstance(documents, list)
+        search_index = indexer.get_search_index(raise_on_errors=False)
+        assert isinstance(search_index, SearchIndex)
 
     def test_export_to_json_creates_file(self, test_dbs, tmp_path):
         """Test export_to_json creates a JSON file."""
@@ -1129,7 +1099,11 @@ class TestGenomeSearchIndexer:
         # Verify JSON is valid
         with open(output_file, "r") as f:
             data = json.load(f)
-            assert isinstance(data, list)
+            assert isinstance(data, dict)
+            assert "name" in data
+            assert "release" in data
+            assert "entry_count" in data
+            assert "entries" in data
 
     def test_export_to_json_pretty_print(self, test_dbs, tmp_path):
         """Test export_to_json with pretty printing."""
@@ -1176,7 +1150,10 @@ class TestGenomeSearchIndexer:
         # Verify JSON is valid
         with open(output_file, "r") as f:
             data = json.load(f)
-            assert isinstance(data, list)
+            assert isinstance(data, dict)
+            assert "name" in data
+            assert "release" in data
+            assert "entries" in data
 
     def test_stream_to_json_pretty_print(self, test_dbs, tmp_path):
         """Test stream_to_json with pretty printing."""
@@ -1259,31 +1236,29 @@ class TestGenomeSearchIndexer:
         taxonomy_uri = test_dbs["ncbi_taxonomy"].dbc.url
         indexer = GenomeSearchIndexer(metadata_uri, taxonomy_uri)
 
-        documents = indexer.get_search_index(raise_on_errors=False)
+        search_index = indexer.get_search_index(raise_on_errors=False)
 
-        if len(documents) > 0:
-            doc = documents[0]
+        if search_index.entry_count > 0:
+            entry = search_index.entries[0]
 
             # Check required fields exist
             required_fields = [
-                "genome_uuid",
+                "id",
+                "common_name",
                 "scientific_name",
-                "assembly_name",
-                "accession",
-                "is_reference",
-                "species_taxonomy_id",
-                "taxonomy_id",
+                "assembly",
+                "assembly_accession",
                 "organism_id",
-                "lineage_taxids",
-                "lineage_name",
-                "contig_n50",
-                "coding_genes",
-                "genebuild_provider",
-                "genebuild_method_display",
-                "release_type",
-                "release_label",
-                "release_id",
+                "first_release_name",
+                "latest_release_name",
             ]
 
+            # Entry has a fields array
+            assert hasattr(entry, "fields")
+            assert isinstance(entry.fields, list)
+
+            # Extract field names from the entry
+            field_names = [field.name for field in entry.fields]
+
             for field in required_fields:
-                assert field in doc, f"Missing required field: {field}"
+                assert field in field_names, f"Missing required field: {field}"
