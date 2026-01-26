@@ -16,7 +16,6 @@ from urllib.parse import urlparse
 import pytest
 
 from ensembl.production.metadata.api.models import Assembly
-from ensembl.production.metadata.api.models import OrganismGroup
 from ensembl.production.metadata.scripts.copy_handover_files import *
 from ensembl.production.metadata.scripts.create_datasets_json import *
 from ensembl.production.metadata.scripts.delete_ftp_by_uuid import *
@@ -182,7 +181,7 @@ class TestScripts:
                 division = session.query(Meta).filter(
                     Meta.meta_key == 'species.division'
                 ).first()
-                result = fetch_division_name(core_uri.dbc.url)
+                result = fetch_division_name(core_uri.dbc.url, "")
                 if division:
                     assert result == division.meta_value
                 else:

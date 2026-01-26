@@ -133,6 +133,7 @@ message Genome {
   AttributesInfo attributes_info = 6;
   int32 related_assemblies_count = 7;
   Release release = 8;
+  repeated string available_datasets = 9;
 }
 
 /*
