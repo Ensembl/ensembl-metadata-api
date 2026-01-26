@@ -127,9 +127,9 @@ class TestGenomeFactory:
         genome_filters['batch_size'] = 0
         genome_filters['release_name'] = release_name
         genome_filters['release_type'] = release_type
-        genome_filters['dataset_status'] = []
-        genome_filters['dataset_type'] = 'genebuild'
-        genome_filters['dataset_names'] = ['genebuild']
+        genome_filters['dataset_status'] = dataset_status
+        genome_filters['dataset_type'] = dataset_type
+        genome_filters['dataset_names'] = dataset_name
         fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
         assert fetched_genome_factory_count == expected_count
 
