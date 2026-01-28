@@ -44,8 +44,8 @@ class GenomeInputFilters:
     genome_uuid: List[str] = field(default_factory=list)
     dataset_uuid: List[str] = field(default_factory=list)
     division: List[str] = field(default_factory=list)
-    dataset_type: str = "genebuild"
-    dataset_names: str = "genebuild"
+    dataset_type: str = ""
+    dataset_names: str = ""
     dataset_is_current: int = 0
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
