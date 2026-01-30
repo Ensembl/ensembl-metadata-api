@@ -1,12 +1,13 @@
-import os
-import argparse
 import logging
+import os
 
 from ensembl.core.models import Meta
+from ensembl.utils.argparse import ArgumentParser
 from ensembl.utils.database import DBConnection
-from ensembl.production.metadata.api.models.organism import OrganismGroup, OrganismGroupMember, Organism
-from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
+
 from ensembl.production.metadata.api.models.dataset import Dataset, DatasetSource
+from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
+from ensembl.production.metadata.api.models.organism import OrganismGroup, OrganismGroupMember, Organism
 
 # Set up the logging configuration
 logging.basicConfig(
@@ -19,13 +20,22 @@ logging.basicConfig(
 )
 
 
-def fetch_division_name(core_db_uri: str) -> str:
+def fetch_division_name(core_db_uri: str, production_name: str) -> str:
     """
     Fetch the division name from the core database.
     """
     with DBConnection(core_db_uri).session_scope() as session:
-        query = session.query(Meta).filter(Meta.meta_key == 'species.division').one_or_none()
-        return query.meta_value if query else None
+        species_query = session.query(Meta.species_id).filter(
+            Meta.meta_key == 'species.production_name',
+            Meta.meta_value == production_name
+        ).one_or_none()
+        if species_query is None:
+            return None
+        division_query = session.query(Meta).filter(
+            Meta.meta_key == 'species.division',
+            Meta.species_id == species_query.species_id
+        ).one_or_none()
+        return division_query.meta_value if division_query else None
 
 
 def create_or_remove_organism_group(session, organism_id: int, organism_group_id: int, remove: bool = False) -> str:
@@ -92,7 +102,7 @@ def process_genomes(session, args, organism_group_id: int = None):
     for genome, dataset_source in query.all():
         logging.info(f"Processing genome {genome.genome_uuid} for organism {genome.organism_id}")
         if not (args.organism_group_type and args.organism_group_name) and args.core_server_uri:
-            division_name = fetch_division_name(os.path.join(args.core_server_uri, dataset_source.name))
+            division_name = fetch_division_name(os.path.join(args.core_server_uri, dataset_source.name), genome.production_name)
             if division_name:
                 organism_group = session.query(OrganismGroup).filter(OrganismGroup.name == division_name).one_or_none()
                 if organism_group:
@@ -106,7 +116,7 @@ def process_genomes(session, args, organism_group_id: int = None):
 
 
 def main():
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         prog="update_organism_to_organismgroup.py",
         description="Script to assign/remove organisms to/from organism groups."
     )

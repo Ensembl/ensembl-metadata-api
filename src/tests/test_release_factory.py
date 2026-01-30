@@ -10,6 +10,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import logging
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from ensembl.utils.database import UnitTestDB, DBConnection
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.factories.genomes import GenomeFactory
 from ensembl.production.metadata.api.factories.release import ReleaseFactory
+from ensembl.production.metadata.api.factories.utils import get_genome_sets_by_assembly_and_provider
 from ensembl.production.metadata.api.models import *
 
 logger = logging.getLogger(__name__)
@@ -41,21 +43,18 @@ class TestReleaseFactory:
         with metadata_db.session_scope() as session:
             last_release = session.query(EnsemblRelease).order_by(EnsemblRelease.version.desc()).first()
             expected_version = Decimal("1.0") if last_release is None else last_release.version + Decimal("0.1")
+        label = "2028-09-11"
+        date = datetime.strptime(label, "%Y-%m-%d").date()
 
-            try:
-                # Call init_release but don't assert on the returned object
-                factory.init_release(label=str(expected_version))
-            except Exception as e:
-                pytest.fail(f"Unexpected exception: {e}")
+        factory.init_release(label=label)
 
-        # ✅ Re-fetch in a new session
+
         with metadata_db.session_scope() as session:
             release = session.query(EnsemblRelease).filter(EnsemblRelease.version == expected_version).one_or_none()
-
             assert release is not None, "Release was not inserted into the database"
             assert release.version == expected_version
-            assert release.release_date is None  # Should allow NULL
-            assert release.label == str(expected_version)  # Default label behavior
+            assert release.release_date == date
+            assert release.label == label
             assert release.release_type == "partial"
             assert release.status == ReleaseStatus.PLANNED
 
@@ -200,3 +199,21 @@ class TestReleaseFactory:
             factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
             errors = factory.pre_release_check("4")
             assert not errors, f"Unexpected errors found: {errors}"
+
+
+@pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
+                                       {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
+                                       ]], indirect=True)
+class TestFactoryUtils:
+    dbc: UnitTestDB = None
+
+    def test_get_genome_sets_by_assembly_and_provider(self, test_dbs) -> None:
+        """
+        Test 'get_genome_sets_by_assembly_and_provider'.
+        Pretty bad test. We haven't populated the metadata here with an updated genome so it just returns an empty set.
+        """
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+
+        with metadata_db.session_scope() as session:
+            genome_sets = get_genome_sets_by_assembly_and_provider(session)
+            assert genome_sets == {}

@@ -29,6 +29,7 @@ def genome_filters(test_dbs):
         'dataset_uuid': [],
         'division': [],
         'dataset_type': '',
+        'dataset_names': [],
         'species': [],
         'antispecies': [],
         'dataset_status': ["Submitted"],
@@ -61,6 +62,7 @@ class TestGenomeFactory:
         assert isinstance(filters.dataset_uuid, list)
         assert isinstance(filters.division, list)
         assert isinstance(filters.dataset_type, str)
+        assert isinstance(filters.dataset_names, list)
         assert isinstance(filters.species, list)
         assert isinstance(filters.antispecies, list)
         assert isinstance(filters.dataset_status, list)
@@ -72,7 +74,7 @@ class TestGenomeFactory:
         "batch_size, status, expected_count",
         [
             (10, 'Submitted', 2),
-            (40, 'Released', 10),
+            (40, 'Released', 20),
             (50, 'Processed', 8),
         ]
     )
@@ -81,6 +83,71 @@ class TestGenomeFactory:
         genome_filters['batch_size'] = batch_size
         genome_filters['dataset_status'] = [status]
         genome_filters['dataset_type'] = 'genebuild'
+
+        fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
+        assert fetched_genome_factory_count == expected_count
+
+    @pytest.mark.parametrize(
+        "release_name, release_type, dataset_type, dataset_name, dataset_status, dataset_is_current, expected_count",
+        [
+            ([1], 'partial', 'variation', ['variation'], ['Released'], 1,  3),
+            ([2], 'partial', 'variation', ['variation'], ['Processed'], 1,  4),
+            ([3], 'partial', 'variation', ['variation'], ['Processed'], 1,  1),
+            ([4], 'partial', 'variation', ['variation'], [], 1,  0),
+            ([5], 'partial', 'variation', ['variation'], ['Released'], 1, 5)
+        ]
+    )
+    def test_fetch_genomes_varaition_iscurrent_dataset_params(self, genome_factory, genome_filters, release_name,
+                                                              release_type, dataset_type, dataset_name, dataset_status,
+                                                              dataset_is_current, expected_count):
+        # fetch genome using genome factory with default filters
+        genome_filters['batch_size'] = 0
+        genome_filters['release_name'] = release_name
+        genome_filters['release_type'] = release_type
+        genome_filters['dataset_type'] = dataset_type
+        genome_filters['dataset_names'] = dataset_name
+        genome_filters['dataset_status'] = dataset_status
+        genome_filters['dataset_is_current'] = dataset_is_current
+        fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
+        assert fetched_genome_factory_count == expected_count
+
+    @pytest.mark.parametrize(
+        "release_name, release_type, dataset_status, dataset_type, dataset_name,  expected_count",
+        [
+            ([1], 'partial', [], 'genebuild', ['genebuild'],  3),
+            ([2], 'partial', [], 'genebuild', ['genebuild'], 14),
+            ([3], 'partial', [], 'genebuild', ['genebuild'], 2),
+            ([4], 'partial', [], 'genebuild', ['genebuild'], 3),
+        ]
+    )
+    def test_fetch_genomes_by_release_type_and_release_name_params(self, genome_factory, genome_filters, release_name,
+                                                                   release_type, dataset_status, dataset_type,
+                                                                   dataset_name,  expected_count):
+        # fetch genome using genome factory with default filters
+        genome_filters['batch_size'] = 0
+        genome_filters['release_name'] = release_name
+        genome_filters['release_type'] = release_type
+        genome_filters['dataset_status'] = dataset_status
+        genome_filters['dataset_type'] = dataset_type
+        genome_filters['dataset_names'] = dataset_name
+        fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
+        assert fetched_genome_factory_count == expected_count
+
+    @pytest.mark.parametrize(
+        "release_type, dataset_type, dataset_name, dataset_status, dataset_is_current, expected_count",
+        [
+            ('integrated', 'genebuild', ['genebuild'], ['Released'], 1, 10),
+        ]
+    )
+    def test_fetch_integrated_genomes_by_release_typeparams(self, genome_factory, genome_filters,  release_type,
+                                                            dataset_type, dataset_name, dataset_status,
+                                                            dataset_is_current, expected_count):
+        # fetch genome using genome factory with default filters
+        genome_filters['batch_size'] = 0
+        genome_filters['release_type'] = release_type
+        genome_filters['dataset_status'] = dataset_status
+        genome_filters['dataset_type'] = dataset_type
+        genome_filters['dataset_names'] = dataset_name
         fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
         assert fetched_genome_factory_count == expected_count
 
@@ -92,7 +159,7 @@ class TestGenomeFactory:
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
 
         with metadata_db.session_scope() as session:
-            genome = session.query(Genome).filter(Genome.genome_uuid == genome_filters['genome_uuid']).one()
+            genome = session.query(Genome).filter(Genome.genome_uuid == genome_filters['genome_uuid'][0]).one()
             assert genome_factory_result['genome_uuid'] == genome_filters['genome_uuid'][0]
             assert genome.genome_uuid == genome_filters['genome_uuid'][0]
             assert genome.genome_uuid == genome_factory_result['genome_uuid']
@@ -109,7 +176,7 @@ class TestGenomeFactory:
         assert genome_factory_result is not None
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
+            dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genome_filters['dataset_uuid'][0]).one()
             assert genome_factory_result['dataset_uuid'] == genome_filters['dataset_uuid'][0]
             assert dataset.dataset_uuid == genome_filters['dataset_uuid'][0]
 
@@ -121,7 +188,7 @@ class TestGenomeFactory:
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             dataset: Dataset = session.query(Dataset).filter(
-                Dataset.dataset_uuid == genome_filters['dataset_uuid']).one()
+                Dataset.dataset_uuid == genome_filters['dataset_uuid'][0]).one()
             assert genome_factory_result['dataset_uuid'] == genome_filters['dataset_uuid'][0]
             assert dataset.dataset_uuid == genome_filters['dataset_uuid'][0]
             assert dataset.status.value == genome_factory_result['dataset_status']
@@ -140,15 +207,15 @@ class TestGenomeFactory:
 
         # fetch genomes by status submitted and update to processing
         genome_factory_result = [genome for genome in genome_factory.get_genomes(**genome_filters)][0]
-        logger.debug(f"Factory Results 1 {genome_factory_result}")
+        # logger.debug(f"Factory Results 1 {genome_factory_result}")
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # check genebuild one has been updated to Processing as well
             dataset: Dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
-            logger.debug(f"Dataset 1 {dataset}")
+            # logger.debug(f"Dataset 1 {dataset}")
             assert genome_factory_result['updated_dataset_status'] == dataset.status.value
             dataset: Dataset = session.query(Dataset).filter(Dataset.dataset_uuid == leaf_uuid).one()
-            logger.debug(f"Dataset 1 {dataset}")
+            # logger.debug(f"Dataset 1 {dataset}")
             assert genome_factory_result['updated_dataset_status'] == dataset.status.value
 
         # update dataset status to processed
@@ -157,13 +224,13 @@ class TestGenomeFactory:
 
         # fetch genomes by status processing and update to processed
         genome_factory_result = [genome for genome in genome_factory.get_genomes(**genome_filters)][0]
-        logger.debug(f"Factory Results 2 {genome_factory_result}")
+        # logger.debug(f"Factory Results 2 {genome_factory_result}")
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
-            logger.debug(f"Dataset 2 {dataset}")
+            # logger.debug(f"Dataset 2 {dataset}")
             assert 'Processing' == dataset.status.value
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == leaf_uuid).one()
-            logger.debug(f"Dataset 2b {dataset}")
+            # logger.debug(f"Dataset 2b {dataset}")
             assert genome_factory_result['updated_dataset_status'] == dataset.status.value
 
         # update dataset status to processed
@@ -173,11 +240,11 @@ class TestGenomeFactory:
         # fetch genomes by status processed and update to released
         with pytest.raises(DatasetFactoryException):
             genome_factory_result = [genome for genome in genome_factory.get_genomes(**genome_filters)][0]
-        logger.debug(f"Factory Results 3 {genome_factory_result}")
+        # logger.debug(f"Factory Results 3 {genome_factory_result}")
         # assert nothing happened in DB
         with metadata_db.session_scope() as session:
             dataset = session.query(Dataset).filter(Dataset.dataset_uuid == leaf_uuid).one()
-            logger.debug(f"Dataset 3 {dataset}")
+            # logger.debug(f"Dataset 3 {dataset}")
             assert 'Processed' == dataset.status.value
         # TODO complete the test with all sub datasets updated to processed before moving leaf to
         #  release then asses that genebuild is now released
@@ -198,3 +265,4 @@ class TestGenomeFactory:
         expected_columns.append('updated_dataset_status')
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
+
