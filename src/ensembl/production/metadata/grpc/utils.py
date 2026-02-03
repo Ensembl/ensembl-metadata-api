@@ -677,7 +677,7 @@ def get_release_label_by_uuid(db_conn, genome_uuid, dataset_type, release_versio
           included in integrated releases.
         - Integrated releases only reference genes that were previously loaded
           via partial releases.
-        - THOAS uses the release label to locate the correct MongoDB database;
+        - Thoas uses the release label to locate the correct MongoDB database;
           all MongoDB databases follow the naming pattern: ``release-YYYY-MM-DD``.
 
     As a result, only partial release labels are considered. If multiple partial
