@@ -665,22 +665,57 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
     return msg_factory.create_release_version()
 
 def get_release_label_by_uuid(db_conn, genome_uuid, dataset_type, release_version):
+    """
+    Retrieve the release label for a genome dataset, prioritizing partial releases.
+
+    This function looks up release labels for a given genome UUID, dataset type,
+    and release version. When multiple release labels are available, **partial
+    releases are preferred over integrated releases**.
+
+    Rationale:
+        - Genomes are always released first as partial releases before being
+          included in integrated releases.
+        - Integrated releases only reference genes that were previously loaded
+          via partial releases.
+        - THOAS uses the release label to locate the correct MongoDB database;
+          all MongoDB databases follow the naming pattern: ``release-YYYY-MM-DD``.
+
+    As a result, only partial release labels are considered. If multiple partial
+    releases are found, the most recent one (by release date) is selected.
+    """
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
         return msg_factory.create_label_version()
 
-    release_version_result = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid,
-                                                           dataset_type_name=dataset_type,
-                                                           release_version=release_version)
+    results = db_conn.fetch_genome_datasets(
+        genome_uuid=genome_uuid,
+        dataset_type_name=dataset_type,
+        release_version=release_version,
+    )
 
-    if len(release_version_result) == 0:
+    if not results:
         logger.error(f"No result found for {genome_uuid}/{dataset_type}/{release_version}")
-    else:
-        if len(release_version_result) > 1:
-            logger.warning(f"Multiple results returned. {release_version_result}")
-        response_data = msg_factory.create_label_version(release_version_result[0])
-        return response_data
-    return msg_factory.create_label_version()
+        return msg_factory.create_label_version()
+
+    # When looking up release labels, prioritize partial releases over integrated releases.
+    partials = [
+        item for item in results
+        if getattr(getattr(item, "release", None), "release_type", None) == "partial"
+    ]
+
+    if not partials:
+        logger.error(
+            f"No partial release found for {genome_uuid}/{dataset_type}/{release_version}"
+        )
+        return msg_factory.create_label_version()
+
+    if len(partials) > 1:
+        logger.warning(f"Multiple partial results returned. {partials}")
+
+    # Pick the latest partial by release_date (works for 1 item too).
+    latest = max(partials, key=lambda item: item.release.release_date)
+
+    return msg_factory.create_label_version(latest)
 
 
 def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names, latest_only):
@@ -1303,4 +1338,3 @@ def get_genome_counts(db_conn: Any, release_label: str | None):
             "(release_label=%r)",release_label
         )
         return msg_factory.create_genome_counts([])
-
