@@ -172,7 +172,6 @@ class GenomeSearchDocument(BaseModel):
 
     def to_search_entry(self) -> SearchEntry:
         """Convert to SearchEntry format with fields array"""
-        # Strip version from accession (e.g., GCA_000005845.2 -> GCA_000005845)
         unversioned_accession = self.accession.rsplit(".", 1)[0] if "." in self.accession else self.accession
 
         fields = [
@@ -340,7 +339,6 @@ class DatasetFieldExtractor:
         if provider:
             return provider
 
-        # Fallback to genome's provider_name
         if self.genome.provider_name:
             return self.genome.provider_name
 
@@ -385,7 +383,6 @@ class ReleaseSelector:
         1. If only partial release(s) exist: return it IF genome_release.is_current=1, else None
         2. If both partial and integrated exist: return the newest integrated (by label)
         """
-        # Get all released genome_releases
         released_genome_releases = [
             gr
             for gr in genome.genome_releases
@@ -395,18 +392,15 @@ class ReleaseSelector:
         if not released_genome_releases:
             return None
 
-        # Separate into integrated and partial
         integrated_grs = [
             gr for gr in released_genome_releases if gr.ensembl_release.release_type == "integrated"
         ]
         partial_grs = [gr for gr in released_genome_releases if gr.ensembl_release.release_type == "partial"]
 
-        # If we have integrated releases, return the newest one
         if integrated_grs:
             newest_integrated = max(integrated_grs, key=lambda gr: gr.ensembl_release.label)
             return newest_integrated.ensembl_release
 
-        # Only partial releases exist - check for is_current=1
         current_partial_grs = [gr for gr in partial_grs if gr.is_current == 1]
 
         if current_partial_grs:
@@ -482,7 +476,6 @@ class ReleaseSelector:
         - For partial-only genomes: always 1
         - For genomes with integrated releases: 1 if the selected_release matches the latest_release
         """
-        # Check if genome has any integrated releases
         has_integrated = any(
             gr.ensembl_release.release_type == "integrated"
             for gr in genome.genome_releases
@@ -490,11 +483,142 @@ class ReleaseSelector:
         )
 
         if not has_integrated:
-            # Partial-only genome
             return 1
         else:
-            # Has integrated releases - check if selected matches latest
             return 1 if selected_release.release_id == latest_release.release_id else 0
+
+
+# ============================================================================
+# DEDUPLICATION AND VALIDATION
+# ============================================================================
+
+
+class EntryDeduplicator:
+    """Handles deduplication of search entries by url_name"""
+
+    @staticmethod
+    def deduplicate_by_url_name(entries: List[SearchEntry]) -> Tuple[List[SearchEntry], int]:
+        """
+        Deduplicate entries by url_name, clearing url_name on non-preferred entries.
+
+        Priority when duplicates exist:
+        1. Keep url_name on entry from genome with integrated releases (latest_release_type == "integrated")
+        2. If both have integrated or both have partial, keep url_name on the one with newer latest_release_name
+        3. If release names are equal, keep url_name on the one with higher genome_uuid (for determinism)
+
+        Entries with empty or missing url_name are not considered duplicates and are all kept as-is.
+
+        Args:
+            entries: List of SearchEntry objects
+
+        Returns:
+            Tuple of (all entries with url_name cleared on non-preferred duplicates, number of url_names cleared)
+        """
+        url_name_to_entries = {}
+
+        for entry in entries:
+            url_name = None
+            latest_release_type = None
+            latest_release_name = None
+            genome_uuid = None
+
+            for field in entry.fields:
+                if field.name == "url_name":
+                    url_name = field.value
+                elif field.name == "latest_release_type":
+                    latest_release_type = field.value
+                elif field.name == "latest_release_name":
+                    latest_release_name = field.value
+                elif field.name == "genome_uuid":
+                    genome_uuid = field.value
+
+            if not url_name:
+                continue
+
+            if url_name not in url_name_to_entries:
+                url_name_to_entries[url_name] = []
+
+            url_name_to_entries[url_name].append(
+                {
+                    "entry": entry,
+                    "release_type": latest_release_type,
+                    "release_name": latest_release_name,
+                    "genome_uuid": genome_uuid,
+                }
+            )
+
+        url_names_cleared = 0
+
+        for url_name, entry_infos in url_name_to_entries.items():
+            if len(entry_infos) <= 1:
+                continue
+
+            def sort_key(info):
+                is_integrated = 1 if info["release_type"] == "integrated" else 0
+                release_name = info["release_name"] or ""
+                genome_uuid = info["genome_uuid"] or ""
+                return (is_integrated, release_name, genome_uuid)
+
+            sorted_infos = sorted(entry_infos, key=sort_key, reverse=True)
+            preferred_info = sorted_infos[0]
+            non_preferred_infos = sorted_infos[1:]
+
+            for info in non_preferred_infos:
+                entry = info["entry"]
+                for field in entry.fields:
+                    if field.name == "url_name":
+                        field.value = ""
+                        break
+
+                logger.info(
+                    f"Duplicate url_name '{url_name}': clearing url_name on genome {info['genome_uuid']} "
+                    f"({info['release_type']} {info['release_name']}), keeping on genome "
+                    f"{preferred_info['genome_uuid']} ({preferred_info['release_type']} {preferred_info['release_name']})"
+                )
+                url_names_cleared += 1
+
+        logger.info(f"Deduplication complete: cleared url_name on {url_names_cleared} entries")
+        return entries, url_names_cleared
+
+    @staticmethod
+    def validate_unique_url_names(entries: List[SearchEntry]) -> None:
+        """
+        Validate that all url_names in entries are unique.
+
+        Args:
+            entries: List of SearchEntry objects to validate
+
+        Raises:
+            ValueError: If duplicate url_names are found
+        """
+        url_name_to_genomes = {}
+
+        for entry in entries:
+            url_name = None
+            genome_uuid = None
+
+            for field in entry.fields:
+                if field.name == "url_name":
+                    url_name = field.value
+                elif field.name == "genome_uuid":
+                    genome_uuid = field.value
+
+            if url_name:
+                if url_name not in url_name_to_genomes:
+                    url_name_to_genomes[url_name] = []
+                url_name_to_genomes[url_name].append(genome_uuid)
+
+        duplicates = {
+            url_name: genomes for url_name, genomes in url_name_to_genomes.items() if len(genomes) > 1
+        }
+
+        if duplicates:
+            error_msg = ["Duplicate url_names found in final index:"]
+            for url_name, genomes in duplicates.items():
+                error_msg.append(f"  - '{url_name}': {', '.join(genomes)}")
+            raise ValueError("\n".join(error_msg))
+
+        logger.info(f"Validation passed: all {len(url_name_to_genomes)} url_names are unique")
 
 
 # ============================================================================
@@ -509,6 +633,7 @@ class GenomeSearchIndexer:
         self.metadata_db = DBConnection(metadata_uri)
         self.taxonomy_db = DBConnection(taxonomy_uri)
         self.release_selector = ReleaseSelector()
+        self.deduplicator = EntryDeduplicator()
         self.batch_size = batch_size
 
     def _get_genome_ids_to_process(self, session: Session) -> List[int]:
@@ -558,12 +683,10 @@ class GenomeSearchIndexer:
         Get genomes with their selected releases in batches.
         Yields batches of (genome, release) tuples.
         """
-        # Get all genome IDs (lightweight query)
         genome_ids = self._get_genome_ids_to_process(session)
         total_genomes = len(genome_ids)
         logger.info(f"Found {total_genomes} genomes to process")
 
-        # Process in batches
         for i in range(0, total_genomes, self.batch_size):
             batch_ids = genome_ids[i: i + self.batch_size]
             logger.info(
@@ -571,10 +694,8 @@ class GenomeSearchIndexer:
                 f"genomes {i + 1}-{min(i + self.batch_size, total_genomes)}"
             )
 
-            # Load this batch with all relationships
             genomes_batch = self._get_genomes_batch(session, batch_ids)
 
-            # Select appropriate release for each genome
             genome_release_pairs = []
             for genome in genomes_batch:
                 selected_release = self.release_selector.select_release_for_genome(genome)
@@ -583,7 +704,6 @@ class GenomeSearchIndexer:
 
             yield genome_release_pairs
 
-            # Clear session to free memory
             session.expunge_all()
 
     def _get_newest_partial_release(self, session: Session) -> Optional[str]:
@@ -641,11 +761,9 @@ class GenomeSearchIndexer:
         from ensembl.ncbi_taxonomy.api.utils import Taxonomy
         from ensembl.ncbi_taxonomy.models import NCBITaxonomy
 
-        # Get all ancestors
         try:
             ancestors = Taxonomy.fetch_ancestors(taxonomy_session, taxonomy_id)
         except NoResultFound:
-            # If no ancestors found, just use the current taxon
             ancestors = []
 
         # Build list of taxon_ids: current + all ancestors
@@ -688,16 +806,12 @@ class GenomeSearchIndexer:
             MissingDatasetFieldError: If any required dataset fields are missing
         """
 
-        # Extract direct fields
         doc_data = self._extract_direct_fields(genome)
 
-        # Get release information
         first_release, latest_release, all_integrated = self.release_selector.get_release_info(genome)
 
-        # Build comma-separated list of integrated release labels
         releases_str = ",".join([r.label for r in all_integrated]) if all_integrated else ""
 
-        # Calculate is_latest_release_current
         is_current = self.release_selector.get_is_latest_release_current(genome, release, latest_release)
 
         doc_data.update(
@@ -724,7 +838,6 @@ class GenomeSearchIndexer:
             }
         )
 
-        # Add taxonomy lineage - use taxonomy session
         lineage_taxids, lineage_names = self._get_taxonomy_lineage(
             taxonomy_session, genome.organism.taxonomy_id
         )
@@ -737,7 +850,9 @@ class GenomeSearchIndexer:
 
         return GenomeSearchDocument(**doc_data)
 
-    def export_to_json(self, output_path: str, raise_on_errors: bool = False, pretty_print: bool = True) -> int:
+    def export_to_json(
+            self, output_path: str, raise_on_errors: bool = False, pretty_print: bool = True
+    ) -> int:
         """
         Generate search index and export to JSON file.
         Loads all documents in memory then writes to file.
@@ -757,10 +872,8 @@ class GenomeSearchIndexer:
         """
         logger.info(f"Generating search index and exporting to {output_path}")
 
-        # Get all documents
         search_index = self.get_search_index(raise_on_errors=raise_on_errors)
 
-        # Write to file
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -773,111 +886,93 @@ class GenomeSearchIndexer:
         logger.info(f"Successfully exported {search_index.entry_count} documents to {output_path}")
         return search_index.entry_count
 
-    def stream_to_json(self, output_path: str, pretty_print: bool = True) -> Tuple[int, IndexingErrorCollection]:
+    def stream_to_json(
+            self, output_path: str, pretty_print: bool = True
+    ) -> Tuple[int, IndexingErrorCollection]:
         """
-        Generate search index and stream to JSON file.
-        Writes documents as they're generated to minimize memory usage.
+        Generate search index and export to JSON file with url_name deduplication.
 
-        Best for large datasets (20k+ genomes) to avoid loading everything in memory.
+        Note: This method collects all entries in memory to perform url_name deduplication
+        before writing. When duplicate url_names are found, the url_name field is cleared
+        on non-preferred entries (preferring integrated over partial releases). All entries
+        are kept in the index.
 
         Args:
             output_path: Path to output JSON file
             pretty_print: If True, format JSON with indentation (larger file)
 
         Returns:
-            Tuple of (number of successful documents, error collection)
+            Tuple of (number of documents exported, error collection)
         """
-        logger.info(f"Streaming search index to {output_path}")
+        logger.info(f"Generating search index with deduplication and exporting to {output_path}")
 
         error_collection = IndexingErrorCollection()
-        output_file = Path(output_path)
-        output_file.parent.mkdir(parents=True, exist_ok=True)
+        all_entries = []
 
-        total = 0
+        with self.metadata_db.session_scope() as metadata_session:
+            with self.taxonomy_db.session_scope() as taxonomy_session:
+                newest_partial = self._get_newest_partial_release(metadata_session)
+                if not newest_partial:
+                    raise ValueError("No partial releases found in database")
 
-        with open(output_file, "w") as f:
-            with self.metadata_db.session_scope() as metadata_session:
-                with self.taxonomy_db.session_scope() as taxonomy_session:
-                    # Get the newest partial release for top-level
-                    newest_partial = self._get_newest_partial_release(metadata_session)
-                    if not newest_partial:
-                        raise ValueError("No partial releases found in database")
+                for batch in self.get_genomes_with_releases_batched(metadata_session):
+                    for genome, release in batch:
+                        try:
+                            doc = self.create_search_document(
+                                metadata_session, taxonomy_session, genome, release
+                            )
+                            entry = doc.to_search_entry()
+                            all_entries.append(entry)
 
-                    # Write opening with metadata
+                            if len(all_entries) % 100 == 0:
+                                logger.info(f"Collected {len(all_entries)} entries...")
+
+                        except MissingDatasetFieldError as e:
+                            error_collection.add_error(
+                                genome_uuid=genome.genome_uuid,
+                                release_label=release.label,
+                                error_message=str(e),
+                                exception=e,
+                            )
+                        except Exception as e:
+                            error_collection.add_error(
+                                genome_uuid=genome.genome_uuid,
+                                release_label=release.label,
+                                error_message=f"Unexpected error: {str(e)}",
+                                exception=e,
+                            )
+
+                logger.info(f"Deduplicating {len(all_entries)} entries by url_name...")
+                processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(all_entries)
+
+                logger.info("Validating url_name uniqueness...")
+                self.deduplicator.validate_unique_url_names(processed_entries)
+
+                output_file = Path(output_path)
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+
+                with open(output_file, "w") as f:
+                    search_index = SearchIndex(
+                        name="ensemblNext",
+                        release=newest_partial,
+                        entry_count=len(processed_entries),
+                        entries=processed_entries,
+                    )
                     if pretty_print:
-                        f.write('{\n  "name": "ensemblNext",\n')
-                        f.write(f'  "release": "{newest_partial}",\n')
-                        f.write('  "entry_count": 0,\n')  # Placeholder, will be updated
-                        f.write('  "entries": [\n')
+                        json.dump(search_index.model_dump(), f, indent=2)
                     else:
-                        f.write('{"name":"ensemblNext",')
-                        f.write(f'"release":"{newest_partial}",')
-                        f.write('"entry_count":0,')
-                        f.write('"entries":[')
+                        json.dump(search_index.model_dump(), f)
 
-                    first = True
+                logger.info(
+                    f"Successfully exported {len(processed_entries)} documents to {output_path} "
+                    f"(cleared url_name on {num_cleared} entries with duplicate url_names)"
+                )
 
-                    for batch in self.get_genomes_with_releases_batched(metadata_session):
-                        for genome, release in batch:
-                            try:
-                                doc = self.create_search_document(
-                                    metadata_session, taxonomy_session, genome, release
-                                )
-                                entry = doc.to_search_entry()
+                if error_collection.has_errors():
+                    logger.warning(f"Failed to index {len(error_collection.errors)} genome(s)")
+                    print(error_collection.get_summary())
 
-                                # Write comma before all but first document
-                                if not first:
-                                    f.write(",\n" if pretty_print else ",")
-                                first = False
-
-                                # Write entry
-                                if pretty_print:
-                                    # Add indentation for array items
-                                    entry_json = json.dumps(entry.model_dump(), indent=2)
-                                    # Indent each line by 4 spaces
-                                    indented = "\n".join("    " + line for line in entry_json.split("\n"))
-                                    f.write(indented)
-                                else:
-                                    json.dump(entry.model_dump(), f)
-
-                                total += 1
-
-                                # Log progress
-                                if total % 100 == 0:
-                                    logger.info(f"Streamed {total} documents...")
-
-                            except MissingDatasetFieldError as e:
-                                error_collection.add_error(
-                                    genome_uuid=genome.genome_uuid,
-                                    release_label=release.label,
-                                    error_message=str(e),
-                                    exception=e,
-                                )
-                            except Exception as e:
-                                error_collection.add_error(
-                                    genome_uuid=genome.genome_uuid,
-                                    release_label=release.label,
-                                    error_message=f"Unexpected error: {str(e)}",
-                                    exception=e,
-                                )
-
-                    f.write("\n  ]\n}" if pretty_print else "]}")
-
-        # Update entry_count in the file
-        with open(output_file, "r") as f:
-            content = f.read()
-        content = content.replace('"entry_count": 0', f'"entry_count": {total}', 1)
-        content = content.replace('"entry_count":0', f'"entry_count":{total}', 1)
-        with open(output_file, "w") as f:
-            f.write(content)
-
-        logger.info(f"Successfully streamed {total} documents to {output_path}")
-
-        if error_collection.has_errors():
-            logger.warning(f"Failed to index {len(error_collection.errors)} genome(s)")
-            print(error_collection.get_summary())
-
-        return total, error_collection
+                return len(processed_entries), error_collection
 
     def export_to_json_auto(
             self,
@@ -889,18 +984,20 @@ class GenomeSearchIndexer:
         """
         Automatically choose between regular export and streaming based on dataset size.
 
-        Counts genomes first, then uses streaming if above threshold.
+        Note: Both methods now perform url_name deduplication, which requires all entries
+        in memory. When duplicate url_names are found, the url_name field is cleared on
+        non-preferred entries (preferring integrated over partial releases). The "streaming"
+        mode processes genomes in batches to avoid keeping all Genome objects loaded.
 
         Args:
             output_path: Path to output JSON file
             raise_on_errors: If True, raise exception if any errors occurred (non-streaming only)
             pretty_print: If True, format JSON with indentation
-            stream_threshold: Use streaming if more than this many genomes
+            stream_threshold: Use streaming mode if more than this many genomes
 
         Returns:
             Number of successfully indexed documents
         """
-        # Count genomes first
         with self.metadata_db.session_scope() as session:
             genome_count = len(self._get_genome_ids_to_process(session))
 
@@ -924,16 +1021,19 @@ class GenomeSearchIndexer:
 
         Processes genomes in batches to manage memory usage.
         Collects all errors and reports them at the end.
+        Performs url_name deduplication: when duplicate url_names are found, clears
+        the url_name field on non-preferred entries (preferring integrated over partial).
 
         Args:
             raise_on_errors: If True, raise exception if any errors occurred.
                            If False, return successfully indexed documents and print errors.
 
         Returns:
-            SearchIndex object with all successfully indexed documents
+            SearchIndex object with all successfully indexed documents (url_name cleared on duplicates)
 
         Raises:
             MissingDatasetFieldError: If raise_on_errors=True and any errors occurred
+            ValueError: If duplicate url_names remain after deduplication
         """
         error_collection = IndexingErrorCollection()
         search_entries = []
@@ -941,12 +1041,10 @@ class GenomeSearchIndexer:
 
         with self.metadata_db.session_scope() as metadata_session:
             with self.taxonomy_db.session_scope() as taxonomy_session:
-                # Get the newest partial release for top-level
                 newest_partial = self._get_newest_partial_release(metadata_session)
                 if not newest_partial:
                     raise ValueError("No partial releases found in database")
 
-                # Process genomes in batches
                 for batch in self.get_genomes_with_releases_batched(metadata_session):
                     for genome, release in batch:
                         try:
@@ -957,7 +1055,6 @@ class GenomeSearchIndexer:
                             search_entries.append(entry)
                             total_processed += 1
 
-                            # Log progress periodically
                             if total_processed % 100 == 0:
                                 logger.info(f"Processed {total_processed} genomes...")
 
@@ -969,7 +1066,6 @@ class GenomeSearchIndexer:
                                 exception=e,
                             )
                         except Exception as e:
-                            # Catch any other unexpected errors
                             error_collection.add_error(
                                 genome_uuid=genome.genome_uuid,
                                 release_label=release.label,
@@ -977,8 +1073,16 @@ class GenomeSearchIndexer:
                                 exception=e,
                             )
 
-                # Report results
-                logger.info(f"Successfully indexed: {len(search_entries)} genome(s)")
+                logger.info(f"Deduplicating {len(search_entries)} entries by url_name...")
+                processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(search_entries)
+
+                logger.info("Validating url_name uniqueness...")
+                self.deduplicator.validate_unique_url_names(processed_entries)
+
+                logger.info(
+                    f"Successfully indexed: {len(processed_entries)} genome(s) "
+                    f"(cleared url_name on {num_cleared} entries with duplicate url_names)"
+                )
                 if error_collection.has_errors():
                     logger.warning(f"Failed to index: {len(error_collection.errors)} genome(s)")
                     print(error_collection.get_summary())
@@ -987,7 +1091,10 @@ class GenomeSearchIndexer:
                         error_collection.raise_if_errors()
 
                 return SearchIndex(
-                    name="ensemblNext", release=newest_partial, entry_count=len(search_entries), entries=search_entries
+                    name="ensemblNext",
+                    release=newest_partial,
+                    entry_count=len(processed_entries),
+                    entries=processed_entries,
                 )
 
 
