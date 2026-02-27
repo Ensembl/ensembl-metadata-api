@@ -1223,6 +1223,16 @@ def get_genomes_in_group(
             }
         ]
 
+        # The condition here is ugly, but we have to live with it for now
+        # Slack discussion for more context:
+        # https://genomes-ebi.slack.com/archives/C08A88R7GJG/p1772190014781849?thread_ts=1772187925.600559&cid=C08A88R7GJG
+        if group_id == "t2t-group":
+            # remove grch38 from the list
+            dummy_data = [
+                genome for genome in dummy_data
+                if genome.get("genome_uuid") != "a7335667-93e7-11ec-a39d-005056b38ce3"
+            ]
+
         # Use release_label even in dummy mode: filter to matching releases.
         if release_label:
             dummy_data = [
