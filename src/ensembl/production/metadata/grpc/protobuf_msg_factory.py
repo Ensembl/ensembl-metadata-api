@@ -116,6 +116,8 @@ def create_assembly(data=None):
         ucsc_name=data.Assembly.ucsc_name,
         ensembl_name=data.Assembly.ensembl_name,
         is_reference=data.Assembly.is_reference,
+        url_name=data.Genome.url_name,
+        tol_id=data.Organism.tol_id,
     )
     return assembly
 
