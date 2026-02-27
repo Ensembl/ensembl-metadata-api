@@ -616,6 +616,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         - [A-Z]{4}[0-9]{2}S?[0-9]{6,8}
         - [A-Z]{6}[0-9]{2}S?[0-9]{7,9}
         - [A-Z]{6}[0-9]{2}S?[0-9]{7,9}\.[0-9]+$
+        - [A-Z]{2}_\d{6,9}\.\d+      RefSeq
 
         Returns:
             bool: True if identifier matches any pattern
@@ -627,6 +628,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             re.compile(r'^[A-Z]{4}[0-9]{2}S?[0-9]{6,8}$'),
             re.compile(r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}$'),
             re.compile(r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}\.[0-9]+$'),
+            re.compile(r'^[A-Z]{2}_\d{6,9}\.\d+$'),
         ]
         return any(pattern.match(identifier) for pattern in ENA_ACCESSION_PATTERNS)
 
