@@ -341,7 +341,7 @@ class EnsemblMetadataServicer(object):
 
     def GetGenomeUUIDByTag(self, request, context):
         """Retrieve genome UUID by genome_tag.
-        genome_tag value will be either in assembly.url_name or tol_id column
+        genome_tag value will be either in genome.url_name or organism.tol_id column
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

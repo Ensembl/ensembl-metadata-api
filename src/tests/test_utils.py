@@ -316,13 +316,20 @@ class TestUtils:
             ))
         logger.debug(f"Initial {output}")
         output = json.loads(output)
-        expected_keys = ['assembly', 'attributesInfo', 'created', 'genomeUuid',
+        required_keys = ['assembly', 'attributesInfo', 'created', 'genomeUuid',
                          'organism', 'release', 'taxon', 'relatedAssembliesCount',
                          'availableDatasets']
+        optional_keys = ['urlName']
         logger.debug(f"Output {output}")
         if actual is not None:
-            assert len(output.keys()) == len(expected_keys)
-            assert [key in output for key in expected_keys]
+            # In proto3 JSON, scalar fields with default values (e.g. null/empty url_name)
+            # may be omitted by MessageToJson, so urlName should be treated as optional.
+            assert [key in output for key in required_keys]
+            # The assert below is to check that output contains only allowed keys
+            assert set(output.keys()).issubset(set(required_keys + optional_keys))
+            if 'urlName' in output:
+                assert isinstance(output['urlName'], str)
+                assert output['urlName'] != ""
             assert output['genomeUuid'] == genome_uuid
             assert output['release']['releaseVersion'] == actual
         else:
@@ -358,11 +365,18 @@ class TestUtils:
             ))
         logger.debug(f"Initial {output}")
         output = json.loads(output)
-        expected_keys = ['assembly', 'taxon', 'created', 'genomeUuid', 'organism', 'release']
+        required_keys = ['assembly', 'taxon', 'created', 'genomeUuid', 'organism', 'release']
+        optional_keys = ['urlName']
         logger.debug(f"Output {output}")
         if actual is not None:
-            assert len(output.keys()) == len(expected_keys)
-            assert [key in output for key in expected_keys]
+            # In proto3 JSON, scalar fields with default values (e.g. null/empty url_name)
+            # may be omitted by MessageToJson, so urlName should be treated as optional.
+            assert [key in output for key in required_keys]
+            # The assert below is to check that output contains only allowed keys
+            assert set(output.keys()).issubset(set(required_keys + optional_keys))
+            if 'urlName' in output:
+                assert isinstance(output['urlName'], str)
+                assert output['urlName'] != ""
             assert output['genomeUuid'] == genome_uuid
             assert output['release']['releaseVersion'] == actual
         else:
