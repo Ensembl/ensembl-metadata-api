@@ -95,7 +95,7 @@ service EnsemblMetadata {
   rpc GetOrganismsGroupCount(OrganismsGroupRequest) returns (OrganismsGroupCount) {}
 
   // Retrieve genome UUID by genome_tag.
-  // genome_tag value will be either in assembly.url_name or tol_id column
+  // genome_tag value will be either in genome.url_name or organism.tol_id column
   rpc GetGenomeUUIDByTag(GenomeTagRequest) returns (GenomeUUID) {}
 
   // Get FTP links associated with a Genome UUID and Dataset
@@ -126,14 +126,15 @@ which may or may not be in the current Ensembl release.
  */
 message Genome {
   string genome_uuid = 1;
-  Assembly assembly = 2;
-  Taxon taxon = 3;
-  string created = 4;
-  Organism organism = 5;
-  AttributesInfo attributes_info = 6;
-  int32 related_assemblies_count = 7;
-  Release release = 8;
-  repeated string available_datasets = 9;
+  string url_name = 2;
+  Assembly assembly = 3;
+  Taxon taxon = 4;
+  string created = 5;
+  Organism organism = 6;
+  AttributesInfo attributes_info = 7;
+  int32 related_assemblies_count = 8;
+  Release release = 9;
+  repeated string available_datasets = 10;
 }
 
 /*
@@ -142,12 +143,13 @@ which may or may not be in the current Ensembl release.
  */
 message BriefGenomeDetails {
   string genome_uuid = 1;
-  Assembly assembly = 2;
-  Taxon taxon = 3;
-  string created = 4;
-  Organism organism = 5;
-  Release release = 6;
-  optional BriefGenomeDetails latest_genome = 7;
+  string url_name = 2;
+  Assembly assembly = 3;
+  Taxon taxon = 4;
+  string created = 5;
+  Organism organism = 6;
+  Release release = 7;
+  optional BriefGenomeDetails latest_genome = 8;
 }
 
 message AttributesInfoByGenome {
@@ -216,8 +218,6 @@ message Assembly {
   string ensembl_name = 5;
   string assembly_uuid = 6;
   bool is_reference = 7;
-  string url_name = 8;
-  string tol_id = 9;
 }
 
 /*
@@ -254,6 +254,7 @@ message Organism {
   string strain_type = 7;
   int32 taxonomy_id = 8;
   int32 species_taxonomy_id = 9;
+  string tol_id = 10;
 }
 
 message Attribute {

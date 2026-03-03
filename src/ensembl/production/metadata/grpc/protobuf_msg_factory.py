@@ -116,8 +116,6 @@ def create_assembly(data=None):
         ucsc_name=data.Assembly.ucsc_name,
         ensembl_name=data.Assembly.ensembl_name,
         is_reference=data.Assembly.is_reference,
-        url_name=data.Genome.url_name,
-        tol_id=data.Organism.tol_id,
     )
     return assembly
 
@@ -149,6 +147,7 @@ def create_organism(data=None):
         organism_uuid=data.Organism.organism_uuid,
         taxonomy_id=data.Organism.taxonomy_id,
         species_taxonomy_id=data.Organism.species_taxonomy_id,
+        tol_id=data.Organism.tol_id,
     )
     return organism
 
@@ -264,6 +263,7 @@ def create_genome(data=None, attributes=None, count=0, alternative_names=[], dat
 
     genome = ensembl_metadata_pb2.Genome(
         genome_uuid=data.Genome.genome_uuid,
+        url_name=data.Genome.url_name,
         created=str(data.Genome.created),
         assembly=assembly,
         taxon=taxon,
@@ -292,6 +292,7 @@ def create_brief_genome_details(data=None, latest_genome=None):
 
     brief_genome_details = ensembl_metadata_pb2.BriefGenomeDetails(
         genome_uuid=data.Genome.genome_uuid,
+        url_name=data.Genome.url_name,
         created=str(data.Genome.created),
         assembly=assembly,
         taxon=taxon,
