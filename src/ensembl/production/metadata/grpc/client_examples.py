@@ -37,6 +37,7 @@ from ensembl_metadata_pb2 import (
     GroupTypeRequest,
     GenomesInGroupRequest,
     GenomeCountsRequest,
+    ReleaseInfoRequest,
 )
 
 
@@ -545,6 +546,38 @@ def get_genome_counts(stub):
     print("**** Genome Counts (Mock) ****")
     print(genome_counts)
 
+def get_release_label_by_genome_uuid(stub):
+    request1 = ReleaseInfoRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3"
+    )
+    release_label1 = stub.GetReleaseLabelByUUID(request1)
+
+    request2 = ReleaseInfoRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="genebuild"
+    )
+    release_label2 = stub.GetReleaseLabelByUUID(request2)
+
+    request3 = ReleaseInfoRequest(
+        dataset_type="genebuild"
+    )
+    release_label3 = stub.GetReleaseLabelByUUID(request3)
+
+    request4 = ReleaseInfoRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="blabla"
+    )
+    release_label4 = stub.GetReleaseLabelByUUID(request4)
+
+    print("**** Get release label: By genome_uuid (Ecoli)****")
+    print(release_label1)
+    print("**** Get release label: By genome_uuid and dataset_type = genebuild (Ecoli)****")
+    print(release_label2)
+    print("**** Get release label: No genome_uuid provided and dataset_type = genebuild (Ecoli) No results****")
+    print(release_label3)
+    print("**** Get release label: By genome_uuid and dataset_type = blabla (Ecoli) No results****")
+    print(release_label4)
+
 
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -605,6 +638,8 @@ def run():
         get_genomes_in_groups(stub)
         print("-------------- Get Genome Counts --------------")
         get_genome_counts(stub)
+        print("-------------- Get Release Label By Genome UUID --------------")
+        get_release_label_by_genome_uuid(stub)
 
 
 if __name__ == "__main__":

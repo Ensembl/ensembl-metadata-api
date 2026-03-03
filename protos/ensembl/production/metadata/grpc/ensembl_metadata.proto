@@ -104,6 +104,9 @@ service EnsemblMetadata {
   // Get release version for a given genome_uuid
   rpc GetReleaseVersionByUUID(ReleaseVersionRequest) returns (ReleaseVersion) {}
 
+  // Get release label for a given genome_uuid
+  rpc GetReleaseLabelByUUID(ReleaseInfoRequest) returns (ReleaseLabel) {}
+
   // Get attributes by genome UUID
   rpc GetAttributesValuesByUUID(DatasetAttributesValuesRequest) returns (DatasetAttributesValues) {}
 
@@ -382,6 +385,10 @@ message ReleaseVersion {
   double release_version = 1;
 }
 
+message ReleaseLabel {
+  string release_label = 1;
+}
+
 message DatasetAttributeValue {
   string attribute_name = 1;
   string attribute_value = 2;
@@ -586,8 +593,21 @@ message FTPLinksRequest {
 
 /*
 Release version request
+TODO: before removing this request message
+ we need to update the code in:
+ 1. Thoas: https://github.com/Ensembl/ensembl-thoas/blob/876dc846f7e7e61771c13aea152e1e3623881e39/grpc_service/grpc_model.py#L106 and
+ 2. Compara: https://github.com/Ensembl/ensembl-naxos/blob/b6430373ba59ce8aed7a50d9749d5ecc2d3ebaea/src/ensembl/io/naxos/metadata/grpc/client.py#L403
  */
 message ReleaseVersionRequest {
+  string genome_uuid = 1;     // Mandatory
+  string dataset_type = 2;    // Optional
+  double release_version = 3; // Optional
+}
+
+/*
+Release info request
+ */
+message ReleaseInfoRequest {
   string genome_uuid = 1;     // Mandatory
   string dataset_type = 2;    // Optional
   double release_version = 3; // Optional
