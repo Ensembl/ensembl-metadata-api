@@ -43,10 +43,9 @@ class BaseMetaUpdater:
     def get_or_new_source(self, meta_session, db_type, name=None):
         db_uri = self.db_uri
         parsed_url = make_url(db_uri)
+        location = parsed_url.host
         if name is None:
-            # For core databases
             name = parsed_url.database
-            location = parsed_url.host
 
         dataset_source = meta_session.query(DatasetSource).filter(DatasetSource.name == name).one_or_none()
         if dataset_source is None:
