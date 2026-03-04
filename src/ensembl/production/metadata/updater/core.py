@@ -709,7 +709,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                      dataset_source)
 
         # No exact match found - either error or force new
-        if int(force_new_uuid) == 1:
+        if force_new_uuid is not None and int(force_new_uuid) == 1:
             return self._create_new_assembly(species_id, meta_session, dataset_source, assembly_accession)
 
         # Return error describing discrepancies

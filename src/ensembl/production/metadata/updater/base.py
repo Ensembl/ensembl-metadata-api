@@ -42,14 +42,18 @@ class BaseMetaUpdater:
 
     def get_or_new_source(self, meta_session, db_type, name=None):
         db_uri = self.db_uri
+        parsed_url = make_url(db_uri)
         if name is None:
             # For core databases
-            name = make_url(db_uri).database
+            name = parsed_url.database
+            location = parsed_url.host
+
         dataset_source = meta_session.query(DatasetSource).filter(DatasetSource.name == name).one_or_none()
         if dataset_source is None:
             dataset_source = DatasetSource(
                 type=db_type,  # core/fungen etc
-                name=name  # dbname
+                name=name,  # dbname
+                location=location
             )
             meta_session.add(dataset_source)  # Only add a new DatasetSource to the session if it doesn't exist
         return dataset_source
