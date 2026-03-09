@@ -1260,28 +1260,33 @@ def get_genome_counts(db_conn: Any, release_label: str | None):
     try:
         # The logic calling the ORM and fetching data from the DB
         # will go here. For now, we return dummy data.
+        # Counts for release 19
         dummy_data = {
-            "total_genomes": 4758,
+            "total_genomes": 4856,
             "counts": [
                 {
                     "label": "Animals",
-                    "count": 4127,
+                    "count": 4529,
                 },
                 {
                     "label": "Green Plants",
-                    "count": 475,
+                    "count": 507,
                 },
                 {
                     "label": "Fungi",
-                    "count": 116,
+                    "count": 156,
+                },
+                {
+                    "label": "Archaea",
+                    "count": 24,
                 },
                 {
                     "label": "Bacteria",
-                    "count": 1,
+                    "count": 85,
                 },
                 {
                     "label": "Others",
-                    "count": 39,
+                    "count": 44,
                 }
             ]
         }
