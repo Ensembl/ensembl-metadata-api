@@ -1262,31 +1262,27 @@ def get_genome_counts(db_conn: Any, release_label: str | None):
         # will go here. For now, we return dummy data.
         # Counts for release 19
         dummy_data = {
-            "total_genomes": 4856,
+            "total_genomes": 4852,
             "counts": [
                 {
                     "label": "Animals",
-                    "count": 4529,
-                },
-                {
-                    "label": "Green Plants",
-                    "count": 507,
-                },
-                {
-                    "label": "Fungi",
-                    "count": 156,
-                },
-                {
-                    "label": "Archaea",
-                    "count": 24,
+                    "count": 4195,
                 },
                 {
                     "label": "Bacteria",
-                    "count": 85,
+                    "count": 1,
+                },
+                {
+                    "label": "Fungi",
+                    "count": 151,
+                },
+                {
+                    "label": "Green Plants",
+                    "count": 465,
                 },
                 {
                     "label": "Others",
-                    "count": 44,
+                    "count": 40,
                 }
             ]
         }
