@@ -604,31 +604,26 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
             return assembly_sequences, sequence_aliases
 
-
     def _is_valid_ena_accession(self, identifier):
         """
         Check if an identifier matches ENA sequence identifier rules for annotated sequences.
-
-        Valid patterns:
-        - [A-Z]{1}[0-9]{5}.[0-9]+
-        - [A-Z]{2}[0-9]{6}.[0-9]+
-        - [A-Z]{2}[0-9]{8}
-        - [A-Z]{4}[0-9]{2}S?[0-9]{6,8}
-        - [A-Z]{6}[0-9]{2}S?[0-9]{7,9}
-        - [A-Z]{6}[0-9]{2}S?[0-9]{7,9}\.[0-9]+$
-        - [A-Z]{2}_\d{6,9}\.\d+      RefSeq
-
+        Valid patterns (version suffix optional for all):
+        - [A-Z][0-9]{5}(\.[0-9]+)?
+        - [A-Z]{2}[0-9]{6}(\.[0-9]+)?
+        - [A-Z]{2}[0-9]{8}(\.[0-9]+)?
+        - [A-Z]{4}[0-9]{2}S?[0-9]{6,8}(\.[0-9]+)?
+        - [A-Z]{6}[0-9]{2}S?[0-9]{7,9}(\.[0-9]+)?
+        - [A-Z]{2}_\d{6,9}(\.\d+)?      RefSeq
         Returns:
             bool: True if identifier matches any pattern
         """
         ENA_ACCESSION_PATTERNS = [
-            re.compile(r'^[A-Z]{1}[0-9]{5}\.[0-9]+$'),
-            re.compile(r'^[A-Z]{2}[0-9]{6}\.[0-9]+$'),
-            re.compile(r'^[A-Z]{2}[0-9]{8}$'),
-            re.compile(r'^[A-Z]{4}[0-9]{2}S?[0-9]{6,8}$'),
-            re.compile(r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}$'),
-            re.compile(r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}\.[0-9]+$'),
-            re.compile(r'^[A-Z]{2}_\d{6,9}\.\d+$'),
+            re.compile(r'^[A-Z][0-9]{5}(\.[0-9]+)?$'),
+            re.compile(r'^[A-Z]{2}[0-9]{6}(\.[0-9]+)?$'),
+            re.compile(r'^[A-Z]{2}[0-9]{8}(\.[0-9]+)?$'),
+            re.compile(r'^[A-Z]{4}[0-9]{2}S?[0-9]{6,8}(\.[0-9]+)?$'),
+            re.compile(r'^[A-Z]{6}[0-9]{2}S?[0-9]{7,9}(\.[0-9]+)?$'),
+            re.compile(r'^[A-Z]{2}_\d{6,9}(\.\d+)?$'),
         ]
         return any(pattern.match(identifier) for pattern in ENA_ACCESSION_PATTERNS)
 
