@@ -15,11 +15,11 @@ from ensembl.production.metadata.grpc.config import cfg
 
 
 class BaseAdaptor:
-    def __init__(self, metadata_db: str | DBConnection):
-        if isinstance(metadata_db, DBConnection):
-            self.metadata_db = metadata_db
+    def __init__(self, metadata_uri: str | DBConnection):
+        if isinstance(metadata_uri, DBConnection):
+            self.metadata_db = metadata_uri
         else:
-            self.metadata_db = DBConnection(metadata_db, pool_size=cfg.pool_size, pool_recycle=cfg.pool_recycle)
+            self.metadata_db = DBConnection(metadata_uri, pool_size=cfg.pool_size, pool_recycle=cfg.pool_recycle)
 
 def check_parameter(param):
     if isinstance(param, tuple):
