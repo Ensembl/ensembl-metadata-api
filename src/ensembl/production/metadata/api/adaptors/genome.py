@@ -57,7 +57,7 @@ class GenomeDatasetsListItem(NamedTuple):
 
 
 class GenomeAdaptor(BaseAdaptor):
-    def __init__(self, metadata_db: str | DBConnection, taxonomy_uri: str | DBConnection):
+    def __init__(self, metadata_db: str | DBConnection, taxonomy_db: str | DBConnection):
 
         if isinstance(metadata_db, DBConnection):
             self.metadata_db = metadata_db
