@@ -22,12 +22,8 @@ from ensembl.production.metadata.api.models import Organism, Assembly, DatasetAt
 
 class VepAdaptor(BaseAdaptor):
     def __init__(self, metadata_uri: str | DBConnection, file="all"):
+        super().__init__(metadata_uri)
         self.file = file
-
-        if isinstance(metadata_uri, DBConnection):
-            self.metadata_db = metadata_uri
-        else:
-            super().__init__(metadata_uri)
 
     def fetch_vep_locations(self, genome_uuid):
         """
