@@ -14,6 +14,8 @@ import re
 from sqlalchemy import and_
 from sqlalchemy.orm import aliased
 
+from ensembl.utils.database import DBConnection
+
 from ensembl.production.metadata.api.adaptors.base import BaseAdaptor
 from ensembl.production.metadata.api.models import Organism, Assembly, DatasetAttribute, Genome, GenomeDataset, Dataset
 
