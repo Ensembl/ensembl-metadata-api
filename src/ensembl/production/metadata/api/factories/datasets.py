@@ -423,7 +423,8 @@ class DatasetFactory:
         Steps:
         1. Identify all FAULTY datasets.
         2. Traverse upwards to mark all parent datasets as FAULTY.
-        3. Retrieve all child datasets from the top-level parent and remove their release association.
+        3. Retrieve all child datasets from the top-level parent; downgrade any
+           RELEASED children to PROCESSED, and remove their release association.
         4. If any dataset in the chain has dataset_type.name of 'genebuild' or 'assembly':
            - Remove all genome_dataset.release_id values for the associated genome.
            - Delete all GenomeRelease entries for the affected genomes.
@@ -468,6 +469,18 @@ class DatasetFactory:
 
             # Remove release IDs where applicable
             for child_uuid, _ in all_child_datasets:
+                # Downgrade any Released children to Processed — these can arise from
+                # old code that left children Released while the parent became Faulty or manual intevention.
+                # Should not be strictly necessary, but prevents false positives on the DC
+                child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one_or_none()
+                if child_dataset and child_dataset.status == DatasetStatus.RELEASED:
+                    logger.info(
+                        f"Downgrading dataset {child_uuid} from RELEASED to PROCESSED "
+                        f"(parent chain is FAULTY)"
+                    )
+                    child_dataset.status = DatasetStatus.PROCESSED
+                    updated_datasets.add(child_uuid)
+
                 genome_datasets = (
                     session.query(GenomeDataset)
                     .join(Dataset)
