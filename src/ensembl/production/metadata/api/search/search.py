@@ -921,8 +921,8 @@ class GenomeSearchIndexer:
                             doc = self.create_search_document(
                                 metadata_session, taxonomy_session, genome, release
                             )
-                            entry = doc.to_search_entry()
-                            all_entries.append(entry)
+                            #entry = doc.to_search_entry()
+                            all_entries.append(doc)
 
                             if len(all_entries) % 100 == 0:
                                 logger.info(f"Collected {len(all_entries)} entries...")
@@ -941,9 +941,15 @@ class GenomeSearchIndexer:
                                 error_message=f"Unexpected error: {str(e)}",
                                 exception=e,
                             )
+                
+                # sort GenomeSearchDocuments
+                all_entries = self.sort_results(all_entries)
+                
+                # convert to SearchEntry
+                all_entries_as_search_entry = list(map(lambda d: d.to_search_entry(), all_entries))
 
-                logger.info(f"Deduplicating {len(all_entries)} entries by url_name...")
-                processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(all_entries)
+                logger.info(f"Deduplicating {len(all_entries_as_search_entry)} entries by url_name...")
+                processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(all_entries_as_search_entry)
 
                 logger.info("Validating url_name uniqueness...")
                 self.deduplicator.validate_unique_url_names(processed_entries)
@@ -1014,6 +1020,43 @@ class GenomeSearchIndexer:
         else:
             logger.info(f"Using regular mode (<={stream_threshold} genomes)")
             return self.export_to_json(output_path, raise_on_errors, pretty_print)
+
+
+    def sort_results(self, docs: List[GenomeSearchDocument]) -> List[GenomeSearchDocument]:
+        """Return a sorted list of genomes.
+        Sorting is done by multiple fields in a specific order.
+        The multiple sorts leverage pythons > only comparison to ensure each
+        sort order is preserved then the next sort doesn't apply
+
+        String values are moved to lower as comparison is done on charactor
+        value and A-Z are lower value than a-z
+        z is used when a string value can be None, this prevents the sort from
+        failing and places any empty strings at the bottom of the sort
+        """
+        sorts = [
+            # Order by highest rank
+            (lambda g: g.rank, True),
+            # Bring any assembly with is_reference == True to the top of the list
+            (lambda g: 1 if g.is_reference else 0, True),
+            # order by release type, integrated first
+            (lambda g: g.first_release_type == "integrated", True),
+            # order by common name
+            (lambda g: g.common_name.lower() if g.common_name else 'z', False),
+            # order by scientific name
+            (lambda g: g.scientific_name.lower(), False),
+            # Order by type.value, putting Non values at the bottom of the list
+            (lambda g: g.strain_type.lower() if g.strain_type else 'z', False),
+            # Order by type.kind, putting None values at the bottom of the list
+            (lambda g: g.strain.lower() if g.strain else 'z', False),
+            # Ensure that related assemblies are grouped
+            (lambda g: g.organism_uuid, False),
+        ]
+        # apply in reverse order to ensure first is applied last
+        for key, reverse in reversed(sorts):
+            docs.sort(key=key, reverse=reverse)
+
+        return docs
+
 
     def get_search_index(self, raise_on_errors: bool = False) -> SearchIndex:
         """
@@ -1089,6 +1132,8 @@ class GenomeSearchIndexer:
 
                     if raise_on_errors:
                         error_collection.raise_if_errors()
+                
+                processed_entries = self.sort_results(sort_results)
 
                 return SearchIndex(
                     name="ensemblNext",
