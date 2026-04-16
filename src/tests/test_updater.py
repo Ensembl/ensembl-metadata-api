@@ -183,3 +183,31 @@ class TestUpdater:
         with pytest.raises(Exception) as exif:
             test.process_core()
             assert ("Existing Organism, Assembly, and Datasets within a release. ")
+
+    def test_new_organism_with_specified_release(self, test_dbs):
+        """Verify that when a release name is specified, the genome is attached to that release."""
+        # "1" should match an existing PLANNED release name in the test metadata db
+        test = meta_factory(test_dbs['core_5'].dbc.url,
+                            test_dbs['ensembl_genome_metadata'].dbc.url,
+                            test_dbs['ncbi_taxonomy'].dbc.url,
+                            release="4")
+        test.process_core()
+
+        core_5_db = DBConnection(test_dbs['core_5'].dbc.url)
+        with core_5_db.session_scope() as core_session:
+            inserted_meta = core_session.query(Meta).filter(
+                Meta.species_id == "1",
+                Meta.meta_key == 'genome.genome_uuid'
+            ).first()
+            inserted_genome_uuid = inserted_meta.meta_value
+        assert inserted_genome_uuid is not None
+
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        with metadata_db.session_scope() as session:
+            genome = session.query(Genome).filter(
+                Genome.genome_uuid == inserted_genome_uuid
+            ).one()
+            assert len(genome.genome_releases) > 0
+            # Verify the genome was attached to the explicitly specified release
+            release_names = [gr.ensembl_release.name for gr in genome.genome_releases]
+            assert "4" in release_names
