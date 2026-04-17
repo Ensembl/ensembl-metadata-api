@@ -921,9 +921,8 @@ class GenomeSearchIndexer:
                             doc = self.create_search_document(
                                 metadata_session, taxonomy_session, genome, release
                             )
-                            #entry = doc.to_search_entry()
-                            all_entries.append(doc)
 
+                            all_entries.append(doc)
                             if len(all_entries) % 100 == 0:
                                 logger.info(f"Collected {len(all_entries)} entries...")
 
@@ -946,8 +945,10 @@ class GenomeSearchIndexer:
                 all_entries = self.sort_results(all_entries)
                 
                 # convert to SearchEntry
+                # TODO turn to_search_entry into a model_serializer  
                 all_entries_as_search_entry = list(map(lambda d: d.to_search_entry(), all_entries))
 
+                # TODO alter this to be a reduce function, performed on GenomeSearchDocuments
                 logger.info(f"Deduplicating {len(all_entries_as_search_entry)} entries by url_name...")
                 processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(all_entries_as_search_entry)
 
