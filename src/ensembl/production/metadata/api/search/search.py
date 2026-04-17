@@ -1095,8 +1095,7 @@ class GenomeSearchIndexer:
                             doc = self.create_search_document(
                                 metadata_session, taxonomy_session, genome, release
                             )
-                            entry = doc.to_search_entry()
-                            search_entries.append(entry)
+                            search_entries.append(doc)
                             total_processed += 1
 
                             if total_processed % 100 == 0:
@@ -1117,8 +1116,16 @@ class GenomeSearchIndexer:
                                 exception=e,
                             )
 
-                logger.info(f"Deduplicating {len(search_entries)} entries by url_name...")
-                processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(search_entries)
+                                # sort GenomeSearchDocuments
+                search_entries = self.sort_results(search_entries)
+                
+                # convert to SearchEntry
+                # TODO turn to_search_entry into a model_serializer  
+                search_entries_as_search_entry = list(map(lambda d: d.to_search_entry(), search_entries))
+
+                # TODO alter this to be a reduce function, performed on GenomeSearchDocuments
+                logger.info(f"Deduplicating {len(search_entries_as_search_entry)} entries by url_name...")
+                processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(search_entries_as_search_entry)
 
                 logger.info("Validating url_name uniqueness...")
                 self.deduplicator.validate_unique_url_names(processed_entries)
@@ -1134,8 +1141,6 @@ class GenomeSearchIndexer:
                     if raise_on_errors:
                         error_collection.raise_if_errors()
                 
-                processed_entries = self.sort_results(sort_results)
-
                 return SearchIndex(
                     name="ensemblNext",
                     release=newest_partial,
