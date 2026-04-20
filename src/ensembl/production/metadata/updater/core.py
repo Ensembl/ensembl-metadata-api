@@ -341,8 +341,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         annotation_source = self.get_meta_single_meta_key(species_id, "genebuild.annotation_source")
         if None in (production_name, genebuild_date, annotation_source, provider_name):
             raise exceptions.MetadataUpdateException(f"Unable to find required keys from meta")
-        # get next release inline to attach the genome to
-        planned_release = get_or_new_release(self.metadata_uri)
+        planned_release = self.get_release(meta_session)
         new_genome = Genome(
             genome_uuid=str(uuid.uuid4()),
             assembly=assembly,
