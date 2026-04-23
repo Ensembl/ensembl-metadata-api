@@ -943,6 +943,7 @@ class GenomeSearchIndexer:
                 
                 # sort GenomeSearchDocuments
                 all_entries = self.sort_results(all_entries)
+                all_entries = update_rank(all_entries)
                 
                 # convert to SearchEntry
                 # TODO turn to_search_entry into a model_serializer  
@@ -1058,7 +1059,6 @@ class GenomeSearchIndexer:
 
         return docs
 
-
     def get_search_index(self, raise_on_errors: bool = False) -> SearchIndex:
         """
         Main entry point to generate search index.
@@ -1118,6 +1118,7 @@ class GenomeSearchIndexer:
 
                                 # sort GenomeSearchDocuments
                 search_entries = self.sort_results(search_entries)
+                search_entries = update_rank(search_entries)
                 
                 # convert to SearchEntry
                 # TODO turn to_search_entry into a model_serializer  
@@ -1148,6 +1149,18 @@ class GenomeSearchIndexer:
                     entries=processed_entries,
                 )
 
+# ============================================================================
+# Default sort order untils
+# ============================================================================
+
+def update_rank(docs: List[GenomeSearchDocument]) -> List[GenomeSearchDocument]:
+    """
+    Updates rank based on array index. This will be used as the default sort column 
+    """
+    for i, d in enumerate(docs):
+        d.rank = i + 1
+    
+    return docs
 
 # ============================================================================
 # USAGE
