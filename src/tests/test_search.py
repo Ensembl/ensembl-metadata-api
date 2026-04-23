@@ -39,6 +39,7 @@ from ensembl.production.metadata.api.search.search import (
     ReleaseSelector,
     GenomeSearchIndexer,
     SearchIndex,
+    update_rank,
 )
 
 db_directory = Path(__file__).parent / "databases"
@@ -313,6 +314,69 @@ class TestGenomeSearchDocument:
         assert data["genome_uuid"] == "test-uuid"
         assert data["scientific_name"] == "Homo sapiens"
         assert data["is_reference"] is True
+
+    def test_rank_injection(self, test_dbs):
+        docs = [
+            GenomeSearchDocument(
+                genome_uuid="test-uuid",
+                scientific_name="Homo sapiens",
+                assembly_name="GRCh38",
+                accession="GCA_000001405.15",
+                is_reference=True,
+                species_taxonomy_id=9606,
+                taxonomy_id=9606,
+                organism_uuid="test-organism-uuid",
+                first_release_name="112",
+                first_release_type="integrated",
+                latest_release_name="112",
+                latest_release_type="integrated",
+                is_latest_release_current=1,
+                releases="112",
+                lineage_taxids=[9606],
+                lineage_name=["Homo sapiens"],
+                contig_n50=50000000,
+                coding_genes=20000,
+                genebuild_provider="Ensembl",
+                genebuild_method_display="Import",
+                rank=999,
+            ),
+            GenomeSearchDocument(
+                genome_uuid="test-uuid_2",
+                scientific_name="Homo sapiens",
+                assembly_name="GRCh38",
+                accession="GCA_000001405.15",
+                is_reference=True,
+                species_taxonomy_id=9606,
+                taxonomy_id=9606,
+                organism_uuid="test-organism-uuid",
+                first_release_name="112",
+                first_release_type="integrated",
+                latest_release_name="112",
+                latest_release_type="integrated",
+                is_latest_release_current=1,
+                releases="112",
+                lineage_taxids=[9606],
+                lineage_name=["Homo sapiens"],
+                contig_n50=50000000,
+                coding_genes=20000,
+                
+                genebuild_provider="Ensembl",
+                genebuild_method_display="Import",
+                rank=0,
+            )
+        ]
+        
+        assert docs[0].rank == 999
+        assert docs[1].rank == 0
+        
+        docs = update_rank(docs)
+        
+        assert docs[0].rank == 1
+        assert docs[1].rank == 2
+        
+        assert docs[0].genome_uuid == "test-uuid"
+        assert docs[1].genome_uuid == "test-uuid_2"
+        
 
 
 @pytest.mark.parametrize(
