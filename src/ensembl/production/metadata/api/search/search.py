@@ -753,7 +753,7 @@ class GenomeSearchIndexer:
             .distinct()
             .all()
         )
-        return [gid[0] for gid in genome_ids][:1]  # TODO remove limit after testing
+        return [gid[0] for gid in genome_ids]
 
     def _get_genomes_batch(self, session: Session, genome_ids: List[int]) -> List[Genome]:
         """
