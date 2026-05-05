@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Optional, List, Tuple, Iterator, Union
 
 from ensembl.utils.database import DBConnection
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, joinedload
 
@@ -28,6 +28,7 @@ from ensembl.production.metadata.api.models import (
     DatasetAttribute,
     EnsemblRelease,
     GenomeRelease,
+    GenomeGroupMember,
     GenomeDataset,
     ReleaseStatus,
     DatasetStatus,
@@ -150,6 +151,8 @@ class GenomeSearchDocument(BaseModel):
     # Additional taxonomy fields
     lineage_taxids: list[int]
     lineage_name: list[str]
+    # Stored as a list internally, but emitted as repeated "genome_group_ids" fields for search.
+    genome_group_ids: List[int] = Field(default_factory=list)
 
     # Complex derived fields from datasets - REQUIRED
     contig_n50: int
@@ -207,6 +210,12 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="is_latest_release_current", value=self.is_latest_release_current),
             SearchField(name="releases", value=self.releases),
         ]
+
+        # Search expects one field entry per genome group rather than a list-valued field.
+        fields.extend(
+            SearchField(name="genome_group_ids", value=genome_group_id)
+            for genome_group_id in self.genome_group_ids
+        )
 
         return SearchEntry(fields=fields)
 
@@ -672,6 +681,8 @@ class GenomeSearchIndexer:
                 .joinedload(Dataset.dataset_attributes)
                 .joinedload(DatasetAttribute.attribute),
                 joinedload(Genome.genome_datasets).joinedload(GenomeDataset.ensembl_release),
+                # Load group ids with each batch so dump generation does not lazy-load per genome.
+                joinedload(Genome.genome_group_members).joinedload(GenomeGroupMember.genome_group),
             )
             .all()
         )
@@ -739,7 +750,24 @@ class GenomeSearchIndexer:
             "scientific_parlance_name": genome.organism.scientific_parlance_name,
             "organism_uuid": genome.organism.organism_uuid,
             "rank": genome.organism.rank or 0,
+            "genome_group_ids": self._extract_genome_group_ids(genome),
         }
+
+    def _extract_genome_group_ids(self, genome: Genome) -> List[int]:
+        """Extract current genome group IDs for repeated search fields."""
+        genome_group_members = getattr(genome, "genome_group_members", []) or []
+        try:
+            genome_group_members = iter(genome_group_members)
+        except TypeError:
+            return []
+
+        # Limit the dump to active memberships and keep output stable for reproducible dumps.
+        genome_group_ids = {
+            ggm.genome_group.genome_group_id
+            for ggm in genome_group_members
+            if ggm.is_current == 1 and ggm.genome_group is not None
+        }
+        return sorted(genome_group_ids)
 
     def _get_taxonomy_lineage(
             self, taxonomy_session: Session, taxonomy_id: int
