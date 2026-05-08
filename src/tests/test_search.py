@@ -241,6 +241,7 @@ class TestGenomeSearchDocument:
             has_regulation=True,
             genebuild_provider="Ensembl",
             genebuild_method_display="Import",
+            genome_group_ids=[1, 2],
         )
 
         assert doc.common_name == "Human"
@@ -248,6 +249,40 @@ class TestGenomeSearchDocument:
         assert doc.has_variation is True
         assert doc.has_regulation is True
         assert doc.rank == 10
+        assert doc.genome_group_ids == [1, 2]
+
+    def test_document_serializes_genome_group_ids_as_repeated_fields(self, test_dbs):
+        """Test genome group IDs are emitted as repeated search fields."""
+        doc = GenomeSearchDocument(
+            genome_uuid="test-uuid",
+            scientific_name="Homo sapiens",
+            assembly_name="GRCh38",
+            accession="GCA_000001405.15",
+            is_reference=True,
+            species_taxonomy_id=9606,
+            taxonomy_id=9606,
+            organism_uuid="test-organism-uuid",
+            first_release_name="112",
+            first_release_type="integrated",
+            latest_release_name="112",
+            latest_release_type="integrated",
+            is_latest_release_current=1,
+            releases="112",
+            lineage_taxids=[9606],
+            lineage_name=["Homo sapiens"],
+            contig_n50=50000000,
+            coding_genes=20000,
+            genebuild_provider="Ensembl",
+            genebuild_method_display="Import",
+            genome_group_ids=[1, 2],
+        )
+
+        entry = doc.to_search_entry()
+        genome_group_fields = [
+            field for field in entry.fields if field.name == "genome_group_ids"
+        ]
+
+        assert [field.value for field in genome_group_fields] == [1, 2]
 
     def test_document_missing_required_field(self, test_dbs):
         """Test document creation fails when required field is missing."""
