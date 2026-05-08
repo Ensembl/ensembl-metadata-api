@@ -12,7 +12,6 @@
 import argparse
 import json
 import logging
-import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +22,7 @@ from pydantic import BaseModel
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, joinedload
 
+from ensembl.production.metadata.api.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.api.models import (
     Genome,
     Dataset,
@@ -368,107 +368,6 @@ class DatasetFieldExtractor:
 
         return value
 
-    def get_genebuild_annotation_source(self) -> str:
-        """
-        Get the genebuild source name used in the public FTP path.
-
-        Raises:
-            MissingDatasetFieldError: If genebuild.annotation_source is not found
-        """
-        value = self._get_dataset_attribute("genebuild", "genebuild.annotation_source")
-
-        if value is None:
-            raise MissingDatasetFieldError(
-                f"Missing required field 'genebuild.annotation_source' for genome "
-                f"{self.genome.genome_uuid} in release {self.release.label}"
-            )
-
-        return value
-
-    def get_last_geneset_update(self) -> str:
-        """
-        Get the geneset update date used in the public FTP path.
-
-        Raises:
-            MissingDatasetFieldError: If genebuild.last_geneset_update is not found
-        """
-        value = self._get_dataset_attribute("genebuild", "genebuild.last_geneset_update")
-
-        if value is None:
-            raise MissingDatasetFieldError(
-                f"Missing required field 'genebuild.last_geneset_update' for genome "
-                f"{self.genome.genome_uuid} in release {self.release.label}"
-            )
-
-        return value
-
-
-class FTPUrlBuilder:
-    """Builds the public FTP URL included in the search index."""
-
-    BASE_URL = "https://ftp.ebi.ac.uk/pub/ensemblorganisms"
-
-    @staticmethod
-    def _format_accession_path(accession: str) -> str:
-        """
-        Convert an assembly accession into the FTP directory layout.
-
-        Example:
-            GCA_000001215.4 -> GCA/000/001/215/4
-        """
-        match = re.match(r"^([A-Z]+)_(\d+)\.(\d+)$", accession)
-        if not match:
-            raise MissingDatasetFieldError(
-                f"Assembly accession '{accession}' is not in the expected format for FTP URL construction"
-            )
-
-        accession_prefix, accession_digits, accession_version = match.groups()
-        digit_groups = [accession_digits[i: i + 3] for i in range(0, len(accession_digits), 3)]
-        return "/".join([accession_prefix, *digit_groups, accession_version])
-
-    @staticmethod
-    def _format_last_geneset_update(last_geneset_update: str) -> str:
-        """Convert a YYYY-MM geneset date prefix to the FTP YYYY_MM directory."""
-        match = re.match(r"^(\d{4}-\d{2})", last_geneset_update)
-        if not match:
-            raise MissingDatasetFieldError(
-                f"genebuild.last_geneset_update '{last_geneset_update}' is not in the expected YYYY-MM format"
-            )
-
-        return match.group(1).replace("-", "_")
-
-    @classmethod
-    def build(cls, genome: Genome, dataset_extractor: DatasetFieldExtractor) -> str:
-        """
-        Construct the genome-level FTP URL from metadata fields.
-
-        The search document needs the public FTP location, but that value is not
-        stored directly on Genome. It is derived from the fixed EBI FTP root,
-        the assembly accession path, genebuild source, and geneset update date.
-        """
-        accession = genome.assembly.accession
-        genebuild_source_name = dataset_extractor.get_genebuild_annotation_source()
-        last_geneset_update = dataset_extractor.get_last_geneset_update()
-
-        missing_fields = []
-        if not accession:
-            missing_fields.append("assembly.accession")
-        if not genebuild_source_name:
-            missing_fields.append("genebuild.annotation_source")
-        if not last_geneset_update:
-            missing_fields.append("genebuild.last_geneset_update")
-
-        if missing_fields:
-            raise MissingDatasetFieldError(
-                f"Missing required field(s) for FTP URL construction for genome "
-                f"{genome.genome_uuid}: {', '.join(missing_fields)}"
-            )
-
-        accession_path = cls._format_accession_path(accession)
-        source_path = genebuild_source_name.lower()
-        update_path = cls._format_last_geneset_update(last_geneset_update)
-        return f"{cls.BASE_URL}/{accession_path}/{source_path}/{update_path}/"
-
 
 # ============================================================================
 # RELEASE SELECTION HELPER
@@ -733,9 +632,12 @@ class EntryDeduplicator:
 class GenomeSearchIndexer:
     """Service for generating genome search documents"""
 
+    FTP_BASE_URL = "https://ftp.ebi.ac.uk/pub/ensemblorganisms"
+
     def __init__(self, metadata_uri: str, taxonomy_uri: str, batch_size: int = 500):
         self.metadata_db = DBConnection(metadata_uri)
         self.taxonomy_db = DBConnection(taxonomy_uri)
+        self.genome_adaptor = GenomeAdaptor(self.metadata_db, self.taxonomy_db)
         self.release_selector = ReleaseSelector()
         self.deduplicator = EntryDeduplicator()
         self.batch_size = batch_size
@@ -753,7 +655,7 @@ class GenomeSearchIndexer:
             .distinct()
             .all()
         )
-        return [gid[0] for gid in genome_ids]
+        return [gid[0] for gid in genome_ids][:10]
 
     def _get_genomes_batch(self, session: Session, genome_ids: List[int]) -> List[Genome]:
         """
@@ -845,6 +747,32 @@ class GenomeSearchIndexer:
             "rank": genome.organism.rank or 0,
         }
 
+    def _get_ftp_path(self, genome: Genome, release: EnsemblRelease) -> str:
+        """
+        Build the search FTP URL using GenomeAdaptor.get_public_path as the source of truth.
+
+        get_public_path returns dataset-specific relative paths. The search index stores
+        the genome-level FTP directory, so use the genebuild path and remove its final
+        dataset directory.
+        """
+        paths = self.genome_adaptor.get_public_path(
+            genome_uuid=genome.genome_uuid,
+            dataset_type="genebuild",
+            release=release.label if release else None,
+        )
+
+        genebuild_path = next(
+            (path_info["path"] for path_info in paths if path_info["dataset_type"] == "genebuild"),
+            None,
+        )
+        if not genebuild_path:
+            raise MissingDatasetFieldError(
+                f"Could not construct FTP path for genome {genome.genome_uuid}: genebuild path not found"
+            )
+
+        genome_path = genebuild_path.removesuffix("/geneset")
+        return f"{self.FTP_BASE_URL}/{genome_path}/"
+
     def _get_taxonomy_lineage(
             self, taxonomy_session: Session, taxonomy_id: int
     ) -> Tuple[List[int], List[str]]:
@@ -931,7 +859,6 @@ class GenomeSearchIndexer:
 
         # Extract dataset fields - will raise exceptions if required fields are missing
         dataset_extractor = DatasetFieldExtractor(metadata_session, genome, release)
-        doc_data["ftp"] = FTPUrlBuilder.build(genome, dataset_extractor)
         doc_data.update(
             {
                 "contig_n50": dataset_extractor.get_contig_n50(),
@@ -942,6 +869,7 @@ class GenomeSearchIndexer:
                 "genebuild_method_display": dataset_extractor.get_genebuild_method_display(),
             }
         )
+        doc_data["ftp"] = self._get_ftp_path(genome, release)
 
         lineage_taxids, lineage_names = self._get_taxonomy_lineage(
             taxonomy_session, genome.organism.taxonomy_id
