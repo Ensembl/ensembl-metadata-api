@@ -159,6 +159,7 @@ class GenomeSearchDocument(BaseModel):
     coding_genes: int
     has_variation: bool = False
     has_regulation: bool = False
+    has_homology: bool = False
     genebuild_provider: str
     genebuild_method_display: str
 
@@ -191,6 +192,7 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="n50", value=str(self.contig_n50)),
             SearchField(name="has_variation", value=self.has_variation),
             SearchField(name="has_regulation", value=self.has_regulation),
+            SearchField(name="has_homology", value=self.has_homology),
             SearchField(name="annotation_method", value=self.genebuild_method_display),
             SearchField(name="annotation_provider", value=self.genebuild_provider),
             SearchField(name="genome_uuid", value=self.genome_uuid),
@@ -333,6 +335,10 @@ class DatasetFieldExtractor:
     def has_regulation(self) -> bool:
         """Check if genome has regulatory features data"""
         return self._has_dataset_type("regulatory_features")
+
+    def has_homology(self) -> bool:
+        """Check if genome has homology data"""
+        return self._has_dataset_type("homologies")
 
     def get_genebuild_provider(self) -> str:
         """
@@ -861,6 +867,7 @@ class GenomeSearchIndexer:
                 "coding_genes": dataset_extractor.get_coding_genes(),
                 "has_variation": dataset_extractor.has_variation(),
                 "has_regulation": dataset_extractor.has_regulation(),
+                "has_homology": dataset_extractor.has_homology(),
                 "genebuild_provider": dataset_extractor.get_genebuild_provider(),
                 "genebuild_method_display": dataset_extractor.get_genebuild_method_display(),
             }
