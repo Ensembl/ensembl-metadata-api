@@ -664,7 +664,7 @@ class GenomeSearchIndexer:
             .distinct()
             .all()
         )
-        return [gid[0] for gid in genome_ids][:10]
+        return [gid[0] for gid in genome_ids]
 
     def _get_genomes_batch(self, session: Session, genome_ids: List[int]) -> List[Genome]:
         """
