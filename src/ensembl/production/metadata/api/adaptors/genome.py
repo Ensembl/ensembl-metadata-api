@@ -1112,7 +1112,7 @@ class GenomeAdaptor(BaseAdaptor):
 
             # === RELEASE HANDLING ===
             if release is None:
-                if 'variation' in unique_dataset_types:
+                if 'variation' in unique_dataset_types and dataset_type in ('all', 'variation'):
                     variation_release = session.execute(
                         select(EnsemblRelease.label).join(GenomeDataset).join(Dataset).join(DatasetType).join(
                             Genome).where(
@@ -1121,10 +1121,10 @@ class GenomeAdaptor(BaseAdaptor):
                             Dataset.status == DatasetStatus.RELEASED,
                             GenomeDataset.is_current == True,
                             EnsemblRelease.release_type == 'partial'
-                        )
-                    ).scalar_one_or_none()
+                        ).order_by(EnsemblRelease.release_id.desc())
+                    ).scalars().first()
 
-                if 'homologies' in unique_dataset_types:
+                if 'homologies' in unique_dataset_types and dataset_type in ('all', 'homologies'):
                     homology_release = session.execute(
                         select(EnsemblRelease.label).join(GenomeDataset).join(Dataset).join(DatasetType).join(
                             Genome).where(
@@ -1133,10 +1133,10 @@ class GenomeAdaptor(BaseAdaptor):
                             Dataset.status == DatasetStatus.RELEASED,
                             GenomeDataset.is_current == True,
                             EnsemblRelease.release_type == 'partial'
-                        )
-                    ).scalar_one_or_none()
+                        ).order_by(EnsemblRelease.release_id.desc())
+                    ).scalars().first()
             else:
-                if 'variation' in unique_dataset_types:
+                if 'variation' in unique_dataset_types and dataset_type in ('all', 'variation'):
                     variation_release = session.execute(
                         select(EnsemblRelease.label).join(GenomeDataset).join(Dataset).join(DatasetType).join(
                             Genome).where(
@@ -1149,12 +1149,12 @@ class GenomeAdaptor(BaseAdaptor):
                                     EnsemblRelease.label == release).scalar_subquery()
                             )
                         ).order_by(EnsemblRelease.release_id.desc())
-                    ).scalar_one_or_none()
+                    ).scalars().first()
 
                     if variation_release is None:
                         unique_dataset_types = [t for t in unique_dataset_types if t != 'variation']
 
-                if 'homologies' in unique_dataset_types:
+                if 'homologies' in unique_dataset_types and dataset_type in ('all', 'homologies'):
                     homology_release = session.execute(
                         select(EnsemblRelease.label).join(GenomeDataset).join(Dataset).join(DatasetType).join(
                             Genome).where(
@@ -1167,7 +1167,7 @@ class GenomeAdaptor(BaseAdaptor):
                                     EnsemblRelease.label == release).scalar_subquery()
                             )
                         ).order_by(EnsemblRelease.release_id.desc())
-                    ).scalar_one_or_none()
+                    ).scalars().first()
 
                     if homology_release is None:
                         unique_dataset_types = [t for t in unique_dataset_types if t != 'homologies']
