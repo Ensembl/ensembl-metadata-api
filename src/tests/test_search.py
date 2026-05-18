@@ -1092,6 +1092,8 @@ class TestGenomeSearchIndexer:
 
     def test_get_taxonomy_lineage(self, test_dbs):
         """Test _get_taxonomy_lineage retrieves taxonomy information."""
+        from ensembl.ncbi_taxonomy.models import NCBITaxonomy
+
         metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
         taxonomy_uri = test_dbs["ncbi_taxonomy"].dbc.url
         indexer = GenomeSearchIndexer(metadata_uri, taxonomy_uri)
@@ -1111,6 +1113,16 @@ class TestGenomeSearchIndexer:
                     assert all(isinstance(tid, int) for tid in lineage["lineage_taxon_id"])
                     assert all(isinstance(name, str) for name in lineage["lineage_common_name"])
                     assert all(isinstance(name, str) for name in lineage["lineage_scientific_name"])
+
+                    selected_ranks = {"domain", "kingdom", "phylum", "class", "order", "family", "genus", "species"}
+                    lineage_ranks = {
+                        rank
+                        for rank, in taxonomy_session.query(NCBITaxonomy.rank)
+                        .filter(NCBITaxonomy.taxon_id.in_(lineage["lineage_taxon_id"]))
+                        .distinct()
+                        .all()
+                    }
+                    assert lineage_ranks.issubset(selected_ranks)
 
     def test_get_taxonomy_lineage_not_found(self, test_dbs):
         """Test _get_taxonomy_lineage handles missing taxonomy gracefully."""

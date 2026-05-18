@@ -803,39 +803,46 @@ class GenomeSearchIndexer:
         try:
             ancestors = Taxonomy.fetch_ancestors(taxonomy_session, taxonomy_id)
         except NoResultFound:
-            ancestors = []
+            return {
+                "lineage_taxon_id": [taxonomy_id],
+                "lineage_common_name": [],
+                "lineage_scientific_name": [],
+            }
 
         # Build list of taxon_ids: current + all ancestors.
         lineage_taxon_ids = [taxonomy_id]
         for ancestor in ancestors:
             lineage_taxon_ids.append(ancestor["taxon_id"])
 
-        # Query scientific and common names for all taxon_ids in the lineage.
-        # TODO: Check if we need to extend this to include more name_classes or tweak filter by rank
+        selected_ranks = (
+            "domain",
+            "kingdom",
+            "phylum",
+            "class",
+            "order",
+            "family",
+            "genus",
+            "species",
+        )
+
+        # Query scientific and common names for selected ranks in the lineage.
         taxonomy_name_rows = (
             taxonomy_session.query(NCBITaxonomy.taxon_id, NCBITaxonomy.name, NCBITaxonomy.name_class)
             .filter(NCBITaxonomy.taxon_id.in_(lineage_taxon_ids))
             .filter(NCBITaxonomy.name_class.in_(("scientific name", "common name")))
-            # Exclude these ranks to limit noise
-            .filter(NCBITaxonomy.rank.notin_((
-                    "acronym", "authority", "blast name", "equivalent name", "genbank common name",
-                    "import date", "in-part", "includes", "merged_taxon_id", "synonym", "type material"
-                ))
-            ) 
+            .filter(NCBITaxonomy.rank.in_(selected_ranks))
             .distinct()
             .all()
         )
 
+        selected_taxon_ids = {taxon_id for taxon_id, name, name_class in taxonomy_name_rows}
+        lineage_taxon_ids = [taxon_id for taxon_id in lineage_taxon_ids if taxon_id in selected_taxon_ids]
         names_by_taxon_id = {
             taxon_id: {"common name": [], "scientific name": []} for taxon_id in lineage_taxon_ids
         }
-        # print(taxonomy_name_rows)
-        
+
         for taxon_id, name, name_class in taxonomy_name_rows:
             names_by_taxon_id[taxon_id][name_class].append(name)
-
-        from pprint import pprint
-        # pprint(names_by_taxon_id)
 
         lineage_common_names = []
         lineage_scientific_names = []
@@ -849,7 +856,7 @@ class GenomeSearchIndexer:
             "lineage_scientific_name": lineage_scientific_names,
         }
 
-        # logger.info(lineage_data)
+        # logger.debug(lineage_data)
         return lineage_data
 
     def create_search_document(
