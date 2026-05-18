@@ -191,8 +191,9 @@ class TestGenomeSearchDocument:
             latest_release_type="integrated",
             is_latest_release_current=1,
             releases="112",
-            lineage_taxids=[9606, 9605, 9604],
-            lineage_name=["Homo sapiens", "Homo", "Hominidae"],
+            lineage_taxon_id=[9606, 9605, 9604],
+            lineage_common_name=["human"],
+            lineage_scientific_name=["Homo sapiens", "Homo", "Hominidae"],
             contig_n50=50000000,
             coding_genes=20000,
             genebuild_provider="Ensembl",
@@ -204,7 +205,7 @@ class TestGenomeSearchDocument:
         assert doc.is_reference is True
         assert doc.contig_n50 == 50000000
         assert doc.coding_genes == 20000
-        assert len(doc.lineage_taxids) == 3
+        assert len(doc.lineage_taxon_id) == 3
         assert doc.has_variation is False  # Default value
         assert doc.has_regulation is False  # Default value
         assert doc.rank == 0  # Default value
@@ -233,8 +234,9 @@ class TestGenomeSearchDocument:
             is_latest_release_current=1,
             releases="112",
             rank=10,
-            lineage_taxids=[9606],
-            lineage_name=["Homo sapiens"],
+            lineage_taxon_id=[9606],
+            lineage_common_name=["human"],
+            lineage_scientific_name=["Homo sapiens"],
             contig_n50=50000000,
             coding_genes=20000,
             has_variation=True,
@@ -268,8 +270,9 @@ class TestGenomeSearchDocument:
             latest_release_type="integrated",
             is_latest_release_current=1,
             releases="112",
-            lineage_taxids=[9606],
-            lineage_name=["Homo sapiens"],
+            lineage_taxon_id=[9606],
+            lineage_common_name=["human"],
+            lineage_scientific_name=["Homo sapiens"],
             contig_n50=50000000,
             coding_genes=20000,
             genebuild_provider="Ensembl",
@@ -278,11 +281,46 @@ class TestGenomeSearchDocument:
         )
 
         entry = doc.to_search_entry()
-        genome_group_fields = [
-            field for field in entry.fields if field.name == "genome_group_ids"
-        ]
+        genome_group_fields = [field for field in entry.fields if field.name == "genome_group_ids"]
 
         assert [field.value for field in genome_group_fields] == [1, 2]
+
+    def test_document_serializes_lineage_as_repeated_fields(self, test_dbs):
+        """Test lineage values are emitted as repeated search fields."""
+        doc = GenomeSearchDocument(
+            genome_uuid="test-uuid",
+            scientific_name="Homo sapiens",
+            assembly_name="GRCh38",
+            accession="GCA_000001405.15",
+            is_reference=True,
+            species_taxonomy_id=9606,
+            taxonomy_id=9606,
+            organism_uuid="test-organism-uuid",
+            first_release_name="112",
+            first_release_type="integrated",
+            latest_release_name="112",
+            latest_release_type="integrated",
+            is_latest_release_current=1,
+            releases="112",
+            lineage_taxon_id=[9606, 9605],
+            lineage_common_name=["human"],
+            lineage_scientific_name=["Homo sapiens", "Homo"],
+            contig_n50=50000000,
+            coding_genes=20000,
+            genebuild_provider="Ensembl",
+            genebuild_method_display="Import",
+        )
+
+        entry = doc.to_search_entry()
+
+        assert [field.value for field in entry.fields if field.name == "lineage_taxon_id"] == [9606, 9605]
+        assert [field.value for field in entry.fields if field.name == "lineage_common_name"] == ["human"]
+        assert [field.value for field in entry.fields if field.name == "lineage_scientific_name"] == [
+            "Homo sapiens",
+            "Homo",
+        ]
+        assert not any(field.name == "lineage_taxids" for field in entry.fields)
+        assert not any(field.name == "lineage_name" for field in entry.fields)
 
     def test_document_missing_required_field(self, test_dbs):
         """Test document creation fails when required field is missing."""
@@ -311,8 +349,9 @@ class TestGenomeSearchDocument:
                 latest_release_type="integrated",
                 is_latest_release_current=1,
                 releases="112",
-                lineage_taxids=[9606],
-                lineage_name=["Homo sapiens"],
+                lineage_taxon_id=[9606],
+                lineage_common_name=["human"],
+                lineage_scientific_name=["Homo sapiens"],
                 contig_n50=50000000,
                 coding_genes=20000,
                 genebuild_provider="Ensembl",
@@ -336,8 +375,9 @@ class TestGenomeSearchDocument:
             latest_release_type="integrated",
             is_latest_release_current=1,
             releases="112",
-            lineage_taxids=[9606],
-            lineage_name=["Homo sapiens"],
+            lineage_taxon_id=[9606],
+            lineage_common_name=["human"],
+            lineage_scientific_name=["Homo sapiens"],
             contig_n50=50000000,
             coding_genes=20000,
             genebuild_provider="Ensembl",
@@ -367,8 +407,9 @@ class TestGenomeSearchDocument:
                 latest_release_type="integrated",
                 is_latest_release_current=1,
                 releases="112",
-                lineage_taxids=[9606],
-                lineage_name=["Homo sapiens"],
+                lineage_taxon_id=[9606],
+                lineage_common_name=["human"],
+                lineage_scientific_name=["Homo sapiens"],
                 contig_n50=50000000,
                 coding_genes=20000,
                 genebuild_provider="Ensembl",
@@ -390,28 +431,27 @@ class TestGenomeSearchDocument:
                 latest_release_type="integrated",
                 is_latest_release_current=1,
                 releases="112",
-                lineage_taxids=[9606],
-                lineage_name=["Homo sapiens"],
+                lineage_taxon_id=[9606],
+                lineage_common_name=["human"],
+                lineage_scientific_name=["Homo sapiens"],
                 contig_n50=50000000,
                 coding_genes=20000,
-                
                 genebuild_provider="Ensembl",
                 genebuild_method_display="Import",
                 rank=0,
-            )
+            ),
         ]
-        
+
         assert docs[0].rank == 999
         assert docs[1].rank == 0
-        
+
         docs = update_rank(docs)
-        
+
         assert docs[0].rank == 1
         assert docs[1].rank == 2
-        
+
         assert docs[0].genome_uuid == "test-uuid"
         assert docs[1].genome_uuid == "test-uuid_2"
-        
 
 
 @pytest.mark.parametrize(
@@ -1052,6 +1092,8 @@ class TestGenomeSearchIndexer:
 
     def test_get_taxonomy_lineage(self, test_dbs):
         """Test _get_taxonomy_lineage retrieves taxonomy information."""
+        from ensembl.ncbi_taxonomy.models import NCBITaxonomy
+
         metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
         taxonomy_uri = test_dbs["ncbi_taxonomy"].dbc.url
         indexer = GenomeSearchIndexer(metadata_uri, taxonomy_uri)
@@ -1061,16 +1103,26 @@ class TestGenomeSearchIndexer:
                 genome = metadata_session.query(Genome).first()
 
                 if genome:
-                    lineage_taxids, lineage_names = indexer._get_taxonomy_lineage(
-                        taxonomy_session, genome.organism.taxonomy_id
-                    )
+                    lineage = indexer._get_taxonomy_lineage(taxonomy_session, genome.organism.taxonomy_id)
 
-                    assert isinstance(lineage_taxids, list)
-                    assert isinstance(lineage_names, list)
-                    assert len(lineage_taxids) > 0
-                    assert len(lineage_names) > 0
-                    assert all(isinstance(tid, int) for tid in lineage_taxids)
-                    assert all(isinstance(name, str) for name in lineage_names)
+                    assert isinstance(lineage["lineage_taxon_id"], list)
+                    assert isinstance(lineage["lineage_common_name"], list)
+                    assert isinstance(lineage["lineage_scientific_name"], list)
+                    assert len(lineage["lineage_taxon_id"]) > 0
+                    assert len(lineage["lineage_scientific_name"]) > 0
+                    assert all(isinstance(tid, int) for tid in lineage["lineage_taxon_id"])
+                    assert all(isinstance(name, str) for name in lineage["lineage_common_name"])
+                    assert all(isinstance(name, str) for name in lineage["lineage_scientific_name"])
+
+                    selected_ranks = {"domain", "kingdom", "phylum", "class", "order", "family", "genus", "species"}
+                    lineage_ranks = {
+                        rank
+                        for rank, in taxonomy_session.query(NCBITaxonomy.rank)
+                        .filter(NCBITaxonomy.taxon_id.in_(lineage["lineage_taxon_id"]))
+                        .distinct()
+                        .all()
+                    }
+                    assert lineage_ranks.issubset(selected_ranks)
 
     def test_get_taxonomy_lineage_not_found(self, test_dbs):
         """Test _get_taxonomy_lineage handles missing taxonomy gracefully."""
@@ -1080,11 +1132,12 @@ class TestGenomeSearchIndexer:
 
         with test_dbs["ncbi_taxonomy"].dbc.session_scope() as taxonomy_session:
             # Use a taxonomy ID that doesn't exist
-            lineage_taxids, lineage_names = indexer._get_taxonomy_lineage(taxonomy_session, 999999999)
+            lineage = indexer._get_taxonomy_lineage(taxonomy_session, 999999999)
 
             # Should return just the requested taxid and empty names
-            assert isinstance(lineage_taxids, list)
-            assert isinstance(lineage_names, list)
+            assert lineage["lineage_taxon_id"] == [999999999]
+            assert lineage["lineage_common_name"] == []
+            assert lineage["lineage_scientific_name"] == []
 
     def test_create_search_document_success(self, test_dbs):
         """Test create_search_document successfully creates a document."""
