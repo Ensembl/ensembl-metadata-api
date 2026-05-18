@@ -260,6 +260,7 @@ class TestGenomeSearchDocument:
             scientific_name="Homo sapiens",
             assembly_name="GRCh38",
             accession="GCA_000001405.15",
+            ftp="https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/",
             is_reference=True,
             species_taxonomy_id=9606,
             taxonomy_id=9606,
