@@ -1124,6 +1124,30 @@ class TestGenomeSearchIndexer:
                     }
                     assert lineage_ranks.issubset(selected_ranks)
 
+    def test_get_taxonomy_lineage_prefers_genbank_common_name(self, test_dbs):
+        """Test lineage common names prefer genbank common name over common name."""
+        metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
+        taxonomy_uri = test_dbs["ncbi_taxonomy"].dbc.url
+        indexer = GenomeSearchIndexer(metadata_uri, taxonomy_uri)
+
+        with test_dbs["ncbi_taxonomy"].dbc.session_scope() as taxonomy_session:
+            lineage = indexer._get_taxonomy_lineage(taxonomy_session, 3702)
+
+            assert "thale cress" in lineage["lineage_common_name"]
+            assert "mouse-ear cress" not in lineage["lineage_common_name"]
+            assert "thale-cress" not in lineage["lineage_common_name"]
+
+    def test_get_taxonomy_lineage_falls_back_to_common_name(self, test_dbs):
+        """Test lineage common names fall back when genbank common name is unavailable."""
+        metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
+        taxonomy_uri = test_dbs["ncbi_taxonomy"].dbc.url
+        indexer = GenomeSearchIndexer(metadata_uri, taxonomy_uri)
+
+        with test_dbs["ncbi_taxonomy"].dbc.session_scope() as taxonomy_session:
+            lineage = indexer._get_taxonomy_lineage(taxonomy_session, 562)
+
+            assert "E. coli" in lineage["lineage_common_name"]
+
     def test_get_taxonomy_lineage_not_found(self, test_dbs):
         """Test _get_taxonomy_lineage handles missing taxonomy gracefully."""
         metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url

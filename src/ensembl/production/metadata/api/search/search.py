@@ -789,7 +789,7 @@ class GenomeSearchIndexer:
         Returns:
             A mapping containing:
             - lineage_taxon_id: all taxon_ids from current to root
-            - lineage_common_name: names with name_class = "common name"
+            - lineage_common_name: preferred common names, using "genbank common name" when available
             - lineage_scientific_name: names with name_class = "scientific name"
 
         Args:
@@ -803,11 +803,7 @@ class GenomeSearchIndexer:
         try:
             ancestors = Taxonomy.fetch_ancestors(taxonomy_session, taxonomy_id)
         except NoResultFound:
-            return {
-                "lineage_taxon_id": [taxonomy_id],
-                "lineage_common_name": [],
-                "lineage_scientific_name": [],
-            }
+            ancestors = []
 
         # Build list of taxon_ids: current + all ancestors.
         lineage_taxon_ids = [taxonomy_id]
@@ -825,20 +821,28 @@ class GenomeSearchIndexer:
             "species",
         )
 
-        # Query scientific and common names for selected ranks in the lineage.
+        # Query scientific names and candidate common names for selected ranks in the lineage.
         taxonomy_name_rows = (
             taxonomy_session.query(NCBITaxonomy.taxon_id, NCBITaxonomy.name, NCBITaxonomy.name_class)
             .filter(NCBITaxonomy.taxon_id.in_(lineage_taxon_ids))
-            .filter(NCBITaxonomy.name_class.in_(("scientific name", "common name")))
+            .filter(NCBITaxonomy.name_class.in_(("scientific name", "genbank common name", "common name")))
             .filter(NCBITaxonomy.rank.in_(selected_ranks))
             .distinct()
             .all()
         )
 
         selected_taxon_ids = {taxon_id for taxon_id, name, name_class in taxonomy_name_rows}
+        if not selected_taxon_ids:
+            return {
+                "lineage_taxon_id": [taxonomy_id],
+                "lineage_common_name": [],
+                "lineage_scientific_name": [],
+            }
+
         lineage_taxon_ids = [taxon_id for taxon_id in lineage_taxon_ids if taxon_id in selected_taxon_ids]
         names_by_taxon_id = {
-            taxon_id: {"common name": [], "scientific name": []} for taxon_id in lineage_taxon_ids
+            taxon_id: {"genbank common name": [], "common name": [], "scientific name": []}
+            for taxon_id in lineage_taxon_ids
         }
 
         for taxon_id, name, name_class in taxonomy_name_rows:
@@ -847,7 +851,10 @@ class GenomeSearchIndexer:
         lineage_common_names = []
         lineage_scientific_names = []
         for taxon_id in lineage_taxon_ids:
-            lineage_common_names.extend(names_by_taxon_id[taxon_id]["common name"])
+            preferred_common_names = names_by_taxon_id[taxon_id]["genbank common name"]
+            if not preferred_common_names:
+                preferred_common_names = names_by_taxon_id[taxon_id]["common name"]
+            lineage_common_names.extend(preferred_common_names)
             lineage_scientific_names.extend(names_by_taxon_id[taxon_id]["scientific name"])
 
         lineage_data = {
