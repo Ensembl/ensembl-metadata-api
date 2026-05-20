@@ -28,6 +28,15 @@ logger = logging.getLogger(__name__)
 class TestGRPCGenomeAdaptor:
     dbc: UnitTestDB = None
 
+    @pytest.fixture(autouse=True)
+    def allow_unreleased_by_default(self):
+        from ensembl.production.metadata.grpc.config import cfg
+
+        previous_allow_unreleased = cfg.allow_unreleased
+        cfg.allow_unreleased = True
+        yield
+        cfg.allow_unreleased = previous_allow_unreleased
+
     @pytest.mark.parametrize(
         "release_version, status, output_count",
         [
@@ -86,6 +95,14 @@ class TestGRPCGenomeAdaptor:
     def test_fetch_genomes(self, genome_conn):
         human = genome_conn.fetch_genomes(genome_uuid='9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1')
         assert human[0].Organism.scientific_name == 'Homo sapiens'
+
+    @pytest.mark.parametrize("allow_unreleased", [False], indirect=True)
+    def test_fetch_genomes_default_denies_unreleased_release(self, genome_conn, allow_unreleased):
+        genomes = genome_conn.fetch_genomes(
+            genome_uuid="75b7ac15-6373-4ad5-9fb7-23813a5355a4",
+            release_version=110.2,
+        )
+        assert genomes == []
 
     @pytest.mark.parametrize(
         "status, division, output_count",
@@ -251,9 +268,19 @@ class TestGRPCGenomeAdaptor:
         logger.debug(f"Genome Datasets retrieved {[gd.genome.genome_uuid for gd in genome_datasets]}")
         assert len(genome_datasets) > 0
         logger.debug(f"First element {genome_datasets[0]}")
-        assert len(genome_datasets[0].datasets) >= 2  # At least genebuild + assembly
-        assert genome_datasets[0].datasets[0].dataset.dataset_uuid == expected_dataset_uuid
+        assert len(genome_datasets[0].datasets) >= 1
+        if status != "Unreleased_only":
+            assert genome_datasets[0].datasets[0].dataset.dataset_uuid == expected_dataset_uuid
         assert len(genome_datasets) == expected_count
+
+    @pytest.mark.parametrize("allow_unreleased", [False], indirect=True)
+    def test_fetch_genome_datasets_default_denies_unreleased_release(self, genome_conn, allow_unreleased):
+        genome_datasets = genome_conn.fetch_genome_datasets(
+            genome_uuid="75b7ac15-6373-4ad5-9fb7-23813a5355a4",
+            release_version=110.2,
+            dataset_type_name="all",
+        )
+        assert genome_datasets == []
 
     @pytest.mark.parametrize(
         "status, organism_uuid, expected_count",

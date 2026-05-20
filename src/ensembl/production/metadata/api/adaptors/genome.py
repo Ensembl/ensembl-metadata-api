@@ -35,6 +35,17 @@ class GenomeStatus(enum.Enum):
     RELEASED = "Released"
     CURRENT = "Current"
 
+
+def _release_status_filter(status: GenomeStatus):
+    if not cfg.allow_unreleased:
+        return EnsemblRelease.status == ReleaseStatus.RELEASED
+    if status == GenomeStatus.UNRELEASED_ONLY:
+        return EnsemblRelease.status != ReleaseStatus.RELEASED
+    if status == GenomeStatus.RELEASED:
+        return EnsemblRelease.status == ReleaseStatus.RELEASED
+    return None
+
+
 class DatasetAttributeItem(NamedTuple):
     name: str
     value: str
@@ -354,11 +365,9 @@ class GenomeAdaptor(BaseAdaptor):
                         )
                     )
 
-        if status == GenomeStatus.UNRELEASED_ONLY:
-            # fetch only unreleased ones
-            genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
-        if status == GenomeStatus.RELEASED:
-            genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+        release_status_filter = _release_status_filter(status)
+        if release_status_filter is not None:
+            genome_select = genome_select.filter(release_status_filter)
         if release_version is not None and release_version > 0:
             # if release is specified
             genome_select = genome_select.filter(EnsemblRelease.version <= release_version)
@@ -674,11 +683,11 @@ class GenomeAdaptor(BaseAdaptor):
                 organism_uuid = check_parameter(organism_uuid)
                 genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
             # We have to fetch from DB
+            release_status_filter = _release_status_filter(status)
+            if release_status_filter is not None:
+                genome_select = genome_select.filter(release_status_filter)
             #TODO: we have two different status - dataset and genome checked for the same condition. Not sure if it is expected
-            if status == GenomeStatus.RELEASED:
-                 genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
-            if status == GenomeStatus.UNRELEASED_ONLY:
-                genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
+            if cfg.allow_unreleased and status == GenomeStatus.UNRELEASED_ONLY:
                 genome_select = genome_select.filter(Dataset.status != DatasetStatus.RELEASED)
             else:
                 # TODO CHECK THIS if needed further filter
@@ -698,13 +707,17 @@ class GenomeAdaptor(BaseAdaptor):
                     genome_datasets = [gd for gd in genome_datasets if
                                        gd.dataset.dataset_type.name == dataset_type_name]
                 # filter release / unreleased
-                if status == GenomeStatus.RELEASED:
+                if not cfg.allow_unreleased or status == GenomeStatus.RELEASED:
                     # TODO see to add is_current as well
-                    genome_datasets = [gd for gd in genome_datasets if gd.dataset.status == DatasetStatus.RELEASED]
+                    genome_datasets = [
+                        gd for gd in genome_datasets
+                        if gd.dataset.status == DatasetStatus.RELEASED
+                        and gd.ensembl_release.status == ReleaseStatus.RELEASED
+                    ]
                     # TODO Get only the first one when allow_unreleased
-                if status == GenomeStatus.UNRELEASED_ONLY:
+                if cfg.allow_unreleased and status == GenomeStatus.UNRELEASED_ONLY:
                     genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release is None or
-                                       gd.ensembl_release.status != DatasetStatus.RELEASED]
+                                       gd.ensembl_release.status != ReleaseStatus.RELEASED]
                 if release_version:
                     genome_datasets = [gd for gd in genome_datasets if
                                        float(gd.ensembl_release.version) <= release_version]

@@ -57,7 +57,7 @@ class TestComparaUseCase:
         [
             (False, 'homo_sapiens', "GRCh38", None, 1),
             (False, 'homo_sapiens_37', "GRCh37", 108.0, 1),
-            (False, 'homo_sapiens_gca018505825v1', "HG02109.pri.mat.f1_v2", None, 1),
+            (False, 'homo_sapiens_gca018505825v1', "HG02109.pri.mat.f1_v2", None, 0),
             (True, 'homo_sapiens_gca018505825v1', "HG02109.pri.mat.f1_v2", None, 1),
             (False, 'homo_sapiens_gca018473315v1', "HG03540.alt.pat.f1_v2", 108.0, 0),
             (False, 'homo_sapiens_gca018473315v1', "HG03540.alt.pat.f1_v2", 110.1, 1),

@@ -105,8 +105,12 @@ def allow_unreleased(request):
     """Set ALLOWED_UNRELEASED environment variable, this fixture must be used with `parametrize`"""
     from ensembl.production.metadata.grpc.config import cfg
 
+    # cfg is a module-level singleton, so restore the previous value to avoid
+    # leaking allow_unreleased state into later tests.
+    previous_allow_unreleased = cfg.allow_unreleased
     cfg.allow_unreleased = request.param
     yield cfg
+    cfg.allow_unreleased = previous_allow_unreleased
 
 
 @pytest.fixture(scope="class")

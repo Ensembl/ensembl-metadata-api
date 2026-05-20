@@ -81,8 +81,8 @@ class TestUtils:
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
-            (False, 3),
-            (True, 2)
+            (False, 2),
+            (True, 3)
         ],
         indirect=['allow_unreleased']
     )
@@ -94,7 +94,7 @@ class TestUtils:
             )
         ]
 
-        assert len(output) == 3
+        assert len(output) == expected_count
     #TODO: double check release_version
     @pytest.mark.parametrize(
         "assembly_accession, release_version",
@@ -140,7 +140,7 @@ class TestUtils:
         [
             # FIXME The current version returns 2 assembly.accession, see whether it's test set related or code
             # (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 1),
-            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 6),
+            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 4),
             # create_stats_by_genome_uuid cannot handle if genome uuidid attached to multiple release and multiple datasert
             (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 6)
         ],
@@ -229,7 +229,7 @@ class TestUtils:
         [
             (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'assembly', 1),
             (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'genebuild', 1),
-            (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 2),
+            (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 1),
             (True, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 2)
         ],
         indirect=['allow_unreleased']
@@ -296,6 +296,8 @@ class TestUtils:
             (False, "a73357ab-93e7-11ec-a39d-005056b38ce3", 110.1, 11, 108.0),
             # Homo sapiens = Released in 110.1
             (False, "65d4f21f-695a-4ed0-be67-5732a551fea4", 108.0, 11, None),
+            # Homo sapiens 110.2 is Prepared and must not be exposed unless ALLOW_UNRELEASED is enabled.
+            (False, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", 110.2, 11, None),
             # Homo sapiens = Released in 110.2
             (True, "75b7ac15-6373-4ad5-9fb7-23813a5355a4", 110.2, 11, 110.2),
             # bread_wheat version unspecified
