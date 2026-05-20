@@ -13,6 +13,7 @@
 from ensembl.ncbi_taxonomy.models import NCBITaxaName
 from ensembl.ncbi_taxonomy.models import NCBITaxaNode
 
+__all__ = ['EnsemblTaxaNode', 'EnsemblTaxaName', 'NCBITaxaName', 'NCBITaxaNode']
 
 class EnsemblTaxaNode(NCBITaxaNode):
     __tablename__ = 'ncbi_taxa_node'

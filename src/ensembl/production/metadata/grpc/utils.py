@@ -161,7 +161,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
     )
 
 
-def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession, release_version):
+def get_genomes_from_assembly_accession_iterator(db_conn, assembly_accession):
     if not assembly_accession:
         logger.warning("Missing or Empty Assembly accession field.")
         return msg_factory.create_genome()
@@ -809,6 +809,7 @@ def get_genome_groups_by_reference(
                 "group_name": "",
                 "reference_genome": {
                     "genome_uuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+                    "url_name": "grch38",
                     "assembly": {
                         "accession": "GCA_000001405.29",
                         "name": "GRCh38.p14",
@@ -817,8 +818,6 @@ def get_genome_groups_by_reference(
                         "ensembl_name": "GRCh38.p14",
                         "assembly_uuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
                         "is_reference": True,
-                        "url_name": "grch38",
-                        "tol_id": "",
                     },
                     "taxon": {
                         "taxonomy_id": 9606,
@@ -837,6 +836,7 @@ def get_genome_groups_by_reference(
                         "strain_type": "",
                         "taxonomy_id": 9606,
                         "species_taxonomy_id": 9606,
+                        "tol_id": "",
                     },
                     "release": {
                         "release_version": 1,
@@ -856,6 +856,7 @@ def get_genome_groups_by_reference(
                 "group_name": "",
                 "reference_genome": {
                     "genome_uuid": "4c07817b-c7c5-463f-8624-982286bc4355",
+                    "url_name": "t2t-chm13",
                     "assembly": {
                         "accession": "GCA_009914755.4",
                         "name": "T2T-CHM13v2.0",
@@ -864,8 +865,6 @@ def get_genome_groups_by_reference(
                         "ensembl_name": "T2T-CHM13v2.0",
                         "assembly_uuid": "fc20ebd6-f756-45da-b941-b3b17e11515f",
                         "is_reference": False,
-                        "url_name": "t2t-chm13",
-                        "tol_id": "",
                     },
                     "taxon": {
                         "taxonomy_id": 9606,
@@ -884,6 +883,7 @@ def get_genome_groups_by_reference(
                         "strain_type": "",
                         "taxonomy_id": 9606,
                         "species_taxonomy_id": 9606,
+                        "tol_id": "",
                     },
                     "release": {
                         "release_version": 1,
@@ -940,6 +940,7 @@ def get_genomes_in_group(
         dummy_data = [
             {
                 "genome_uuid": "a7335667-93e7-11ec-a39d-005056b38ce3",
+                "url_name": "grch38",
                 "assembly": {
                     "accession": "GCA_000001405.29",
                     "name": "GRCh38.p14",
@@ -948,8 +949,6 @@ def get_genomes_in_group(
                     "ensembl_name": "GRCh38.p14",
                     "assembly_uuid": "fd7fea38-981a-4d73-a879-6f9daef86f08",
                     "is_reference": True,
-                    "url_name": "grch38",
-                    "tol_id": "",
                 },
                 "taxon": {
                     "taxonomy_id": 9606,
@@ -968,6 +967,7 @@ def get_genomes_in_group(
                     "strain_type": "",
                     "taxonomy_id": 9606,
                     "species_taxonomy_id": 9606,
+                    "tol_id": "",
                 },
                 "release": {
                     "release_version": 1,
@@ -982,6 +982,7 @@ def get_genomes_in_group(
             },
             {
                 "genome_uuid": "4c07817b-c7c5-463f-8624-982286bc4355",
+                "url_name": "t2t-chm13",
                 "assembly": {
                     "accession": "GCA_009914755.4",
                     "name": "T2T-CHM13v2.0",
@@ -990,8 +991,6 @@ def get_genomes_in_group(
                     "ensembl_name": "T2T-CHM13v2.0",
                     "assembly_uuid": "fc20ebd6-f756-45da-b941-b3b17e11515f",
                     "is_reference": False,
-                    "url_name": "t2t-chm13",
-                    "tol_id": "",
                 },
                 "taxon": {
                     "taxonomy_id": 9606,
@@ -1010,6 +1009,7 @@ def get_genomes_in_group(
                     "strain_type": "",
                     "taxonomy_id": 9606,
                     "species_taxonomy_id": 9606,
+                    "tol_id": "",
                 },
                 "release": {
                     "release_version": 1,
@@ -1024,6 +1024,7 @@ def get_genomes_in_group(
             },
             {
                 "genome_uuid": "9d3b2ead-a987-4f08-8d18-10a1eb1e0fb0",
+                "url_name": "",
                 "assembly": {
                     "accession": "GCA_018503275.2",
                     "name": "NA19240_mat_hprc_f2",
@@ -1032,8 +1033,6 @@ def get_genomes_in_group(
                     "ensembl_name": "",
                     "assembly_uuid": "561a1451-cfe4-451d-ad8f-00310645e1fd",
                     "is_reference": False,
-                    "url_name": "",
-                    "tol_id": ""
                 },
                 "taxon": {
                     "taxonomy_id": 9606,
@@ -1051,7 +1050,8 @@ def get_genomes_in_group(
                     "organism_uuid": "14a967b2-6d62-49f8-b0b7-c3836a87cffa",
                     "strain_type": "population",
                     "taxonomy_id": 9606,
-                    "species_taxonomy_id": 9606
+                    "species_taxonomy_id": 9606,
+                    "tol_id": ""
                 },
                 "release": {
                     "release_version": 114.9,
@@ -1066,6 +1066,7 @@ def get_genomes_in_group(
             },
             {
                 "genome_uuid": "27be510b-c431-434c-a6f5-158d8c138507",
+                "url_name": "",
                 "assembly": {
                     "accession": "GCA_018506975.2",
                     "name": "HG00733_mat_hprc_f2",
@@ -1074,8 +1075,6 @@ def get_genomes_in_group(
                     "ensembl_name": "",
                     "assembly_uuid": "0fb76cdf-6c6b-4c20-beef-7f7d4151651b",
                     "is_reference": False,
-                    "url_name": "",
-                    "tol_id": ""
                 },
                 "taxon": {
                     "taxonomy_id": 9606,
@@ -1093,7 +1092,8 @@ def get_genomes_in_group(
                     "organism_uuid": "07314e4e-9ac5-4ed7-b2ae-b8e257e1e6d7",
                     "strain_type": "population",
                     "taxonomy_id": 9606,
-                    "species_taxonomy_id": 9606
+                    "species_taxonomy_id": 9606,
+                    "tol_id": ""
                 },
                 "release": {
                     "release_version": 114.9,
@@ -1108,6 +1108,7 @@ def get_genomes_in_group(
             },
             {
                 "genome_uuid": "7e09bad9-aa22-46e4-ab8f-1b2a64202967",
+                "url_name": "",
                 "assembly": {
                     "accession": "GCA_042077495.1",
                     "name": "NA19036_hap1_hprc_f2",
@@ -1116,8 +1117,6 @@ def get_genomes_in_group(
                     "ensembl_name": "",
                     "assembly_uuid": "11ed863b-5b0a-45e6-b3e6-f0788be79706",
                     "is_reference": False,
-                    "url_name": "",
-                    "tol_id": ""
                 },
                 "taxon": {
                     "taxonomy_id": 9606,
@@ -1135,7 +1134,8 @@ def get_genomes_in_group(
                     "organism_uuid": "eec7d10e-3ef4-4f14-8d2e-3233978dd0ce",
                     "strain_type": "",
                     "taxonomy_id": 9606,
-                    "species_taxonomy_id": 9606
+                    "species_taxonomy_id": 9606,
+                    "tol_id": ""
                 },
                 "release": {
                     "release_version": 114.1,
@@ -1150,6 +1150,7 @@ def get_genomes_in_group(
             },
             {
                 "genome_uuid": "30094672-c48c-425a-84e0-4049073a68d3",
+                "url_name": "",
                 "assembly": {
                     "accession": "GCA_018469665.2",
                     "name": "HG01123_mat_hprc_f2",
@@ -1158,8 +1159,6 @@ def get_genomes_in_group(
                     "ensembl_name": "",
                     "assembly_uuid": "6ab0e3a4-4e11-443d-a18a-81ff1e68d42d",
                     "is_reference": False,
-                    "url_name": "",
-                    "tol_id": ""
                 },
                 "taxon": {
                     "taxonomy_id": 9606,
@@ -1177,7 +1176,8 @@ def get_genomes_in_group(
                     "organism_uuid": "c9bd9d75-c746-4515-ad37-40d054eeaa91",
                     "strain_type": "population",
                     "taxonomy_id": 9606,
-                    "species_taxonomy_id": 9606
+                    "species_taxonomy_id": 9606,
+                    "tol_id": ""
                 },
                 "release": {
                     "release_version": 114.9,
@@ -1192,6 +1192,7 @@ def get_genomes_in_group(
             },
             {
                 "genome_uuid": "82b440be-8f7d-47fe-a363-a40cea709ea2",
+                "url_name": "",
                 "assembly": {
                     "accession": "GCA_018472595.2",
                     "name": "HG00438_pat_hprc_f2",
@@ -1200,8 +1201,6 @@ def get_genomes_in_group(
                     "ensembl_name": "",
                     "assembly_uuid": "179f190d-17f9-4692-9353-374976c62e20",
                     "is_reference": False,
-                    "url_name": "",
-                    "tol_id": ""
                 },
                 "taxon": {
                     "taxonomy_id": 9606,
@@ -1219,7 +1218,8 @@ def get_genomes_in_group(
                     "organism_uuid": "b6f5e927-22f1-4e12-8bc5-77880de41211",
                     "strain_type": "population",
                     "taxonomy_id": 9606,
-                    "species_taxonomy_id": 9606
+                    "species_taxonomy_id": 9606,
+                    "tol_id": ""
                 },
                 "release": {
                     "release_version": 114.9,
@@ -1234,6 +1234,7 @@ def get_genomes_in_group(
             },
             {
                 "genome_uuid": "ddfadcb5-3b4a-48ca-9dcd-e75884445bd1",
+                "url_name": "",
                 "assembly": {
                     "accession": "GCA_018472695.2",
                     "name": "HG01928_mat_hprc_f2",
@@ -1242,8 +1243,6 @@ def get_genomes_in_group(
                     "ensembl_name": "",
                     "assembly_uuid": "c4b526fd-4919-459f-b25e-9f1f658e0c53",
                     "is_reference": False,
-                    "url_name": "",
-                    "tol_id": ""
                 },
                 "taxon": {
                     "taxonomy_id": 9606,
@@ -1261,7 +1260,8 @@ def get_genomes_in_group(
                     "organism_uuid": "c0ce970e-a1ab-492e-8838-684854ed22fb",
                     "strain_type": "population",
                     "taxonomy_id": 9606,
-                    "species_taxonomy_id": 9606
+                    "species_taxonomy_id": 9606,
+                    "tol_id": ""
                 },
                 "release": {
                     "release_version": 114.9,
@@ -1275,6 +1275,16 @@ def get_genomes_in_group(
                 }
             }
         ]
+
+        # The condition here is ugly, but we have to live with it for now
+        # Slack discussion for more context:
+        # https://genomes-ebi.slack.com/archives/C08A88R7GJG/p1772190014781849?thread_ts=1772187925.600559&cid=C08A88R7GJG
+        if group_id == "t2t-group":
+            # remove grch38 from the list
+            dummy_data = [
+                genome for genome in dummy_data
+                if genome.get("genome_uuid") != "a7335667-93e7-11ec-a39d-005056b38ce3"
+            ]
 
         # Use release_label even in dummy mode: filter to matching releases.
         if release_label:
@@ -1303,28 +1313,33 @@ def get_genome_counts(db_conn: Any, release_label: str | None):
     try:
         # The logic calling the ORM and fetching data from the DB
         # will go here. For now, we return dummy data.
+        # Counts for release 19
         dummy_data = {
-            "total_genomes": 4758,
+            "total_genomes": 4977,
             "counts": [
                 {
                     "label": "Animals",
-                    "count": 4127,
+                    "count": 4207,
                 },
                 {
-                    "label": "Green Plants",
-                    "count": 475,
-                },
-                {
-                    "label": "Fungi",
-                    "count": 116,
+                    "label": "Archaea",
+                    "count": 24,
                 },
                 {
                     "label": "Bacteria",
-                    "count": 1,
+                    "count": 85,
+                },
+                {
+                    "label": "Fungi",
+                    "count": 153,
+                },
+                {
+                    "label": "Green Plants",
+                    "count": 465,
                 },
                 {
                     "label": "Others",
-                    "count": 39,
+                    "count": 43,
                 }
             ]
         }

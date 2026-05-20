@@ -43,7 +43,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
     def GetGenomesByAssemblyAccessionID(self, request, context):
         logger.debug(f"Received RPC for GetGenomesByAssemblyAccessionID with request: {request}")
         return utils.get_genomes_from_assembly_accession_iterator(
-            self.genome_adaptor, request.assembly_accession, request.release_version
+            self.genome_adaptor, request.assembly_accession
         )
 
     def GetSubSpeciesInformation(self, request, context):

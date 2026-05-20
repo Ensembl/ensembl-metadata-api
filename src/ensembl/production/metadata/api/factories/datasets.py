@@ -391,21 +391,20 @@ class DatasetFactory:
                 for child_uuid in child_uuids:
                     dataset_obj = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
 
-                    # Skip if dataset is FAULTY or RELEASED
                     if dataset_obj.status in (DatasetStatus.FAULTY, DatasetStatus.RELEASED):
-                        continue  # ✅ Skip updating or inserting for this dataset
+                        continue
 
-                    # Check if GenomeDataset exists for this dataset & genome
-                    genome_dataset = session.query(GenomeDataset).filter(
+                    genome_dataset = session.query(GenomeDataset).outerjoin(
+                        EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id
+                    ).filter(
                         GenomeDataset.dataset_id == dataset_obj.dataset_id,
-                        GenomeDataset.genome_id == genome_id
+                        GenomeDataset.genome_id == genome_id,
+                        (EnsemblRelease.release_type != "integrated") | (GenomeDataset.release_id.is_(None))
                     ).one_or_none()
 
                     if genome_dataset:
-                        # ✅ Update release_id even if it was attached to a previous release
                         genome_dataset.release_id = release_id
                     else:
-                        # ✅ If it doesn’t exist, create a new one
                         new_gd = GenomeDataset(
                             genome_id=genome_id,
                             dataset=dataset_obj,
@@ -424,7 +423,8 @@ class DatasetFactory:
         Steps:
         1. Identify all FAULTY datasets.
         2. Traverse upwards to mark all parent datasets as FAULTY.
-        3. Retrieve all child datasets from the top-level parent and remove their release association.
+        3. Retrieve all child datasets from the top-level parent; downgrade any
+           RELEASED children to PROCESSED, and remove their release association.
         4. If any dataset in the chain has dataset_type.name of 'genebuild' or 'assembly':
            - Remove all genome_dataset.release_id values for the associated genome.
            - Delete all GenomeRelease entries for the affected genomes.
@@ -469,6 +469,18 @@ class DatasetFactory:
 
             # Remove release IDs where applicable
             for child_uuid, _ in all_child_datasets:
+                # Downgrade any Released children to Processed — these can arise from
+                # old code that left children Released while the parent became Faulty or manual intevention.
+                # Should not be strictly necessary, but prevents false positives on the DC
+                child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one_or_none()
+                if child_dataset and child_dataset.status == DatasetStatus.RELEASED:
+                    logger.info(
+                        f"Downgrading dataset {child_uuid} from RELEASED to PROCESSED "
+                        f"(parent chain is FAULTY)"
+                    )
+                    child_dataset.status = DatasetStatus.PROCESSED
+                    updated_datasets.add(child_uuid)
+
                 genome_datasets = (
                     session.query(GenomeDataset)
                     .join(Dataset)
@@ -686,15 +698,6 @@ class DatasetFactory:
             all_child_datasets.extend(sub_children)
         return all_child_datasets
 
-    def __query_depends_on(self, session, dataset_uuid):
-        dataset = session.query(Dataset).filter(Dataset.dataset_uuid == dataset_uuid).one_or_none()
-        dataset_type = dataset.dataset_type
-        dependent_types = dataset_type.depends_on.split(',') if dataset_type.depends_on else []
-        dependent_datasets_info = []
-        for dtype in dependent_types:
-            new_uuid, new_status = self.__query_related_genome_by_type(session, dataset_uuid, dtype)
-            dependent_datasets_info.append((new_uuid, new_status))
-        return dependent_datasets_info
 
     def __update_status(self, session, dataset_uuid, status):
         # Processed to Released. Only accept top level. Check that all assembly and genebuild datsets (all the way down) are processed.
@@ -720,10 +723,6 @@ class DatasetFactory:
             if current_dataset.status == DatasetStatus.RELEASED:  # "Released":  # and it is not top level.
                 return updated_datasets
             # Check the dependents
-            dependents = self.__query_depends_on(session, dataset_uuid)
-            for uuid, dep_status in dependents:
-                if dep_status not in (DatasetStatus.PROCESSED, DatasetStatus.RELEASED):  # ("Processed", "Released"):
-                    return updated_datasets
             current_dataset.status = DatasetStatus.PROCESSING  # "Processing"
             parent_uuid, parent_status = self.__query_parent_datasets(session, dataset_uuid)
             if parent_uuid is not None:

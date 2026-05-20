@@ -10,10 +10,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from sqlalchemy.orm import aliased
-
-from ensembl.production.metadata.api.models import Dataset, Genome, GenomeDataset, DatasetAttribute, Attribute, Assembly
-
+from ensembl.production.metadata.api.models import Genome, Assembly
 
 def get_genome_sets_by_assembly_and_provider(session):
     """
@@ -26,47 +23,24 @@ def get_genome_sets_by_assembly_and_provider(session):
     DOES NOT HAVE A TEST. NOR DO WE HAVE UPDATES IN OUR TEST DB. BIG WORK TO UPDATE THIS.
     """
 
-    # Aliases for clarity
-    genome_alias = aliased(Genome)
-    dataset_alias = aliased(Dataset)
-    dataset_attr_provider = aliased(DatasetAttribute)  # Attribute for genebuild.provider
-    dataset_attr_geneset = aliased(DatasetAttribute)  # Attribute for genebuild.last_geneset_update
-    attribute_provider = aliased(Attribute)
-    attribute_geneset = aliased(Attribute)
-    assembly_alias = aliased(Assembly)
-
-    # Query to retrieve genome_uuid, assembly_uuid, provider, and last_geneset_update
+    # Query to retrieve genome_uuid, assembly_uuid, provider_name, and genebuild_date
     query = (
         session.query(
-            genome_alias.genome_uuid,
-            assembly_alias.assembly_uuid,
-            dataset_attr_provider.value.label("provider_name"),
-            dataset_attr_geneset.value.label("last_geneset_update")
+            Genome.genome_uuid,
+            Assembly.assembly_uuid,
+            Genome.provider_name,
+            Genome.genebuild_date
         )
-        .join(assembly_alias, genome_alias.assembly_id == assembly_alias.assembly_id)
-        .join(GenomeDataset, GenomeDataset.genome_id == genome_alias.genome_id)
-        .join(dataset_alias, GenomeDataset.dataset_id == dataset_alias.dataset_id)
-        # Join for provider attribute
-        .join(dataset_attr_provider, dataset_attr_provider.dataset_id == dataset_alias.dataset_id)
-        .join(attribute_provider, dataset_attr_provider.attribute_id == attribute_provider.attribute_id)
-        # Join for last_geneset_update attribute
-        .join(dataset_attr_geneset, dataset_attr_geneset.dataset_id == dataset_alias.dataset_id)
-        .join(attribute_geneset, dataset_attr_geneset.attribute_id == attribute_geneset.attribute_id)
-        .filter(
-            dataset_alias.dataset_type.has(name="genebuild"),  # Ensure dataset is of type genebuild
-            attribute_provider.name == "genebuild.provider_name",  # Ensure attribute is genebuild.provider_name
-            attribute_geneset.name == "genebuild.last_geneset_update"
-            # Ensure attribute is genebuild.last_geneset_update
-        )
+        .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
     )
 
     # Organize results into a dictionary grouping genome_uuids by (assembly_uuid, provider)
     genome_sets = {}
-    for genome_uuid, assembly_uuid, provider, last_geneset_update in query.all():
-        key = (assembly_uuid, provider)
+    for genome_uuid, assembly_uuid, provider_name, genebuild_date in query.all():
+        key = (assembly_uuid, provider_name)
         if key not in genome_sets:
             genome_sets[key] = []
-        genome_sets[key].append((genome_uuid, last_geneset_update))  # Keep last_geneset_update with each genome
+        genome_sets[key].append((genome_uuid, genebuild_date))
 
     # Create a filtered dictionary where only groups with more than one genome are kept
     genome_sets_with_multiple = {key: genomes for key, genomes in genome_sets.items() if len(genomes) > 1}

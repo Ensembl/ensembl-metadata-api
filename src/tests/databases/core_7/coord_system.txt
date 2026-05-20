@@ -1,1 +1,0 @@
-1	1	primary_assembly	test	1	default_version,sequence_level

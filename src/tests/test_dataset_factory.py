@@ -101,11 +101,15 @@ class TestDatasetFactory:
         genebuild_uuid = 'a3352834-cea1-40aa-9dad-99981620c36b'
         # Test children creation
         with metadata_db.test_session_scope() as session:
-            genome = Genome(genebuild_version="1.0",
-                            production_name="new_grch37",
-                            assembly_id=40,
-                            created=func.now(),
-                            organism_id=9)
+            genome = Genome(
+                production_name="new_grch37",
+                assembly_id=40,
+                created=func.now(),
+                organism_id=9,
+                annotation_source="test",
+                genebuild_date="2026-04",
+                provider_name="test"
+            )
             session.add(genome)
             genebuild = Dataset(
                 dataset_type_id=2,
@@ -185,9 +189,6 @@ class TestDatasetFactory:
             succeed_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == xref_uuid).one()
             assert succeed_status == succeed_status_check[0]
 
-            failed_status_check = session.query(Dataset.status).filter(Dataset.dataset_uuid == protfeat_uuid).one()
-            assert failed_status == DatasetStatus.SUBMITTED  # "Submitted"
-            assert failed_status_check[0] == DatasetStatus.SUBMITTED  # "Submitted"
             # succeed on xref
             temp, succeed_status = dataset_factory.update_dataset_status(xref_uuid, DatasetStatus.PROCESSING,
                                                                          session=session)

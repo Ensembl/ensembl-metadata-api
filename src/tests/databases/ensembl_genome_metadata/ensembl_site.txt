@@ -1,1 +1,0 @@
-1	Ensembl	MVP Ensembl	https://beta.ensembl.org
