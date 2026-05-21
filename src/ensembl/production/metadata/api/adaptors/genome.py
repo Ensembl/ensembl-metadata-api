@@ -447,7 +447,16 @@ class GenomeAdaptor(BaseAdaptor):
             genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         if release_version is not None and release_version > 0:
             genome_query = genome_query.where(EnsemblRelease.version <= release_version)
-
+        else:
+            # Pick only current integrated and partial releases, if release_version is not specified, 
+            # otherwise pick all releases up to the specified release version in the if condition above
+            genome_query = genome_query.where(
+                or_(
+                    EnsemblRelease.is_current == 1,
+                    GenomeRelease.is_current == 1
+                )       
+            )
+            
         provided_fields = [
             tolid,
             assembly_accession_id,
@@ -510,6 +519,7 @@ class GenomeAdaptor(BaseAdaptor):
             return []
 
         logger.debug(f"bySpecificKeyword: {genome_query} {release_version}")
+        print(f"bySpecificKeyword: {genome_query} {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_query).all()
