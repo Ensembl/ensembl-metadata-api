@@ -452,8 +452,13 @@ class GenomeAdaptor(BaseAdaptor):
             # otherwise pick all releases up to the specified release version in the if condition above
             genome_query = genome_query.where(
                 or_(
-                    EnsemblRelease.is_current == 1,
-                    GenomeRelease.is_current == 1
+                    and_(
+                        EnsemblRelease.release_type == "partial",
+                        GenomeRelease.is_current == 1),
+                    and_(
+                        EnsemblRelease.release_type == "integrated", 
+                        EnsemblRelease.is_current == 1
+                    )
                 )       
             )
             
