@@ -59,7 +59,7 @@ class EnsemblRelease(LoadAble, Base):
     label = Column(String(64), nullable=False)
     is_current = Column(TINYINT(1), nullable=False, default=0)
     site_id = Column(ForeignKey('ensembl_site.site_id'), index=True)
-    release_type = Column(Enum('partial', 'integrated'), nullable=False)
+    release_type = Column(Enum("partial", "integrated", "archive"), nullable=False)
     status = Column(ReleaseStatusType, nullable=False, default=ReleaseStatus.PLANNED)
     name = Column(String(3))
     # One to many relationships
