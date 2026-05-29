@@ -86,6 +86,69 @@ class TestReleaseFactory:
                 assert release.release_type == "integrated"
                 assert release.status == ReleaseStatus.RELEASED
 
+    def test_prepare_integrated_release_archives_and_creates_new_release(self, test_dbs) -> None:
+        """Test prepare_integrated_release archives old integrated release and inserts new rows."""
+        metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
+        factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
+
+        with metadata_db.session_scope() as session:
+            existing_integrated = session.query(EnsemblRelease).filter(
+                EnsemblRelease.release_type == "integrated"
+            ).all()
+            assert existing_integrated, "Expected at least one existing integrated release in test fixture."
+
+        release = factory.prepare_integrated_release(version=Decimal("200.0"), name="I2")
+
+        with metadata_db.session_scope() as session:
+            archived = session.query(EnsemblRelease).filter(
+                EnsemblRelease.status == ReleaseStatus.ARCHIVED,
+                EnsemblRelease.release_type == "integrated"
+            ).all()
+            assert archived, "Existing integrated releases were not archived."
+
+            new_release = session.query(EnsemblRelease).filter(
+                EnsemblRelease.release_id == release.release_id
+            ).one()
+            assert new_release.release_type == "integrated"
+            assert new_release.is_current == 1
+            assert new_release.status == ReleaseStatus.RELEASED
+
+            new_genome_count = session.query(GenomeRelease).filter(
+                GenomeRelease.release_id == new_release.release_id,
+                GenomeRelease.is_current == 1
+            ).count()
+            assert new_genome_count > 0, "Expected genome releases to be inserted for the new integrated release."
+
+            new_dataset_count = session.query(GenomeDataset).filter(
+                GenomeDataset.release_id == new_release.release_id,
+                GenomeDataset.is_current == 1
+            ).count()
+            assert new_dataset_count > 0, "Expected genome dataset rows to be inserted for the new integrated release."
+
+            expected_group_count = session.query(GenomeGroupMember).join(
+                EnsemblRelease, GenomeGroupMember.release_id == EnsemblRelease.release_id
+            ).filter(
+                EnsemblRelease.release_type == "partial",
+                GenomeGroupMember.is_current == 1
+            ).count()
+
+            new_group_count = session.query(GenomeGroupMember).filter(
+                GenomeGroupMember.release_id == new_release.release_id,
+                GenomeGroupMember.is_current == 1
+            ).count()
+
+            assert new_group_count == expected_group_count, (
+                f"Expected {expected_group_count} genome group member rows for the new integrated release, "
+                f"got {new_group_count}."
+            )
+
+    def test_prepare_integrated_release_missing_site(self, test_dbs) -> None:
+        """Test prepare_integrated_release raises when the site does not exist."""
+        factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
+
+        with pytest.raises(MissingMetaException, match="Site 'InvalidSite' not found"):
+            factory.prepare_integrated_release(version=Decimal("200.0"), name="I2", site_name="InvalidSite")
+
     def test_init_release_invalid_inputs(self, test_dbs) -> None:
         """
         Ensure `init_release` raises appropriate exceptions for invalid inputs.
