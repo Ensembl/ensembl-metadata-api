@@ -312,7 +312,8 @@ class TestGenomeFactory:
         GenomeOutputWriter.write(iter(records), str(output_file), OutputFormat.JSON, ['genome_uuid', 'species', 'dataset_uuid'])
 
         assert output_file.exists()
-        assert json.loads(output_file.read_text(encoding='utf-8')) == records
+        loaded_records = [json.loads(line) for line in output_file.read_text(encoding='utf-8').strip().split('\n')]
+        assert loaded_records == records
 
     def test_output_writer_tsv(self, tmp_path):
         records = [
