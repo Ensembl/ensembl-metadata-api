@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 class OutputFormat(str, Enum):
     JSON = "json"
     TSV = "tsv"
+    CSV = "csv"
     PARQUET = "parquet"
 
     @classmethod
@@ -62,8 +63,9 @@ class GenomeOutputWriter:
 
         if output_format == OutputFormat.JSON:
             GenomeOutputWriter._write_json(records, output_path)
-        elif output_format == OutputFormat.TSV:
-            GenomeOutputWriter._write_tsv(records, output_path, columns)
+        elif output_format in [ OutputFormat.TSV , OutputFormat.CSV]  :
+            delimiter = "\t" if output_format == OutputFormat.TSV else ","
+            GenomeOutputWriter._write(records, output_path, columns, delimiter)
         elif output_format == OutputFormat.PARQUET:
             GenomeOutputWriter._write_parquet(records, output_path, columns)
         else:
@@ -72,19 +74,14 @@ class GenomeOutputWriter:
     @staticmethod
     def _write_json(records: Iterator[dict], output_path: Path) -> None:
         with output_path.open("w", encoding="utf-8") as handle:
-            handle.write("[")
-            first = True
             for record in records:
-                if not first:
-                    handle.write(",\n")
                 json.dump(record, handle, default=str)
-                first = False
-            handle.write("]\n")
+                handle.write("\n")
 
     @staticmethod
-    def _write_tsv(records: Iterator[dict], output_path: Path, columns: List[str]) -> None:
+    def _write(records: Iterator[dict], output_path: Path, columns: List[str], delimiter:str) -> None:
         with output_path.open("w", encoding="utf-8", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=columns, delimiter="\t", extrasaction="ignore")
+            writer = csv.DictWriter(handle, fieldnames=columns, delimiter=delimiter, extrasaction="ignore")
             writer.writeheader()
             for record in records:
                 writer.writerow({key: record.get(key, "") for key in columns})
