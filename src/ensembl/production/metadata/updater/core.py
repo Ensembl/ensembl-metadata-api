@@ -921,9 +921,10 @@ class CoreMetaUpdater(BaseMetaUpdater):
         else:
             dataset_source = source
         dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "homologies").first()
-
-        taxonomy_id = self.get_meta_single_meta_key(species_id, "organism.taxonomy_id")
-        reference_set = get_homology_reference_set(taxonomy_id, self.taxonomy_uri)
+        reference_set = self.get_meta_single_meta_key(species_id, "compara.homology_reference_set")
+        if reference_set is None:
+            taxonomy_id = self.get_meta_single_meta_key(species_id, "organism.taxonomy_id")
+            reference_set = get_homology_reference_set(taxonomy_id, self.taxonomy_uri, meta_session)
         if dataset_attributes is None:
             dataset_attributes = {}
         dataset_attributes["compara.homology_reference_set"] = reference_set
