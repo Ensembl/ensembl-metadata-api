@@ -46,12 +46,6 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="Metadata database URI (e.g. mysql://user:pass@host:port/dbname)",
     )
-    parser.add_argument(
-        "--site-name",
-        type=str,
-        default="Ensembl",
-        help="Site name for the release (default: Ensembl)",
-    )
     parser.add_argument("--log-file", type=str, help="Optional path to a log file")
     parser.add_argument(
         "--log-level",
@@ -69,10 +63,9 @@ def main() -> int:
 
     logger = logging.getLogger(__name__)
     logger.info(
-        "Preparing integrated release: name=%s version=%s site=%s",
+        "Preparing integrated release: name=%s version=%s",
         args.release_name,
-        args.release_version,
-        args.site_name,
+        args.release_version
     )
 
     try:
@@ -91,7 +84,6 @@ def main() -> int:
         release = rf.prepare_integrated_release(
             version=version,
             name=args.release_name,
-            site_name=args.site_name,
         )
     except Exception:
         logger.exception("Failed to prepare integrated release %s", args.release_name)

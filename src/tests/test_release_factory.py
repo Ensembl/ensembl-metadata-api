@@ -142,12 +142,6 @@ class TestReleaseFactory:
                 f"got {new_group_count}."
             )
 
-    def test_prepare_integrated_release_missing_site(self, test_dbs) -> None:
-        """Test prepare_integrated_release raises when the site does not exist."""
-        factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
-
-        with pytest.raises(MissingMetaException, match="Site 'InvalidSite' not found"):
-            factory.prepare_integrated_release(version=Decimal("200.0"), name="I2", site_name="InvalidSite")
 
     def test_init_release_invalid_inputs(self, test_dbs) -> None:
         """

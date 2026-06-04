@@ -324,16 +324,12 @@ class ReleaseFactory:
 
             return release
 
-    def prepare_integrated_release(self, version: Decimal, name: str, site_name: str = "Ensembl") -> EnsemblRelease:
+    def prepare_integrated_release(self, version: Decimal, name: str) -> EnsemblRelease:
         """Prepare a new integrated release from current partial release state."""
         db = DBConnection(self.metadata_uri)
         with db.session_scope() as session:
-            site = session.query(EnsemblSite).filter_by(name=site_name).one_or_none()
-            if site is None:
-                raise MissingMetaException(f"Site '{site_name}' not found.")
-
             self._archive_existing_integrated_releases(session)
-            release = self._insert_integrated_release(session, site.site_id, version, name)
+            release = self._insert_integrated_release(session, version, name)
             self._insert_genome_release_rows(session, release.release_id)
             self._insert_genome_dataset_rows(session, release.release_id)
             self._insert_genome_group_member_rows(session, release.release_id)
@@ -353,7 +349,7 @@ class ReleaseFactory:
         logger.info("Archived %s existing integrated release(s).", archived)
         return archived
 
-    def _insert_integrated_release(self, session, site_id: int, version: Decimal, name: str) -> EnsemblRelease:
+    def _insert_integrated_release(self, session, version: Decimal, name: str) -> EnsemblRelease:
         """Create and return a new integrated release record."""
         release_date = datetime.now().date()
         label = release_date.strftime("%Y-%m")
@@ -362,7 +358,6 @@ class ReleaseFactory:
             release_date=release_date,
             label=label,
             is_current=1,
-            site_id=site_id,
             release_type="integrated",
             status=ReleaseStatus.RELEASED,
             name=name,

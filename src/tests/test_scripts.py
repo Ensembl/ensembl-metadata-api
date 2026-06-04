@@ -244,8 +244,7 @@ class TestScripts:
         assert result == 0
         mock_instance.prepare_integrated_release.assert_called_once_with(
             version=Decimal('200.0'),
-            name='I2',
-            site_name='Ensembl',
+            name='I2'
         )
 
     def test_json_file_structure_for_ftp_copy(self, test_dbs, tmp_path):
