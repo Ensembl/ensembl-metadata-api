@@ -28,6 +28,7 @@ from ensembl.production.metadata.api import exceptions
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
+from ensembl.production.metadata.updater.updater_utils import get_homology_reference_set
 
 logging.basicConfig(level=logging.INFO)
 
@@ -276,7 +277,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                                                             genebuild_dataset)
             self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
 
-
         # Create genome and populate the database with assembly and dataset
         else:
             provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
@@ -302,9 +302,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                                                             assembly_dataset,
                                                                                             genebuild_dataset)
             self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
-
-
-
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
         # Currently impossible with myisam without two phase commit (requires full refactor)
@@ -374,7 +371,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
         meta_session.add(genebuild_genome_dataset)
 
         self._create_genome_group_members(meta_session, species_id, new_genome, planned_release)
-
 
         # Homology dataset creation
         homology_uuid, homology_dataset, homology_dataset_attributes, homology_genome_dataset = self.new_homology(
@@ -925,6 +921,13 @@ class CoreMetaUpdater(BaseMetaUpdater):
         else:
             dataset_source = source
         dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "homologies").first()
+
+        taxonomy_id = self.get_meta_single_meta_key(species_id, "organism.taxonomy_id")
+        reference_set = get_homology_reference_set(taxonomy_id, self.taxonomy_uri)
+        if dataset_attributes is None:
+            dataset_attributes = {}
+        dataset_attributes["compara.homology_reference_set"] = reference_set
+
         dataset_factory = DatasetFactory(self.metadata_uri)
         (dataset_uuid, homology_dataset, homology_dataset_attributes,
          homology_genome_dataset) = dataset_factory.create_dataset(meta_session, genome, dataset_source,

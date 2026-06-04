@@ -9,8 +9,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+from ensembl.utils.database import DBConnection
+
+from ensembl.production.metadata.api import exceptions
 from ensembl.production.metadata.api.exceptions import UpdaterException
-from ensembl.production.metadata.api.models import Attribute, DatasetAttribute
+from ensembl.production.metadata.api.models import Attribute, DatasetAttribute, GenomeGroup
 
 
 def update_attributes(dataset, attributes, session, replace=False):
@@ -54,3 +57,34 @@ def update_attributes(dataset, attributes, session, replace=False):
             dataset_attributes.append(new_dataset_attribute)
 
     return dataset_attributes
+
+
+def get_homology_reference_set(taxonomy_id, taxonomy_uri, session):
+    """
+    Determine the compara homology reference set for a given taxonomy ID.
+
+    Args:
+        taxonomy_id: NCBI taxonomy ID
+
+    Returns:
+        str: The reference set name for the compara.homology_reference_set attribute
+
+    Raises:
+        UpdaterException: If no reference set can be determined for the taxonomy_id
+    """
+    tax_db = DBConnection(taxonomy_uri)
+    with tax_db.session_scope() as tax_session:
+        reference_set = session.query("Your logic in here. Please use the taxonomy models.")
+        # Also explain it slightly in comments please.
+
+    # Raise an error if we don't find it in the metadata database, should have another one if it is blank.
+    genome_group = session.query(GenomeGroup).filter(GenomeGroup.name == reference_set).one_or_none()
+    if genome_group is None:
+        raise exceptions.MetadataUpdateException(
+            f"Reference Set '{genome_group}' specified in meta key 'genome.genome_group' does not exist in the database"
+        )
+
+    raise NotImplementedError(
+        f"get_homology_reference_set logic not yet implemented for taxonomy_id {taxonomy_id}"
+    )
+    return reference_set
