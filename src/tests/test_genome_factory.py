@@ -9,6 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import json
 import logging
 from pathlib import Path
 
@@ -16,7 +17,11 @@ import pytest
 from ensembl.utils.database import UnitTestDB, DBConnection
 
 from ensembl.production.metadata.api.exceptions import DatasetFactoryException
-from ensembl.production.metadata.api.factories.genomes import GenomeInputFilters
+from ensembl.production.metadata.api.factories.genomes import (
+    GenomeInputFilters,
+    GenomeOutputWriter,
+    OutputFormat,
+)
 from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus
 
 logger = logging.getLogger(__name__)
@@ -69,6 +74,35 @@ class TestGenomeFactory:
         assert isinstance(filters.batch_size, int)
         assert isinstance(filters.organism_group_type, str)
         assert isinstance(filters.update_dataset_status, str)
+
+    def test_column_names_resolve_to_selectable_columns(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            column_names=["genome_uuid", "species", "dataset_name"],
+        )
+
+        expected_keys = ["genome_uuid", "species", "dataset_name"]
+        assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
+
+    def test_invalid_column_names_fallback_to_default_columns(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            column_names=["not_a_column", "also_invalid"],
+        )
+
+        expected_keys = [
+            "genome_uuid",
+            "species",
+            "dataset_uuid",
+            "dataset_status",
+            "dataset_source",
+            "dataset_source_location",
+            "dataset_name",
+            "dataset_type",
+            "genome_release",
+            "dataset_release",
+        ]
+        assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
 
     @pytest.mark.parametrize(
         "batch_size, status, expected_count",
@@ -265,4 +299,52 @@ class TestGenomeFactory:
         expected_columns.append('updated_dataset_status')
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
+
+    def test_output_writer_json(self, tmp_path):
+        records = [
+            {
+                'genome_uuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
+                'species': 'homo_sapiens',
+                'dataset_uuid': '11a0be7f-99ae-45d3-a004-dc19bb562330',
+            }
+        ]
+        output_file = tmp_path / 'genomes.json'
+        GenomeOutputWriter.write(iter(records), str(output_file), OutputFormat.JSON, ['genome_uuid', 'species', 'dataset_uuid'])
+
+        assert output_file.exists()
+        loaded_records = [json.loads(line) for line in output_file.read_text(encoding='utf-8').strip().split('\n')]
+        assert loaded_records == records
+
+    def test_output_writer_tsv(self, tmp_path):
+        records = [
+            {
+                'genome_uuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
+                'species': 'homo_sapiens',
+                'dataset_uuid': '11a0be7f-99ae-45d3-a004-dc19bb562330',
+            }
+        ]
+        output_file = tmp_path / 'genomes.tsv'
+        GenomeOutputWriter.write(iter(records), str(output_file), OutputFormat.TSV, ['genome_uuid', 'species', 'dataset_uuid'])
+
+        assert output_file.exists()
+        content = output_file.read_text(encoding='utf-8').splitlines()
+        assert content[0] == 'genome_uuid\tspecies\tdataset_uuid'
+        assert content[1] == 'a73351f7-93e7-11ec-a39d-005056b38ce3\thomo_sapiens\t11a0be7f-99ae-45d3-a004-dc19bb562330'
+
+    def test_output_writer_parquet_missing_engine(self, tmp_path):
+        records = [
+            {
+                'genome_uuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
+                'species': 'homo_sapiens',
+                'dataset_uuid': '11a0be7f-99ae-45d3-a004-dc19bb562330',
+            }
+        ]
+        output_file = tmp_path / 'genomes.parquet'
+
+        try:
+            GenomeOutputWriter.write(iter(records), str(output_file), OutputFormat.PARQUET, ['genome_uuid', 'species', 'dataset_uuid'])
+        except RuntimeError as exc:
+            assert 'Parquet export failed' in str(exc) or 'requires pandas' in str(exc)
+        else:
+            assert output_file.exists()
 
