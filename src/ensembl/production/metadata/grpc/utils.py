@@ -13,7 +13,7 @@ import itertools
 import logging
 import uuid
 from typing import Type, Any
-from datetime import datetime
+from datetime import date, datetime
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.adaptors import GenomeAdaptor, BaseAdaptor
@@ -22,6 +22,38 @@ from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.grpc.config import MetadataConfig
 
 logger = logging.getLogger(__name__)
+
+
+def _release_date_sort_key(release_date):
+    """Return a comparable date value for release-date sorting.
+
+    Release dates usually come from the ORM as ``datetime.date`` values, but
+    some gRPC/protobuf paths serialize them as strings. This helper normalizes
+    both representations so callers can reliably select the latest release.
+
+    Args:
+        release_date: A release date as ``datetime.date``, ``datetime.datetime``,
+            or a string in ``YYYY-MM-DD`` or ``MM/DD/YYYY`` format.
+
+    Returns:
+        datetime.date: The parsed date. Invalid or missing values return
+            ``date.min`` so they sort before valid release dates.
+    """
+    if isinstance(release_date, datetime):
+        return release_date.date()
+    if isinstance(release_date, date):
+        return release_date
+    if isinstance(release_date, str):
+        # Support both the ORM/factory ISO format and the protobuf display format.
+        for date_format in ("%Y-%m-%d", "%m/%d/%Y"):
+            try:
+                return datetime.strptime(release_date, date_format).date()
+            except ValueError:
+                pass
+
+    # Keep malformed dates from being selected as the latest release.
+    logger.warning(f"Invalid release date for sorting: {release_date}")
+    return date.min
 
 
 def connect_to_db(adaptor_class: Type[BaseAdaptor], **kwargs):
@@ -713,7 +745,7 @@ def get_release_label_by_uuid(db_conn, genome_uuid, dataset_type, release_versio
         logger.warning(f"Multiple partial results returned. {partials}")
 
     # Pick the latest partial by release_date (works for 1 item too).
-    latest = max(partials, key=lambda item: item.release.release_date)
+    latest = max(partials, key=lambda item: _release_date_sort_key(item.release.release_date))
 
     return msg_factory.create_label_version(latest)
 
