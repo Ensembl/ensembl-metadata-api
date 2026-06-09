@@ -20,7 +20,7 @@ from decimal import Decimal
 from typing import Optional
 
 from ensembl.utils.database import DBConnection
-from sqlalchemy import update, select, func, cast, Integer
+from sqlalchemy import insert, update, select, func, cast, Integer
 
 from ensembl.production.metadata.api.exceptions import *
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
@@ -323,6 +323,134 @@ class ReleaseFactory:
                 logger.info(f"Release {other_release.version} has been marked as not current.")
 
             return release
+
+    def prepare_integrated_release(self, version: Decimal, name: str) -> EnsemblRelease:
+        """Prepare a new integrated release from current partial release state."""
+        db = DBConnection(self.metadata_uri)
+        with db.session_scope() as session:
+            self._archive_existing_integrated_releases(session)
+            release = self._insert_integrated_release(session, version, name)
+            self._insert_genome_release_rows(session, release.release_id)
+            self._insert_genome_dataset_rows(session, release.release_id)
+            self._insert_genome_group_member_rows(session, release.release_id)
+            session.commit()
+            session.refresh(release)
+            session.expunge(release)
+            return release
+
+    def _archive_existing_integrated_releases(self, session) -> int:
+        """Archive any existing integrated releases before creating a new one."""
+        result = session.execute(
+            update(EnsemblRelease)
+            .where(EnsemblRelease.release_type == "integrated")
+            .values(status=ReleaseStatus.ARCHIVED, is_current=0)
+        )
+        archived = result.rowcount if hasattr(result, "rowcount") else 0
+        logger.info("Archived %s existing integrated release(s).", archived)
+        return archived
+
+    def _insert_integrated_release(self, session, version: Decimal, name: str) -> EnsemblRelease:
+        """Create and return a new integrated release record."""
+        release_date = datetime.now().date()
+        label = release_date.strftime("%Y-%m")
+        release = EnsemblRelease(
+            version=version,
+            release_date=release_date,
+            label=label,
+            is_current=1,
+            release_type="integrated",
+            status=ReleaseStatus.RELEASED,
+            name=name,
+        )
+        session.add(release)
+        session.flush()
+        session.refresh(release)
+        logger.info("Created new integrated release %s (%s) with id %s.", name, version, release.release_id)
+        return release
+
+    def _insert_genome_release_rows(self, session, release_id: int) -> int:
+        """Insert genome_release rows for genomes currently attached to partial releases."""
+        genome_ids = (
+            session.query(Genome.genome_id)
+            .join(GenomeRelease, Genome.genome_id == GenomeRelease.genome_id)
+            .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id)
+            .filter(GenomeRelease.is_current == 1)
+            .filter(EnsemblRelease.release_type == "partial")
+            .filter(Genome.suppressed == 0)
+            .distinct()
+            .all()
+        )
+        for (genome_id,) in genome_ids:
+            session.add(GenomeRelease(genome_id=genome_id, release_id=release_id, is_current=1))
+        count = len(genome_ids)
+        logger.info("Inserted %s genome_release row(s) for the new integrated release.", count)
+        return count
+
+    def _insert_genome_dataset_rows(self, session, release_id: int) -> int:
+        """Insert genome_dataset rows for datasets currently attached to partial releases."""
+        dataset_pairs = (
+            session.query(GenomeDataset.dataset_id, GenomeDataset.genome_id)
+            .join(Genome, GenomeDataset.genome_id == Genome.genome_id)
+            .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
+            .filter(GenomeDataset.is_current == 1)
+            .filter(EnsemblRelease.release_type == "partial")
+            .filter(Genome.suppressed == 0)
+            .distinct()
+            .all()
+        )
+        for dataset_id, genome_id in dataset_pairs:
+            session.add(
+                GenomeDataset(
+                    is_current=1,
+                    dataset_id=dataset_id,
+                    genome_id=genome_id,
+                    release_id=release_id,
+                )
+            )
+        count = len(dataset_pairs)
+        logger.info("Inserted %s genome_dataset row(s) for the new integrated release.", count)
+        return count
+
+    def _insert_genome_group_member_rows(self, session, release_id: int) -> int:
+        """Insert genome_group_member rows for group assignments currently attached to partial releases."""
+        group_members = (
+            session.query(GenomeGroupMember.is_reference, GenomeGroupMember.genome_id, GenomeGroupMember.genome_group_id)
+            .join(Genome, GenomeGroupMember.genome_id == Genome.genome_id)
+            .join(EnsemblRelease, GenomeGroupMember.release_id == EnsemblRelease.release_id)
+            .filter(GenomeGroupMember.is_current == 1)
+            .filter(EnsemblRelease.release_type == "partial")
+            .filter(Genome.suppressed == 0)
+            .distinct()
+            .all()
+        )
+
+        if not group_members:
+            logger.info("No current genome group member rows found to copy for the new integrated release.")
+            return 0
+
+        rows = [
+            {
+                "is_current": 1,
+                "is_reference": is_reference,
+                "genome_id": genome_id,
+                "genome_group_id": genome_group_id,
+                "release_id": release_id,
+            }
+            for is_reference, genome_id, genome_group_id in group_members
+        ]
+
+        dialect_name = session.bind.dialect.name
+        if dialect_name == "mysql":
+            stmt = insert(GenomeGroupMember).prefix_with("IGNORE")
+        elif dialect_name == "sqlite":
+            stmt = insert(GenomeGroupMember).prefix_with("OR IGNORE")
+        else:
+            stmt = insert(GenomeGroupMember)
+
+        session.execute(stmt, rows)
+        inserted = len(rows)
+        logger.info("Inserted %s genome_group_member row(s) for the new integrated release.", inserted)
+        return inserted
 
     def pre_release_check(self, release: int | EnsemblRelease) -> list[str]:
         """
