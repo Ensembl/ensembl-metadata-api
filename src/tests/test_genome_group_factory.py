@@ -37,14 +37,17 @@ class TestGenomeGroupFactory:
         with DBConnection(metadata_uri).session_scope() as session:
             genome = session.query(Genome).filter(Genome.suppressed == 0).first()
             assert genome is not None
+            production_name = genome.production_name
+            genome_uuid = genome.genome_uuid
+            genome_id = genome.genome_id
 
         csv_file = tmp_path / "genome_group.csv"
         with csv_file.open("w", encoding="utf-8", newline="") as handle:
             writer = csv.DictWriter(handle, fieldnames=["production_name", "genome_uuid"])
             writer.writeheader()
             writer.writerow({
-                "production_name": genome.production_name,
-                "genome_uuid": genome.genome_uuid,
+                "production_name": production_name,
+                "genome_uuid": genome_uuid,
             })
             writer.writerow({
                 "production_name": "missing_species",
@@ -62,13 +65,13 @@ class TestGenomeGroupFactory:
             group = session.query(GenomeGroup).filter(GenomeGroup.name == group_name).one()
             member = session.query(GenomeGroupMember).filter(
                 GenomeGroupMember.genome_group_id == group.genome_group_id,
-                GenomeGroupMember.genome_id == genome.genome_id,
+                GenomeGroupMember.genome_id == genome_id,
             ).one_or_none()
             assert member is not None
             assert member.is_current == 1
-            assert member.genome_id == genome.genome_id
+            assert member.genome_id == genome_id
 
-        remove_result = factory.remove_genomes_from_group(metadata_uri, group_name, [genome.genome_uuid])
+        remove_result = factory.remove_genomes_from_group(metadata_uri, group_name, [genome_uuid])
         assert remove_result["removed"] == 1
         assert remove_result["not_found"] == 0
 
@@ -76,7 +79,7 @@ class TestGenomeGroupFactory:
             group = session.query(GenomeGroup).filter(GenomeGroup.name == group_name).one()
             member = session.query(GenomeGroupMember).filter(
                 GenomeGroupMember.genome_group_id == group.genome_group_id,
-                GenomeGroupMember.genome_id == genome.genome_id,
+                GenomeGroupMember.genome_id == genome_id,
             ).one_or_none()
             assert member is None
 
