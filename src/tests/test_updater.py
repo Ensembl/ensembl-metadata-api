@@ -132,6 +132,124 @@ class TestUpdater:
             assert organism.scientific_name == 'carol_jabberwocky'
             assert genome.assembly.accession == 'weird02'
             assert genome.genebuild_date == '2024-02'
+
+    def test_existing_assembly_children_attach_to_new_genome(self, test_dbs):
+        # Create the shared assembly and its first genome.
+        core_7_db = DBConnection(test_dbs["core_7"].dbc.url)
+        with core_7_db.session_scope() as core_session:
+            core_session.add(
+                Meta(
+                    species_id="1",
+                    meta_key="organism.biosample_id",
+                    meta_value="assembly_child_test_biosample",
+                )
+            )
+            assembly_accession = (
+                core_session.query(Meta)
+                .filter(Meta.species_id == "1", Meta.meta_key == "assembly.accession")
+                .one()
+            )
+            assembly_accession.meta_value = "assembly_child_test_accession"
+            assembly_name = (
+                core_session.query(Meta)
+                .filter(Meta.species_id == "1", Meta.meta_key == "assembly.name")
+                .one()
+            )
+            assembly_name.meta_value = "assembly_child_test"
+            core_session.commit()
+
+        first_core = meta_factory(
+            test_dbs["core_7"].dbc.url,
+            test_dbs["ensembl_genome_metadata"].dbc.url,
+            test_dbs["ncbi_taxonomy"].dbc.url,
+        )
+        first_core.process_core()
+
+        metadata_db = DBConnection(test_dbs["ensembl_genome_metadata"].dbc.url)
+        with metadata_db.session_scope() as session:
+            assembly_dataset = (
+                session.query(Dataset)
+                .join(GenomeDataset)
+                .join(Genome)
+                .join(Organism)
+                .join(DatasetType)
+                .filter(
+                    Organism.biosample_id == "assembly_child_test_biosample",
+                    Genome.genebuild_date == "2023-01",
+                    DatasetType.name == "assembly",
+                )
+                .one()
+            )
+
+            assembly_child_type = DatasetType(
+                name="assembly_child_test",
+                label="Assembly child test",
+                topic="production_process",
+                parent=assembly_dataset.dataset_type_id,
+            )
+            assembly_child_dataset = Dataset(
+                dataset_type=assembly_child_type,
+                dataset_source=assembly_dataset.dataset_source,
+                name="assembly_child_test",
+                version="1.0",
+                label="Assembly child test",
+                status=DatasetStatus.PROCESSED,
+                parent=assembly_dataset,
+            )
+            session.add(assembly_child_dataset)
+            session.add(
+                GenomeDataset(
+                    genome=assembly_dataset.genome_datasets[0].genome,
+                    dataset=assembly_child_dataset,
+                    is_current=True,
+                )
+            )
+            session.commit()
+            assembly_child_uuid = assembly_child_dataset.dataset_uuid
+
+        # Load a new genebuild on the existing assembly from the same copied core DB.
+        with core_7_db.session_scope() as core_session:
+            core_session.query(Meta).filter(
+                Meta.species_id == "1", Meta.meta_key == "genome.genome_uuid"
+            ).delete()
+            last_geneset_update = (
+                core_session.query(Meta)
+                .filter(Meta.species_id == "1", Meta.meta_key == "genebuild.last_geneset_update")
+                .one()
+            )
+            last_geneset_update.meta_value = "2024-assembly-child-test"
+            core_session.commit()
+
+        second_core = meta_factory(
+            test_dbs["core_7"].dbc.url,
+            test_dbs["ensembl_genome_metadata"].dbc.url,
+            test_dbs["ncbi_taxonomy"].dbc.url,
+        )
+        second_core.process_core()
+
+        with core_7_db.session_scope() as core_session:
+            inserted_meta = (
+                core_session.query(Meta)
+                .filter(Meta.species_id == "1", Meta.meta_key == "genome.genome_uuid")
+                .one()
+            )
+            inserted_genome_uuid = inserted_meta.meta_value
+
+        with metadata_db.session_scope() as session:
+            child_link = (
+                session.query(GenomeDataset)
+                .join(Genome)
+                .join(Dataset)
+                .filter(
+                    Genome.genome_uuid == inserted_genome_uuid,
+                    Dataset.dataset_uuid == assembly_child_uuid,
+                )
+                .one_or_none()
+            )
+
+            assert child_link is not None
+            assert child_link.is_current == 1
+
     #
     def test_update_geneset(self, test_dbs):
         # Run the update process
