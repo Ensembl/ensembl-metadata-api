@@ -13,7 +13,7 @@ import itertools
 import logging
 import uuid
 from typing import Type, Any
-from datetime import datetime
+from datetime import date, datetime
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.adaptors import GenomeAdaptor, BaseAdaptor
@@ -22,6 +22,38 @@ from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.grpc.config import MetadataConfig
 
 logger = logging.getLogger(__name__)
+
+
+def _release_date_sort_key(release_date):
+    """Return a comparable date value for release-date sorting.
+
+    Release dates usually come from the ORM as ``datetime.date`` values, but
+    some gRPC/protobuf paths serialize them as strings. This helper normalizes
+    both representations so callers can reliably select the latest release.
+
+    Args:
+        release_date: A release date as ``datetime.date``, ``datetime.datetime``,
+            or a string in ``YYYY-MM-DD`` or ``MM/DD/YYYY`` format.
+
+    Returns:
+        datetime.date: The parsed date. Invalid or missing values return
+            ``date.min`` so they sort before valid release dates.
+    """
+    if isinstance(release_date, datetime):
+        return release_date.date()
+    if isinstance(release_date, date):
+        return release_date
+    if isinstance(release_date, str):
+        # Support both the ORM/factory ISO format and the protobuf display format.
+        for date_format in ("%Y-%m-%d", "%m/%d/%Y"):
+            try:
+                return datetime.strptime(release_date, date_format).date()
+            except ValueError:
+                pass
+
+    # Keep malformed dates from being selected as the latest release.
+    logger.warning(f"Invalid release date for sorting: {release_date}")
+    return date.min
 
 
 def connect_to_db(adaptor_class: Type[BaseAdaptor], **kwargs):
@@ -664,6 +696,59 @@ def get_release_version_by_uuid(db_conn, genome_uuid, dataset_type, release_vers
         return response_data
     return msg_factory.create_release_version()
 
+def get_release_label_by_uuid(db_conn, genome_uuid, dataset_type, release_version):
+    """
+    Retrieve the release label for a genome dataset, prioritizing partial releases.
+
+    This function looks up release labels for a given genome UUID, dataset type,
+    and release version. When multiple release labels are available, **partial
+    releases are preferred over integrated releases**.
+
+    Rationale:
+        - Genomes are always released first as partial releases before being
+          included in integrated releases.
+        - Integrated releases only reference genes that were previously loaded
+          via partial releases.
+        - Thoas uses the release label to locate the correct MongoDB database;
+          all MongoDB databases follow the naming pattern: ``release-YYYY-MM-DD``.
+
+    As a result, only partial release labels are considered. If multiple partial
+    releases are found, the most recent one (by release date) is selected.
+    """
+    if not genome_uuid:
+        logger.warning("Missing or Empty Genome UUID field.")
+        return msg_factory.create_label_version()
+
+    results = db_conn.fetch_genome_datasets(
+        genome_uuid=genome_uuid,
+        dataset_type_name=dataset_type,
+        release_version=release_version,
+    )
+
+    if not results:
+        logger.error(f"No result found for {genome_uuid}/{dataset_type}/{release_version}")
+        return msg_factory.create_label_version()
+
+    # When looking up release labels, prioritize partial releases over integrated releases.
+    partials = [
+        item for item in results
+        if getattr(getattr(item, "release", None), "release_type", None) == "partial"
+    ]
+
+    if not partials:
+        logger.error(
+            f"No partial release found for {genome_uuid}/{dataset_type}/{release_version}"
+        )
+        return msg_factory.create_label_version()
+
+    if len(partials) > 1:
+        logger.warning(f"Multiple partial results returned. {partials}")
+
+    # Pick the latest partial by release_date (works for 1 item too).
+    latest = max(partials, key=lambda item: _release_date_sort_key(item.release.release_date))
+
+    return msg_factory.create_label_version(latest)
+
 
 def get_attributes_values_by_uuid(db_conn, genome_uuid, dataset_type, release_version, attribute_names, latest_only):
     """
@@ -1300,4 +1385,3 @@ def get_genome_counts(db_conn: Any, release_label: str | None):
             "(release_label=%r)",release_label
         )
         return msg_factory.create_genome_counts([])
-

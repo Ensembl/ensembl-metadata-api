@@ -15,6 +15,7 @@ Unit tests for utils.py
 import json
 import logging
 from pathlib import Path
+from types import SimpleNamespace
 from typing import List
 
 import pytest
@@ -764,6 +765,37 @@ class TestUtils:
                 release_version=release_version
             ))
         assert json.loads(output) == expected_output
+
+    def test_get_release_label_by_uuid_picks_latest_partial_by_date(self):
+        db_conn = SimpleNamespace(
+            fetch_genome_datasets=lambda **kwargs: [
+                SimpleNamespace(
+                    release=SimpleNamespace(
+                        release_type="partial",
+                        release_date="12/31/2024",
+                        label="2024-12-31"
+                    )
+                ),
+                SimpleNamespace(
+                    release=SimpleNamespace(
+                        release_type="partial",
+                        release_date="02/27/2025",
+                        label="2025-02-27"
+                    )
+                ),
+            ]
+        )
+
+        output = json_format.MessageToJson(
+            utils.get_release_label_by_uuid(
+                db_conn=db_conn,
+                genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+                dataset_type="genebuild",
+                release_version=111.1
+            )
+        )
+
+        assert json.loads(output) == {"releaseLabel": "2025-02-27"}
 
     @pytest.mark.parametrize(
         "genome_uuid, expected_output",
