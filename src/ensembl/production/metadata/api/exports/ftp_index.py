@@ -363,13 +363,16 @@ class FTPMetadataExporter:
             raise ValueError(
                 f"Required metadata fields are missing: {', '.join(missing_fields)}. Please check the database entries.")
 
-        unique_dataset_types = list(set([
-            'regulation' if d['dataset_type_name'] == 'regulatory_features'
-            else d['dataset_type_name']
-            for d in datasets
-        ]))
+        unique_dataset_types = list(
+            set(
+                [
+                    "regulation" if d["dataset_type_name"] == "regulation_tracks" else d["dataset_type_name"]
+                    for d in datasets
+                ]
+            )
+        )
 
-        if dataset_type == 'regulatory_features':
+        if dataset_type == "regulation_tracks":
             dataset_type = 'regulation'
 
         match = re.match(r'^(\d{4}-\d{2})', last_geneset_update)
@@ -463,11 +466,11 @@ class FTPMetadataExporter:
         """Check if there's a released dataset of the specified type using preloaded data."""
 
         type_mapping = {
-            'regulation': 'regulatory_features',
-            'genebuild': 'genebuild',
-            'assembly': 'assembly',
-            'homologies': 'homologies',
-            'variation': 'variation'
+            "regulation": "regulation_tracks",
+            "genebuild": "genebuild",
+            "assembly": "assembly",
+            "homologies": "homologies",
+            "variation": "short_variants",
         }
 
         mapped_type = type_mapping.get(dataset_type, dataset_type)
@@ -543,14 +546,14 @@ class FTPMetadataExporter:
                 }
             }
 
-        elif dataset_type == 'variation':
+        elif dataset_type == "short_variants":
             file_paths = {
                 "variation_data": {
                     "variation.vcf.gz": f"{base_path}/variation.vcf.gz"
                 }
             }
 
-        elif dataset_type == 'regulation':
+        elif dataset_type == "regulation_tracks":
             file_paths = {
                 "regulatory_features": {
                     "regulation.gff": f"{base_path}/regulation.gff"

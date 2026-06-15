@@ -140,7 +140,7 @@ class GenomeAdaptor(BaseAdaptor):
             genomes = self.fetch_genomes(production_name = production_name, assembly_name=assembly, release_version=release_version, status=status, genebuild_date = genebuild)
 
         return genomes
-    
+
     def fetch_genomes(
             self,
             genome_id=None,
@@ -308,7 +308,7 @@ class GenomeAdaptor(BaseAdaptor):
         if status == GenomeStatus.CURRENT:
             # This filter will allow us to fetch genomes present in the integrated release
             # and having genome_release.is_current = 0 (see ENSPLAT-169 for more details)
-           
+
             if release_type is not None:
                 genome_select = genome_select.where(
                         and_(
@@ -317,7 +317,7 @@ class GenomeAdaptor(BaseAdaptor):
                             )
                         )    
             else: 
-                # We join two pairs of genome_release-ensembl_release they should be with 
+                # We join two pairs of genome_release-ensembl_release they should be with
                 # - Both pairs should have either genome is current or ensembl is currrent and be different releases
                 # - We select those pairs where EnsemblRelease (that gives selected fileds) is earlier or no other current release
                 # - If dates are equal we select integrated
@@ -434,7 +434,7 @@ class GenomeAdaptor(BaseAdaptor):
             list: A list of fetched genomes matching the keyword and release version.
         """
         status = GenomeStatus[status.upper()]
-        #TODO: fix current logic here, to fetch latest release
+        # TODO: fix current logic here, to fetch latest release
         genome_query = db.select(Genome, Assembly, Organism, EnsemblRelease).select_from(Genome) \
             .join(Organism, Genome.organism_id == Organism.organism_id) \
             .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
@@ -448,7 +448,7 @@ class GenomeAdaptor(BaseAdaptor):
         if release_version is not None and release_version > 0:
             genome_query = genome_query.where(EnsemblRelease.version <= release_version)
         else:
-            # Pick only current integrated and partial releases, if release_version is not specified, 
+            # Pick only current integrated and partial releases, if release_version is not specified,
             # otherwise pick all releases up to the specified release version in the if condition above
             genome_query = genome_query.where(
                 or_(
@@ -461,7 +461,7 @@ class GenomeAdaptor(BaseAdaptor):
                     )
                 )       
             )
-            
+
         provided_fields = [
             tolid,
             assembly_accession_id,
@@ -529,7 +529,6 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(genome_query).all()
 
-
     def fetch_genome_by_release_version(self, release_version, status="Released"):
         """
         Fetches genomes based on a specific release version.
@@ -558,7 +557,6 @@ class GenomeAdaptor(BaseAdaptor):
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_query).all()
-            
 
     def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None, assembly_accession=None,
                         assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
@@ -689,9 +687,9 @@ class GenomeAdaptor(BaseAdaptor):
                 organism_uuid = check_parameter(organism_uuid)
                 genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
             # We have to fetch from DB
-            #TODO: we have two different status - dataset and genome checked for the same condition. Not sure if it is expected
+            # TODO: we have two different status - dataset and genome checked for the same condition. Not sure if it is expected
             if status == GenomeStatus.RELEASED:
-                 genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+                genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
             if status == GenomeStatus.UNRELEASED_ONLY:
                 genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
                 genome_select = genome_select.filter(Dataset.status != DatasetStatus.RELEASED)
@@ -1080,7 +1078,7 @@ class GenomeAdaptor(BaseAdaptor):
                 scientific_name = accession = genebuild_source_name = last_geneset_update = None
 
             # Query for which of the 5 supported dataset types exist for this genome
-            supported_types = ['genebuild', 'assembly', 'homologies', 'regulatory_features', 'variation']
+            supported_types = ["genebuild", "assembly", "homologies", "regulation_tracks", "short_variants"]
             unique_dataset_types_query = select(DatasetType.name).distinct().join(
                 Dataset
             ).join(GenomeDataset).join(Genome).where(
@@ -1091,9 +1089,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         if scientific_name is None or accession is None or genebuild_source_name is None or last_geneset_update is None:
             raise ValueError("Required metadata fields are missing. Please check the database entries.")
-        unique_dataset_types = ['regulation' if t == 'regulatory_features' else t for t in unique_dataset_types]
-        if dataset_type == 'regulatory_features':
-            dataset_type = 'regulation'
+
         match = re.match(r'^(\d{4}-\d{2})', last_geneset_update)  # Match format YYYY-MM
         last_geneset_update = match.group(1).replace('-', '_')
         scientific_name = re.sub(r'[^a-zA-Z0-9]+', ' ', scientific_name)
@@ -1104,11 +1100,11 @@ class GenomeAdaptor(BaseAdaptor):
         common_path = f"{base_path}/{genebuild_source_name}"
 
         path_templates = {
-            'genebuild': f"{common_path}/geneset/{last_geneset_update}",
-            'assembly': f"{base_path}/genome",
-            'homologies': f"{common_path}/homology/{last_geneset_update}",
-            'regulation': f"{common_path}/regulation",
-            'variation': f"{common_path}/variation/{last_geneset_update}",
+            "genebuild": f"{common_path}/geneset/{last_geneset_update}",
+            "assembly": f"{base_path}/genome",
+            "homologies": f"{common_path}/homology/{last_geneset_update}",
+            "regulation_tracks": f"{common_path}/regulation",
+            "short_variants": f"{common_path}/variation/{last_geneset_update}",
         }
 
         # Check for invalid dataset type early

@@ -48,7 +48,6 @@ class TestReleaseFactory:
 
         factory.init_release(label=label)
 
-
         with metadata_db.session_scope() as session:
             release = session.query(EnsemblRelease).filter(EnsemblRelease.version == expected_version).one_or_none()
             assert release is not None, "Release was not inserted into the database"
@@ -142,7 +141,6 @@ class TestReleaseFactory:
                 f"got {new_group_count}."
             )
 
-
     def test_init_release_invalid_inputs(self, test_dbs) -> None:
         """
         Ensure `init_release` raises appropriate exceptions for invalid inputs.
@@ -193,16 +191,18 @@ class TestReleaseFactory:
         """Test pre_release_check when a dataset has an invalid status."""
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
-            dataset = session.query(Dataset).filter(Dataset.dataset_id == 8936).one()
-            dataset.status = "Processing"
-            genome_dataset = session.query(GenomeDataset).filter(GenomeDataset.dataset_id == 8936).one()
+            dataset = session.query(Dataset).filter(Dataset.dataset_id == 9033).one()
+            dataset.status = DatasetStatus.PROCESSING
+            genome_dataset = session.query(GenomeDataset).filter(GenomeDataset.dataset_id == 9033).one()
             genome_dataset.release_id = 4
             session.add(genome_dataset)
             session.add(dataset)
             session.commit()
             factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
             errors = factory.pre_release_check("4")
-            assert f"Dataset [f9ef4142-f4c9-4def-84af-c9480934d408] is neither processed nor released." in errors
+            assert (
+                f"Dataset [7bb8919c-d9e0-4eca-9a49-7a6d9e311c8d] is neither processed nor released." in errors
+            )
 
     def test_pre_release_check_processed_alternative(self, test_dbs):
         """Test pre_release_check when an alternative dataset of the same type is processed."""
@@ -224,24 +224,26 @@ class TestReleaseFactory:
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         with metadata_db.session_scope() as session:
             # Run the same test as above to ensure we have a dataset with an invalid status
-            dataset = session.query(Dataset).filter(Dataset.dataset_id == 8936).one()
-            genome_dataset = session.query(GenomeDataset).filter(GenomeDataset.dataset_id == 8936).one()
+            dataset = session.query(Dataset).filter(Dataset.dataset_id == 9033).one()
+            genome_dataset = session.query(GenomeDataset).filter(GenomeDataset.dataset_id == 9033).one()
             genome_dataset.release_id = 4
             session.add(genome_dataset)
             session.add(dataset)
             session.commit()
             factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
             errors = factory.pre_release_check("4")
-            assert f"Dataset [f9ef4142-f4c9-4def-84af-c9480934d408] is neither processed nor released." in errors
+            assert (
+                f"Dataset [7bb8919c-d9e0-4eca-9a49-7a6d9e311c8d] is neither processed nor released." in errors
+            )
 
             # Create a dataset of the same type, but with processed.
             processed_dataset = Dataset(
                 dataset_type=dataset.dataset_type,
-                status="Processed",
+                status=DatasetStatus.PROCESSED,
                 dataset_uuid="new-processed-dataset",
                 name="New Processed Dataset",
                 dataset_source_id=dataset.dataset_source_id,
-                label="New Processed Dataset"
+                label="New Processed Dataset",
             )
             session.add(processed_dataset)
             session.flush()

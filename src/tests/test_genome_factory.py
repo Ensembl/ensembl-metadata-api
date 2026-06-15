@@ -124,12 +124,12 @@ class TestGenomeFactory:
     @pytest.mark.parametrize(
         "release_name, release_type, dataset_type, dataset_name, dataset_status, dataset_is_current, expected_count",
         [
-            ([1], 'partial', 'variation', ['variation'], ['Released'], 1,  3),
-            ([2], 'partial', 'variation', ['variation'], ['Processed'], 1,  4),
-            ([3], 'partial', 'variation', ['variation'], ['Processed'], 1,  1),
-            ([4], 'partial', 'variation', ['variation'], [], 1,  0),
-            ([5], 'partial', 'variation', ['variation'], ['Released'], 1, 5)
-        ]
+            ([1], "partial", "short_variants", ["variation"], ["Released"], 1, 3),
+            ([2], "partial", "short_variants", ["variation"], ["Processed"], 1, 4),
+            ([3], "partial", "short_variants", ["variation"], ["Processed"], 1, 1),
+            ([4], "partial", "short_variants", ["variation"], [], 1, 0),
+            ([5], "partial", "short_variants", ["variation"], ["Released"], 1, 5),
+        ],
     )
     def test_fetch_genomes_varaition_iscurrent_dataset_params(self, genome_factory, genome_filters, release_name,
                                                               release_type, dataset_type, dataset_name, dataset_status,
@@ -347,4 +347,3 @@ class TestGenomeFactory:
             assert 'Parquet export failed' in str(exc) or 'requires pandas' in str(exc)
         else:
             assert output_file.exists()
-

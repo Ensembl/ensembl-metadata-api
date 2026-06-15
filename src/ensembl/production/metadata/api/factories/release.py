@@ -38,7 +38,6 @@ class ReleaseFactory:
         self.gen_factory = GenomeFactory()
         self.ds_factory = DatasetFactory(conn_uri)
 
-
     def init_release(
             self,
             version: Optional[Decimal] = None,
@@ -476,7 +475,11 @@ class ReleaseFactory:
 
         with db.session_scope() as session:
             # Ensure we have an EnsemblRelease instance
-            release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == release).one()
+            if isinstance(release, EnsemblRelease):
+                release_id = release.release_id
+            else:
+                release_id = release
+            release = session.query(EnsemblRelease).filter(EnsemblRelease.release_id == release_id).one()
 
             # Retrieve all genome datasets associated with this release
             genome_datasets = (
@@ -492,26 +495,33 @@ class ReleaseFactory:
                 # Fetch all datasets attached to this genome
                 dataset = genome_dataset.dataset
                 # Define dataset types that are allowed to be unprocessed
-                allowed_unprocessed_types = {
+                allowed_unprocessed_type_names = {
                     "vcf_handover",
-                    "variation",
-                    "regulatory_features",
+                    "short_variants",
+                    "regulation_tracks",
                     "vep",
-                    "vep_feature",
+                    "vep_assembly_feature",
+                    "vep_genome_feature",
                     "variation_ftp_web",
                     "regulation_handover",
                     "variation_register_track",
                 }
 
                 # Validate dataset statuses
-                if dataset.status not in ("Processed", "Released"):
-                    if dataset.dataset_type not in allowed_unprocessed_types:
+                if dataset.status not in (DatasetStatus.PROCESSED, DatasetStatus.RELEASED):
+                    if dataset.dataset_type.name not in allowed_unprocessed_type_names:
                         # Check if another dataset of the same type is processed
-                        has_processed_alternative = session.query(Dataset).join(GenomeDataset).filter(
-                            GenomeDataset.genome_id == genome.genome_id,
-                            Dataset.dataset_type == dataset.dataset_type,
-                            Dataset.status == "Processed"
-                        ).count() > 0
+                        has_processed_alternative = (
+                            session.query(Dataset)
+                            .join(GenomeDataset)
+                            .filter(
+                                GenomeDataset.genome_id == genome.genome_id,
+                                Dataset.dataset_type_id == dataset.dataset_type_id,
+                                Dataset.status.in_([DatasetStatus.PROCESSED, DatasetStatus.RELEASED]),
+                            )
+                            .count()
+                            > 0
+                        )
 
                         if not has_processed_alternative:
                             errors.append(

@@ -259,7 +259,13 @@ def create_genome(data=None, attributes=None, count=0, alternative_names=[], dat
     # I will be honest with myself here, I don't like this! I don't like this at all!
     # For many reasons, datasets are deeply nested like onions! I cry while peeling the stacked layers!
     # But Yay! It's working! ... Everything about datasets has to change later
-    available_datasets = list({ds_type.dataset.dataset_type.name for ds_type in datasets})
+    available_datasets = list(
+        {
+            ds_type.dataset.dataset_type.name
+            for ds_type in datasets
+            if ds_type.dataset.dataset_type.parent is None
+        }
+    )
 
     genome = ensembl_metadata_pb2.Genome(
         genome_uuid=data.Genome.genome_uuid,

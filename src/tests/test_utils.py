@@ -77,7 +77,7 @@ class TestUtils:
             'sha512t24u': '2YnepKM7OkBoOrKmvHbGqguVfF9amCST'
         }
         assert json.loads(output) == expected_output
-    #TODO: Double check allow unreleased
+    # TODO: Double check allow unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
@@ -95,7 +95,7 @@ class TestUtils:
         ]
 
         assert len(output) == 3
-    #TODO: double check release_version
+    # TODO: double check release_version
     @pytest.mark.parametrize(
         "assembly_accession, release_version",
         [
@@ -223,7 +223,7 @@ class TestUtils:
         output = json.loads(output)
         expected_output = {}
         assert output == expected_output
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, dataset_type, count",
         [
@@ -268,7 +268,7 @@ class TestUtils:
     #        utils.get_dataset_by_genome_and_dataset_type(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3"))
     #    output = json.loads(output)
     #    assert output == {}
-    #TODO: double check commented option is neededd
+    # TODO: double check commented option is neededd
     @pytest.mark.parametrize(
         "production_name, assembly_name, use_default, expected_output",
         [
@@ -305,7 +305,7 @@ class TestUtils:
         ],
         indirect=['allow_unreleased']
     )
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     def test_get_genome_by_uuid(self, genome_conn, allow_unreleased, genome_uuid, version, expected_count, actual):
 
         output = json_format.MessageToJson(
@@ -338,7 +338,7 @@ class TestUtils:
     def test_get_genomes_by_uuid_null(self, genome_conn):
         output = utils.get_genome_by_uuid(genome_conn, None, 0)
         assert output == ensembl_metadata_pb2.Genome()
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, version, expected_count, actual",
         [
@@ -427,7 +427,6 @@ class TestUtils:
         assert [key in output['attributesInfo'] for key in expected_attributes_info_keys]
         assert output['attributesInfo']['assemblyLevel'] == assembly_level
 
-
     def test_get_genomes_by_keyword(self, genome_conn):
         output = [
             json.loads(json_format.MessageToJson(response)) for response in
@@ -439,7 +438,7 @@ class TestUtils:
         ]
         assert len(output) == 5
         assert all(genome['organism']['commonName'].lower() == 'human' for genome in output)
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, output_count, scientific_name, assembly_name",
         [
@@ -506,69 +505,69 @@ class TestUtils:
                                      release_version=110.1))
 
         expected_output = {
-            'assembly': {
-                'accession': 'GCA_018469415.1',
-                'assemblyUuid': '1551e511-bde7-40cf-95cd-de4059678c6f',
-                'ensemblName': 'HG03516.alt.pat.f1_v2',
-                'level': 'primary_assembly',
-                'name': 'HG03516.alt.pat.f1_v2'
+            "assembly": {
+                "accession": "GCA_018469415.1",
+                "assemblyUuid": "1551e511-bde7-40cf-95cd-de4059678c6f",
+                "ensemblName": "HG03516.alt.pat.f1_v2",
+                "level": "primary_assembly",
+                "name": "HG03516.alt.pat.f1_v2",
             },
-            'attributesInfo': {
-                'assemblyDate': '2021-05',
-                'assemblyLevel': 'scaffold',
-                'genebuildLastGenesetUpdate': '2022-07',
-                'genebuildMethod': 'projection_build',
-                'genebuildMethodDisplay': 'Mapping from reference',
-                'genebuildProviderName': 'Ensembl',
-                'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
-                'genebuildProviderVersion': 'ENS01',
-                'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
+            "attributesInfo": {
+                "assemblyDate": "2021-05",
+                "assemblyLevel": "scaffold",
+                "genebuildLastGenesetUpdate": "2022-07",
+                "genebuildMethod": "projection_build",
+                "genebuildMethodDisplay": "Mapping from reference",
+                "genebuildProviderName": "Ensembl",
+                "genebuildProviderUrl": "https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html",
+                "genebuildProviderVersion": "ENS01",
+                "variationSampleVariant": "JAGYYT010000001.1:2643538:rs1423484253",
             },
-            'availableDatasets': [
-                'assembly',
-                'genebuild',
-                'homologies',
-                'variation',
+            "availableDatasets": [
+                "assembly",
+                "genebuild",
+                "homologies",
+                "short_variants",
             ],
-            'created': '2023-09-22 15:02:01',
-            'genomeUuid': '2020e8d5-4d87-47af-be78-0b15e48970a7',
-            'organism': {
-                'commonName': 'human',
-                'ensemblName': 'SAMN17861241',
-                'organismUuid': 'a3352834-cea1-40aa-9dad-98581620c36b',
-                'scientificName': 'Homo sapiens',
-                'scientificParlanceName': 'Human',
-                'speciesTaxonomyId': 9606,
-                'strain': 'Esan in Nigeria',
-                'strainType': 'population',
-                'taxonomyId': 9606
+            "created": "2023-09-22 15:02:01",
+            "genomeUuid": "2020e8d5-4d87-47af-be78-0b15e48970a7",
+            "organism": {
+                "commonName": "human",
+                "ensemblName": "SAMN17861241",
+                "organismUuid": "a3352834-cea1-40aa-9dad-98581620c36b",
+                "scientificName": "Homo sapiens",
+                "scientificParlanceName": "Human",
+                "speciesTaxonomyId": 9606,
+                "strain": "Esan in Nigeria",
+                "strainType": "population",
+                "taxonomyId": 9606,
             },
-            'release': {
-                'isCurrent': True,
-                'releaseDate': '2020-10-18',
-                'releaseLabel': '2020-10-18',
-                'releaseType': 'partial',
-                'releaseVersion': 110.1,
-                'siteLabel': 'MVP Ensembl',
-                'siteName': 'Ensembl',
-                'siteUri': 'https://beta.ensembl.org'
+            "release": {
+                "isCurrent": True,
+                "releaseDate": "2020-10-18",
+                "releaseLabel": "2020-10-18",
+                "releaseType": "partial",
+                "releaseVersion": 110.1,
+                "siteLabel": "MVP Ensembl",
+                "siteName": "Ensembl",
+                "siteUri": "https://beta.ensembl.org",
             },
-            'taxon': {
-                'alternativeNames': ['human'],
-                'scientificName': 'Homo sapiens',
-                'strain': 'Esan in Nigeria',
-                'taxonomyId': 9606
+            "taxon": {
+                "alternativeNames": ["human"],
+                "scientificName": "Homo sapiens",
+                "strain": "Esan in Nigeria",
+                "taxonomyId": 9606,
             },
-            'relatedAssembliesCount': 5
+            "relatedAssembliesCount": 5,
         }
-        
+
         t = json.loads(output)
 
         # assert t["attributesInfo"] == expected_output["attributesInfo"]
         # Sort both lists before comparison
         t['availableDatasets'].sort()
         expected_output['availableDatasets'] = sorted(expected_output['availableDatasets'])
-        
+
         assert t == expected_output
     # TODO: double check if output is correct and merge with aboove one
     """ def test_get_genomes_by_name_release_unspecified(self, genome_conn):
