@@ -1004,7 +1004,6 @@ class GenomeAdaptor(BaseAdaptor):
         Returns:
             List of tuples (Genome, GenomeGroupMember) with full membership details.
         """
-        status = GenomeStatus[status.upper()]
         member_select = select(Genome, GenomeGroupMember).join(
             GenomeGroupMember, Genome.genome_id == GenomeGroupMember.genome_id
         ).join(
@@ -1078,7 +1077,7 @@ class GenomeAdaptor(BaseAdaptor):
                 scientific_name = accession = genebuild_source_name = last_geneset_update = None
 
             # Query for which of the 5 supported dataset types exist for this genome
-            supported_types = ["genebuild", "assembly", "homologies", "regulation_tracks", "short_variants"]
+            supported_types = ["genebuild", "assembly", "homologies", "short_variants"]
             unique_dataset_types_query = select(DatasetType.name).distinct().join(
                 Dataset
             ).join(GenomeDataset).join(Genome).where(
@@ -1103,7 +1102,6 @@ class GenomeAdaptor(BaseAdaptor):
             "genebuild": f"{common_path}/geneset/{last_geneset_update}",
             "assembly": f"{base_path}/genome",
             "homologies": f"{common_path}/homology/{last_geneset_update}",
-            "regulation_tracks": f"{common_path}/regulation",
             "short_variants": f"{common_path}/variation/{last_geneset_update}",
         }
 

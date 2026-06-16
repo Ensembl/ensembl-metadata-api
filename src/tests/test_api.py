@@ -49,7 +49,7 @@ class TestApi:
         genome_uuid = 'a7335667-93e7-11ec-a39d-005056b38ce3'
         # Homo sapien GRCH38
         paths = genome_adapter.get_public_path(genome_uuid, dataset_type='all')
-        assert len(paths) == 5
+        assert len(paths) == 4
         # assert all("/genebuild/" in path for path in paths)
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='genebuild')
         assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/geneset/2023_03'
@@ -59,5 +59,3 @@ class TestApi:
         assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/variation/2023_03'
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='homologies')
         assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/homology/2023_03'
-        path = genome_adapter.get_public_path(genome_uuid, dataset_type="regulation_tracks")
-        assert path[0]['path'] == 'Homo_sapiens/GCA_000001405.29/ensembl/regulation'
