@@ -156,10 +156,10 @@ class TestStatsGenerator:
         generator = StatsGenerator(metadata_uri)
         with generator.metadata_db.session_scope() as session:
             release_id = 1
-            variation_count = generator._count_datasets(session, release_id, 'variation')
+            variation_count = generator._count_datasets(session, release_id, "short_variants")
             assert variation_count == 3
 
-            regulation_count = generator._count_datasets(session, release_id, 'regulatory_features')
+            regulation_count = generator._count_datasets(session, release_id, "regulation_tracks")
             assert regulation_count == 0
 
     def test_count_and_get_dataset_ids(self, test_dbs):
@@ -169,9 +169,7 @@ class TestStatsGenerator:
 
         with generator.metadata_db.session_scope() as session:
             release_id = 1
-            count, dataset_ids = generator._count_and_get_dataset_ids(
-                session, release_id, 'variation'
-            )
+            count, dataset_ids = generator._count_and_get_dataset_ids(session, release_id, "short_variants")
 
             assert isinstance(count, int)
             assert isinstance(dataset_ids, set)

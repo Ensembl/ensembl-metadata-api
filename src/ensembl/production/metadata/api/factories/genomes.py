@@ -24,18 +24,17 @@ from enum import Enum
 from pathlib import Path
 from typing import Iterator, List
 
-from ensembl.utils.database import DBConnection
 from ensembl.utils.argparse import ArgumentParser
-
+from ensembl.utils.database import DBConnection
 from sqlalchemy import select, exists
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.operators import and_
 
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset, DatasetSource, DatasetStatus
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 from ensembl.production.metadata.api.models.release import EnsemblRelease
-from sqlalchemy.orm import aliased
-from sqlalchemy.sql.operators import and_
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -90,7 +89,7 @@ class GenomeOutputWriter:
     def _write_parquet(records: Iterator[dict], output_path: Path, columns: List[str]) -> None:
         try:
             import pandas as pd
-        except ImportError as exc:
+        except Exception as exc:
             raise RuntimeError("Parquet export requires pandas and pyarrow or fastparquet") from exc
 
         rows = [record for record in records]

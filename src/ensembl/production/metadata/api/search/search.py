@@ -339,11 +339,11 @@ class DatasetFieldExtractor:
 
     def has_variation(self) -> bool:
         """Check if genome has variation data"""
-        return self._has_dataset_type("variation")
+        return self._has_dataset_type("short_variants")
 
     def has_regulation(self) -> bool:
         """Check if genome has regulatory features data"""
-        return self._has_dataset_type("regulatory_features")
+        return self._has_dataset_type("regulation_tracks")
 
     def get_genebuild_provider(self) -> str:
         """

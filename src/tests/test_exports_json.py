@@ -182,11 +182,7 @@ class TestFTPMetadataExporter:
         ]
         assert exporter._has_released_dataset_bulk(datasets, 'genebuild') is True
         assert exporter._has_released_dataset_bulk(datasets, 'assembly') is True
-        assert exporter._has_released_dataset_bulk(datasets, 'variation') is False
-        datasets = [
-            {'dataset_type_name': 'regulatory_features'}
-        ]
-        assert exporter._has_released_dataset_bulk(datasets, 'regulation') is True
+        assert exporter._has_released_dataset_bulk(datasets, "short_variants") is False
         assert exporter._has_released_dataset_bulk([], 'genebuild') is False
 
     def test_get_dataset_file_paths_genebuild(self, test_dbs):
@@ -236,26 +232,9 @@ class TestFTPMetadataExporter:
         with exporter.metadata_db.session_scope() as session:
             genome = session.query(Genome).first()
             assembly_data = {'accession': 'GRCh38'} if genome else {}
-            file_paths = exporter._get_dataset_file_paths(
-                base_path, 'variation', genome, assembly_data
-            )
+            file_paths = exporter._get_dataset_file_paths(base_path, "short_variants", genome, assembly_data)
         assert 'variation_data' in file_paths
         assert 'variation.vcf.gz' in file_paths['variation_data']
-
-    def test_get_dataset_file_paths_regulation(self, test_dbs):
-        """Test _get_dataset_file_paths generates correct file paths for regulation."""
-        metadata_uri = test_dbs['ensembl_genome_metadata'].dbc.url
-        exporter = FTPMetadataExporter(metadata_uri)
-        base_path = "homo_sapiens/GRCh38/ensembl/regulation"
-        with exporter.metadata_db.session_scope() as session:
-            genome = session.query(Genome).first()
-            assembly_data = {'accession': 'GRCh38'} if genome else {}
-            file_paths = exporter._get_dataset_file_paths(
-                base_path, 'regulation', genome, assembly_data
-            )
-
-        assert 'regulatory_features' in file_paths
-        assert 'regulation.gff' in file_paths['regulatory_features']
 
     def test_get_dataset_file_paths_homologies(self, test_dbs):
         """Test _get_dataset_file_paths generates correct file paths for homologies."""
