@@ -222,10 +222,14 @@ def main():
 
     con.execute("show tables")
 
+    # Django migration history is only useful to the source application. It is
+    # skipped so the DuckDB dump contains metadata content rather than app state.
+    skipped_tables = {"django_migrations"}
+
     results = con.fetchall()
     for res in results:
         tbl = res[0]
-        if tbl.startswith("vw_"):
+        if tbl.startswith("vw_") or tbl in skipped_tables:
             continue
         print(f"Importing from table {tbl}")
         con.execute(f"DROP TABLE IF EXISTS duck_meta.{tbl}")
