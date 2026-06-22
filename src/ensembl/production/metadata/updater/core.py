@@ -335,6 +335,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         url_name = self.get_meta_single_meta_key(species_id, "assembly.url_name")
         provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
         annotation_source = self.get_meta_single_meta_key(species_id, "genebuild.annotation_source")
+        is_best = self.get_meta_single_meta_key(species_id, "genome.is_best")
         if None in (production_name, genebuild_date, annotation_source, provider_name):
             raise exceptions.MetadataUpdateException(f"Unable to find required keys from meta")
         planned_release = self.get_release(meta_session)
@@ -353,7 +354,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
         meta_session.add(new_genome)
         genome_release = GenomeRelease(
             genome=new_genome,
-            ensembl_release=planned_release
+            ensembl_release=planned_release,
+            is_best=1 if is_best is not None and int(is_best) == 1 else 0,
         )
         new_genome.genome_releases.append(genome_release)
         assembly_genome_dataset = GenomeDataset(

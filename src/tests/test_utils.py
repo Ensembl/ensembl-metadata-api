@@ -14,6 +14,8 @@ Unit tests for utils.py
 """
 import json
 import logging
+import uuid
+from datetime import date, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import List
@@ -22,7 +24,13 @@ import pytest
 from ensembl.utils.database import UnitTestDB, DBConnection
 from google.protobuf import json_format
 
-from ensembl.production.metadata.api.models import Genome, Dataset
+from ensembl.production.metadata.api.models import (
+    Dataset,
+    EnsemblRelease,
+    Genome,
+    GenomeRelease,
+    ReleaseStatus,
+)
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
 
 logger = logging.getLogger(__name__)
@@ -289,6 +297,129 @@ class TestUtils:
                 use_default=use_default
             ))
         assert json.loads(output) == expected_output
+
+    def test_get_genome_uuid_by_assembly_accession(self, test_dbs):
+        metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
+        integrated_genome_uuid = None
+        best_partial_genome_uuid = None
+        inserted_genome_ids = []
+        inserted_release_ids = []
+
+        try:
+            with test_dbs["ensembl_genome_metadata"].dbc.session_scope() as session:
+                source_genome = (
+                    session.query(Genome)
+                    .filter(Genome.genome_uuid == "a7335667-93e7-11ec-a39d-005056b38ce3")
+                    .one()
+                )
+
+                integrated_release = EnsemblRelease(
+                    version=997.0,
+                    release_date=date(2099, 1, 1),
+                    label="997",
+                    is_current=0,
+                    release_type="integrated",
+                    status=ReleaseStatus.RELEASED,
+                    name="e99",
+                )
+                partial_release = EnsemblRelease(
+                    version=998.0,
+                    release_date=date(2099, 2, 1),
+                    label="998",
+                    is_current=0,
+                    release_type="partial",
+                    status=ReleaseStatus.RELEASED,
+                    name="e99",
+                )
+                session.add_all([integrated_release, partial_release])
+                session.flush()
+
+                integrated_genome = Genome(
+                    genome_uuid=str(uuid.uuid4()),
+                    assembly=source_genome.assembly,
+                    organism=source_genome.organism,
+                    created=datetime.utcnow(),
+                    production_name="test_integrated",
+                    annotation_source="test",
+                    provider_name="Other",
+                    genebuild_date="2099-01",
+                )
+                ensembl_partial_genome = Genome(
+                    genome_uuid=str(uuid.uuid4()),
+                    assembly=source_genome.assembly,
+                    organism=source_genome.organism,
+                    created=datetime.utcnow(),
+                    production_name="test_partial_ensembl",
+                    annotation_source="test",
+                    provider_name="Ensembl",
+                    genebuild_date="2099-02",
+                )
+                best_partial_genome = Genome(
+                    genome_uuid=str(uuid.uuid4()),
+                    assembly=source_genome.assembly,
+                    organism=source_genome.organism,
+                    created=datetime.utcnow(),
+                    production_name="test_partial_best",
+                    annotation_source="test",
+                    provider_name="Other",
+                    genebuild_date="2099-03",
+                )
+                session.add_all([integrated_genome, ensembl_partial_genome, best_partial_genome])
+                session.flush()
+                integrated_genome_uuid = integrated_genome.genome_uuid
+                best_partial_genome_uuid = best_partial_genome.genome_uuid
+                inserted_genome_ids = [
+                    integrated_genome.genome_id,
+                    ensembl_partial_genome.genome_id,
+                    best_partial_genome.genome_id,
+                ]
+                inserted_release_ids = [integrated_release.release_id, partial_release.release_id]
+
+                session.add_all(
+                    [
+                        GenomeRelease(
+                            genome_id=integrated_genome.genome_id,
+                            release_id=integrated_release.release_id,
+                            is_current=0,
+                            is_best=0,
+                        ),
+                        GenomeRelease(
+                            genome_id=ensembl_partial_genome.genome_id,
+                            release_id=partial_release.release_id,
+                            is_current=0,
+                            is_best=0,
+                        ),
+                        GenomeRelease(
+                            genome_id=best_partial_genome.genome_id,
+                            release_id=partial_release.release_id,
+                            is_current=0,
+                            is_best=1,
+                        ),
+                    ]
+                )
+
+            assert (
+                utils.get_genome_uuid_by_assembly_accession("GCA_000001405.29", metadata_uri)
+                == best_partial_genome_uuid
+            )
+            assert (
+                utils.get_genome_uuid_by_assembly_accession("GCA_000001405.29", metadata_uri, release=997.0)
+                == integrated_genome_uuid
+            )
+            assert utils.get_genome_uuid_by_assembly_accession("missing", metadata_uri) is None
+
+        finally:
+            if inserted_genome_ids:
+                with test_dbs["ensembl_genome_metadata"].dbc.session_scope() as session:
+                    session.query(GenomeRelease).filter(
+                        GenomeRelease.genome_id.in_(inserted_genome_ids)
+                    ).delete(synchronize_session=False)
+                    session.query(Genome).filter(Genome.genome_id.in_(inserted_genome_ids)).delete(
+                        synchronize_session=False
+                    )
+                    session.query(EnsemblRelease).filter(
+                        EnsemblRelease.release_id.in_(inserted_release_ids)
+                    ).delete(synchronize_session=False)
 
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, version, expected_count, actual",
