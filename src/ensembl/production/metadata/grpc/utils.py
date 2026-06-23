@@ -15,19 +15,10 @@ import uuid
 from datetime import date, datetime
 from typing import Type, Any
 
-import sqlalchemy as db
-from ensembl.utils.database import DBConnection
-
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.adaptors import GenomeAdaptor, BaseAdaptor
 from ensembl.production.metadata.api.adaptors import ReleaseAdaptor
-from ensembl.production.metadata.api.models import (
-    Assembly,
-    EnsemblRelease,
-    Genome,
-    GenomeRelease,
-    ReleaseStatus,
-)
+from ensembl.production.metadata.api.models import Genome
 from ensembl.production.metadata.grpc.config import MetadataConfig
 
 logger = logging.getLogger(__name__)
@@ -291,67 +282,6 @@ def get_genome_uuid(db_conn: GenomeAdaptor,
     return msg_factory.create_genome_uuid()
 
 
-def get_genome_uuid_by_assembly_accession(
-    assembly_accession: str, metadata_uri: str, release: float = None
-) -> str | None:
-    """Look up the best genome UUID for a given assembly accession.
-
-    Queries released genomes by assembly accession and applies a priority
-    ordering to select the single best result:
-
-    1. ``is_best`` flag on the genome-release link (best genome first)
-    2. Release type — integrated releases preferred over partial
-    3. Ensembl-provided genomes preferred over other providers
-    4. Most recent release (by release_id descending)
-
-    Args:
-        assembly_accession: INSDC assembly accession (e.g. ``GCA_000001405.29``).
-        metadata_uri: SQLAlchemy-compatible database URL for the metadata store.
-        release: Optional release version to restrict the search to a specific
-            ``EnsemblRelease``. When ``None``, all released versions are considered.
-
-    Returns:
-        The genome UUID string for the best-matching genome, or ``None`` if no
-        released genome is found for the given accession (and optional release).
-    """
-    if not assembly_accession or not metadata_uri:
-        logger.warning("Missing or Empty assembly_accession or metadata_uri field.")
-        return None
-
-    with DBConnection(metadata_uri).session_scope() as session:
-        integrated_release = db.case((EnsemblRelease.release_type == "integrated", 1), else_=0)
-        ensembl_provider = db.case((db.func.lower(Genome.provider_name) == "ensembl", 1), else_=0)
-
-        query = (
-            db.select(Genome.genome_uuid)
-            .select_from(Assembly)
-            .join(Genome, Genome.assembly_id == Assembly.assembly_id)
-            .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
-            .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
-            .where(
-                Assembly.accession == assembly_accession,
-                EnsemblRelease.status == ReleaseStatus.RELEASED,
-            )
-        )
-
-        if release is not None:
-            query = query.where(EnsemblRelease.version == release)
-
-        query = query.order_by(
-            GenomeRelease.is_best.desc(),
-            integrated_release.desc(),
-            ensembl_provider.desc(),
-            EnsemblRelease.release_id.desc(),
-        ).limit(1)
-
-        genome_uuid = session.execute(query).scalar_one_or_none()
-
-    if genome_uuid is None:
-        logger.error(f"No Genome UUID found for assembly_accession={assembly_accession}, release={release}")
-
-    return genome_uuid
-
-
 def get_genome_by_uuid(db_conn, genome_uuid, release_version):
     if not genome_uuid:
         logger.warning("Missing or Empty Genome UUID field.")
@@ -377,7 +307,7 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
 
     Args:
         db_conn: Database connection object.
-        genome_uuid_or_tag: Genome UUID or tag.
+        genome_uuid: Genome UUID
         release_version: Release version to fetch.
 
     Returns:
@@ -417,7 +347,7 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
     assembly_name = current_genome.Assembly.name
     # Fetch all genomes with the same assembly name, sorted by release date
     all_genomes_with_same_assembly = db_conn.fetch_genomes(assembly_name=assembly_name)
-    
+
     # Find the genome with the most recent release date
     latest_genome = None
     if all_genomes_with_same_assembly:
@@ -425,7 +355,7 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
         if all_genomes_with_same_assembly[0].Genome.genome_uuid != current_genome.Genome.genome_uuid:
             latest_genome = all_genomes_with_same_assembly[0]
             logger.debug(f"Found newer genome: {latest_genome.Genome.genome_uuid}")
-    
+
     # Return the requested genome together with the latest genome details (or None if current is latest)
     return msg_factory.create_brief_genome_details(current_genome, latest_genome)
 

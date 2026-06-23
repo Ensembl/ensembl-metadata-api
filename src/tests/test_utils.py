@@ -298,8 +298,7 @@ class TestUtils:
             ))
         assert json.loads(output) == expected_output
 
-    def test_get_genome_uuid_by_assembly_accession(self, test_dbs):
-        metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
+    def test_get_genome_uuid_by_assembly_accession(self, genome_conn, test_dbs):
         integrated_genome_uuid = None
         best_partial_genome_uuid = None
         inserted_genome_ids = []
@@ -399,14 +398,14 @@ class TestUtils:
                 )
 
             assert (
-                utils.get_genome_uuid_by_assembly_accession("GCA_000001405.29", metadata_uri)
+                genome_conn.get_genome_uuid_by_assembly_accession("GCA_000001405.29")
                 == best_partial_genome_uuid
             )
             assert (
-                utils.get_genome_uuid_by_assembly_accession("GCA_000001405.29", metadata_uri, release=997.0)
+                genome_conn.get_genome_uuid_by_assembly_accession("GCA_000001405.29", release=997.0)
                 == integrated_genome_uuid
             )
-            assert utils.get_genome_uuid_by_assembly_accession("missing", metadata_uri) is None
+            assert genome_conn.get_genome_uuid_by_assembly_accession("missing") is None
 
         finally:
             if inserted_genome_ids:
@@ -798,23 +797,6 @@ class TestUtils:
     #     # and pick up the first element to check if it matches the expected output
     #     # I picked up only the first element for the sake of shortening the code
     #     assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
-
-    @pytest.mark.parametrize(
-        "genome_tag, expected_output",
-        [
-            # url_name = GRCh38 => homo_sapien 38
-            ("grch38", {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-            # Null
-            ("iDontExist", {}),
-        ]
-    )
-    def test_get_genome_uuid_by_tag(self, genome_conn, genome_tag, expected_output):
-        output = json_format.MessageToJson(
-            utils.get_genome_uuid_by_tag(
-                db_conn=genome_conn,
-                genome_tag=genome_tag,
-            ))
-        assert json.loads(output) == expected_output
 
     @pytest.mark.parametrize(
         "genome_uuid, dataset_type, release_version, expected_output",
