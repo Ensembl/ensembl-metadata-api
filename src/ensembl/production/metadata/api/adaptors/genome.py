@@ -620,6 +620,74 @@ class GenomeAdaptor(BaseAdaptor):
             genome_uuid=genome_uuid, chromosomal_only=chromosomal_only
         )
 
+    def fetch_top_regions_by_genome_uuid(self, genome_uuid, region_type=None, limit=100):
+        """
+        Fetches the top assembly regions for a genome.
+
+        Chromosomal regions are ordered by chromosome rank. Non-chromosomal regions are
+        ordered by length descending, then name. When no region type is provided,
+        chromosomal regions are returned first and non-chromosomal regions fill the
+        remaining limit.
+
+        Args:
+            genome_uuid (str): Genome UUID to filter by.
+            region_type (str or None): Public region type filter. "chromosome"
+                maps to chromosomal regions; other values map to non-chromosomal
+                assembly_sequence.type values.
+            limit (int): Maximum number of regions to return.
+
+        Returns:
+            list: A list of fetched sequence rows.
+        """
+        if not genome_uuid or limit <= 0:
+            return []
+
+        def top_regions_select():
+            return db.select(
+                Genome, Assembly, AssemblySequence
+            ).select_from(Genome) \
+                .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
+                .join(AssemblySequence, AssemblySequence.assembly_id == Assembly.assembly_id) \
+                .filter(Genome.genome_uuid == genome_uuid)
+
+        def fetch_chromosomal(session, result_limit):
+            chromosomal_select = top_regions_select() \
+                .filter(AssemblySequence.chromosomal == 1) \
+                .order_by(
+                    AssemblySequence.chromosome_rank,
+                    AssemblySequence.name,
+                ) \
+                .limit(result_limit)
+            return session.execute(chromosomal_select).all()
+
+        def fetch_non_chromosomal(session, result_limit, assembly_sequence_type=None):
+            non_chromosomal_select = top_regions_select() \
+                .filter(AssemblySequence.chromosomal == 0)
+            if assembly_sequence_type is not None:
+                non_chromosomal_select = non_chromosomal_select.filter(
+                    AssemblySequence.type == assembly_sequence_type
+                )
+            non_chromosomal_select = non_chromosomal_select \
+                .order_by(
+                    AssemblySequence.length.desc(),
+                    AssemblySequence.name,
+                ) \
+                .limit(result_limit)
+            return session.execute(non_chromosomal_select).all()
+
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            if region_type == "chromosome":
+                return fetch_chromosomal(session, limit)
+            if region_type is not None:
+                return fetch_non_chromosomal(session, limit, region_type)
+
+            top_regions = fetch_chromosomal(session, limit)
+            remaining_limit = limit - len(top_regions)
+            if remaining_limit > 0:
+                top_regions.extend(fetch_non_chromosomal(session, remaining_limit))
+            return top_regions
+
     def fetch_sequences_by_assembly_accession(
             self, assembly_accession, chromosomal_only=False
     ):
