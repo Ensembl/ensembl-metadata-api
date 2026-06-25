@@ -172,6 +172,8 @@ class GenomeAdaptor(BaseAdaptor):
                 GenomeRelease.is_best.desc(),
                 integrated_release.desc(),
                 ensembl_provider.desc(),
+                # sorting by date is needed to guarantee that the latest integrated is the one on the top
+                EnsemblRelease.release_date.desc(),
                 EnsemblRelease.release_id.desc(),
             ).limit(1)
 
