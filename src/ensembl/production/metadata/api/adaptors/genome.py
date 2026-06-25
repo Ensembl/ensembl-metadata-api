@@ -339,7 +339,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
-        genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
+        genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
             .join(GenomeRelease) \
             .join(EnsemblRelease) \
             .join(EnsemblSite)
