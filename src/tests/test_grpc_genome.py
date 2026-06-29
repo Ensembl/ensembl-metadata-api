@@ -319,6 +319,30 @@ class TestGRPCGenomeAdaptor:
         assert genome_datasets[0].datasets[0].dataset.dataset_uuid == expected_dataset_uuid
         assert len(genome_datasets) == expected_count
 
+    def test_fetch_genome_dataset_includes_regulation_tracks(self, genome_conn):
+        genome_uuid = "a7335667-93e7-11ec-a39d-005056b38ce3"
+
+        all_datasets = genome_conn.fetch_genome_datasets(
+            genome_uuid=genome_uuid,
+            dataset_type_name="all",
+        )
+        regulation_datasets = genome_conn.fetch_genome_datasets(
+            genome_uuid=genome_uuid,
+            dataset_type_name="regulation_tracks",
+        )
+
+        assert any(
+            dataset.dataset.dataset_type.name == "regulation_tracks"
+            for result in all_datasets
+            for dataset in result.datasets
+        )
+        assert len(regulation_datasets) > 0
+        assert all(
+            dataset.dataset.dataset_type.name == "regulation_tracks"
+            for result in regulation_datasets
+            for dataset in result.datasets
+        )
+
     @pytest.mark.parametrize(
         "status, organism_uuid, expected_count",
         [
