@@ -154,10 +154,18 @@ class GenomeInputFilters:
             "dataset_type": DatasetType.name.label("dataset_type"),
             "genome_release": EnsemblRelease.name.label("genome_release"),
             "dataset_release": GenomeDataset.release_id.label("dataset_release"),
+            "division": OrganismGroup.name.label("division"),
         }
 
     @classmethod
     def resolve_columns(cls, column_names: List[str]) -> List:
+        column_names = [
+            column_name.strip()
+            for column_group in column_names
+            for column_name in column_group.split(",")
+            if column_name.strip()
+        ]
+
         if not column_names:
             return cls.default_columns()
 
@@ -177,6 +185,31 @@ class GenomeInputFilters:
 
         return resolved if resolved else cls.default_columns()
 
+    @staticmethod
+    def _column_table_name(column) -> str:
+        element = getattr(column, "element", column)
+        table = getattr(element, "table", None)
+        return getattr(table, "name", "")
+
+    @staticmethod
+    def _column_name(column) -> str:
+        element = getattr(column, "element", column)
+        return getattr(element, "name", getattr(column, "name", ""))
+
+    def uses_organism_group_columns(self) -> bool:
+        return any(
+            self._column_table_name(column) in ["organism_group", "organism_group_member"]
+            for column in self.columns
+        )
+
+    def requires_organism_group(self) -> bool:
+        return bool(
+            self.division
+            or self.run_all
+            or self.organism_group_type
+            or self.uses_organism_group_columns()
+        )
+
     def __post_init__(self) -> None:
         if self.column_names:
             self.columns = self.resolve_columns(self.column_names)
@@ -189,6 +222,16 @@ class GenomeQueryBuilder:
         self.filters = filters
 
     def build(self):
+        if self.filters.run_all:
+            self.filters.division = [
+                'EnsemblBacteria',
+                'EnsemblVertebrates',
+                'EnsemblPlants',
+                'EnsemblProtists',
+                'EnsemblMetazoa',
+                'EnsemblFungi',
+            ]
+
         query = (
             select(*self.filters.columns)
             .select_from(Genome)
@@ -209,18 +252,7 @@ class GenomeQueryBuilder:
         genomes_dataset_release = aliased(EnsemblRelease)
         ensembl_release_type_filter = 'integrated'
 
-        if self.filters.run_all:
-            self.filters.division = [
-                'EnsemblBacteria',
-                'EnsemblVertebrates',
-                'EnsemblPlants',
-                'EnsemblProtists',
-                'EnsemblMetazoa',
-                'EnsemblFungi',
-            ]
-
-        if self.filters.division or self.filters.organism_group_type or any(
-                [i.element.table.name in ['organism_group', 'organism_group_member'] for i in self.filters.columns]):
+        if self.filters.requires_organism_group():
             query = query.outerjoin(Organism.organism_group_members).outerjoin(OrganismGroupMember.organism_group)
             ensembl_divisions = self.filters.division
 
@@ -570,7 +602,7 @@ def main():
             "Select columns to return in the query result. "
             "If omitted, default columns are used. "
             "Supported values: genome_uuid, species, dataset_uuid, dataset_status, "
-            "dataset_source, dataset_name, dataset_type, genome_release, dataset_release."
+            "dataset_source, dataset_name, dataset_type, genome_release, dataset_release, division."
         ),
     )
     parser.add_argument(
