@@ -35,6 +35,7 @@ from ensembl.production.metadata.api.models.dataset import DatasetType, Dataset,
 from ensembl.production.metadata.api.models.genome import Genome, GenomeDataset, GenomeRelease
 from ensembl.production.metadata.api.models.organism import Organism, OrganismGroup, OrganismGroupMember
 from ensembl.production.metadata.api.models.release import EnsemblRelease
+from ensembl.production.metadata.api.models.assembly import Assembly
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -155,6 +156,10 @@ class GenomeInputFilters:
             "genome_release": EnsemblRelease.name.label("genome_release"),
             "dataset_release": GenomeDataset.release_id.label("dataset_release"),
             "division": OrganismGroup.name.label("division"),
+            "assembly_name": Assembly.name.label('assembly_name'),
+            "assembly_accession": Assembly.accession.label('assembly_accession'),
+            "assembly_level": Assembly.level.label('assembly_level'),
+            "assembly_default": Assembly.assembly_default.label('assembly_default'),
         }
 
     @classmethod
