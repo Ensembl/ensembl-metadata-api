@@ -12,8 +12,8 @@
 import itertools
 import logging
 import uuid
-from typing import Type, Any
 from datetime import date, datetime
+from typing import Type, Any
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.adaptors import GenomeAdaptor, BaseAdaptor
@@ -127,17 +127,18 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
     stats_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all")
 
     statistics = []
-    # FIXME stats_results can contain multiple entries
     if len(stats_results) > 0:
-
-        for dataset in stats_results[0].datasets:
-            for attribute in dataset.attributes:
-                statistics.append({
-                    'name': attribute.name,
-                    'label': attribute.label,
-                    'statistic_type': attribute.type,
-                    'statistic_value': attribute.value
-                })
+        for result in stats_results:
+            for dataset in result.datasets:
+                for attribute in dataset.attributes:
+                    statistics.append(
+                        {
+                            "name": attribute.name,
+                            "label": attribute.label,
+                            "statistic_type": attribute.type,
+                            "statistic_value": attribute.value,
+                        }
+                    )
 
         statistics.sort(key=lambda x: x['name'])
         response_data = msg_factory.create_top_level_statistics_by_uuid(

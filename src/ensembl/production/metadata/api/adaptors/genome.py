@@ -774,10 +774,13 @@ class GenomeAdaptor(BaseAdaptor):
 
             for genome_release in genomes:
                 logger.debug(f"Retrieved genome {genome_release}")
-                genome_datasets = [gd for gd in genome_release.Genome.genome_datasets if gd.dataset.parent_id is None]
-                if dataset_type_name is not None and dataset_type_name != 'all':
-                    genome_datasets = [gd for gd in genome_datasets if
-                                       gd.dataset.dataset_type.name == dataset_type_name]
+                genome_datasets = list(genome_release.Genome.genome_datasets)
+                if dataset_type_name is None:
+                    genome_datasets = [gd for gd in genome_datasets if gd.dataset.parent_id is None]
+                elif dataset_type_name != "all":
+                    genome_datasets = [
+                        gd for gd in genome_datasets if gd.dataset.dataset_type.name == dataset_type_name
+                    ]
                 # filter release / unreleased
                 if status == GenomeStatus.RELEASED:
                     # TODO see to add is_current as well

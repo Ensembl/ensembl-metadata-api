@@ -210,6 +210,23 @@ class TestUtils:
             'statisticValue': '22'
         }
 
+    def test_get_top_level_statistics_by_uuid_includes_regulation_tracks(self, genome_conn):
+        output = json_format.MessageToJson(
+            utils.get_top_level_statistics_by_uuid(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3")
+        )
+        output = json.loads(output)
+
+        regulation_stats = [
+            stat for stat in output["statistics"] if stat["name"] == "regulation.stats.enhancer_count"
+        ]
+        assert len(regulation_stats) > 0
+        assert regulation_stats[0] == {
+            "label": "regulation.stats.enhancer_count",
+            "name": "regulation.stats.enhancer_count",
+            "statisticType": "integer",
+            "statisticValue": "268483",
+        }
+
     def test_get_datasets_list_by_uuid(self, genome_conn):
         # the expected_output is too long and duplicated
         # because of the returned attributes
