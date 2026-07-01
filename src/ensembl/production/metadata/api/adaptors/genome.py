@@ -169,7 +169,7 @@ class GenomeAdaptor(BaseAdaptor):
                 query = query.where(EnsemblRelease.version == release)
 
             query = query.order_by(
-                GenomeRelease.is_best.desc(),
+                GenomeRelease.default.desc(),
                 integrated_release.desc(),
                 ensembl_provider.desc(),
                 # sorting by date is needed to guarantee that the latest integrated is the one on the top

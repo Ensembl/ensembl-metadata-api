@@ -380,19 +380,19 @@ class TestUtils:
                             genome_id=integrated_genome.genome_id,
                             release_id=integrated_release.release_id,
                             is_current=0,
-                            is_best=0,
+                            default=0,
                         ),
                         GenomeRelease(
                             genome_id=ensembl_partial_genome.genome_id,
                             release_id=partial_release.release_id,
                             is_current=0,
-                            is_best=0,
+                            default=0,
                         ),
                         GenomeRelease(
                             genome_id=best_partial_genome.genome_id,
                             release_id=partial_release.release_id,
                             is_current=0,
-                            is_best=1,
+                            default=1,
                         ),
                     ]
                 )

@@ -88,7 +88,7 @@ class GenomeRelease(LoadAble, Base):
     genome_id = Column(ForeignKey("genome.genome_id"), nullable=False, index=True)
     release_id = Column(ForeignKey("ensembl_release.release_id"), nullable=False, index=True)
     is_current = Column(TINYINT(1), nullable=False, default=0)
-    is_best = Column(TINYINT(1), nullable=False, default=0, server_default=text("0"))
+    default = Column(TINYINT(1), nullable=False, default=0, server_default=text("0"))
     # many to one relationships
     # genome_release_id to genome_release
     genome = relationship("Genome", back_populates="genome_releases")
