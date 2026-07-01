@@ -30,7 +30,6 @@ from ensembl_metadata_pb2 import (
     OrganismsGroupRequest,
     AssemblyRegionRequest,
     GenomeAssemblySequenceRegionRequest,
-    GenomeTagRequest,
     FTPLinksRequest,
     ReleaseVersionRequest,
     GenomeByReleaseVersionRequest,
@@ -331,25 +330,6 @@ def get_organisms_group_count(stub):
     print(organisms_group_count)
 
 
-def get_genome_uuid_by_tag(stub):
-    request1 = GenomeTagRequest(genome_tag="grch37")
-    genome_uuid1 = stub.GetGenomeUUIDByTag(request1)
-    request2 = GenomeTagRequest(genome_tag="grch38")
-    genome_uuid2 = stub.GetGenomeUUIDByTag(request2)
-    request3 = GenomeTagRequest(genome_tag="r64-1-1")
-    genome_uuid3 = stub.GetGenomeUUIDByTag(request3)
-    request4 = GenomeTagRequest(genome_tag="foo")
-    genome_uuid4 = stub.GetGenomeUUIDByTag(request4)
-
-    print("**** Genome Tag: grch37 ****")
-    print(genome_uuid1)
-    print("**** Genome Tag: grch38 ****")
-    print(genome_uuid2)
-    print("**** Genome Tag: r64-1-1 ****")
-    print(genome_uuid3)
-    print("**** Genome Tag: foo ****")
-    print(genome_uuid4)
-
 
 def get_ftp_links(stub):
 
@@ -493,12 +473,6 @@ def get_brief_genome_details_by_uuid(stub):
     print("**** Brief Genome Details: By genome_uuid (human)****")
     print(brief_genome_details1)
 
-    request2 = GenomeUUIDRequest(
-        genome_uuid="grch37"
-    )
-    brief_genome_details2 = stub.GetBriefGenomeDetailsByUUID(request2)
-    print("**** Brief Genome Details: By Tag (grch37) ****")
-    print(brief_genome_details2)
 
     request3 = GenomeUUIDRequest(
         genome_uuid="8bce37f6-5353-4fb4-962f-f7e9a6c4303d"
@@ -620,8 +594,6 @@ def run():
         get_genome_uuid(stub)
         print("-------------- Get Organisms Group Count --------------")
         get_organisms_group_count(stub)
-        print("-------------- Get Genome UUID By Tag --------------")
-        get_genome_uuid_by_tag(stub)
         print("-------------- Get FTP Links by Genome UUID and dataset --------------")
         get_ftp_links(stub)
         print("-------------- Get Release Version By Genome UUID --------------")

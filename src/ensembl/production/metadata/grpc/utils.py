@@ -12,8 +12,8 @@
 import itertools
 import logging
 import uuid
-from typing import Type, Any
 from datetime import date, datetime
+from typing import Type, Any
 
 import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
 from ensembl.production.metadata.api.adaptors import GenomeAdaptor, BaseAdaptor
@@ -307,7 +307,7 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
 
     Args:
         db_conn: Database connection object.
-        genome_uuid_or_tag: Genome UUID or tag.
+        genome_uuid: Genome UUID
         release_version: Release version to fetch.
 
     Returns:
@@ -347,7 +347,7 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
     assembly_name = current_genome.Assembly.name
     # Fetch all genomes with the same assembly name, sorted by release date
     all_genomes_with_same_assembly = db_conn.fetch_genomes(assembly_name=assembly_name)
-    
+
     # Find the genome with the most recent release date
     latest_genome = None
     if all_genomes_with_same_assembly:
@@ -355,7 +355,7 @@ def get_brief_genome_details_by_uuid(db_conn, genome_uuid_or_tag, release_versio
         if all_genomes_with_same_assembly[0].Genome.genome_uuid != current_genome.Genome.genome_uuid:
             latest_genome = all_genomes_with_same_assembly[0]
             logger.debug(f"Found newer genome: {latest_genome.Genome.genome_uuid}")
-    
+
     # Return the requested genome together with the latest genome details (or None if current is latest)
     return msg_factory.create_brief_genome_details(current_genome, latest_genome)
 

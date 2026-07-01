@@ -94,9 +94,7 @@ service EnsemblMetadata {
   // Retrieve organisms group count
   rpc GetOrganismsGroupCount(OrganismsGroupRequest) returns (OrganismsGroupCount) {}
 
-  // Retrieve genome UUID by genome_tag.
-  // genome_tag value will be either in genome.url_name or organism.tol_id column
-  rpc GetGenomeUUIDByTag(GenomeTagRequest) returns (GenomeUUID) {}
+
 
   // Get FTP links associated with a Genome UUID and Dataset
   rpc GetFTPLinks(FTPLinksRequest) returns (FTPLinks) {}
@@ -574,13 +572,6 @@ Organisms group count request
  */
 message OrganismsGroupRequest {
   string release_label = 1; // Optional
-}
-
-/*
-Genome Tag request
- */
-message GenomeTagRequest {
-  string genome_tag = 1; // Mandatory
 }
 
 /*

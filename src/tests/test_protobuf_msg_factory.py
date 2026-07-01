@@ -244,24 +244,7 @@ class TestClass:
         )
         assert json.loads(output) == expected_result
     # TODO: double check curernt only option
-    @pytest.mark.parametrize(
-        "genome_tag, current_only, expected_output",
-        [
-            # url_name = GRCh38 => homo_sapien 38
-            ("grch38", True, {'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'}),
-            ("grch38", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-            ("grch37", False, {"genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"}),
-            ("iDontExist", False, {}),
-        ]
-    )
-    def test_create_genome_uuid(self, genome_conn, genome_tag, current_only, expected_output):
-        input_data = genome_conn.fetch_genomes(genome_tag=genome_tag, status="Current")
 
-        genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) else ""
-        output = json_format.MessageToJson(
-            msg_factory.create_genome_uuid({"genome_uuid": genome_uuid})
-        )
-        assert json.loads(output) == expected_output
 
     @pytest.mark.parametrize(
         "genome_uuid, expected_output",
