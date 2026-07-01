@@ -150,9 +150,10 @@ class GenomeSearchDocument(BaseModel):
     organism_uuid: str  # Changed from organism_id
     rank: int = 0
 
-    # Additional taxonomy fields
-    lineage_taxids: list[int]
-    lineage_name: list[str]
+    # Additional taxonomy fields. Stored as lists internally, but emitted as repeated fields for search.
+    lineage_taxon_id: list[int]
+    lineage_common_name: list[str]
+    lineage_scientific_name: list[str]
     # Stored as a list internally, but emitted as repeated "genome_group_ids" fields for search.
     genome_group_ids: List[int] = Field(default_factory=list)
 
@@ -202,8 +203,6 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="is_reference", value=self.is_reference),
             SearchField(name="species_taxonomy_id", value=self.species_taxonomy_id),
             SearchField(name="taxonomy_id", value=self.taxonomy_id),
-            SearchField(name="lineage_taxids", value=self.lineage_taxids),
-            SearchField(name="lineage_name", value=self.lineage_name),
             SearchField(name="organism_id", value=self.organism_uuid),
             SearchField(name="rank", value=self.rank),
             SearchField(name="first_release_name", value=self.first_release_name),
@@ -214,7 +213,19 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="releases", value=self.releases),
         ]
 
-        # Search expects one field entry per genome group rather than a list-valued field.
+        # Search expects one field entry per multi-valued facet rather than list-valued fields.
+        fields.extend(
+            SearchField(name="lineage_taxon_id", value=lineage_taxon_id)
+            for lineage_taxon_id in self.lineage_taxon_id
+        )
+        fields.extend(
+            SearchField(name="lineage_common_name", value=lineage_common_name)
+            for lineage_common_name in self.lineage_common_name
+        )
+        fields.extend(
+            SearchField(name="lineage_scientific_name", value=lineage_scientific_name)
+            for lineage_scientific_name in self.lineage_scientific_name
+        )
         fields.extend(
             SearchField(name="genome_group_ids", value=genome_group_id)
             for genome_group_id in self.genome_group_ids
@@ -331,11 +342,11 @@ class DatasetFieldExtractor:
 
     def has_variation(self) -> bool:
         """Check if genome has variation data"""
-        return self._has_dataset_type("variation")
+        return self._has_dataset_type("short_variants")
 
     def has_regulation(self) -> bool:
         """Check if genome has regulatory features data"""
-        return self._has_dataset_type("regulatory_features")
+        return self._has_dataset_type("regulation_tracks")
 
     def get_genebuild_provider(self) -> str:
         """
@@ -802,21 +813,21 @@ class GenomeSearchIndexer:
         return sorted(genome_group_ids)
 
     def _get_taxonomy_lineage(
-            self, taxonomy_session: Session, taxonomy_id: int
-    ) -> Tuple[List[int], List[str]]:
+        self, taxonomy_session: Session, taxonomy_id: int
+    ) -> dict[str, List[Union[int, str]]]:
         """
         Get taxonomy lineage for a given taxonomy_id.
 
         Returns:
-            - lineage_taxids: List of all taxon_ids from current to root
-            - lineage_names: List of ALL names (all name_classes) for all taxids in lineage
+            A mapping containing:
+            - lineage_taxon_id: all taxon_ids from current to root
+            - lineage_common_name: preferred common names, using "genbank common name" when available
+            - lineage_scientific_name: names with name_class = "scientific name"
 
         Args:
             taxonomy_session: Taxonomy database session
             taxonomy_id: The taxonomy ID to get lineage for
 
-        Returns:
-            (lineage_taxids, lineage_names) tuple
         """
         from ensembl.ncbi_taxonomy.api.utils import Taxonomy
         from ensembl.ncbi_taxonomy.models import NCBITaxonomy
@@ -826,26 +837,66 @@ class GenomeSearchIndexer:
         except NoResultFound:
             ancestors = []
 
-        # Build list of taxon_ids: current + all ancestors
-        lineage_taxids = [taxonomy_id]
+        # Build list of taxon_ids: current + all ancestors.
+        lineage_taxon_ids = [taxonomy_id]
         for ancestor in ancestors:
-            lineage_taxids.append(ancestor["taxon_id"])
+            lineage_taxon_ids.append(ancestor["taxon_id"])
 
-        # Query for ALL names (all name_class values) for all taxon_ids in the lineage
-        # exclude 'import date' entries.
-        # TODO: Add more exclusions on here!
-        all_names = (
-            taxonomy_session.query(NCBITaxonomy.name)
-            .filter(NCBITaxonomy.taxon_id.in_(lineage_taxids))
-            .filter(NCBITaxonomy.name_class != "import date")
+        selected_ranks = (
+            "domain",
+            "kingdom",
+            "phylum",
+            "class",
+            "order",
+            "family",
+            "genus",
+            "species",
+        )
+
+        # Query scientific names and candidate common names for selected ranks in the lineage.
+        taxonomy_name_rows = (
+            taxonomy_session.query(NCBITaxonomy.taxon_id, NCBITaxonomy.name, NCBITaxonomy.name_class)
+            .filter(NCBITaxonomy.taxon_id.in_(lineage_taxon_ids))
+            .filter(NCBITaxonomy.name_class.in_(("scientific name", "genbank common name", "common name")))
+            .filter(NCBITaxonomy.rank.in_(selected_ranks))
             .distinct()
             .all()
         )
 
-        # Extract just the name strings from the query results
-        lineage_names = [name[0] for name in all_names]
+        selected_taxon_ids = {taxon_id for taxon_id, name, name_class in taxonomy_name_rows}
+        if not selected_taxon_ids:
+            return {
+                "lineage_taxon_id": [taxonomy_id],
+                "lineage_common_name": [],
+                "lineage_scientific_name": [],
+            }
 
-        return (lineage_taxids, lineage_names)
+        lineage_taxon_ids = [taxon_id for taxon_id in lineage_taxon_ids if taxon_id in selected_taxon_ids]
+        names_by_taxon_id = {
+            taxon_id: {"genbank common name": [], "common name": [], "scientific name": []}
+            for taxon_id in lineage_taxon_ids
+        }
+
+        for taxon_id, name, name_class in taxonomy_name_rows:
+            names_by_taxon_id[taxon_id][name_class].append(name)
+
+        lineage_common_names = []
+        lineage_scientific_names = []
+        for taxon_id in lineage_taxon_ids:
+            preferred_common_names = names_by_taxon_id[taxon_id]["genbank common name"]
+            if not preferred_common_names:
+                preferred_common_names = names_by_taxon_id[taxon_id]["common name"]
+            lineage_common_names.extend(preferred_common_names)
+            lineage_scientific_names.extend(names_by_taxon_id[taxon_id]["scientific name"])
+
+        lineage_data = {
+            "lineage_taxon_id": lineage_taxon_ids,
+            "lineage_common_name": lineage_common_names,
+            "lineage_scientific_name": lineage_scientific_names,
+        }
+
+        # logger.debug(lineage_data)
+        return lineage_data
 
     def create_search_document(
             self, metadata_session: Session, taxonomy_session: Session, genome: Genome, release: EnsemblRelease
@@ -899,15 +950,7 @@ class GenomeSearchIndexer:
         )
         doc_data["ftp"] = self._get_ftp_path(genome, release)
 
-        lineage_taxids, lineage_names = self._get_taxonomy_lineage(
-            taxonomy_session, genome.organism.taxonomy_id
-        )
-        doc_data.update(
-            {
-                "lineage_taxids": lineage_taxids,
-                "lineage_name": lineage_names,
-            }
-        )
+        doc_data.update(self._get_taxonomy_lineage(taxonomy_session, genome.organism.taxonomy_id))
 
         return GenomeSearchDocument(**doc_data)
 
@@ -1001,11 +1044,11 @@ class GenomeSearchIndexer:
                                 error_message=f"Unexpected error: {str(e)}",
                                 exception=e,
                             )
-                
+
                 # sort GenomeSearchDocuments
                 all_entries = self.sort_results(all_entries)
                 all_entries = update_rank(all_entries)
-                
+
                 # convert to SearchEntry
                 # TODO turn to_search_entry into a model_serializer  
                 all_entries_as_search_entry = list(map(lambda d: d.to_search_entry(), all_entries))
@@ -1180,7 +1223,7 @@ class GenomeSearchIndexer:
                                 # sort GenomeSearchDocuments
                 search_entries = self.sort_results(search_entries)
                 search_entries = update_rank(search_entries)
-                
+
                 # convert to SearchEntry
                 # TODO turn to_search_entry into a model_serializer  
                 search_entries_as_search_entry = list(map(lambda d: d.to_search_entry(), search_entries))
@@ -1202,7 +1245,7 @@ class GenomeSearchIndexer:
 
                     if raise_on_errors:
                         error_collection.raise_if_errors()
-                
+
                 return SearchIndex(
                     name="ensemblNext",
                     release=newest_partial,
@@ -1220,7 +1263,7 @@ def update_rank(docs: List[GenomeSearchDocument]) -> List[GenomeSearchDocument]:
     """
     for i, d in enumerate(docs):
         d.rank = i + 1
-    
+
     return docs
 
 # ============================================================================

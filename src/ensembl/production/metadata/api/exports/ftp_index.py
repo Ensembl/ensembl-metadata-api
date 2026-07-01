@@ -229,7 +229,7 @@ class FTPMetadataExporter:
             Genome, GenomeDataset.genome_id == Genome.genome_id
         ).where(
             Genome.genome_uuid.in_(genome_uuids),
-            DatasetType.name.in_(['homologies', 'variation']),
+            DatasetType.name.in_(['homologies', 'short_variants']),
             Dataset.status == DatasetStatus.RELEASED,
             GenomeDataset.is_current == True,
             EnsemblRelease.release_type == 'partial'
@@ -238,7 +238,7 @@ class FTPMetadataExporter:
         partial_release_results = session.execute(partial_releases_query).all()
 
         # --- Assemble per-genome partial release lookup ---
-        # genome_uuid -> { 'homologies': label, 'variation': label }
+        # genome_uuid -> { 'homologies': label, 'short_variants': label }
         partial_releases_by_genome = defaultdict(dict)
         for result in partial_release_results:
             partial_releases_by_genome[result.genome_uuid][result.dataset_type_name] = result.label
@@ -282,7 +282,7 @@ class FTPMetadataExporter:
                     # Partial release labels used as sub-directory names for homology/variation.
                     # None means the dataset type has no released partial release and will be omitted.
                     'homology_release': genome_partial.get('homologies'),
-                    'variation_release': genome_partial.get('variation'),
+                    'variation_release': genome_partial.get('short_variants'),
                 }
 
         return genome_data
@@ -468,12 +468,9 @@ class FTPMetadataExporter:
         # Drop homologies / variation if there is no partial release date available
         if not homology_release and 'homologies' in unique_dataset_types:
             unique_dataset_types = [t for t in unique_dataset_types if t != 'homologies']
-        if not variation_release and 'variation' in unique_dataset_types:
+        if not variation_release and 'short_variants' in unique_dataset_types:
             unique_dataset_types = [t for t in unique_dataset_types if t != 'variation']
 
-        # Normalise incoming dataset_type alias
-        if dataset_type == 'regulatory_features':
-            dataset_type = 'regulation'
 
         # Build paths
         accession_path = format_accession_path(accession)
@@ -484,7 +481,7 @@ class FTPMetadataExporter:
             'genebuild': f"{common_path}/geneset",
             'assembly': f"{common_path}/genome",
             'homologies': f"{common_path}/homology/{homology_release}",
-            'variation': f"{common_path}/variation/{variation_release}",
+            'short_variants': f"{common_path}/variation/{variation_release}",
         }
 
         if dataset_type not in unique_dataset_types and dataset_type != 'all':
@@ -560,7 +557,7 @@ class FTPMetadataExporter:
                 }
             }
 
-        elif dataset_type == 'variation':
+        elif dataset_type == 'short_variants':
             # variation/{partial_release}/ — single file
             return {
                 "variation_data": {
@@ -621,11 +618,10 @@ class FTPMetadataExporter:
     def _has_released_dataset_bulk(self, datasets, dataset_type):
         """Check if a released dataset of the given type exists in the preloaded data."""
         type_mapping = {
-            'regulation': 'regulatory_features',
-            'genebuild': 'genebuild',
-            'assembly': 'assembly',
-            'homologies': 'homologies',
-            'variation': 'variation',
+            "genebuild": "genebuild",
+            "assembly": "assembly",
+            "homologies": "homologies",
+            "variation": "short_variants",
         }
         mapped_type = type_mapping.get(dataset_type, dataset_type)
         return any(d['dataset_type_name'] == mapped_type for d in datasets)

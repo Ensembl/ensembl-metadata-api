@@ -9,6 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import json
 import logging
 from pathlib import Path
 
@@ -16,7 +17,11 @@ import pytest
 from ensembl.utils.database import UnitTestDB, DBConnection
 
 from ensembl.production.metadata.api.exceptions import DatasetFactoryException
-from ensembl.production.metadata.api.factories.genomes import GenomeInputFilters
+from ensembl.production.metadata.api.factories.genomes import (
+    GenomeInputFilters,
+    GenomeOutputWriter,
+    OutputFormat,
+)
 from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus
 
 logger = logging.getLogger(__name__)
@@ -70,6 +75,88 @@ class TestGenomeFactory:
         assert isinstance(filters.organism_group_type, str)
         assert isinstance(filters.update_dataset_status, str)
 
+    def test_column_names_resolve_to_selectable_columns(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            column_names=["genome_uuid", "species", "dataset_name"],
+        )
+
+        expected_keys = ["genome_uuid", "species", "dataset_name"]
+        assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
+
+    def test_comma_separated_column_names_resolve_to_exact_columns(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            column_names=[
+                "genome_uuid,species,dataset_uuid,dataset_status,dataset_source,"
+                "dataset_source_location,dataset_name,dataset_type,genome_release,dataset_release"
+            ],
+        )
+
+        expected_keys = [
+            "genome_uuid",
+            "species",
+            "dataset_uuid",
+            "dataset_status",
+            "dataset_source",
+            "dataset_source_location",
+            "dataset_name",
+            "dataset_type",
+            "genome_release",
+            "dataset_release",
+        ]
+        assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
+
+    def test_division_filter_uses_default_columns_when_columns_omitted(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            division=["vertebrates"],
+        )
+
+        expected_keys = [
+            "genome_uuid",
+            "species",
+            "dataset_uuid",
+            "dataset_status",
+            "dataset_source",
+            "dataset_source_location",
+            "dataset_name",
+            "dataset_type",
+            "genome_release",
+            "dataset_release",
+        ]
+        assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
+
+    def test_filters_accept_vars_round_trip(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            division=["vertebrates"],
+        )
+
+        round_tripped_filters = GenomeInputFilters(**vars(filters))
+        column_keys = [getattr(col, "key", getattr(col, "name", None)) for col in round_tripped_filters.columns]
+        assert column_keys == [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns]
+
+    def test_invalid_column_names_fallback_to_default_columns(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            column_names=["not_a_column", "also_invalid"],
+        )
+
+        expected_keys = [
+            "genome_uuid",
+            "species",
+            "dataset_uuid",
+            "dataset_status",
+            "dataset_source",
+            "dataset_source_location",
+            "dataset_name",
+            "dataset_type",
+            "genome_release",
+            "dataset_release",
+        ]
+        assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
+
     @pytest.mark.parametrize(
         "batch_size, status, expected_count",
         [
@@ -90,12 +177,12 @@ class TestGenomeFactory:
     @pytest.mark.parametrize(
         "release_name, release_type, dataset_type, dataset_name, dataset_status, dataset_is_current, expected_count",
         [
-            ([1], 'partial', 'variation', ['variation'], ['Released'], 1,  3),
-            ([2], 'partial', 'variation', ['variation'], ['Processed'], 1,  4),
-            ([3], 'partial', 'variation', ['variation'], ['Processed'], 1,  1),
-            ([4], 'partial', 'variation', ['variation'], [], 1,  0),
-            ([5], 'partial', 'variation', ['variation'], ['Released'], 1, 5)
-        ]
+            ([1], "partial", "short_variants", ["variation"], ["Released"], 1, 3),
+            ([2], "partial", "short_variants", ["variation"], ["Processed"], 1, 4),
+            ([3], "partial", "short_variants", ["variation"], ["Processed"], 1, 1),
+            ([4], "partial", "short_variants", ["variation"], [], 1, 0),
+            ([5], "partial", "short_variants", ["variation"], ["Released"], 1, 5),
+        ],
     )
     def test_fetch_genomes_varaition_iscurrent_dataset_params(self, genome_factory, genome_filters, release_name,
                                                               release_type, dataset_type, dataset_name, dataset_status,
@@ -266,3 +353,50 @@ class TestGenomeFactory:
         returned_columns = list(next(genome_factory.get_genomes(**genome_filters)).keys())
         assert returned_columns.sort() == expected_columns.sort()
 
+    def test_output_writer_json(self, tmp_path):
+        records = [
+            {
+                'genome_uuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
+                'species': 'homo_sapiens',
+                'dataset_uuid': '11a0be7f-99ae-45d3-a004-dc19bb562330',
+            }
+        ]
+        output_file = tmp_path / 'genomes.json'
+        GenomeOutputWriter.write(iter(records), str(output_file), OutputFormat.JSON, ['genome_uuid', 'species', 'dataset_uuid'])
+
+        assert output_file.exists()
+        loaded_records = [json.loads(line) for line in output_file.read_text(encoding='utf-8').strip().split('\n')]
+        assert loaded_records == records
+
+    def test_output_writer_tsv(self, tmp_path):
+        records = [
+            {
+                'genome_uuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
+                'species': 'homo_sapiens',
+                'dataset_uuid': '11a0be7f-99ae-45d3-a004-dc19bb562330',
+            }
+        ]
+        output_file = tmp_path / 'genomes.tsv'
+        GenomeOutputWriter.write(iter(records), str(output_file), OutputFormat.TSV, ['genome_uuid', 'species', 'dataset_uuid'])
+
+        assert output_file.exists()
+        content = output_file.read_text(encoding='utf-8').splitlines()
+        assert content[0] == 'genome_uuid\tspecies\tdataset_uuid'
+        assert content[1] == 'a73351f7-93e7-11ec-a39d-005056b38ce3\thomo_sapiens\t11a0be7f-99ae-45d3-a004-dc19bb562330'
+
+    def test_output_writer_parquet_missing_engine(self, tmp_path):
+        records = [
+            {
+                'genome_uuid': 'a73351f7-93e7-11ec-a39d-005056b38ce3',
+                'species': 'homo_sapiens',
+                'dataset_uuid': '11a0be7f-99ae-45d3-a004-dc19bb562330',
+            }
+        ]
+        output_file = tmp_path / 'genomes.parquet'
+
+        try:
+            GenomeOutputWriter.write(iter(records), str(output_file), OutputFormat.PARQUET, ['genome_uuid', 'species', 'dataset_uuid'])
+        except RuntimeError as exc:
+            assert 'Parquet export failed' in str(exc) or 'requires pandas' in str(exc)
+        else:
+            assert output_file.exists()

@@ -225,6 +225,70 @@ class TestGRPCGenomeAdaptor:
         for result in sequences:
             assert result.AssemblySequence.accession == expected_output
 
+    def test_fetch_top_regions_by_genome_uuid_chromosome_type(self, genome_conn):
+        regions = genome_conn.fetch_top_regions_by_genome_uuid(
+            "3704ceb1-948d-11ec-a39d-005056b38ce3",
+            region_type="chromosome",
+            limit=3,
+        )
+
+        assert [region.AssemblySequence.name for region in regions] == ["1", "10", "11"]
+        assert [region.AssemblySequence.chromosomal for region in regions] == [1, 1, 1]
+        assert [region.AssemblySequence.chromosome_rank for region in regions] == [1, 10, 11]
+
+    def test_fetch_top_regions_by_genome_uuid_non_chromosomal_type(self, genome_conn):
+        regions = genome_conn.fetch_top_regions_by_genome_uuid(
+            "2020e8d5-4d87-47af-be78-0b15e48970a7",
+            region_type="primary_assembly",
+            limit=3,
+        )
+
+        assert [region.AssemblySequence.name for region in regions] == [
+            "JAGYYT010000006.1",
+            "JAGYYT010000009.1",
+            "JAGYYT010000002.1",
+        ]
+        assert [region.AssemblySequence.chromosomal for region in regions] == [0, 0, 0]
+        assert [region.AssemblySequence.length for region in regions] == [
+            158663023,
+            118296892,
+            55482364,
+        ]
+
+    def test_fetch_top_regions_by_genome_uuid_defaults_to_chromosomal_then_non_chromosomal(self, genome_conn):
+        regions = genome_conn.fetch_top_regions_by_genome_uuid(
+            "3704ceb1-948d-11ec-a39d-005056b38ce3",
+            limit=12,
+        )
+
+        assert len(regions) == 12
+        assert [region.AssemblySequence.name for region in regions[:10]] == [
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+        ]
+        assert [region.AssemblySequence.chromosomal for region in regions[:10]] == [1] * 10
+        assert [region.AssemblySequence.name for region in regions[10:]] == [
+            "GL000192.1",
+            "GL000194.1",
+        ]
+        assert [region.AssemblySequence.chromosomal for region in regions[10:]] == [0, 0]
+
+    def test_fetch_top_regions_by_genome_uuid_empty_inputs(self, genome_conn):
+        assert genome_conn.fetch_top_regions_by_genome_uuid(None) == []
+        assert genome_conn.fetch_top_regions_by_genome_uuid("missing-genome-uuid") == []
+        assert genome_conn.fetch_top_regions_by_genome_uuid(
+            "3704ceb1-948d-11ec-a39d-005056b38ce3",
+            limit=0,
+        ) == []
+
     @pytest.mark.parametrize(
         "genome_uuid, dataset_uuid, status, expected_dataset_uuid, expected_count",
         [

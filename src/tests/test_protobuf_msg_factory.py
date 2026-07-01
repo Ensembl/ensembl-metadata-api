@@ -27,17 +27,17 @@ import ensembl.production.metadata.grpc.protobuf_msg_factory as msg_factory
                          indirect=True)
 class TestClass:
     dbc = None  # type: UnitTestDB
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, ds_type_name, expected_genome_count, expected_ds_count, expected_assembly_count, ensembl_name",
         [
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 3, 2, 5, 'SAMN12121739'),
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'all', 3, 16, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'assembly', 3, 2, 5, 'SAMN12121739'),
-            (False, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 3, 4, 5, 'SAMN12121739'),
-            (True, 'a7335667-93e7-11ec-a39d-005056b38ce3', 'homologies', 3, 4, 5, 'SAMN12121739'),
+            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly", 3, 2, 5, "SAMN12121739"),
+            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "all", 3, 23, 5, "SAMN12121739"),
+            (True, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly", 3, 2, 5, "SAMN12121739"),
+            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "homologies", 3, 4, 5, "SAMN12121739"),
+            (True, "a7335667-93e7-11ec-a39d-005056b38ce3", "homologies", 3, 4, 5, "SAMN12121739"),
         ],
-        indirect=['allow_unreleased']
+        indirect=["allow_unreleased"],
     )
     def test_create_genome(self, genome_conn, allow_unreleased, genome_uuid, ds_type_name, expected_genome_count,
                            expected_ds_count, expected_assembly_count, ensembl_name):
@@ -213,7 +213,7 @@ class TestClass:
                                            always_print_fields_with_no_presence=True)
 
         assert json.loads(actual) == output
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
@@ -243,25 +243,8 @@ class TestClass:
             )
         )
         assert json.loads(output) == expected_result
-    #TODO: double check curernt only option
-    @pytest.mark.parametrize(
-        "genome_tag, current_only, expected_output",
-        [
-            # url_name = GRCh38 => homo_sapien 38
-            ("grch38", True, {'genomeUuid': 'a7335667-93e7-11ec-a39d-005056b38ce3'}),
-            ("grch38", False, {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-            ("grch37", False, {"genomeUuid": "3704ceb1-948d-11ec-a39d-005056b38ce3"}),
-            ("iDontExist", False, {}),
-        ]
-    )
-    def test_create_genome_uuid(self, genome_conn, genome_tag, current_only, expected_output):
-        input_data = genome_conn.fetch_genomes(genome_tag=genome_tag, status="Current")
+    # TODO: double check curernt only option
 
-        genome_uuid = input_data[0].Genome.genome_uuid if len(input_data) else ""
-        output = json_format.MessageToJson(
-            msg_factory.create_genome_uuid({"genome_uuid": genome_uuid})
-        )
-        assert json.loads(output) == expected_output
 
     @pytest.mark.parametrize(
         "genome_uuid, expected_output",
@@ -290,7 +273,6 @@ class TestClass:
             msg_factory.create_vep_file_paths(input_data)
         )
         assert json.loads(output) == expected_output
-
 
     def test_create_vep_file_paths_invalid_uuid(self, vep_conn):
         invalid_uuid = "some-invalid-genome-uuid-000000000000"

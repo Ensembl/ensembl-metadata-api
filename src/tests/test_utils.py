@@ -14,14 +14,23 @@ Unit tests for utils.py
 """
 import json
 import logging
+import uuid
+from datetime import date, datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import List
 
 import pytest
 from ensembl.utils.database import UnitTestDB, DBConnection
 from google.protobuf import json_format
 
-from ensembl.production.metadata.api.models import Genome, Dataset
+from ensembl.production.metadata.api.models import (
+    Dataset,
+    EnsemblRelease,
+    Genome,
+    GenomeRelease,
+    ReleaseStatus,
+)
 from ensembl.production.metadata.grpc import ensembl_metadata_pb2, utils
 
 logger = logging.getLogger(__name__)
@@ -77,7 +86,7 @@ class TestUtils:
             'sha512t24u': '2YnepKM7OkBoOrKmvHbGqguVfF9amCST'
         }
         assert json.loads(output) == expected_output
-    #TODO: Double check allow unreleased
+    # TODO: Double check allow unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, expected_count",
         [
@@ -95,7 +104,7 @@ class TestUtils:
         ]
 
         assert len(output) == 3
-    #TODO: double check release_version
+    # TODO: double check release_version
     @pytest.mark.parametrize(
         "assembly_accession, release_version",
         [
@@ -223,7 +232,7 @@ class TestUtils:
         output = json.loads(output)
         expected_output = {}
         assert output == expected_output
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, dataset_type, count",
         [
@@ -268,7 +277,7 @@ class TestUtils:
     #        utils.get_dataset_by_genome_and_dataset_type(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3"))
     #    output = json.loads(output)
     #    assert output == {}
-    #TODO: double check commented option is neededd
+    # TODO: double check commented option is neededd
     @pytest.mark.parametrize(
         "production_name, assembly_name, use_default, expected_output",
         [
@@ -289,6 +298,128 @@ class TestUtils:
             ))
         assert json.loads(output) == expected_output
 
+    def test_get_genome_uuid_by_assembly_accession(self, genome_conn, test_dbs):
+        integrated_genome_uuid = None
+        best_partial_genome_uuid = None
+        inserted_genome_ids = []
+        inserted_release_ids = []
+
+        try:
+            with test_dbs["ensembl_genome_metadata"].dbc.session_scope() as session:
+                source_genome = (
+                    session.query(Genome)
+                    .filter(Genome.genome_uuid == "a7335667-93e7-11ec-a39d-005056b38ce3")
+                    .one()
+                )
+
+                integrated_release = EnsemblRelease(
+                    version=997.0,
+                    release_date=date(2099, 1, 1),
+                    label="997",
+                    is_current=0,
+                    release_type="integrated",
+                    status=ReleaseStatus.RELEASED,
+                    name="e99",
+                )
+                partial_release = EnsemblRelease(
+                    version=998.0,
+                    release_date=date(2099, 2, 1),
+                    label="998",
+                    is_current=0,
+                    release_type="partial",
+                    status=ReleaseStatus.RELEASED,
+                    name="e99",
+                )
+                session.add_all([integrated_release, partial_release])
+                session.flush()
+
+                integrated_genome = Genome(
+                    genome_uuid=str(uuid.uuid4()),
+                    assembly=source_genome.assembly,
+                    organism=source_genome.organism,
+                    created=datetime.utcnow(),
+                    production_name="test_integrated",
+                    annotation_source="test",
+                    provider_name="Other",
+                    genebuild_date="2099-01",
+                )
+                ensembl_partial_genome = Genome(
+                    genome_uuid=str(uuid.uuid4()),
+                    assembly=source_genome.assembly,
+                    organism=source_genome.organism,
+                    created=datetime.utcnow(),
+                    production_name="test_partial_ensembl",
+                    annotation_source="test",
+                    provider_name="Ensembl",
+                    genebuild_date="2099-02",
+                )
+                best_partial_genome = Genome(
+                    genome_uuid=str(uuid.uuid4()),
+                    assembly=source_genome.assembly,
+                    organism=source_genome.organism,
+                    created=datetime.utcnow(),
+                    production_name="test_partial_best",
+                    annotation_source="test",
+                    provider_name="Other",
+                    genebuild_date="2099-03",
+                )
+                session.add_all([integrated_genome, ensembl_partial_genome, best_partial_genome])
+                session.flush()
+                integrated_genome_uuid = integrated_genome.genome_uuid
+                best_partial_genome_uuid = best_partial_genome.genome_uuid
+                inserted_genome_ids = [
+                    integrated_genome.genome_id,
+                    ensembl_partial_genome.genome_id,
+                    best_partial_genome.genome_id,
+                ]
+                inserted_release_ids = [integrated_release.release_id, partial_release.release_id]
+
+                session.add_all(
+                    [
+                        GenomeRelease(
+                            genome_id=integrated_genome.genome_id,
+                            release_id=integrated_release.release_id,
+                            is_current=0,
+                            default=0,
+                        ),
+                        GenomeRelease(
+                            genome_id=ensembl_partial_genome.genome_id,
+                            release_id=partial_release.release_id,
+                            is_current=0,
+                            default=0,
+                        ),
+                        GenomeRelease(
+                            genome_id=best_partial_genome.genome_id,
+                            release_id=partial_release.release_id,
+                            is_current=0,
+                            default=1,
+                        ),
+                    ]
+                )
+
+            assert (
+                genome_conn.get_genome_uuid_by_assembly_accession("GCA_000001405.29")
+                == best_partial_genome_uuid
+            )
+            assert (
+                genome_conn.get_genome_uuid_by_assembly_accession("GCA_000001405.29", release=997.0)
+                == integrated_genome_uuid
+            )
+            assert genome_conn.get_genome_uuid_by_assembly_accession("missing") is None
+
+        finally:
+            if inserted_genome_ids:
+                with test_dbs["ensembl_genome_metadata"].dbc.session_scope() as session:
+                    session.query(GenomeRelease).filter(
+                        GenomeRelease.genome_id.in_(inserted_genome_ids)
+                    ).delete(synchronize_session=False)
+                    session.query(Genome).filter(Genome.genome_id.in_(inserted_genome_ids)).delete(
+                        synchronize_session=False
+                    )
+                    session.query(EnsemblRelease).filter(
+                        EnsemblRelease.release_id.in_(inserted_release_ids)
+                    ).delete(synchronize_session=False)
+
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, version, expected_count, actual",
         [
@@ -305,7 +436,7 @@ class TestUtils:
         ],
         indirect=['allow_unreleased']
     )
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     def test_get_genome_by_uuid(self, genome_conn, allow_unreleased, genome_uuid, version, expected_count, actual):
 
         output = json_format.MessageToJson(
@@ -338,7 +469,7 @@ class TestUtils:
     def test_get_genomes_by_uuid_null(self, genome_conn):
         output = utils.get_genome_by_uuid(genome_conn, None, 0)
         assert output == ensembl_metadata_pb2.Genome()
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, version, expected_count, actual",
         [
@@ -427,7 +558,6 @@ class TestUtils:
         assert [key in output['attributesInfo'] for key in expected_attributes_info_keys]
         assert output['attributesInfo']['assemblyLevel'] == assembly_level
 
-
     def test_get_genomes_by_keyword(self, genome_conn):
         output = [
             json.loads(json_format.MessageToJson(response)) for response in
@@ -439,7 +569,7 @@ class TestUtils:
         ]
         assert len(output) == 5
         assert all(genome['organism']['commonName'].lower() == 'human' for genome in output)
-    #TODO: double check allow_unreleased
+    # TODO: double check allow_unreleased
     @pytest.mark.parametrize(
         "allow_unreleased, output_count, scientific_name, assembly_name",
         [
@@ -506,69 +636,69 @@ class TestUtils:
                                      release_version=110.1))
 
         expected_output = {
-            'assembly': {
-                'accession': 'GCA_018469415.1',
-                'assemblyUuid': '1551e511-bde7-40cf-95cd-de4059678c6f',
-                'ensemblName': 'HG03516.alt.pat.f1_v2',
-                'level': 'primary_assembly',
-                'name': 'HG03516.alt.pat.f1_v2'
+            "assembly": {
+                "accession": "GCA_018469415.1",
+                "assemblyUuid": "1551e511-bde7-40cf-95cd-de4059678c6f",
+                "ensemblName": "HG03516.alt.pat.f1_v2",
+                "level": "primary_assembly",
+                "name": "HG03516.alt.pat.f1_v2",
             },
-            'attributesInfo': {
-                'assemblyDate': '2021-05',
-                'assemblyLevel': 'scaffold',
-                'genebuildLastGenesetUpdate': '2022-07',
-                'genebuildMethod': 'projection_build',
-                'genebuildMethodDisplay': 'Mapping from reference',
-                'genebuildProviderName': 'Ensembl',
-                'genebuildProviderUrl': 'https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html',
-                'genebuildProviderVersion': 'ENS01',
-                'variationSampleVariant': 'JAGYYT010000001.1:2643538:rs1423484253'
+            "attributesInfo": {
+                "assemblyDate": "2021-05",
+                "assemblyLevel": "scaffold",
+                "genebuildLastGenesetUpdate": "2022-07",
+                "genebuildMethod": "projection_build",
+                "genebuildMethodDisplay": "Mapping from reference",
+                "genebuildProviderName": "Ensembl",
+                "genebuildProviderUrl": "https://rapid.ensembl.org/info/genome/genebuild/full_genebuild.html",
+                "genebuildProviderVersion": "ENS01",
+                "variationSampleVariant": "JAGYYT010000001.1:2643538:rs1423484253",
             },
-            'availableDatasets': [
-                'assembly',
-                'genebuild',
-                'homologies',
-                'variation',
+            "availableDatasets": [
+                "assembly",
+                "genebuild",
+                "homologies",
+                "short_variants",
             ],
-            'created': '2023-09-22 15:02:01',
-            'genomeUuid': '2020e8d5-4d87-47af-be78-0b15e48970a7',
-            'organism': {
-                'commonName': 'human',
-                'ensemblName': 'SAMN17861241',
-                'organismUuid': 'a3352834-cea1-40aa-9dad-98581620c36b',
-                'scientificName': 'Homo sapiens',
-                'scientificParlanceName': 'Human',
-                'speciesTaxonomyId': 9606,
-                'strain': 'Esan in Nigeria',
-                'strainType': 'population',
-                'taxonomyId': 9606
+            "created": "2023-09-22 15:02:01",
+            "genomeUuid": "2020e8d5-4d87-47af-be78-0b15e48970a7",
+            "organism": {
+                "commonName": "human",
+                "ensemblName": "SAMN17861241",
+                "organismUuid": "a3352834-cea1-40aa-9dad-98581620c36b",
+                "scientificName": "Homo sapiens",
+                "scientificParlanceName": "Human",
+                "speciesTaxonomyId": 9606,
+                "strain": "Esan in Nigeria",
+                "strainType": "population",
+                "taxonomyId": 9606,
             },
-            'release': {
-                'isCurrent': True,
-                'releaseDate': '2020-10-18',
-                'releaseLabel': '2020-10-18',
-                'releaseType': 'partial',
-                'releaseVersion': 110.1,
-                'siteLabel': 'MVP Ensembl',
-                'siteName': 'Ensembl',
-                'siteUri': 'https://beta.ensembl.org'
+            "release": {
+                "isCurrent": True,
+                "releaseDate": "2020-10-18",
+                "releaseLabel": "2020-10-18",
+                "releaseType": "partial",
+                "releaseVersion": 110.1,
+                "siteLabel": "MVP Ensembl",
+                "siteName": "Ensembl",
+                "siteUri": "https://beta.ensembl.org",
             },
-            'taxon': {
-                'alternativeNames': ['human'],
-                'scientificName': 'Homo sapiens',
-                'strain': 'Esan in Nigeria',
-                'taxonomyId': 9606
+            "taxon": {
+                "alternativeNames": ["human"],
+                "scientificName": "Homo sapiens",
+                "strain": "Esan in Nigeria",
+                "taxonomyId": 9606,
             },
-            'relatedAssembliesCount': 5
+            "relatedAssembliesCount": 5,
         }
-        
+
         t = json.loads(output)
 
         # assert t["attributesInfo"] == expected_output["attributesInfo"]
         # Sort both lists before comparison
         t['availableDatasets'].sort()
         expected_output['availableDatasets'] = sorted(expected_output['availableDatasets'])
-        
+
         assert t == expected_output
     # TODO: double check if output is correct and merge with aboove one
     """ def test_get_genomes_by_name_release_unspecified(self, genome_conn):
@@ -669,23 +799,6 @@ class TestUtils:
     #     assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
 
     @pytest.mark.parametrize(
-        "genome_tag, expected_output",
-        [
-            # url_name = GRCh38 => homo_sapien 38
-            ("grch38", {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
-            # Null
-            ("iDontExist", {}),
-        ]
-    )
-    def test_get_genome_uuid_by_tag(self, genome_conn, genome_tag, expected_output):
-        output = json_format.MessageToJson(
-            utils.get_genome_uuid_by_tag(
-                db_conn=genome_conn,
-                genome_tag=genome_tag,
-            ))
-        assert json.loads(output) == expected_output
-
-    @pytest.mark.parametrize(
         "genome_uuid, dataset_type, release_version, expected_output",
         [
             # valid genome uuid and no dataset should return all the datasets links of that genome uuid
@@ -764,6 +877,37 @@ class TestUtils:
                 release_version=release_version
             ))
         assert json.loads(output) == expected_output
+
+    def test_get_release_label_by_uuid_picks_latest_partial_by_date(self):
+        db_conn = SimpleNamespace(
+            fetch_genome_datasets=lambda **kwargs: [
+                SimpleNamespace(
+                    release=SimpleNamespace(
+                        release_type="partial",
+                        release_date="12/31/2024",
+                        label="2024-12-31"
+                    )
+                ),
+                SimpleNamespace(
+                    release=SimpleNamespace(
+                        release_type="partial",
+                        release_date="02/27/2025",
+                        label="2025-02-27"
+                    )
+                ),
+            ]
+        )
+
+        output = json_format.MessageToJson(
+            utils.get_release_label_by_uuid(
+                db_conn=db_conn,
+                genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+                dataset_type="genebuild",
+                release_version=111.1
+            )
+        )
+
+        assert json.loads(output) == {"releaseLabel": "2025-02-27"}
 
     @pytest.mark.parametrize(
         "genome_uuid, expected_output",

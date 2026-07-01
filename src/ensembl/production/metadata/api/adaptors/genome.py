@@ -141,12 +141,56 @@ class GenomeAdaptor(BaseAdaptor):
             genomes = self.fetch_genomes(production_name = production_name, assembly_name=assembly, release_version=release_version, status=status, genebuild_date = genebuild)
 
         return genomes
-    
+
+    def get_genome_uuid_by_assembly_accession(
+        self, assembly_accession: str, release: float = None
+    ) -> str | None:
+        """Return the best released genome UUID for an assembly accession."""
+        if not assembly_accession:
+            logger.warning("Missing or Empty assembly_accession field.")
+            return None
+
+        with self.metadata_db.session_scope() as session:
+            integrated_release = case((EnsemblRelease.release_type == "integrated", 1), else_=0)
+            ensembl_provider = case((func.lower(Genome.provider_name) == "ensembl", 1), else_=0)
+
+            query = (
+                select(Genome.genome_uuid)
+                .select_from(Assembly)
+                .join(Genome, Genome.assembly_id == Assembly.assembly_id)
+                .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
+                .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
+                .where(
+                    Assembly.accession == assembly_accession,
+                    EnsemblRelease.status == ReleaseStatus.RELEASED,
+                )
+            )
+
+            if release is not None:
+                query = query.where(EnsemblRelease.version == release)
+
+            query = query.order_by(
+                GenomeRelease.default.desc(),
+                integrated_release.desc(),
+                ensembl_provider.desc(),
+                # sorting by date is needed to guarantee that the latest integrated is the one on the top
+                EnsemblRelease.release_date.desc(),
+                EnsemblRelease.release_id.desc(),
+            ).limit(1)
+
+            genome_uuid = session.execute(query).scalar_one_or_none()
+
+        if genome_uuid is None:
+            logger.error(
+                f"No Genome UUID found for assembly_accession={assembly_accession}, release={release}"
+            )
+
+        return genome_uuid
+
     def fetch_genomes(
             self,
             genome_id=None,
             genome_uuid=None,
-            genome_tag=None,
             organism_uuid=None,
             assembly_uuid=None,
             assembly_accession=None,
@@ -172,7 +216,6 @@ class GenomeAdaptor(BaseAdaptor):
         Args:
             genome_id (Union[int, List[int]]): The ID(s) of the genome(s) to fetch.
             genome_uuid str|None: The UUID of the genome to fetch.
-            genome_tag (Union[str, List[str]]): genome_tag value is genome.url_name
             organism_uuid (Union[str, List[str]]): The UUID(s) of the organism(s) to fetch.
             assembly_uuid (Union[str, List[str]]): The UUID(s) of the assembly(s) to fetch.
             assembly_accession (Union[str, List[str]]): The assenbly accession of the assembly(s) to fetch.
@@ -205,7 +248,6 @@ class GenomeAdaptor(BaseAdaptor):
         """
         # Parameter normalization (to list)
         genome_id = check_parameter(genome_id)
-        genome_tag = check_parameter(genome_tag)
         organism_uuid = check_parameter(organism_uuid)
         assembly_uuid = check_parameter(assembly_uuid)
         assembly_accession = check_parameter(assembly_accession)
@@ -266,10 +308,6 @@ class GenomeAdaptor(BaseAdaptor):
         if genome_uuid is not None:
             genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
 
-        if genome_tag is not None:
-            genome_select = genome_select.filter(
-                db.or_(Genome.url_name.in_(genome_tag), Organism.tol_id.in_(genome_tag)))
-
         if organism_uuid is not None:
             genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
 
@@ -302,14 +340,14 @@ class GenomeAdaptor(BaseAdaptor):
 
         if taxonomy_id is not None:
             genome_select = genome_select.filter(Organism.taxonomy_id.in_(taxonomy_id))
-        genome_select = genome_select.add_columns(EnsemblRelease, EnsemblSite) \
+        genome_select = genome_select.add_columns(GenomeRelease, EnsemblRelease, EnsemblSite) \
             .join(GenomeRelease) \
             .join(EnsemblRelease) \
             .join(EnsemblSite)
         if status == GenomeStatus.CURRENT:
             # This filter will allow us to fetch genomes present in the integrated release
             # and having genome_release.is_current = 0 (see ENSPLAT-169 for more details)
-           
+
             if release_type is not None:
                 genome_select = genome_select.where(
                         and_(
@@ -318,7 +356,7 @@ class GenomeAdaptor(BaseAdaptor):
                             )
                         )    
             else: 
-                # We join two pairs of genome_release-ensembl_release they should be with 
+                # We join two pairs of genome_release-ensembl_release they should be with
                 # - Both pairs should have either genome is current or ensembl is currrent and be different releases
                 # - We select those pairs where EnsemblRelease (that gives selected fileds) is earlier or no other current release
                 # - If dates are equal we select integrated
@@ -435,7 +473,7 @@ class GenomeAdaptor(BaseAdaptor):
             list: A list of fetched genomes matching the keyword and release version.
         """
         status = GenomeStatus[status.upper()]
-        #TODO: fix current logic here, to fetch latest release
+        # TODO: fix current logic here, to fetch latest release
         genome_query = db.select(Genome, Assembly, Organism, EnsemblRelease).select_from(Genome) \
             .join(Organism, Genome.organism_id == Organism.organism_id) \
             .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
@@ -448,6 +486,20 @@ class GenomeAdaptor(BaseAdaptor):
             genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         if release_version is not None and release_version > 0:
             genome_query = genome_query.where(EnsemblRelease.version <= release_version)
+        else:
+            # Pick only current integrated and partial releases, if release_version is not specified,
+            # otherwise pick all releases up to the specified release version in the if condition above
+            genome_query = genome_query.where(
+                or_(
+                    and_(
+                        EnsemblRelease.release_type == "partial",
+                        GenomeRelease.is_current == 1),
+                    and_(
+                        EnsemblRelease.release_type == "integrated",
+                        EnsemblRelease.is_current == 1
+                    )
+                )
+            )
 
         provided_fields = [
             tolid,
@@ -511,10 +563,10 @@ class GenomeAdaptor(BaseAdaptor):
             return []
 
         logger.debug(f"bySpecificKeyword: {genome_query} {release_version}")
+        print(f"bySpecificKeyword: {genome_query} {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_query).all()
-
 
     def fetch_genome_by_release_version(self, release_version, status="Released"):
         """
@@ -544,7 +596,6 @@ class GenomeAdaptor(BaseAdaptor):
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
             return session.execute(genome_query).all()
-            
 
     def fetch_sequences(self, genome_id=None, genome_uuid=None, assembly_uuid=None, assembly_accession=None,
                         assembly_sequence_accession=None, assembly_sequence_name=None, chromosomal_only=False):
@@ -607,6 +658,74 @@ class GenomeAdaptor(BaseAdaptor):
         return self.fetch_sequences(
             genome_uuid=genome_uuid, chromosomal_only=chromosomal_only
         )
+
+    def fetch_top_regions_by_genome_uuid(self, genome_uuid, region_type=None, limit=100):
+        """
+        Fetches the top assembly regions for a genome.
+
+        Chromosomal regions are ordered by chromosome rank. Non-chromosomal regions are
+        ordered by length descending, then name. When no region type is provided,
+        chromosomal regions are returned first and non-chromosomal regions fill the
+        remaining limit.
+
+        Args:
+            genome_uuid (str): Genome UUID to filter by.
+            region_type (str or None): Public region type filter. "chromosome"
+                maps to chromosomal regions; other values map to non-chromosomal
+                assembly_sequence.type values.
+            limit (int): Maximum number of regions to return.
+
+        Returns:
+            list: A list of fetched sequence rows.
+        """
+        if not genome_uuid or limit <= 0:
+            return []
+
+        def top_regions_select():
+            return db.select(
+                Genome, Assembly, AssemblySequence
+            ).select_from(Genome) \
+                .join(Assembly, Assembly.assembly_id == Genome.assembly_id) \
+                .join(AssemblySequence, AssemblySequence.assembly_id == Assembly.assembly_id) \
+                .filter(Genome.genome_uuid == genome_uuid)
+
+        def fetch_chromosomal(session, result_limit):
+            chromosomal_select = top_regions_select() \
+                .filter(AssemblySequence.chromosomal == 1) \
+                .order_by(
+                    AssemblySequence.chromosome_rank,
+                    AssemblySequence.name,
+                ) \
+                .limit(result_limit)
+            return session.execute(chromosomal_select).all()
+
+        def fetch_non_chromosomal(session, result_limit, assembly_sequence_type=None):
+            non_chromosomal_select = top_regions_select() \
+                .filter(AssemblySequence.chromosomal == 0)
+            if assembly_sequence_type is not None:
+                non_chromosomal_select = non_chromosomal_select.filter(
+                    AssemblySequence.type == assembly_sequence_type
+                )
+            non_chromosomal_select = non_chromosomal_select \
+                .order_by(
+                    AssemblySequence.length.desc(),
+                    AssemblySequence.name,
+                ) \
+                .limit(result_limit)
+            return session.execute(non_chromosomal_select).all()
+
+        with self.metadata_db.session_scope() as session:
+            session.expire_on_commit = False
+            if region_type == "chromosome":
+                return fetch_chromosomal(session, limit)
+            if region_type is not None:
+                return fetch_non_chromosomal(session, limit, region_type)
+
+            top_regions = fetch_chromosomal(session, limit)
+            remaining_limit = limit - len(top_regions)
+            if remaining_limit > 0:
+                top_regions.extend(fetch_non_chromosomal(session, remaining_limit))
+            return top_regions
 
     def fetch_sequences_by_assembly_accession(
             self, assembly_accession, chromosomal_only=False
@@ -675,9 +794,9 @@ class GenomeAdaptor(BaseAdaptor):
                 organism_uuid = check_parameter(organism_uuid)
                 genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
             # We have to fetch from DB
-            #TODO: we have two different status - dataset and genome checked for the same condition. Not sure if it is expected
+            # TODO: we have two different status - dataset and genome checked for the same condition. Not sure if it is expected
             if status == GenomeStatus.RELEASED:
-                 genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
+                genome_select = genome_select.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
             if status == GenomeStatus.UNRELEASED_ONLY:
                 genome_select = genome_select.filter(EnsemblRelease.status != ReleaseStatus.RELEASED)
                 genome_select = genome_select.filter(Dataset.status != DatasetStatus.RELEASED)
@@ -992,7 +1111,6 @@ class GenomeAdaptor(BaseAdaptor):
         Returns:
             List of tuples (Genome, GenomeGroupMember) with full membership details.
         """
-        status = GenomeStatus[release_status.upper()]
         member_select = select(Genome, GenomeGroupMember).join(
             GenomeGroupMember, Genome.genome_id == GenomeGroupMember.genome_id
         ).join(
@@ -1097,7 +1215,7 @@ class GenomeAdaptor(BaseAdaptor):
                 scientific_name = accession = genebuild_source_name = last_geneset_update = None
 
             # === DATASET TYPE DISCOVERY ===
-            supported_types = ['genebuild', 'assembly', 'homologies', 'variation']
+            supported_types = ["genebuild", "assembly", "homologies", "short_variants"]
             unique_dataset_types_query = select(DatasetType.name).distinct().join(
                 Dataset
             ).join(GenomeDataset).join(Genome).where(

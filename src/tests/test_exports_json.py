@@ -278,9 +278,13 @@ class TestFTPMetadataExporter:
         """Test _get_dataset_file_paths generates correct file paths for variation."""
         metadata_uri = test_dbs['ensembl_genome_metadata'].dbc.url
         exporter = FTPMetadataExporter(metadata_uri)
-        base_path = "GCA/000/001/405/29/ensembl/2024_01/variation/2024_10_18"
-        file_paths = exporter._get_dataset_file_paths(base_path, 'variation')
-
+        base_path = "homo_sapiens/GRCh38/ensembl/variation/2024_01"
+        with exporter.metadata_db.session_scope() as session:
+            genome = session.query(Genome).first()
+            assembly_data = {'accession': 'GRCh38'} if genome else {}
+            file_paths = exporter._get_dataset_file_paths(
+                base_path, 'variation', genome, assembly_data
+            )
         assert 'variation_data' in file_paths
         variation_files = file_paths['variation_data']
         assert 'variation.vcf.gz' in variation_files

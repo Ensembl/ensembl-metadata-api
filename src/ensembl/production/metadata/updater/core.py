@@ -276,7 +276,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                                                             genebuild_dataset)
             self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
 
-
         # Create genome and populate the database with assembly and dataset
         else:
             provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
@@ -302,9 +301,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
                                                                                             assembly_dataset,
                                                                                             genebuild_dataset)
             self.concurrent_commit_genome_uuid(meta_session, species_id, new_genome.genome_uuid)
-
-
-
 
     def concurrent_commit_genome_uuid(self, meta_session, species_id, genome_uuid):
         # Currently impossible with myisam without two phase commit (requires full refactor)
@@ -339,6 +335,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         url_name = self.get_meta_single_meta_key(species_id, "assembly.url_name")
         provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
         annotation_source = self.get_meta_single_meta_key(species_id, "genebuild.annotation_source")
+        default = self.get_meta_single_meta_key(species_id, "genome.default")
         if None in (production_name, genebuild_date, annotation_source, provider_name):
             raise exceptions.MetadataUpdateException(f"Unable to find required keys from meta")
         planned_release = self.get_release(meta_session)
@@ -357,7 +354,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
         meta_session.add(new_genome)
         genome_release = GenomeRelease(
             genome=new_genome,
-            ensembl_release=planned_release
+            ensembl_release=planned_release,
+            default=1 if default is not None and int(default) == 1 else 0,
         )
         new_genome.genome_releases.append(genome_release)
         assembly_genome_dataset = GenomeDataset(
@@ -366,6 +364,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
             is_current=True,
         )
         meta_session.add(assembly_genome_dataset)
+        self._attach_existing_assembly_children_to_genome(meta_session, new_genome, assembly_dataset)
         genebuild_genome_dataset = GenomeDataset(
             genome=new_genome,
             dataset=genebuild_dataset,
@@ -374,7 +373,6 @@ class CoreMetaUpdater(BaseMetaUpdater):
         meta_session.add(genebuild_genome_dataset)
 
         self._create_genome_group_members(meta_session, species_id, new_genome, planned_release)
-
 
         # Homology dataset creation
         homology_uuid, homology_dataset, homology_dataset_attributes, homology_genome_dataset = self.new_homology(
@@ -388,6 +386,44 @@ class CoreMetaUpdater(BaseMetaUpdater):
         dataset_factory.create_all_child_datasets(homology_dataset.dataset_uuid, meta_session)
 
         return new_genome, assembly_genome_dataset, genebuild_genome_dataset
+
+    def _attach_existing_assembly_children_to_genome(self, meta_session, genome, assembly_dataset):
+        """
+        Attach existing assembly child datasets to a newly created genome.
+
+        Assembly datasets can be shared by multiple genomes. When reusing an existing
+        assembly dataset, its children already exist, so handover should create the
+        missing GenomeDataset rows rather than creating another child dataset tree.
+        """
+        attached_dataset_ids = {
+            genome_dataset.dataset_id
+            for genome_dataset in genome.genome_datasets
+            if genome_dataset.dataset_id is not None
+        }
+        attached_dataset_objects = {
+            genome_dataset.dataset
+            for genome_dataset in genome.genome_datasets
+            if genome_dataset.dataset_id is None
+        }
+
+        def attach_children(parent_dataset):
+            for child_dataset in parent_dataset.children:
+                already_attached = (
+                    child_dataset.dataset_id in attached_dataset_ids
+                    or child_dataset in attached_dataset_objects
+                )
+                if not already_attached:
+                    genome_dataset = GenomeDataset(
+                        genome=genome,
+                        dataset=child_dataset,
+                        is_current=True,
+                    )
+                    meta_session.add(genome_dataset)
+                    attached_dataset_ids.add(child_dataset.dataset_id)
+                    attached_dataset_objects.add(child_dataset)
+                attach_children(child_dataset)
+
+        attach_children(assembly_dataset)
 
     def _create_genome_group_members(self, meta_session, species_id, new_genome, planned_release):
         """
