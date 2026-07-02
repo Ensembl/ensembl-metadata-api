@@ -459,18 +459,13 @@ class FTPMetadataExporter:
             variation_release = variation_release.replace('-', '_')
 
         # Collect the dataset types actually present for this genome
-        unique_dataset_types = list(set([
-            'regulation' if d['dataset_type_name'] == 'regulatory_features'
-            else d['dataset_type_name']
-            for d in datasets
-        ]))
+        unique_dataset_types = list(set([d["dataset_type_name"] for d in datasets]))
 
         # Drop homologies / variation if there is no partial release date available
         if not homology_release and 'homologies' in unique_dataset_types:
             unique_dataset_types = [t for t in unique_dataset_types if t != 'homologies']
-        if not variation_release and 'short_variants' in unique_dataset_types:
-            unique_dataset_types = [t for t in unique_dataset_types if t != 'variation']
-
+        if not variation_release and "short_variants" in unique_dataset_types:
+            unique_dataset_types = [t for t in unique_dataset_types if t != "short_variants"]
 
         # Build paths
         accession_path = format_accession_path(accession)
@@ -503,13 +498,14 @@ class FTPMetadataExporter:
     # File listings
     # ------------------------------------------------------------------
 
-    def _get_dataset_file_paths(self, base_path, dataset_type):
+    def _get_dataset_file_paths(self, base_path, dataset_type, *_, **__):
         """
         Return the explicit file listings for a dataset type under base_path.
 
         Index files (.fai, .gzi, .csi) and checksum files (md5sum.txt) are
         intentionally excluded.
         """
+
         if dataset_type == 'genebuild':
             # geneset/ directory
             filenames = [
@@ -564,14 +560,6 @@ class FTPMetadataExporter:
                     "variation.vcf.gz": f"{base_path}/variation.vcf.gz"
                 }
             }
-
-        elif dataset_type == 'regulation':
-            return {
-                "regulatory_features": {
-                    "regulation.gff": f"{base_path}/regulation.gff"
-                }
-            }
-
         return {}
 
     # ------------------------------------------------------------------
@@ -621,7 +609,7 @@ class FTPMetadataExporter:
             "genebuild": "genebuild",
             "assembly": "assembly",
             "homologies": "homologies",
-            "variation": "short_variants",
+            "short_variants": "short_variants",
         }
         mapped_type = type_mapping.get(dataset_type, dataset_type)
         return any(d['dataset_type_name'] == mapped_type for d in datasets)

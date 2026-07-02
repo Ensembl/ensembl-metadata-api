@@ -1152,7 +1152,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         Args:
             genome_uuid (str): Unique identifier for the genome
-            dataset_type (str): Type of dataset ('genebuild', 'assembly', 'homologies', 'variation', or 'all')
+            dataset_type (str): Type of dataset ('genebuild', 'assembly', 'homologies', 'short_variants', or 'all')
             release (str, optional): Specific Ensembl release label. If None, uses current release.
 
         Returns:
@@ -1167,6 +1167,8 @@ class GenomeAdaptor(BaseAdaptor):
         accession = None
         genebuild_source_name = None
         last_geneset_update = None
+        if dataset_type == "variation":
+            dataset_type = "short_variants"
 
         with self.metadata_db.session_scope() as session:
             # === VALIDATION SECTION ===
@@ -1230,17 +1232,26 @@ class GenomeAdaptor(BaseAdaptor):
 
             # === RELEASE HANDLING ===
             if release is None:
-                if 'variation' in unique_dataset_types and dataset_type in ('all', 'variation'):
-                    variation_release = session.execute(
-                        select(EnsemblRelease.label).join(GenomeDataset).join(Dataset).join(DatasetType).join(
-                            Genome).where(
-                            Genome.genome_uuid == genome_uuid,
-                            DatasetType.name == 'variation',
-                            Dataset.status == DatasetStatus.RELEASED,
-                            GenomeDataset.is_current == True,
-                            EnsemblRelease.release_type == 'partial'
-                        ).order_by(EnsemblRelease.release_id.desc())
-                    ).scalars().first()
+                if "short_variants" in unique_dataset_types and dataset_type in ("all", "short_variants"):
+                    variation_release = (
+                        session.execute(
+                            select(EnsemblRelease.label)
+                            .join(GenomeDataset)
+                            .join(Dataset)
+                            .join(DatasetType)
+                            .join(Genome)
+                            .where(
+                                Genome.genome_uuid == genome_uuid,
+                                DatasetType.name == "short_variants",
+                                Dataset.status == DatasetStatus.RELEASED,
+                                GenomeDataset.is_current == True,
+                                EnsemblRelease.release_type == "partial",
+                            )
+                            .order_by(EnsemblRelease.release_id.desc())
+                        )
+                        .scalars()
+                        .first()
+                    )
 
                 if 'homologies' in unique_dataset_types and dataset_type in ('all', 'homologies'):
                     homology_release = session.execute(
@@ -1254,23 +1265,34 @@ class GenomeAdaptor(BaseAdaptor):
                         ).order_by(EnsemblRelease.release_id.desc())
                     ).scalars().first()
             else:
-                if 'variation' in unique_dataset_types and dataset_type in ('all', 'variation'):
-                    variation_release = session.execute(
-                        select(EnsemblRelease.label).join(GenomeDataset).join(Dataset).join(DatasetType).join(
-                            Genome).where(
-                            Genome.genome_uuid == genome_uuid,
-                            DatasetType.name == 'variation',
-                            Dataset.status == DatasetStatus.RELEASED,
-                            EnsemblRelease.release_type == 'partial',
-                            EnsemblRelease.release_id <= (
-                                select(EnsemblRelease.release_id).where(
-                                    EnsemblRelease.label == release).scalar_subquery()
+                if "short_variants" in unique_dataset_types and dataset_type in ("all", "short_variants"):
+                    variation_release = (
+                        session.execute(
+                            select(EnsemblRelease.label)
+                            .join(GenomeDataset)
+                            .join(Dataset)
+                            .join(DatasetType)
+                            .join(Genome)
+                            .where(
+                                Genome.genome_uuid == genome_uuid,
+                                DatasetType.name == "short_variants",
+                                Dataset.status == DatasetStatus.RELEASED,
+                                EnsemblRelease.release_type == "partial",
+                                EnsemblRelease.release_id
+                                <= (
+                                    select(EnsemblRelease.release_id)
+                                    .where(EnsemblRelease.label == release)
+                                    .scalar_subquery()
+                                ),
                             )
-                        ).order_by(EnsemblRelease.release_id.desc())
-                    ).scalars().first()
+                            .order_by(EnsemblRelease.release_id.desc())
+                        )
+                        .scalars()
+                        .first()
+                    )
 
                     if variation_release is None:
-                        unique_dataset_types = [t for t in unique_dataset_types if t != 'variation']
+                        unique_dataset_types = [t for t in unique_dataset_types if t != "short_variants"]
 
                 if 'homologies' in unique_dataset_types and dataset_type in ('all', 'homologies'):
                     homology_release = session.execute(
@@ -1311,14 +1333,14 @@ class GenomeAdaptor(BaseAdaptor):
 
         if 'homologies' in unique_dataset_types and homology_release:
             homology_release = homology_release.replace('-', '_')
-        if 'variation' in unique_dataset_types and variation_release:
+        if "short_variants" in unique_dataset_types and variation_release:
             variation_release = variation_release.replace('-', '_')
 
         path_templates = {
-            'genebuild': f"{common_path}/geneset",
-            'assembly': f"{common_path}/genome",
-            'homologies': f"{common_path}/homology/{homology_release}",
-            'variation': f"{common_path}/variation/{variation_release}",
+            "genebuild": f"{common_path}/geneset",
+            "assembly": f"{common_path}/genome",
+            "homologies": f"{common_path}/homology/{homology_release}",
+            "short_variants": f"{common_path}/variation/{variation_release}",
         }
 
         # === REQUEST VALIDATION ===

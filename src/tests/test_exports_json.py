@@ -175,7 +175,6 @@ class TestFTPMetadataExporter:
         assert exporter._has_released_dataset_bulk(datasets, 'genebuild') is True
         assert exporter._has_released_dataset_bulk(datasets, 'assembly') is True
         assert exporter._has_released_dataset_bulk(datasets, 'variation') is False
-        assert exporter._has_released_dataset_bulk([{'dataset_type_name': 'regulatory_features'}], 'regulation') is True
         assert exporter._has_released_dataset_bulk([], 'genebuild') is False
 
     # ------------------------------------------------------------------
@@ -282,25 +281,12 @@ class TestFTPMetadataExporter:
         with exporter.metadata_db.session_scope() as session:
             genome = session.query(Genome).first()
             assembly_data = {'accession': 'GRCh38'} if genome else {}
-            file_paths = exporter._get_dataset_file_paths(
-                base_path, 'variation', genome, assembly_data
-            )
+            file_paths = exporter._get_dataset_file_paths(base_path, "short_variants", genome, assembly_data)
         assert 'variation_data' in file_paths
         variation_files = file_paths['variation_data']
         assert 'variation.vcf.gz' in variation_files
         assert variation_files['variation.vcf.gz'] == f"{base_path}/variation.vcf.gz"
         assert len(variation_files) == 1
-
-    def test_get_dataset_file_paths_regulation(self, test_dbs):
-        """Test _get_dataset_file_paths generates correct file paths for regulation."""
-        metadata_uri = test_dbs['ensembl_genome_metadata'].dbc.url
-        exporter = FTPMetadataExporter(metadata_uri)
-        base_path = "GCA/000/001/405/29/ensembl/2024_01/regulation"
-        file_paths = exporter._get_dataset_file_paths(base_path, 'regulation')
-
-        assert 'regulatory_features' in file_paths
-        assert 'regulation.gff' in file_paths['regulatory_features']
-        assert file_paths['regulatory_features']['regulation.gff'] == f"{base_path}/regulation.gff"
 
     def test_get_dataset_file_paths_unknown_type(self, test_dbs):
         """Test _get_dataset_file_paths returns empty dict for unknown dataset type."""
