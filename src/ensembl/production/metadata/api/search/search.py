@@ -169,6 +169,7 @@ class GenomeSearchDocument(BaseModel):
     latest_release_name: str
     latest_release_type: str
     is_latest_release_current: int
+    default: bool = False
     releases: str  # comma-separated list of integrated releases
 
     class Config:
@@ -195,7 +196,7 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="annotation_method", value=self.genebuild_method_display),
             SearchField(name="annotation_provider", value=self.genebuild_provider),
             SearchField(name="genome_uuid", value=self.genome_uuid),
-            SearchField(name="url_name", value=self.url_name or ""),
+            SearchField(name="url_name", value=self.accession or ""),
             SearchField(name="tol_id", value=self.tol_id or ""),
             SearchField(name="is_reference", value=self.is_reference),
             SearchField(name="species_taxonomy_id", value=self.species_taxonomy_id),
@@ -519,6 +520,8 @@ class EntryDeduplicator:
     @staticmethod
     def deduplicate_by_url_name(entries: List[SearchEntry]) -> Tuple[List[SearchEntry], int]:
         """
+        url_name is now a link to assembly accession (self.accession).
+         
         Deduplicate entries by url_name, clearing url_name on non-preferred entries.
 
         Priority when duplicates exist:
