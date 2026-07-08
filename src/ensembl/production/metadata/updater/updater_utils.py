@@ -9,11 +9,13 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ensembl.utils.database import DBConnection
+from sqlalchemy.orm import Session
 
+from ensembl.ncbi_taxonomy.api import Taxonomy
 from ensembl.production.metadata.api import exceptions
 from ensembl.production.metadata.api.exceptions import UpdaterException
 from ensembl.production.metadata.api.models import Attribute, DatasetAttribute, GenomeGroup
+from ensembl.utils.database import DBConnection
 
 
 def update_attributes(dataset, attributes, session, replace=False):
@@ -59,32 +61,50 @@ def update_attributes(dataset, attributes, session, replace=False):
     return dataset_attributes
 
 
-def get_homology_reference_set(taxonomy_id, taxonomy_uri, session):
-    """
-    Determine the compara homology reference set for a given taxonomy ID.
+def get_homology_reference_collection(taxonomy_id: int, taxonomy_uri: str, session: Session) -> str:
+    """Determine the compara homology reference collection for a given taxonomy ID.
+
+    This method expects the metadata `genome_group` table to contain the data in the following format::
+
+        +-----------------+-------------------+------+----------------+-------------+
+        | genome_group_id | type              | name | label          | description |
+        +-----------------+-------------------+------+----------------+-------------+
+        |               1 | compara_reference | 7898 | Actinopterygii | NULL        |
+        |               2 | compara_reference | 6656 | Arthropoda     | NULL        |
+        |             ... | ...               | ...  | ...            | ...         |
+        +-----------------+-------------------+------+----------------+-------------+
 
     Args:
-        taxonomy_id: NCBI taxonomy ID
+        taxonomy_id: NCBI taxonomy ID.
+        taxonomy_uri: NCBI taxonomy database URI.
+        session: Metadata database session.
 
     Returns:
-        str: The reference set name for the compara.homology_reference_set attribute
+        str: The reference collection name for the `compara.homology_reference_set` attribute.
 
     Raises:
-        UpdaterException: If no reference set can be determined for the taxonomy_id
+        MetadataUpdateException: If no reference collection can be determined for ``taxonomy_id``.
+
     """
     tax_db = DBConnection(taxonomy_uri)
+    # Get all available homology reference collections, but keep only their name, i.e. the
+    # collection's taxon ID
+    reference_collections = session.query(GenomeGroup).filter(GenomeGroup.type == "compara_reference").all()
+    collection_ids = {str(collection.name) for collection in reference_collections}
+    selected_collection: str | None = None
+    # Explore the taxonomy tree from the given taxonomy ID to the root, stopping at the first taxon ID
+    # that matches a homology reference collection
     with tax_db.session_scope() as tax_session:
-        reference_set = session.query("Your logic in here. Please use the taxonomy models.")
-        # Also explain it slightly in comments please.
-
-    # Raise an error if we don't find it in the metadata database, should have another one if it is blank.
-    genome_group = session.query(GenomeGroup).filter(GenomeGroup.name == reference_set).one_or_none()
-    if genome_group is None:
+        current = Taxonomy.fetch_node_by_id(tax_session, taxonomy_id)
+        while not Taxonomy.is_root(tax_session, current.taxon_id):
+            parent = Taxonomy.parent(tax_session, current.taxon_id)
+            parent_taxon_id = str(parent.taxon_id)
+            if parent_taxon_id in collection_ids:
+                selected_collection = parent_taxon_id
+                break
+            current = parent
+    if selected_collection is None:
         raise exceptions.MetadataUpdateException(
-            f"Reference Set '{genome_group}' specified in meta key 'genome.genome_group' does not exist in the database"
+            f"Taxonomy ID '{taxonomy_id}' did not get assigned any homology reference collection"
         )
-
-    raise NotImplementedError(
-        f"get_homology_reference_set logic not yet implemented for taxonomy_id {taxonomy_id}"
-    )
-    return reference_set
+    return selected_collection
