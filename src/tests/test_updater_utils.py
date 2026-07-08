@@ -39,7 +39,7 @@ class TestUpdaterUtils:
     @pytest.mark.parametrize(
         ("taxonomy_id", "expectation"),
         [
-            pytest.param(3702, does_not_raise("33090"), id="Collection found for taxon ID"),
+            pytest.param(3702, does_not_raise("Viridiplantae"), id="Collection found for taxon ID"),
             pytest.param(
                 4932,
                 pytest.raises(

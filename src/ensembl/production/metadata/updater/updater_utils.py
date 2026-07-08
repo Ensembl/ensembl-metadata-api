@@ -80,17 +80,16 @@ def get_homology_reference_collection(taxonomy_id: int, taxonomy_uri: str, sessi
         session: Metadata database session.
 
     Returns:
-        str: The reference collection name for the `compara.homology_reference_set` attribute.
+        str: The reference collection label for the `compara.homology_reference_set` attribute.
 
     Raises:
         MetadataUpdateException: If no reference collection can be determined for ``taxonomy_id``.
 
     """
     tax_db = DBConnection(taxonomy_uri)
-    # Get all available homology reference collections, but keep only their name, i.e. the
-    # collection's taxon ID
-    reference_collections = session.query(GenomeGroup).filter(GenomeGroup.type == "compara_reference").all()
-    collection_ids = {str(collection.name) for collection in reference_collections}
+    # Get all available homology reference collections, but keep only their name and label
+    results = session.query(GenomeGroup).filter(GenomeGroup.type == "compara_reference").all()
+    reference_collections = {str(collection.name): collection.label for collection in results}
     selected_collection: str | None = None
     # Explore the taxonomy tree from the given taxonomy ID to the root, stopping at the first taxon ID
     # that matches a homology reference collection
@@ -99,7 +98,7 @@ def get_homology_reference_collection(taxonomy_id: int, taxonomy_uri: str, sessi
         while not Taxonomy.is_root(tax_session, current.taxon_id):
             parent = Taxonomy.parent(tax_session, current.taxon_id)
             parent_taxon_id = str(parent.taxon_id)
-            if parent_taxon_id in collection_ids:
+            if parent_taxon_id in reference_collections:
                 selected_collection = parent_taxon_id
                 break
             current = parent
@@ -107,4 +106,4 @@ def get_homology_reference_collection(taxonomy_id: int, taxonomy_uri: str, sessi
         raise exceptions.MetadataUpdateException(
             f"Taxonomy ID '{taxonomy_id}' did not get assigned any homology reference collection"
         )
-    return selected_collection
+    return reference_collections[selected_collection]
