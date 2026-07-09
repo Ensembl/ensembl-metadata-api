@@ -652,7 +652,7 @@ class EntryDeduplicator:
 class GenomeSearchIndexer:
     """Service for generating genome search documents"""
 
-    FTP_BASE_URL = "https://ftp.ebi.ac.uk/pub/ensemblorganisms"
+    FTP_BASE_URL = "http://ftp.ebi.ac.uk/pub/ensemblorganisms"
 
     def __init__(self, metadata_uri: str, taxonomy_uri: str, batch_size: int = 500):
         self.metadata_db = DBConnection(metadata_uri)
