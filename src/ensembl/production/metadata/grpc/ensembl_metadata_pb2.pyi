@@ -1,7 +1,9 @@
-from google.protobuf.internal import containers as _containers
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, \
+    Union as _Union
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
+from google.protobuf.internal import containers as _containers
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -398,12 +400,6 @@ class GenomeSequenceRequest(_message.Message):
     chromosomal_only: bool
     genome_uuid: str
     def __init__(self, genome_uuid: _Optional[str] = ..., chromosomal_only: bool = ...) -> None: ...
-
-class GenomeTagRequest(_message.Message):
-    __slots__ = ["genome_tag"]
-    GENOME_TAG_FIELD_NUMBER: _ClassVar[int]
-    genome_tag: str
-    def __init__(self, genome_tag: _Optional[str] = ...) -> None: ...
 
 class GenomeUUID(_message.Message):
     __slots__ = ["genome_uuid"]

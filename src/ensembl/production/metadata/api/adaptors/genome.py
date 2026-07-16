@@ -141,11 +141,55 @@ class GenomeAdaptor(BaseAdaptor):
 
         return genomes
 
+    def get_genome_uuid_by_assembly_accession(
+        self, assembly_accession: str, release: float = None
+    ) -> str | None:
+        """Return the best released genome UUID for an assembly accession."""
+        if not assembly_accession:
+            logger.warning("Missing or Empty assembly_accession field.")
+            return None
+
+        with self.metadata_db.session_scope() as session:
+            integrated_release = case((EnsemblRelease.release_type == "integrated", 1), else_=0)
+            ensembl_provider = case((func.lower(Genome.provider_name) == "ensembl", 1), else_=0)
+
+            query = (
+                select(Genome.genome_uuid)
+                .select_from(Assembly)
+                .join(Genome, Genome.assembly_id == Assembly.assembly_id)
+                .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
+                .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
+                .where(
+                    Assembly.accession == assembly_accession,
+                    EnsemblRelease.status == ReleaseStatus.RELEASED,
+                )
+            )
+
+            if release is not None:
+                query = query.where(EnsemblRelease.version == release)
+
+            query = query.order_by(
+                GenomeRelease.default.desc(),
+                integrated_release.desc(),
+                ensembl_provider.desc(),
+                # sorting by date is needed to guarantee that the latest integrated is the one on the top
+                EnsemblRelease.release_date.desc(),
+                EnsemblRelease.release_id.desc(),
+            ).limit(1)
+
+            genome_uuid = session.execute(query).scalar_one_or_none()
+
+        if genome_uuid is None:
+            logger.error(
+                f"No Genome UUID found for assembly_accession={assembly_accession}, release={release}"
+            )
+
+        return genome_uuid
+
     def fetch_genomes(
             self,
             genome_id=None,
             genome_uuid=None,
-            genome_tag=None,
             organism_uuid=None,
             assembly_uuid=None,
             assembly_accession=None,
@@ -171,7 +215,6 @@ class GenomeAdaptor(BaseAdaptor):
         Args:
             genome_id (Union[int, List[int]]): The ID(s) of the genome(s) to fetch.
             genome_uuid str|None: The UUID of the genome to fetch.
-            genome_tag (Union[str, List[str]]): genome_tag value is genome.url_name
             organism_uuid (Union[str, List[str]]): The UUID(s) of the organism(s) to fetch.
             assembly_uuid (Union[str, List[str]]): The UUID(s) of the assembly(s) to fetch.
             assembly_accession (Union[str, List[str]]): The assenbly accession of the assembly(s) to fetch.
@@ -204,7 +247,6 @@ class GenomeAdaptor(BaseAdaptor):
         """
         # Parameter normalization (to list)
         genome_id = check_parameter(genome_id)
-        genome_tag = check_parameter(genome_tag)
         organism_uuid = check_parameter(organism_uuid)
         assembly_uuid = check_parameter(assembly_uuid)
         assembly_accession = check_parameter(assembly_accession)
@@ -264,10 +306,6 @@ class GenomeAdaptor(BaseAdaptor):
 
         if genome_uuid is not None:
             genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
-
-        if genome_tag is not None:
-            genome_select = genome_select.filter(
-                db.or_(Genome.url_name.in_(genome_tag), Organism.tol_id.in_(genome_tag)))
 
         if organism_uuid is not None:
             genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
