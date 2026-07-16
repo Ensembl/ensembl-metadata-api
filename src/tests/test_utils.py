@@ -204,6 +204,15 @@ class TestUtils:
             'statisticType': 'integer',
             'statisticValue': '22'
         }
+        variation_short_variants = [stat for stat in output['statistics'] if
+                                    stat['name'] == 'variation.stats.short_variants']
+        assert len(variation_short_variants) == 2
+        assert variation_short_variants[0] == {
+            'label': 'Short variants',
+            'name': 'variation.stats.short_variants',
+            'statisticType': 'integer',
+            'statisticValue': '25626842'
+        }
 
     def test_get_top_level_statistics_by_uuid_includes_regulation_tracks(self, genome_conn):
         output = json_format.MessageToJson(
