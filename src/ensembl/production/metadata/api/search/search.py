@@ -1054,17 +1054,15 @@ class GenomeSearchIndexer:
                 search_entries = update_rank(search_entries)
                 
                 # set url_name
-                all_entries = set_url_name(all_entries)
+                search_entries = set_url_name(search_entries)
 
                 # convert to SearchEntry
                 # TODO turn to_search_entry into a model_serializer  
                 search_entries_as_search_entry = list(map(lambda d: d.to_search_entry(), search_entries))
 
-                # TODO alter this to be a reduce function, performed on GenomeSearchDocuments
-                logger.info(f"Deduplicating {len(search_entries_as_search_entry)} entries by url_name...")
-                
+
                 logger.info(
-                    f"Successfully indexed: {len(all_entries_as_search_entry)} genome(s) "
+                    f"Successfully indexed: {len(search_entries)} genome(s) "
                 )
                 if error_collection.has_errors():
                     logger.warning(f"Failed to index: {len(error_collection.errors)} genome(s)")
@@ -1076,8 +1074,8 @@ class GenomeSearchIndexer:
                 return SearchIndex(
                     name="ensemblNext",
                     release=newest_partial,
-                    entry_count=len(all_entries_as_search_entry),
-                    entries=all_entries_as_search_entry,
+                    entry_count=len(search_entries_as_search_entry),
+                    entries=search_entries_as_search_entry,
                 )
 
 # ============================================================================
