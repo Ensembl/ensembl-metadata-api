@@ -31,11 +31,11 @@ class TestClass:
     @pytest.mark.parametrize(
         "allow_unreleased, genome_uuid, ds_type_name, expected_genome_count, expected_ds_count, expected_assembly_count, ensembl_name",
         [
-            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly", 3, 2, 5, "SAMN12121739"),
-            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "all", 3, 29, 5, "SAMN12121739"),
-            (True, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly", 3, 2, 5, "SAMN12121739"),
-            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "homologies", 3, 4, 5, "SAMN12121739"),
-            (True, "a7335667-93e7-11ec-a39d-005056b38ce3", "homologies", 3, 4, 5, "SAMN12121739"),
+            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly", 3, 1, 5, "SAMN12121739"),
+            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "all", 3, 17, 5, "SAMN12121739"),
+            (True, "a7335667-93e7-11ec-a39d-005056b38ce3", "assembly", 3, 1, 5, "SAMN12121739"),
+            (False, "a7335667-93e7-11ec-a39d-005056b38ce3", "homologies", 3, 1, 5, "SAMN12121739"),
+            (True, "a7335667-93e7-11ec-a39d-005056b38ce3", "homologies", 3, 1, 5, "SAMN12121739"),
         ],
         indirect=["allow_unreleased"],
     )
