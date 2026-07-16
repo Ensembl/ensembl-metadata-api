@@ -774,7 +774,10 @@ class GenomeAdaptor(BaseAdaptor):
 
             for genome_release in genomes:
                 logger.debug(f"Retrieved genome {genome_release}")
-                genome_datasets = list(genome_release.Genome.genome_datasets)
+                genome_datasets = [
+                    gd for gd in genome_release.Genome.genome_datasets
+                    if gd.release_id == genome_release.EnsemblRelease.release_id
+                ]
                 if dataset_type_name is None:
                     genome_datasets = [gd for gd in genome_datasets if gd.dataset.parent_id is None]
                 elif dataset_type_name != "all":
@@ -821,11 +824,7 @@ class GenomeAdaptor(BaseAdaptor):
                             dataset=gd.dataset,
                             dataset_type=gd.dataset.dataset_type,
                             dataset_source=gd.dataset.dataset_source,
-                            # If more than one dataset is available go with the partial dataset.
-                            # If only one dataset is available just go with that one
-                            # Slack discussion: https://genomes-ebi.slack.com/archives/C010QF119N1/p1746094298003789
-                            # Todo: clarify the confusion here (why release is assigned a genome_datasets)
-                            release=utils.fetch_proper_dataset(gd.dataset.genome_datasets),
+                            release=gd,
                             attributes=attributes
                         )
                         datasets_list.append(dataset_item)

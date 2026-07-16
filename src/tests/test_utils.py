@@ -139,11 +139,8 @@ class TestUtils:
     @pytest.mark.parametrize(
         "allow_unreleased, organism_uuid, expected_count",
         [
-            # FIXME The current version returns 2 assembly.accession, see whether it's test set related or code
-            # (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 1),
-            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 6),
-            # create_stats_by_genome_uuid cannot handle if genome uuidid attached to multiple release and multiple datasert
-            (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 6)
+            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 2),
+            (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 2)
         ],
         indirect=['allow_unreleased']
     )
@@ -158,8 +155,6 @@ class TestUtils:
         output = json.loads(output)
         print(f"top stats {output}")
         print(f"top stats {output['statsByGenomeUuid'][0]['statistics']}")
-        # FIXME when genome is retrieved from multiple release/dataset, stats are duplicated
-        # create_stats_by_genome_uuid(protobuf_msg_factory) cannot handle if genome uuidid attached to multiple release and multiple datasert
         assembly_accession_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
                                     stat['name'] == 'assembly.accession']
         logger.debug(assembly_accession_stats)
@@ -221,7 +216,7 @@ class TestUtils:
         ]
         assert len(regulation_stats) > 0
         assert regulation_stats[0] == {
-            "label": "regulation.stats.enhancer_count",
+            "label": "regulation.enhancer_count",
             "name": "regulation.stats.enhancer_count",
             "statisticType": "integer",
             "statisticValue": "268483",
@@ -247,8 +242,8 @@ class TestUtils:
         [
             (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'assembly', 1),
             (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'genebuild', 1),
-            (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 2),
-            (True, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 2)
+            (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 1),
+            (True, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 1)
         ],
         indirect=['allow_unreleased']
     )

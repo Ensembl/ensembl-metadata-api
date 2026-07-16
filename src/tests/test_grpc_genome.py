@@ -293,14 +293,14 @@ class TestGRPCGenomeAdaptor:
         "genome_uuid, dataset_uuid, status, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, "All", "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 40),
+            (None, None, "All", "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 37),
             (None, None, "Released", "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 20),
             ("8364a820-5485-42d7-a648-1a5eeb858319", None, "All", "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
             # specifying genome_uuid -- Triticum aestivum (SAMEA4791365)
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, "All", "999315f6-6d25-481f-a017-297f7e1490c8", 3),
-            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, "Unreleased_only", "999315f6-6d25-481f-a017-297f7e1490c8", 1),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, "Unreleased_only", "254a68c7-f512-446d-a958-983a2713daf2", 1),
             # fetch unreleased datasets only
-            (None, None, "Unreleased_only", "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 20),
+            (None, None, "Unreleased_only", "9681f4c2-afb4-4a08-8e4d-f26363f65ddf", 17),
             (None, 'f93d21ca-9a24-4c31-ae11-b0f8d3deab6d', "Unreleased_only", "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
         ]
     )
@@ -435,13 +435,13 @@ class TestGRPCGenomeAdaptor:
         "status, group, version, output_count",
         [
             # fetches everything from every release
-            ("Unreleased_only", None, None, 20),
+            ("Unreleased_only", None, None, 17),
             # fetches Metazoa only, no unreleased
             ("Released", 'EnsemblMetazoa', None, 1),
             # fetches Vertebrates only, no unreleased
             ("Released", 'vertebrates', None, 5),
             # fetches Vertebrates only, with unreleased
-            ("All", 'vertebrates', None, 15),
+            ("All", 'vertebrates', None, 12),
             # (True, 'vertebrates', 110.2, 9),  # up to 110.2
             # Broke this one. Not sure if it is necessary.
         ]
