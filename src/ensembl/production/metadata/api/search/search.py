@@ -1083,14 +1083,14 @@ class GenomeSearchIndexer:
 # ============================================================================
 def set_url_name(docs: List[GenomeSearchDocument]) -> List[GenomeSearchDocument]:
     """
-    Sets url_name to accession if the genome is attached to an integrated release
+    Sets url_name to accession if the genome is attached to an integrated release.
+    Clears url_name for partial-only genomes.
     """
-    
-    updated = 0
     for d in docs:
         if d.latest_release_type == "integrated":
-            updated += 1
             d.url_name = d.accession
+        else:
+            d.url_name = ""
     return docs
 
 # ============================================================================
