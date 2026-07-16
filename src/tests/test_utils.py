@@ -354,6 +354,7 @@ class TestUtils:
                 assert output['urlName'] != ""
             assert output['genomeUuid'] == genome_uuid
             assert output['release']['releaseVersion'] == actual
+            assert output['attributesInfo'] != {}
         else:
             assert len(output) == 0
 
