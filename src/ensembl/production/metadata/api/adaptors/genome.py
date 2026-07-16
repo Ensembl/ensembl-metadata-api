@@ -810,68 +810,107 @@ class GenomeAdaptor(BaseAdaptor):
             genomes_dataset_info = []
             # Release check
 
+            seen_genome_uuids = set()
             for genome_release in genomes:
                 logger.debug(f"Retrieved genome {genome_release}")
-                genome_datasets = [gd for gd in genome_release.Genome.genome_datasets if gd.dataset.parent_id is None]
-                if dataset_type_name is not None and dataset_type_name != 'all':
-                    genome_datasets = [gd for gd in genome_datasets if
-                                       gd.dataset.dataset_type.name == dataset_type_name]
+                genome = genome_release.Genome
+                if genome.genome_uuid in seen_genome_uuids:
+                    continue
+                seen_genome_uuids.add(genome.genome_uuid)
+
+                genome_datasets = [
+                    gd for gd in genome.genome_datasets
+                ]
+                if dataset_type_name is None:
+                    genome_datasets = [gd for gd in genome_datasets if gd.dataset.parent_id is None]
+                elif dataset_type_name != "all":
+                    genome_datasets = [
+                        gd for gd in genome_datasets if gd.dataset.dataset_type.name == dataset_type_name
+                    ]
                 # filter release / unreleased
                 if status == GenomeStatus.RELEASED:
                     # TODO see to add is_current as well
-                    genome_datasets = [gd for gd in genome_datasets if gd.dataset.status == DatasetStatus.RELEASED]
+                    genome_datasets = [
+                        gd for gd in genome_datasets
+                        if gd.dataset.status == DatasetStatus.RELEASED
+                        and gd.ensembl_release is not None
+                        and gd.ensembl_release.status == ReleaseStatus.RELEASED
+                    ]
                     # TODO Get only the first one when allow_unreleased
                 if status == GenomeStatus.UNRELEASED_ONLY:
-                    genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release is None or
-                                       gd.ensembl_release.status != DatasetStatus.RELEASED]
+                    genome_datasets = [
+                        gd for gd in genome_datasets
+                        if (gd.ensembl_release is None or gd.ensembl_release.status != ReleaseStatus.RELEASED)
+                        and gd.dataset.status != DatasetStatus.RELEASED
+                    ]
                 if release_version:
-                    genome_datasets = [gd for gd in genome_datasets if
-                                       float(gd.ensembl_release.version) <= release_version]
+                    genome_datasets = [
+                        gd for gd in genome_datasets
+                        if gd.ensembl_release is not None
+                        and float(gd.ensembl_release.version) <= release_version
+                    ]
                 if len(genome_datasets) > 1:
-                    logger.debug(f"{len(genome_release)} genome_datasets found")
-                    logger.debug(f"Retrieved genome_datasets {genome_release}")
+                    logger.debug(f"{len(genome_datasets)} genome_datasets found")
+                    logger.debug(f"Retrieved genome_datasets {genome}")
                     # this means that we have datasets that are released in both integrated and partial,
                     # if it's the case we pick the partial dataset because "if a dataset is provided in a partial release
                     # for an existing genome we would prefer that dataset"
                     # https://genomes-ebi.slack.com/archives/C010QF119N1/p1746101265211759?thread_ts=1746094298.003789&cid=C010QF119N1
                     # TODO: assure that above described logic still valid
                     if status == GenomeStatus.CURRENT:
-                        genome_datasets = [gd for gd in genome_datasets if gd.ensembl_release.release_type == "partial"]
-                if len(genome_datasets) > 0:
-                    datasets_list = []
-                    for gd in genome_datasets:
-                        # Build attributes first
-                        attributes = [
-                            DatasetAttributeItem(
-                                name=ds.attribute.name,
-                                value=ds.value,
-                                type=ds.attribute.type,
-                                label=ds.attribute.label
-                            )
-                            for ds in gd.dataset.dataset_attributes
+                        genome_datasets = [
+                            gd for gd in genome_datasets
+                            if gd.ensembl_release is not None
+                            and gd.ensembl_release.release_type == "partial"
                         ]
+                if len(genome_datasets) > 0:
+                    indexed_datasets = {}
+                    for gd in genome_datasets:
+                        indexed_datasets[gd.genome_dataset_id] = gd
 
-                        # Build dataset item
-                        dataset_item = GenomeDatasetItem(
-                            dataset=gd.dataset,
-                            dataset_type=gd.dataset.dataset_type,
-                            dataset_source=gd.dataset.dataset_source,
-                            # If more than one dataset is available go with the partial dataset.
-                            # If only one dataset is available just go with that one
-                            # Slack discussion: https://genomes-ebi.slack.com/archives/C010QF119N1/p1746094298003789
-                            # Todo: clarify the confusion here (why release is assigned a genome_datasets)
-                            release=utils.fetch_proper_dataset(gd.dataset.genome_datasets),
-                            attributes=attributes
+                    datasets_by_release = {}
+                    for gd in indexed_datasets.values():
+                        datasets_by_release.setdefault(gd.release_id, []).append(gd)
+
+                    def release_sort_key(release_id):
+                        release = datasets_by_release[release_id][0].ensembl_release
+                        if release is None:
+                            return (3, "", 0)
+                        release_status_rank = 0 if release.status == ReleaseStatus.RELEASED else 2
+                        release_type_rank = 0 if release.release_type == "partial" else 1
+                        return (release_status_rank, release_type_rank, -(release.version or 0))
+
+                    for release_id in sorted(datasets_by_release.keys(), key=release_sort_key):
+                        datasets_list = []
+                        for gd in datasets_by_release[release_id]:
+                            # Build attributes first
+                            attributes = [
+                                DatasetAttributeItem(
+                                    name=ds.attribute.name,
+                                    value=ds.value,
+                                    type=ds.attribute.type,
+                                    label=ds.attribute.label
+                                )
+                                for ds in gd.dataset.dataset_attributes
+                            ]
+
+                            # Build dataset item
+                            dataset_item = GenomeDatasetItem(
+                                dataset=gd.dataset,
+                                dataset_type=gd.dataset.dataset_type,
+                                dataset_source=gd.dataset.dataset_source,
+                                release=gd,
+                                attributes=attributes
+                            )
+                            datasets_list.append(dataset_item)
+
+                        # Finally, build the main GenomeDatasetsListItem
+                        genome_item = GenomeDatasetsListItem(
+                            genome=genome,
+                            release=datasets_by_release[release_id][0].ensembl_release or genome_release.EnsemblRelease,
+                            datasets=datasets_list
                         )
-                        datasets_list.append(dataset_item)
-
-                    # Finally, build the main GenomeDatasetsListItem
-                    genome_item = GenomeDatasetsListItem(
-                        genome=genome_release.Genome,
-                        release=genome_release.EnsemblRelease,
-                        datasets=datasets_list
-                    )
-                    genomes_dataset_info.append(genome_item)
+                        genomes_dataset_info.append(genome_item)
 
                 else:
                     logger.warning(f"No dataset retrieved for genome and parameters")

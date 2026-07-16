@@ -127,17 +127,18 @@ def get_top_level_statistics_by_uuid(db_conn, genome_uuid):
     stats_results = db_conn.fetch_genome_datasets(genome_uuid=genome_uuid, dataset_type_name="all")
 
     statistics = []
-    # FIXME stats_results can contain multiple entries
     if len(stats_results) > 0:
-
-        for dataset in stats_results[0].datasets:
-            for attribute in dataset.attributes:
-                statistics.append({
-                    'name': attribute.name,
-                    'label': attribute.label,
-                    'statistic_type': attribute.type,
-                    'statistic_value': attribute.value
-                })
+        for result in stats_results:
+            for dataset in result.datasets:
+                for attribute in dataset.attributes:
+                    statistics.append(
+                        {
+                            "name": attribute.name,
+                            "label": attribute.label,
+                            "statistic_type": attribute.type,
+                            "statistic_value": attribute.value,
+                        }
+                    )
 
         statistics.sort(key=lambda x: x['name'])
         response_data = msg_factory.create_top_level_statistics_by_uuid(
@@ -175,9 +176,14 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
 
     logger.debug(f"Genome Datasets Retrieved: {attrib_data_results}")
     attribs = []
+    datasets = []
     if len(attrib_data_results) > 0:
-        for dataset in attrib_data_results[0].datasets:
-            attribs.extend(dataset.attributes)
+        for dataset_group in attrib_data_results:
+            datasets.extend(dataset_group.datasets)
+
+        for dataset_group in reversed(attrib_data_results):
+            for dataset in dataset_group.datasets:
+                attribs.extend(dataset.attributes)
 
     # fetch related assemblies count
     related_assemblies_count = db_conn.fetch_assemblies_count(genome.Organism.species_taxonomy_id)
@@ -189,7 +195,7 @@ def create_genome_with_attributes_and_count(db_conn, genome, release_version):
         attributes=attribs,
         count=related_assemblies_count,
         alternative_names=alternative_names,
-        datasets=attrib_data_results[0].datasets
+        datasets=datasets
     )
 
 
