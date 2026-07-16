@@ -285,6 +285,38 @@ class TestGenomeSearchDocument:
 
         assert [field.value for field in genome_group_fields] == [1, 2]
 
+    def test_document_serializes_url_name(self, test_dbs):
+        """Test url_name is preserved when converting to search fields."""
+        doc = GenomeSearchDocument(
+            genome_uuid="test-uuid",
+            scientific_name="Homo sapiens",
+            assembly_name="GRCh38",
+            accession="GCA_000001405.15",
+            url_name="GCA_000001405.15",
+            is_reference=True,
+            species_taxonomy_id=9606,
+            taxonomy_id=9606,
+            organism_uuid="test-organism-uuid",
+            first_release_name="112",
+            first_release_type="integrated",
+            latest_release_name="112",
+            latest_release_type="integrated",
+            is_latest_release_current=1,
+            releases="112",
+            lineage_taxon_id=[9606],
+            lineage_common_name=["human"],
+            lineage_scientific_name=["Homo sapiens"],
+            contig_n50=50000000,
+            coding_genes=20000,
+            genebuild_provider="Ensembl",
+            genebuild_method_display="Import",
+        )
+
+        entry = doc.to_search_entry()
+        url_name_field = next(field for field in entry.fields if field.name == "url_name")
+
+        assert url_name_field.value == "GCA_000001405.15"
+
     def test_document_serializes_lineage_as_repeated_fields(self, test_dbs):
         """Test lineage values are emitted as repeated search fields."""
         doc = GenomeSearchDocument(

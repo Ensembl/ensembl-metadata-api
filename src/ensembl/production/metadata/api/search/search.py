@@ -196,7 +196,7 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="annotation_method", value=self.genebuild_method_display),
             SearchField(name="annotation_provider", value=self.genebuild_provider),
             SearchField(name="genome_uuid", value=self.genome_uuid),
-            SearchField(name="url_name", value=""),
+            SearchField(name="url_name", value=self.url_name or ""),
             SearchField(name="tol_id", value=self.tol_id or ""),
             SearchField(name="is_reference", value=self.is_reference),
             SearchField(name="species_taxonomy_id", value=self.species_taxonomy_id),
