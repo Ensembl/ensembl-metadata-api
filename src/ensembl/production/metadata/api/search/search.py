@@ -140,7 +140,7 @@ class GenomeSearchDocument(BaseModel):
     strain: Optional[str] = None
     assembly_name: str
     accession: str
-    ftp: str
+    ftp_url: str
     url_name: Optional[str] = None
     tol_id: Optional[str] = None
     is_reference: bool
@@ -186,7 +186,7 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="scientific_name", value=self.scientific_name),
             SearchField(name="assembly", value=self.assembly_name),
             SearchField(name="assembly_accession", value=self.accession),
-            SearchField(name="ftp", value=self.ftp),
+            SearchField(name="ftp_url", value=self.ftp_url),
             SearchField(name="unversioned_assembly_accession", value=unversioned_accession),
             SearchField(name="type_value", value=self.strain or ""),
             SearchField(name="parlance_name", value=self.scientific_parlance_name or ""),
@@ -948,7 +948,7 @@ class GenomeSearchIndexer:
                 "genebuild_method_display": dataset_extractor.get_genebuild_method_display(),
             }
         )
-        doc_data["ftp"] = self._get_ftp_path(genome, release)
+        doc_data["ftp_url"] = self._get_ftp_path(genome, release)
 
         doc_data.update(self._get_taxonomy_lineage(taxonomy_session, genome.organism.taxonomy_id))
 
