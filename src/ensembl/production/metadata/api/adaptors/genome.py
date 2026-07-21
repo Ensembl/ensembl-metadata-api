@@ -25,6 +25,7 @@ from sqlalchemy.orm import aliased
 
 from ensembl.production.metadata.api.adaptors.base import BaseAdaptor, check_parameter, cfg
 from ensembl.production.metadata.api.exceptions import TypeNotFoundException
+from ensembl.production.metadata.api.factories.utils import format_accession_path
 from ensembl.production.metadata.api.models import *
 
 logger = logging.getLogger(__name__)
@@ -382,7 +383,7 @@ class GenomeAdaptor(BaseAdaptor):
                             or_(
                                 or_(
                                     EnsemblRelease.release_date > Er_2.release_date,
-                                    Er_2.release_date is None 
+                                    Er_2.release_date.is_(None)
                                 ),
                                 and_(
                                     EnsemblRelease.release_date == Er_2.release_date,
@@ -494,10 +495,10 @@ class GenomeAdaptor(BaseAdaptor):
                         EnsemblRelease.release_type == "partial",
                         GenomeRelease.is_current == 1),
                     and_(
-                        EnsemblRelease.release_type == "integrated", 
+                        EnsemblRelease.release_type == "integrated",
                         EnsemblRelease.is_current == 1
                     )
-                )       
+                )
             )
 
         provided_fields = [
@@ -586,7 +587,7 @@ class GenomeAdaptor(BaseAdaptor):
             .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id) \
             .join(EnsemblSite,
                   EnsemblRelease.site_id == EnsemblSite.site_id & EnsemblSite.site_id == cfg.ensembl_site_id)
-        if status == GenomeStatus.RELEASED or GenomeStatus.CURRENT:
+        if status in (GenomeStatus.RELEASED, GenomeStatus.CURRENT):
             genome_query = genome_query.filter(EnsemblRelease.status == ReleaseStatus.RELEASED)
         if release_version is not None and release_version > 0:
             genome_query = genome_query.where(EnsemblRelease.version == release_version)        
@@ -1184,14 +1185,47 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(member_select).all()
 
-    def get_public_path(self, genome_uuid, dataset_type='all'):
+    def get_public_path(self, genome_uuid, dataset_type='all', release=None):
+        """
+        Retrieve public file paths for genomic datasets.
+
+        Args:
+            genome_uuid (str): Unique identifier for the genome
+            dataset_type (str): Type of dataset ('genebuild', 'assembly', 'homologies', 'short_variants', or 'all')
+            release (str, optional): Specific Ensembl release label. If None, uses current release.
+
+        Returns:
+            list: List of dictionaries containing dataset_type and path information
+
+        Raises:
+            ValueError: If genome_uuid or release not found, or required metadata missing
+            TypeNotFoundException: If requested dataset_type is not available
+        """
         paths = []
         scientific_name = None
         accession = None
         genebuild_source_name = None
         last_geneset_update = None
+        if dataset_type == "variation":
+            dataset_type = "short_variants"
+
         with self.metadata_db.session_scope() as session:
-            # Single combined query to get all required data
+            # === VALIDATION SECTION ===
+            genome_exists = session.execute(
+                select(Genome.genome_uuid).where(Genome.genome_uuid == genome_uuid)
+            ).first()
+            if not genome_exists:
+                raise ValueError(f"Genome with UUID {genome_uuid} not found")
+
+            if release is not None:
+                release_exists = session.execute(
+                    select(EnsemblRelease.label).where(EnsemblRelease.label == release)
+                ).first()
+                if not release_exists:
+                    raise ValueError(f"Ensembl release with label '{release}' not found")
+
+            # === METADATA RETRIEVAL ===
+            # Get core genome metadata: organism name, assembly accession, and genebuild info
             query = select(
                 Organism.scientific_name,
                 Assembly.accession,
@@ -1221,54 +1255,150 @@ class GenomeAdaptor(BaseAdaptor):
             else:
                 scientific_name = accession = genebuild_source_name = last_geneset_update = None
 
-            # Query for which of the 5 supported dataset types exist for this genome
+            # === DATASET TYPE DISCOVERY ===
             supported_types = ["genebuild", "assembly", "homologies", "short_variants"]
             unique_dataset_types_query = select(DatasetType.name).distinct().join(
                 Dataset
             ).join(GenomeDataset).join(Genome).where(
                 Genome.genome_uuid == genome_uuid,
-                DatasetType.name.in_(supported_types)
+                DatasetType.name.in_(supported_types),
+                Dataset.status == DatasetStatus.RELEASED
             )
             unique_dataset_types = session.execute(unique_dataset_types_query).scalars().all()
+
+            variation_release = None
+            homology_release = None
+
+            # === RELEASE HANDLING ===
+            if release is None:
+                if "short_variants" in unique_dataset_types and dataset_type in ("all", "short_variants"):
+                    variation_release = (
+                        session.execute(
+                            select(EnsemblRelease.label)
+                            .join(GenomeDataset)
+                            .join(Dataset)
+                            .join(DatasetType)
+                            .join(Genome)
+                            .where(
+                                Genome.genome_uuid == genome_uuid,
+                                DatasetType.name == "short_variants",
+                                Dataset.status == DatasetStatus.RELEASED,
+                                GenomeDataset.is_current == True,
+                                EnsemblRelease.release_type == "partial",
+                            )
+                            .order_by(EnsemblRelease.release_id.desc())
+                        )
+                        .scalars()
+                        .first()
+                    )
+
+                if 'homologies' in unique_dataset_types and dataset_type in ('all', 'homologies'):
+                    homology_release = session.execute(
+                        select(EnsemblRelease.label).join(GenomeDataset).join(Dataset).join(DatasetType).join(
+                            Genome).where(
+                            Genome.genome_uuid == genome_uuid,
+                            DatasetType.name == 'homologies',
+                            Dataset.status == DatasetStatus.RELEASED,
+                            GenomeDataset.is_current == True,
+                            EnsemblRelease.release_type == 'partial'
+                        ).order_by(EnsemblRelease.release_id.desc())
+                    ).scalars().first()
+            else:
+                if "short_variants" in unique_dataset_types and dataset_type in ("all", "short_variants"):
+                    variation_release = (
+                        session.execute(
+                            select(EnsemblRelease.label)
+                            .join(GenomeDataset)
+                            .join(Dataset)
+                            .join(DatasetType)
+                            .join(Genome)
+                            .where(
+                                Genome.genome_uuid == genome_uuid,
+                                DatasetType.name == "short_variants",
+                                Dataset.status == DatasetStatus.RELEASED,
+                                EnsemblRelease.release_type == "partial",
+                                EnsemblRelease.release_id
+                                <= (
+                                    select(EnsemblRelease.release_id)
+                                    .where(EnsemblRelease.label == release)
+                                    .scalar_subquery()
+                                ),
+                            )
+                            .order_by(EnsemblRelease.release_id.desc())
+                        )
+                        .scalars()
+                        .first()
+                    )
+
+                    if variation_release is None:
+                        unique_dataset_types = [t for t in unique_dataset_types if t != "short_variants"]
+
+                if 'homologies' in unique_dataset_types and dataset_type in ('all', 'homologies'):
+                    homology_release = session.execute(
+                        select(EnsemblRelease.label).join(GenomeDataset).join(Dataset).join(DatasetType).join(
+                            Genome).where(
+                            Genome.genome_uuid == genome_uuid,
+                            DatasetType.name == 'homologies',
+                            Dataset.status == DatasetStatus.RELEASED,
+                            EnsemblRelease.release_type == 'partial',
+                            EnsemblRelease.release_id <= (
+                                select(EnsemblRelease.release_id).where(
+                                    EnsemblRelease.label == release).scalar_subquery()
+                            )
+                        ).order_by(EnsemblRelease.release_id.desc())
+                    ).scalars().first()
+
+                    if homology_release is None:
+                        unique_dataset_types = [t for t in unique_dataset_types if t != 'homologies']
+
+        # === DATA VALIDATION ===
+        if 'genebuild' not in unique_dataset_types or 'assembly' not in unique_dataset_types:
+            raise ValueError(
+                f"Missing genebuild or assembly dataset types. Something is seriously wrong with {genome_uuid}")
 
         if scientific_name is None or accession is None or genebuild_source_name is None or last_geneset_update is None:
             raise ValueError("Required metadata fields are missing. Please check the database entries.")
 
-        match = re.match(r'^(\d{4}-\d{2})', last_geneset_update)  # Match format YYYY-MM
+        # === PATH CONSTRUCTION ===
+        match = re.match(r'^(\d{4}-\d{2})', last_geneset_update)
+        if not match:
+            raise ValueError(f"Invalid last_geneset_update format: {last_geneset_update}")
         last_geneset_update = match.group(1).replace('-', '_')
-        scientific_name = re.sub(r'[^a-zA-Z0-9]+', ' ', scientific_name)
-        scientific_name = scientific_name.replace(' ', '_')
-        scientific_name = re.sub(r'^_+|_+$', '', scientific_name)
+
         genebuild_source_name = genebuild_source_name.lower()
-        base_path = f"{scientific_name}/{accession}"
-        common_path = f"{base_path}/{genebuild_source_name}"
+
+        base_path = format_accession_path(accession)
+        common_path = f"{base_path}/{genebuild_source_name}/{last_geneset_update}"
+
+        if 'homologies' in unique_dataset_types and homology_release:
+            homology_release = homology_release.replace('-', '_')
+        if "short_variants" in unique_dataset_types and variation_release:
+            variation_release = variation_release.replace('-', '_')
 
         path_templates = {
-            "genebuild": f"{common_path}/geneset/{last_geneset_update}",
-            "assembly": f"{base_path}/genome",
-            "homologies": f"{common_path}/homology/{last_geneset_update}",
-            "short_variants": f"{common_path}/variation/{last_geneset_update}",
+            "genebuild": f"{common_path}/geneset",
+            "assembly": f"{common_path}/genome",
+            "homologies": f"{common_path}/homology/{homology_release}",
+            "short_variants": f"{common_path}/variation/{variation_release}",
         }
 
-        # Check for invalid dataset type early
+        # === REQUEST VALIDATION ===
         if dataset_type not in unique_dataset_types and dataset_type != 'all':
             raise TypeNotFoundException(f"Dataset Type : {dataset_type} not found in metadata.")
 
-        # If 'all', add paths for all unique dataset types
+        # === PATH GENERATION ===
         if dataset_type == 'all':
-            for t in unique_dataset_types:
+            for dataset_type_name in unique_dataset_types:
                 paths.append({
-                    "dataset_type": t,
-                    "path": path_templates[t]
+                    "dataset_type": dataset_type_name,
+                    "path": path_templates[dataset_type_name]
                 })
         elif dataset_type in path_templates:
-            # Add path for the specific dataset type
             paths.append({
                 "dataset_type": dataset_type,
                 "path": path_templates[dataset_type]
             })
         else:
-            # If the code reaches here, it means there is a logic error
             raise TypeNotFoundException(f"Dataset Type : {dataset_type} has no associated path.")
 
         return paths

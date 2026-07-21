@@ -181,6 +181,7 @@ class TestGenomeSearchDocument:
             scientific_name="Homo sapiens",
             assembly_name="GRCh38",
             accession="GCA_000001405.15",
+            ftp_url="http://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/",
             is_reference=True,
             species_taxonomy_id=9606,
             taxonomy_id=9606,
@@ -220,6 +221,7 @@ class TestGenomeSearchDocument:
             strain="GRCh38",
             assembly_name="GRCh38",
             accession="GCA_000001405.15",
+            ftp_url="http://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/",
             url_name="homo_sapiens",
             tol_id="mHomSap1",
             is_reference=True,
@@ -260,6 +262,7 @@ class TestGenomeSearchDocument:
             scientific_name="Homo sapiens",
             assembly_name="GRCh38",
             accession="GCA_000001405.15",
+            ftp_url="http://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/",
             is_reference=True,
             species_taxonomy_id=9606,
             taxonomy_id=9606,
@@ -281,8 +284,13 @@ class TestGenomeSearchDocument:
         )
 
         entry = doc.to_search_entry()
+        ftp_url_fields = [field for field in entry.fields if field.name == "ftp_url"]
         genome_group_fields = [field for field in entry.fields if field.name == "genome_group_ids"]
 
+        assert [field.value for field in ftp_url_fields] == [
+            "http://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/"
+        ]
+        assert not any(field.name == "ftp" for field in entry.fields)
         assert [field.value for field in genome_group_fields] == [1, 2]
 
     def test_document_serializes_lineage_as_repeated_fields(self, test_dbs):
@@ -292,6 +300,7 @@ class TestGenomeSearchDocument:
             scientific_name="Homo sapiens",
             assembly_name="GRCh38",
             accession="GCA_000001405.15",
+            ftp_url="http://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/",
             is_reference=True,
             species_taxonomy_id=9606,
             taxonomy_id=9606,
@@ -365,6 +374,7 @@ class TestGenomeSearchDocument:
             scientific_name="Homo sapiens",
             assembly_name="GRCh38",
             accession="GCA_000001405.15",
+            ftp_url="http://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/",
             is_reference=True,
             species_taxonomy_id=9606,
             taxonomy_id=9606,
@@ -397,6 +407,7 @@ class TestGenomeSearchDocument:
                 scientific_name="Homo sapiens",
                 assembly_name="GRCh38",
                 accession="GCA_000001405.15",
+                ftp_url="http://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/",
                 is_reference=True,
                 species_taxonomy_id=9606,
                 taxonomy_id=9606,
@@ -421,6 +432,7 @@ class TestGenomeSearchDocument:
                 scientific_name="Homo sapiens",
                 assembly_name="GRCh38",
                 accession="GCA_000001405.15",
+                ftp_url="http://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/15/ensembl/2022_07/",
                 is_reference=True,
                 species_taxonomy_id=9606,
                 taxonomy_id=9606,
