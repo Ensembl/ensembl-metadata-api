@@ -821,6 +821,22 @@ class TestUtils:
     #     assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
 
     @pytest.mark.parametrize(
+        "genome_tag, expected_output",
+        [
+            ("grch38", {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            ("iDontExist", {}),
+        ],
+    )
+    def test_get_genome_uuid_by_tag(self, genome_conn, genome_tag, expected_output):
+        output = json_format.MessageToJson(
+            utils.get_genome_uuid_by_tag(
+                db_conn=genome_conn,
+                genome_tag=genome_tag,
+            )
+        )
+        assert json.loads(output) == expected_output
+
+    @pytest.mark.parametrize(
         "genome_uuid, dataset_type, release_version, expected_output",
         [
             # valid genome uuid and no dataset should return all the datasets links of that genome uuid

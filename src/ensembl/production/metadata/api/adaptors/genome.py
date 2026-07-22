@@ -191,6 +191,7 @@ class GenomeAdaptor(BaseAdaptor):
             self,
             genome_id=None,
             genome_uuid=None,
+            genome_tag=None,
             organism_uuid=None,
             assembly_uuid=None,
             assembly_accession=None,
@@ -216,6 +217,7 @@ class GenomeAdaptor(BaseAdaptor):
         Args:
             genome_id (Union[int, List[int]]): The ID(s) of the genome(s) to fetch.
             genome_uuid str|None: The UUID of the genome to fetch.
+            genome_tag (Union[str, List[str]]): Genome URL name or organism Tree of Life ID.
             organism_uuid (Union[str, List[str]]): The UUID(s) of the organism(s) to fetch.
             assembly_uuid (Union[str, List[str]]): The UUID(s) of the assembly(s) to fetch.
             assembly_accession (Union[str, List[str]]): The assenbly accession of the assembly(s) to fetch.
@@ -248,6 +250,7 @@ class GenomeAdaptor(BaseAdaptor):
         """
         # Parameter normalization (to list)
         genome_id = check_parameter(genome_id)
+        genome_tag = check_parameter(genome_tag)
         organism_uuid = check_parameter(organism_uuid)
         assembly_uuid = check_parameter(assembly_uuid)
         assembly_accession = check_parameter(assembly_accession)
@@ -307,6 +310,11 @@ class GenomeAdaptor(BaseAdaptor):
 
         if genome_uuid is not None:
             genome_select = genome_select.filter(Genome.genome_uuid == genome_uuid)
+
+        if genome_tag is not None:
+            genome_select = genome_select.filter(
+                db.or_(Genome.url_name.in_(genome_tag), Organism.tol_id.in_(genome_tag))
+            )
 
         if organism_uuid is not None:
             genome_select = genome_select.filter(Organism.organism_uuid.in_(organism_uuid))
