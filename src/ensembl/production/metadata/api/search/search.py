@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, joinedload
 
+from ensembl.production.metadata.api.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.api.models import (
     Genome,
     Dataset,
@@ -139,6 +140,7 @@ class GenomeSearchDocument(BaseModel):
     strain: Optional[str] = None
     assembly_name: str
     accession: str
+    ftp_url: str
     url_name: Optional[str] = None
     tol_id: Optional[str] = None
     is_reference: bool
@@ -185,6 +187,7 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="scientific_name", value=self.scientific_name),
             SearchField(name="assembly", value=self.assembly_name),
             SearchField(name="assembly_accession", value=self.accession),
+            SearchField(name="ftp_url", value=self.ftp_url),
             SearchField(name="unversioned_assembly_accession", value=unversioned_accession),
             SearchField(name="type_value", value=self.strain or ""),
             SearchField(name="parlance_name", value=self.scientific_parlance_name or ""),
@@ -516,9 +519,12 @@ class ReleaseSelector:
 class GenomeSearchIndexer:
     """Service for generating genome search documents"""
 
+    FTP_BASE_URL = "http://ftp.ebi.ac.uk/pub/ensemblorganisms"
+
     def __init__(self, metadata_uri: str, taxonomy_uri: str, batch_size: int = 500):
         self.metadata_db = DBConnection(metadata_uri)
         self.taxonomy_db = DBConnection(taxonomy_uri)
+        self.genome_adaptor = GenomeAdaptor(self.metadata_db, self.taxonomy_db)
         self.release_selector = ReleaseSelector()
         self.batch_size = batch_size
 
@@ -629,6 +635,32 @@ class GenomeSearchIndexer:
             "rank": genome.organism.rank or 0,
             "genome_group_ids": self._extract_genome_group_ids(genome),
         }
+
+    def _get_ftp_path(self, genome: Genome, release: EnsemblRelease) -> str:
+        """
+        Build the search FTP URL using GenomeAdaptor.get_public_path as the source of truth.
+
+        get_public_path returns dataset-specific relative paths. The search index stores
+        the genome-level FTP directory, so use the genebuild path and remove its final
+        dataset directory.
+        """
+        paths = self.genome_adaptor.get_public_path(
+            genome_uuid=genome.genome_uuid,
+            dataset_type="genebuild",
+            release=release.label if release else None,
+        )
+
+        genebuild_path = next(
+            (path_info["path"] for path_info in paths if path_info["dataset_type"] == "genebuild"),
+            None,
+        )
+        if not genebuild_path:
+            raise MissingDatasetFieldError(
+                f"Could not construct FTP path for genome {genome.genome_uuid}: genebuild path not found"
+            )
+
+        genome_path = genebuild_path.removesuffix("/geneset")
+        return f"{self.FTP_BASE_URL}/{genome_path}/"
 
     def _extract_genome_group_ids(self, genome: Genome) -> List[int]:
         """Extract current genome group IDs for repeated search fields."""
@@ -783,6 +815,7 @@ class GenomeSearchIndexer:
                 "genebuild_method_display": dataset_extractor.get_genebuild_method_display(),
             }
         )
+        doc_data["ftp_url"] = self._get_ftp_path(genome, release)
 
         doc_data.update(self._get_taxonomy_lineage(taxonomy_session, genome.organism.taxonomy_id))
 

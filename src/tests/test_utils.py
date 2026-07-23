@@ -147,11 +147,8 @@ class TestUtils:
     @pytest.mark.parametrize(
         "allow_unreleased, organism_uuid, expected_count",
         [
-            # FIXME The current version returns 2 assembly.accession, see whether it's test set related or code
-            # (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 1),
-            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 6),
-            # create_stats_by_genome_uuid cannot handle if genome uuidid attached to multiple release and multiple datasert
-            (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 6)
+            (False, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 2),
+            (True, "86dd50f1-421e-4829-aca5-13ccc9a459f6", 2)
         ],
         indirect=['allow_unreleased']
     )
@@ -166,8 +163,6 @@ class TestUtils:
         output = json.loads(output)
         print(f"top stats {output}")
         print(f"top stats {output['statsByGenomeUuid'][0]['statistics']}")
-        # FIXME when genome is retrieved from multiple release/dataset, stats are duplicated
-        # create_stats_by_genome_uuid(protobuf_msg_factory) cannot handle if genome uuidid attached to multiple release and multiple datasert
         assembly_accession_stats = [stat for stat in output['statsByGenomeUuid'][0]['statistics'] if
                                     stat['name'] == 'assembly.accession']
         logger.debug(assembly_accession_stats)
@@ -217,6 +212,32 @@ class TestUtils:
             'statisticType': 'integer',
             'statisticValue': '22'
         }
+        variation_short_variants = [stat for stat in output['statistics'] if
+                                    stat['name'] == 'variation.stats.short_variants']
+        assert len(variation_short_variants) == 2
+        assert variation_short_variants[0] == {
+            'label': 'Short variants',
+            'name': 'variation.stats.short_variants',
+            'statisticType': 'integer',
+            'statisticValue': '25626842'
+        }
+
+    def test_get_top_level_statistics_by_uuid_includes_regulation_tracks(self, genome_conn):
+        output = json_format.MessageToJson(
+            utils.get_top_level_statistics_by_uuid(genome_conn, "a7335667-93e7-11ec-a39d-005056b38ce3")
+        )
+        output = json.loads(output)
+
+        regulation_stats = [
+            stat for stat in output["statistics"] if stat["name"] == "regulation.stats.enhancer_count"
+        ]
+        assert len(regulation_stats) > 0
+        assert regulation_stats[0] == {
+            "label": "regulation.enhancer_count",
+            "name": "regulation.stats.enhancer_count",
+            "statisticType": "integer",
+            "statisticValue": "268483",
+        }
 
     def test_get_datasets_list_by_uuid(self, genome_conn):
         # the expected_output is too long and duplicated
@@ -238,8 +259,8 @@ class TestUtils:
         [
             (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'assembly', 1),
             (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'genebuild', 1),
-            (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 2),
-            (True, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 2)
+            (False, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 1),
+            (True, '9caa2cae-d1c8-4cfc-9ffd-2e13bc3e95b1', 'homologies', 1)
         ],
         indirect=['allow_unreleased']
     )
@@ -463,6 +484,7 @@ class TestUtils:
                 assert output['urlName'] != ""
             assert output['genomeUuid'] == genome_uuid
             assert output['release']['releaseVersion'] == actual
+            assert output['attributesInfo'] != {}
         else:
             assert len(output) == 0
 
@@ -797,6 +819,22 @@ class TestUtils:
     #     # and pick up the first element to check if it matches the expected output
     #     # I picked up only the first element for the sake of shortening the code
     #     assert json_output['organismsGroupCount'][0] == expected_output['organismsGroupCount'][0]
+
+    @pytest.mark.parametrize(
+        "genome_tag, expected_output",
+        [
+            ("grch38", {"genomeUuid": "a7335667-93e7-11ec-a39d-005056b38ce3"}),
+            ("iDontExist", {}),
+        ],
+    )
+    def test_get_genome_uuid_by_tag(self, genome_conn, genome_tag, expected_output):
+        output = json_format.MessageToJson(
+            utils.get_genome_uuid_by_tag(
+                db_conn=genome_conn,
+                genome_tag=genome_tag,
+            )
+        )
+        assert json.loads(output) == expected_output
 
     @pytest.mark.parametrize(
         "genome_uuid, dataset_type, release_version, expected_output",

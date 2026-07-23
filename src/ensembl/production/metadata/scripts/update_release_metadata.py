@@ -71,7 +71,7 @@ def main() -> int:
         return 1
 
     try:
-        rf.pre_release_check(release_id=args.release_id)
+        rf.pre_release_check(args.release_id)
     except Exception:
         logger.exception("Pre-release checks failed for id=%s", args.release_id)
         return 2
