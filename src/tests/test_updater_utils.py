@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
     "test_dbs",
     [
         [
-            {'src': Path(__file__).parent / "databases" / "ensembl_genome_metadata"},
-            {'src': Path(__file__).parent / "databases" / "ncbi_taxonomy"},
+            {'src': Path(__file__).parent / "databases" / "updater_utils" / "ensembl_genome_metadata"},
+            {'src': Path(__file__).parent / "databases" / "updater_utils" / "ncbi_taxonomy"},
         ]
     ],
     indirect=True,
