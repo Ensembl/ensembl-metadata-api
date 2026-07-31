@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 """One-off script: backfill the `compara.homology_reference_set` dataset attribute.
 
-For every genome in a given **partial** release that has a `homologies`
-dataset for that release but is missing the `compara.homology_reference_set`
-dataset attribute, compute the reference collection via
-`get_homology_reference_collection()` and store it.
+For every genome *released* in a given **partial** release (regardless of
+which release its current `homologies` dataset happens to be stamped with)
+that is missing the `compara.homology_reference_set` dataset attribute,
+compute the reference collection via `get_homology_reference_collection()`
+and store it.
 
 Usage:
     python backfill_homology_reference_set.py \
@@ -27,6 +28,7 @@ from ensembl.production.metadata.api.models import (
     Genome,
     GenomeDataset,
     GenomeGroup,
+    GenomeRelease,
 )
 from ensembl.production.metadata.updater.updater_utils import (
     get_homology_reference_collection,
@@ -79,14 +81,17 @@ def check_preconditions(session) -> None:
 
 
 def iter_current_homology_datasets(session, release_id: int):
-    """Yield (Genome, Dataset) for every genome with a 'homologies' dataset in the given release."""
+    """Yield (Genome, Dataset) for every genome *released* in ``release_id``, paired with its
+    current 'homologies' dataset (which may itself be stamped with a different, e.g. later,
+    release_id than the genome's own release)."""
     query = (
         session.query(Genome, Dataset)
+        .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
         .join(GenomeDataset, GenomeDataset.genome_id == Genome.genome_id)
         .join(Dataset, Dataset.dataset_id == GenomeDataset.dataset_id)
         .options(joinedload(Genome.organism))
+        .filter(GenomeRelease.release_id == release_id)
         .filter(Dataset.dataset_type.has(name=DATASET_TYPE_NAME))
-        .filter(GenomeDataset.release_id == release_id)
         .filter(GenomeDataset.is_current == 1)
     )
     yield from query.all()
