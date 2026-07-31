@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from collections import namedtuple
+from decimal import Decimal
 from unittest.mock import patch
 from urllib.parse import urlparse
 
@@ -20,6 +21,7 @@ from ensembl.production.metadata.scripts.copy_handover_files import *
 from ensembl.production.metadata.scripts.create_datasets_json import *
 from ensembl.production.metadata.scripts.delete_ftp_by_uuid import *
 from ensembl.production.metadata.scripts.organism_to_organismgroup import *
+from ensembl.production.metadata.scripts.prepare_integrated_release import main as prepare_integrated_release_main
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -222,6 +224,28 @@ class TestScripts:
                     session, organism_id, group_id, remove=True
                 )
                 assert "removed successfully" in msg or "not found" in msg
+
+    @patch('ensembl.production.metadata.scripts.prepare_integrated_release.ReleaseFactory')
+    def test_prepare_integrated_release_script_invokes_factory(self, mock_release_factory, test_dbs):
+        """Test prepare_integrated_release script calls ReleaseFactory.prepare_integrated_release."""
+        mock_instance = mock_release_factory.return_value
+        mock_instance.prepare_integrated_release.return_value = type(
+            'Release', (), {'name': 'I2', 'release_id': 123}
+        )()
+
+        with patch('sys.argv', [
+            'prepare_integrated_release.py',
+            '--release-name', 'I2',
+            '--release-version', '200.0',
+            '--metadata-db-uri', 'sqlite:///:memory:'
+        ]):
+            result = prepare_integrated_release_main()
+
+        assert result == 0
+        mock_instance.prepare_integrated_release.assert_called_once_with(
+            version=Decimal('200.0'),
+            name='I2'
+        )
 
     def test_json_file_structure_for_ftp_copy(self, test_dbs, tmp_path):
         """Test that ftp_copy can parse expected JSON structure."""

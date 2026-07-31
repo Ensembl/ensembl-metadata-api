@@ -62,11 +62,14 @@ class DatasetFactory:
         session.commit()
         return dataset.dataset_uuid, dataset.status
 
-    def create_all_child_datasets(self, dataset_uuid: str,
-                                  session: sqlalchemy.orm.Session = None,
-                                  topic: str = 'production_process',
-                                  status: DatasetStatus = None,
-                                  release: EnsemblRelease = None):
+    def create_all_child_datasets(
+        self,
+        dataset_uuid: str,
+        session: sqlalchemy.orm.Session = None,
+        topic: str = None,
+        status: DatasetStatus = None,
+        release: EnsemblRelease = None,
+    ):
         # CURRENTLY BROKEN FOR STATUS AND RELEASE. Marc broke it with his last update. Trace back to fix.
         # Retrieve the top-level dataset
         # Will not work on datasets that are tied to multiple genomes!
@@ -125,6 +128,7 @@ class DatasetFactory:
             status=status,
             parent_id=parent.dataset_id if parent else None
         )
+        session.add(new_dataset)
         if dataset_attributes is not None:
             new_dataset_attributes = update_attributes(new_dataset, dataset_attributes, session)
         else:
@@ -367,9 +371,11 @@ class DatasetFactory:
                 all_child_datasets.append((dataset.dataset_uuid, None))
                 child_uuids = [child_uuid for child_uuid, _ in all_child_datasets]
 
-                session.query(GenomeDataset).filter(GenomeDataset.dataset_id.in_(child_uuids)).update(
-                    {"release_id": None}, synchronize_session=False
-                )
+                session.query(GenomeDataset).filter(
+                    GenomeDataset.dataset_id.in_(
+                        session.query(Dataset.dataset_id).filter(Dataset.dataset_uuid.in_(child_uuids))
+                    )
+                ).update({"release_id": None}, synchronize_session=False)
                 logger.info(f"Removed release from dataset {dataset.dataset_uuid} and {len(child_uuids)} children")
                 continue  # Skip further processing for this dataset
             if has_valid_status or (dataset.status in valid_statuses and not has_faulty):
@@ -698,7 +704,6 @@ class DatasetFactory:
             all_child_datasets.extend(sub_children)
         return all_child_datasets
 
-
     def __update_status(self, session, dataset_uuid, status):
         # Processed to Released. Only accept top level. Check that all assembly and genebuild datsets (all the way down) are processed.
         # Then convert all to "Released".
@@ -800,4 +805,3 @@ class DatasetFactory:
         # Execute query and fetch results
         results = query
         return results
-

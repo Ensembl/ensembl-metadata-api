@@ -30,13 +30,13 @@ from ensembl_metadata_pb2 import (
     OrganismsGroupRequest,
     AssemblyRegionRequest,
     GenomeAssemblySequenceRegionRequest,
-    GenomeTagRequest,
     FTPLinksRequest,
     ReleaseVersionRequest,
     GenomeByReleaseVersionRequest,
     GroupTypeRequest,
     GenomesInGroupRequest,
     GenomeCountsRequest,
+    ReleaseInfoRequest,
 )
 
 
@@ -330,25 +330,6 @@ def get_organisms_group_count(stub):
     print(organisms_group_count)
 
 
-def get_genome_uuid_by_tag(stub):
-    request1 = GenomeTagRequest(genome_tag="grch37")
-    genome_uuid1 = stub.GetGenomeUUIDByTag(request1)
-    request2 = GenomeTagRequest(genome_tag="grch38")
-    genome_uuid2 = stub.GetGenomeUUIDByTag(request2)
-    request3 = GenomeTagRequest(genome_tag="r64-1-1")
-    genome_uuid3 = stub.GetGenomeUUIDByTag(request3)
-    request4 = GenomeTagRequest(genome_tag="foo")
-    genome_uuid4 = stub.GetGenomeUUIDByTag(request4)
-
-    print("**** Genome Tag: grch37 ****")
-    print(genome_uuid1)
-    print("**** Genome Tag: grch38 ****")
-    print(genome_uuid2)
-    print("**** Genome Tag: r64-1-1 ****")
-    print(genome_uuid3)
-    print("**** Genome Tag: foo ****")
-    print(genome_uuid4)
-
 
 def get_ftp_links(stub):
 
@@ -492,12 +473,6 @@ def get_brief_genome_details_by_uuid(stub):
     print("**** Brief Genome Details: By genome_uuid (human)****")
     print(brief_genome_details1)
 
-    request2 = GenomeUUIDRequest(
-        genome_uuid="grch37"
-    )
-    brief_genome_details2 = stub.GetBriefGenomeDetailsByUUID(request2)
-    print("**** Brief Genome Details: By Tag (grch37) ****")
-    print(brief_genome_details2)
 
     request3 = GenomeUUIDRequest(
         genome_uuid="8bce37f6-5353-4fb4-962f-f7e9a6c4303d"
@@ -545,6 +520,38 @@ def get_genome_counts(stub):
     print("**** Genome Counts (Mock) ****")
     print(genome_counts)
 
+def get_release_label_by_genome_uuid(stub):
+    request1 = ReleaseInfoRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3"
+    )
+    release_label1 = stub.GetReleaseLabelByUUID(request1)
+
+    request2 = ReleaseInfoRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="genebuild"
+    )
+    release_label2 = stub.GetReleaseLabelByUUID(request2)
+
+    request3 = ReleaseInfoRequest(
+        dataset_type="genebuild"
+    )
+    release_label3 = stub.GetReleaseLabelByUUID(request3)
+
+    request4 = ReleaseInfoRequest(
+        genome_uuid="a73351f7-93e7-11ec-a39d-005056b38ce3",
+        dataset_type="blabla"
+    )
+    release_label4 = stub.GetReleaseLabelByUUID(request4)
+
+    print("**** Get release label: By genome_uuid (Ecoli)****")
+    print(release_label1)
+    print("**** Get release label: By genome_uuid and dataset_type = genebuild (Ecoli)****")
+    print(release_label2)
+    print("**** Get release label: No genome_uuid provided and dataset_type = genebuild (Ecoli) No results****")
+    print(release_label3)
+    print("**** Get release label: By genome_uuid and dataset_type = blabla (Ecoli) No results****")
+    print(release_label4)
+
 
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:
@@ -587,8 +594,6 @@ def run():
         get_genome_uuid(stub)
         print("-------------- Get Organisms Group Count --------------")
         get_organisms_group_count(stub)
-        print("-------------- Get Genome UUID By Tag --------------")
-        get_genome_uuid_by_tag(stub)
         print("-------------- Get FTP Links by Genome UUID and dataset --------------")
         get_ftp_links(stub)
         print("-------------- Get Release Version By Genome UUID --------------")
@@ -605,6 +610,8 @@ def run():
         get_genomes_in_groups(stub)
         print("-------------- Get Genome Counts --------------")
         get_genome_counts(stub)
+        print("-------------- Get Release Label By Genome UUID --------------")
+        get_release_label_by_genome_uuid(stub)
 
 
 if __name__ == "__main__":

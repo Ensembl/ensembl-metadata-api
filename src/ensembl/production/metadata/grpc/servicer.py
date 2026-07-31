@@ -165,6 +165,12 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
             self.genome_adaptor, request.genome_uuid, request.dataset_type, request.release_version
         )
 
+    def GetReleaseLabelByUUID(self, request, context):
+        logger.debug(f"Received RPC for GetReleaseLabelByUUID with request: {request}")
+        return utils.get_release_label_by_uuid(
+            self.genome_adaptor, request.genome_uuid, request.dataset_type, request.release_version
+        )
+
     def GetAttributesValuesByUUID(self, request, context):
         logger.debug(f"Received RPC for GetAttributesByUUID with request: {request}")
         attribute_names = list(request.attribute_name) if request.attribute_name else None

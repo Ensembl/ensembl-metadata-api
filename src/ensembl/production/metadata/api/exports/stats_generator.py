@@ -33,8 +33,8 @@ from ensembl.production.metadata.api.models import (
 )
 
 # Constants
-DATASET_TYPE_VARIATION = 'variation'
-DATASET_TYPE_REGULATORY = 'regulatory_features'
+DATASET_TYPE_VARIATION = "short_variants"
+DATASET_TYPE_REGULATORY = "regulation_tracks"
 RELEASE_TYPE_PARTIAL = 'partial'
 RELEASE_TYPE_INTEGRATED = 'integrated'
 

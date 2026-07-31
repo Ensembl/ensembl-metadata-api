@@ -225,19 +225,83 @@ class TestGRPCGenomeAdaptor:
         for result in sequences:
             assert result.AssemblySequence.accession == expected_output
 
+    def test_fetch_top_regions_by_genome_uuid_chromosome_type(self, genome_conn):
+        regions = genome_conn.fetch_top_regions_by_genome_uuid(
+            "3704ceb1-948d-11ec-a39d-005056b38ce3",
+            region_type="chromosome",
+            limit=3,
+        )
+
+        assert [region.AssemblySequence.name for region in regions] == ["1", "10", "11"]
+        assert [region.AssemblySequence.chromosomal for region in regions] == [1, 1, 1]
+        assert [region.AssemblySequence.chromosome_rank for region in regions] == [1, 10, 11]
+
+    def test_fetch_top_regions_by_genome_uuid_non_chromosomal_type(self, genome_conn):
+        regions = genome_conn.fetch_top_regions_by_genome_uuid(
+            "2020e8d5-4d87-47af-be78-0b15e48970a7",
+            region_type="primary_assembly",
+            limit=3,
+        )
+
+        assert [region.AssemblySequence.name for region in regions] == [
+            "JAGYYT010000006.1",
+            "JAGYYT010000009.1",
+            "JAGYYT010000002.1",
+        ]
+        assert [region.AssemblySequence.chromosomal for region in regions] == [0, 0, 0]
+        assert [region.AssemblySequence.length for region in regions] == [
+            158663023,
+            118296892,
+            55482364,
+        ]
+
+    def test_fetch_top_regions_by_genome_uuid_defaults_to_chromosomal_then_non_chromosomal(self, genome_conn):
+        regions = genome_conn.fetch_top_regions_by_genome_uuid(
+            "3704ceb1-948d-11ec-a39d-005056b38ce3",
+            limit=12,
+        )
+
+        assert len(regions) == 12
+        assert [region.AssemblySequence.name for region in regions[:10]] == [
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+        ]
+        assert [region.AssemblySequence.chromosomal for region in regions[:10]] == [1] * 10
+        assert [region.AssemblySequence.name for region in regions[10:]] == [
+            "GL000192.1",
+            "GL000194.1",
+        ]
+        assert [region.AssemblySequence.chromosomal for region in regions[10:]] == [0, 0]
+
+    def test_fetch_top_regions_by_genome_uuid_empty_inputs(self, genome_conn):
+        assert genome_conn.fetch_top_regions_by_genome_uuid(None) == []
+        assert genome_conn.fetch_top_regions_by_genome_uuid("missing-genome-uuid") == []
+        assert genome_conn.fetch_top_regions_by_genome_uuid(
+            "3704ceb1-948d-11ec-a39d-005056b38ce3",
+            limit=0,
+        ) == []
+
     @pytest.mark.parametrize(
         "genome_uuid, dataset_uuid, status, expected_dataset_uuid, expected_count",
         [
             # nothing specified + allow_unreleased -> fetches everything
-            (None, None, "All", "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 40),
+            (None, None, "All", "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 43),
             (None, None, "Released", "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 20),
-            ("8364a820-5485-42d7-a648-1a5eeb858319", None, "All", "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
+            ("8364a820-5485-42d7-a648-1a5eeb858319", None, "All", "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 2),
             # specifying genome_uuid -- Triticum aestivum (SAMEA4791365)
             ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, "All", "999315f6-6d25-481f-a017-297f7e1490c8", 3),
-            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, "Unreleased_only", "999315f6-6d25-481f-a017-297f7e1490c8", 1),
+            ("a73357ab-93e7-11ec-a39d-005056b38ce3", None, "Unreleased_only", "254a68c7-f512-446d-a958-983a2713daf2", 1),
             # fetch unreleased datasets only
-            (None, None, "Unreleased_only", "6c1896f9-10dd-423e-a1ff-db8b5815cb66", 20),
-            (None, 'f93d21ca-9a24-4c31-ae11-b0f8d3deab6d', "Unreleased_only", "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 1),
+            (None, None, "Unreleased_only", "9681f4c2-afb4-4a08-8e4d-f26363f65ddf", 23),
+            (None, 'f93d21ca-9a24-4c31-ae11-b0f8d3deab6d', "Unreleased_only", "3c67123a-e9e1-41ef-9014-2aadc8acf12a", 2),
         ]
     )
     def test_fetch_genome_dataset_all(
@@ -255,12 +319,36 @@ class TestGRPCGenomeAdaptor:
         assert genome_datasets[0].datasets[0].dataset.dataset_uuid == expected_dataset_uuid
         assert len(genome_datasets) == expected_count
 
+    def test_fetch_genome_dataset_includes_regulation_tracks(self, genome_conn):
+        genome_uuid = "a7335667-93e7-11ec-a39d-005056b38ce3"
+
+        all_datasets = genome_conn.fetch_genome_datasets(
+            genome_uuid=genome_uuid,
+            dataset_type_name="all",
+        )
+        regulation_datasets = genome_conn.fetch_genome_datasets(
+            genome_uuid=genome_uuid,
+            dataset_type_name="regulation_tracks",
+        )
+
+        assert any(
+            dataset.dataset.dataset_type.name == "regulation_tracks"
+            for result in all_datasets
+            for dataset in result.datasets
+        )
+        assert len(regulation_datasets) > 0
+        assert all(
+            dataset.dataset.dataset_type.name == "regulation_tracks"
+            for result in regulation_datasets
+            for dataset in result.datasets
+        )
+
     @pytest.mark.parametrize(
         "status, organism_uuid, expected_count",
         [
             # homo_sapiens_37
             ("Released", "1d336185-affe-4a91-85bb-04ebd73cbb56", 4),
-            ("Unreleased_only", "1d336185-affe-4a91-85bb-04ebd73cbb56", 2),
+            ("Unreleased_only", "1d336185-affe-4a91-85bb-04ebd73cbb56", 3),
             # Homo sapiens Gambian in Western Division
             ("Released", "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 4),
             ("All", "18bd7042-d861-4a10-b5d0-68c8bccfc87e", 7),

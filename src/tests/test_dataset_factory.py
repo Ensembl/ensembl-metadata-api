@@ -67,7 +67,9 @@ class TestDatasetFactory:
             test_genome_uuid = session.query(Genome.genome_uuid).filter(Genome.genome_id == 4).scalar()  # one human
             test_dataset_source = session.query(DatasetSource).filter(
                 DatasetSource.name == 'homo_sapiens_gca018473315v1_core_110_1').one()
-            test_dataset_type = session.query(DatasetType).filter(DatasetType.name == 'regulatory_features').one()
+            test_dataset_type = (
+                session.query(DatasetType).filter(DatasetType.name == "regulation_tracks").one()
+            )
             test_name = 'test_name'
             test_label = 'test_label'
             test_version = 'test_version'
@@ -139,8 +141,11 @@ class TestDatasetFactory:
             assert genebuild_ds.name == 'fake genebuild'
             assert genebuild_ds.dataset_uuid == genebuild.dataset_uuid
 
-            data_q = session.query(Dataset).join(DatasetType).filter(
-                DatasetType.name == 'genebuild_web', Dataset.parent == genebuild_ds)
+            data_q = (
+                session.query(Dataset)
+                .join(DatasetType)
+                .filter(DatasetType.name == "xrefs", Dataset.parent == genebuild_ds)
+            )
             logger.debug(data_q)
             data = data_q.one()
             sdata = session.query(Dataset).join(GenomeDataset).join(DatasetType).filter(
@@ -152,9 +157,18 @@ class TestDatasetFactory:
             assert test_parent == genebuild.dataset_uuid
             stest_parent, test_status = dataset_factory.get_parent_datasets(data.dataset_uuid, session=session)
             assert test_parent == stest_parent
-            assert len(data.children) == 3
-            assert any(x for x in data.children if x.name == 'checksums')
-            assert any(x for x in data.children if x.name == 'thoas_dumps')
+            child_type_names = {
+                dataset.dataset_type.name
+                for dataset in session.query(Dataset)
+                .join(GenomeDataset)
+                .filter(
+                    GenomeDataset.genome_id == genome.genome_id,
+                    Dataset.parent == genebuild_ds,
+                )
+            }
+            assert {"xrefs", "protein_features", "alpha_fold", "checksums", "thoas_dumps"}.issubset(
+                child_type_names
+            )
 
             # Genebuild child datasets are now created, test updating status
             genebuild_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
@@ -234,7 +248,7 @@ class TestDatasetFactory:
         """
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         genebuild_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
-        child_uuid = "da20e2b5-1809-494e-893f-7fb90e8032a1"
+        child_uuid = "8ec9f005-91d7-4015-be09-7b61b6d62c54"
 
         with metadata_db.test_session_scope() as session:
             dataset_factory.simple_update_dataset_status(genebuild_uuid, DatasetStatus.FAULTY, session=session)
@@ -249,7 +263,6 @@ class TestDatasetFactory:
             assert parent_dataset.genome_datasets[0].release_id is None
             assert child_dataset.genome_datasets[0].release_id is None
 
-
     def test_faulty_child(self, test_dbs, dataset_factory):
         """
         Test case: Marking a child dataset as FAULTY should:
@@ -260,8 +273,8 @@ class TestDatasetFactory:
         """
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
         parent_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
-        child_uuid = "da20e2b5-1809-494e-893f-7fb90e8032a1"
-        subchild_uuid = "8ec9f005-91d7-4015-be09-7b61b6d62c54"
+        child_uuid = "8ec9f005-91d7-4015-be09-7b61b6d62c54"
+        sibling_uuid = "fdd6e615-8ac7-41fc-b8b2-aff7aeb9c99a"
 
         with metadata_db.test_session_scope() as session:
             dataset_factory.simple_update_dataset_status(child_uuid, DatasetStatus.FAULTY, session=session)
@@ -271,16 +284,15 @@ class TestDatasetFactory:
             parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == parent_uuid).one()
             assert parent_dataset.status == DatasetStatus.FAULTY
 
-            # Verify that the subchild dataset remains PROCESSED
-            subchild_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == subchild_uuid).one()
-            assert subchild_dataset.status == DatasetStatus.PROCESSED
+            # Verify that an unrelated sibling dataset remains PROCESSED
+            sibling_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == sibling_uuid).one()
+            assert sibling_dataset.status == DatasetStatus.PROCESSED
 
-            # Verify that release_id is removed from parent, child, and subchild genome datasets
+            # Verify that release_id is removed from parent, child, and sibling genome datasets
             assert parent_dataset.genome_datasets[0].release_id is None
             child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
             assert child_dataset.genome_datasets[0].release_id is None
-            assert subchild_dataset.genome_datasets[0].release_id is None
-
+            assert sibling_dataset.genome_datasets[0].release_id is None
 
 
 @pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
@@ -299,8 +311,8 @@ class TestDatasetFactory2:
         - Ensure the GenomeRelease entry still exists for the 'genebuild' genome.
         """
         metadata_db = DBConnection(test_dbs['ensembl_genome_metadata'].dbc.url)
-        non_essential_child = "f8c7383b-aaac-41cf-9ac8-dce5f99b5338"
-        non_essential_parent = "5c2d6ef7-fe03-4f1a-bcc2-fb72af9ffa46"
+        non_essential_child = "6c28c1ae-af07-4199-9da9-b48ae0fcb7b7"
+        non_essential_parent = "35f56606-9186-432f-b033-6e7204708f3b"
         genebuild_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
 
         with metadata_db.test_session_scope() as session:
@@ -473,10 +485,57 @@ class TestDatasetFactory3:
 
         # Define dataset UUIDs for the test hierarchy
         top_level_dataset = "99999999-847e-4742-a68b-18c3ece068aa"
-        child_dataset = "99999999-da2c-4997-8002-9da717ba79d2"
         grandchild_dataset = "99999999-d9e0-4eca-9a49-7a6d9e311c8d"
+        child_dataset = "99999999-da2c-4997-8002-9da717ba79d2"
 
         with metadata_db.test_session_scope() as session:
+            top_level = session.query(Dataset).filter(Dataset.dataset_uuid == top_level_dataset).one()
+            existing_child = session.query(Dataset).filter(Dataset.dataset_uuid == grandchild_dataset).one()
+            genome = top_level.genome_datasets[0].genome
+
+            child_type = DatasetType(
+                name="dataset_factory_status_child",
+                label="Dataset factory status child",
+                topic="production_processing",
+                parent=top_level.dataset_type_id,
+            )
+            session.add(child_type)
+            session.flush()
+            grandchild_type = DatasetType(
+                name="dataset_factory_status_grandchild",
+                label="Dataset factory status grandchild",
+                topic="production_processing",
+                parent=child_type.dataset_type_id,
+            )
+            session.delete(existing_child)
+            session.flush()
+            child = Dataset(
+                dataset_uuid=child_dataset,
+                dataset_type=child_type,
+                dataset_source=top_level.dataset_source,
+                name="dataset_factory_status_child",
+                version="1.0",
+                label="Dataset factory status child",
+                status=DatasetStatus.SUBMITTED,
+                parent=top_level,
+            )
+            session.add(child)
+            session.flush()
+            grandchild = Dataset(
+                dataset_uuid=grandchild_dataset,
+                dataset_type=grandchild_type,
+                dataset_source=top_level.dataset_source,
+                name="dataset_factory_status_grandchild",
+                version="1.0",
+                label="Dataset factory status grandchild",
+                status=DatasetStatus.SUBMITTED,
+                parent=child,
+            )
+            session.add(grandchild)
+            session.add(GenomeDataset(genome=genome, dataset=child, release_id=6))
+            session.add(GenomeDataset(genome=genome, dataset=grandchild, release_id=6))
+            session.commit()
+
             # Step 1: Ensure initial dataset statuses
             top_level = session.query(Dataset).filter(Dataset.dataset_uuid == top_level_dataset).one()
             child = session.query(Dataset).filter(Dataset.dataset_uuid == child_dataset).one()

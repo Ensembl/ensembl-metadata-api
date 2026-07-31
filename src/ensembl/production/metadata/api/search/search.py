@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, joinedload
 
+from ensembl.production.metadata.api.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.api.models import (
     Genome,
     Dataset,
@@ -139,6 +140,7 @@ class GenomeSearchDocument(BaseModel):
     strain: Optional[str] = None
     assembly_name: str
     accession: str
+    ftp_url: str
     url_name: Optional[str] = None
     tol_id: Optional[str] = None
     is_reference: bool
@@ -169,6 +171,7 @@ class GenomeSearchDocument(BaseModel):
     latest_release_name: str
     latest_release_type: str
     is_latest_release_current: int
+    default: bool = False
     releases: str  # comma-separated list of integrated releases
 
     class Config:
@@ -184,6 +187,7 @@ class GenomeSearchDocument(BaseModel):
             SearchField(name="scientific_name", value=self.scientific_name),
             SearchField(name="assembly", value=self.assembly_name),
             SearchField(name="assembly_accession", value=self.accession),
+            SearchField(name="ftp_url", value=self.ftp_url),
             SearchField(name="unversioned_assembly_accession", value=unversioned_accession),
             SearchField(name="type_value", value=self.strain or ""),
             SearchField(name="parlance_name", value=self.scientific_parlance_name or ""),
@@ -339,11 +343,11 @@ class DatasetFieldExtractor:
 
     def has_variation(self) -> bool:
         """Check if genome has variation data"""
-        return self._has_dataset_type("variation")
+        return self._has_dataset_type("short_variants")
 
     def has_regulation(self) -> bool:
         """Check if genome has regulatory features data"""
-        return self._has_dataset_type("regulatory_features")
+        return self._has_dataset_type("regulation_tracks")
 
     def get_genebuild_provider(self) -> str:
         """
@@ -507,140 +511,6 @@ class ReleaseSelector:
         else:
             return 1 if selected_release.release_id == latest_release.release_id else 0
 
-
-# ============================================================================
-# DEDUPLICATION AND VALIDATION
-# ============================================================================
-
-
-class EntryDeduplicator:
-    """Handles deduplication of search entries by url_name"""
-
-    @staticmethod
-    def deduplicate_by_url_name(entries: List[SearchEntry]) -> Tuple[List[SearchEntry], int]:
-        """
-        Deduplicate entries by url_name, clearing url_name on non-preferred entries.
-
-        Priority when duplicates exist:
-        1. Keep url_name on entry from genome with integrated releases (latest_release_type == "integrated")
-        2. If both have integrated or both have partial, keep url_name on the one with newer latest_release_name
-        3. If release names are equal, keep url_name on the one with higher genome_uuid (for determinism)
-
-        Entries with empty or missing url_name are not considered duplicates and are all kept as-is.
-
-        Args:
-            entries: List of SearchEntry objects
-
-        Returns:
-            Tuple of (all entries with url_name cleared on non-preferred duplicates, number of url_names cleared)
-        """
-        url_name_to_entries = {}
-
-        for entry in entries:
-            url_name = None
-            latest_release_type = None
-            latest_release_name = None
-            genome_uuid = None
-
-            for field in entry.fields:
-                if field.name == "url_name":
-                    url_name = field.value
-                elif field.name == "latest_release_type":
-                    latest_release_type = field.value
-                elif field.name == "latest_release_name":
-                    latest_release_name = field.value
-                elif field.name == "genome_uuid":
-                    genome_uuid = field.value
-
-            if not url_name:
-                continue
-
-            if url_name not in url_name_to_entries:
-                url_name_to_entries[url_name] = []
-
-            url_name_to_entries[url_name].append(
-                {
-                    "entry": entry,
-                    "release_type": latest_release_type,
-                    "release_name": latest_release_name,
-                    "genome_uuid": genome_uuid,
-                }
-            )
-
-        url_names_cleared = 0
-
-        for url_name, entry_infos in url_name_to_entries.items():
-            if len(entry_infos) <= 1:
-                continue
-
-            def sort_key(info):
-                is_integrated = 1 if info["release_type"] == "integrated" else 0
-                release_name = info["release_name"] or ""
-                genome_uuid = info["genome_uuid"] or ""
-                return (is_integrated, release_name, genome_uuid)
-
-            sorted_infos = sorted(entry_infos, key=sort_key, reverse=True)
-            preferred_info = sorted_infos[0]
-            non_preferred_infos = sorted_infos[1:]
-
-            for info in non_preferred_infos:
-                entry = info["entry"]
-                for field in entry.fields:
-                    if field.name == "url_name":
-                        field.value = ""
-                        break
-
-                logger.info(
-                    f"Duplicate url_name '{url_name}': clearing url_name on genome {info['genome_uuid']} "
-                    f"({info['release_type']} {info['release_name']}), keeping on genome "
-                    f"{preferred_info['genome_uuid']} ({preferred_info['release_type']} {preferred_info['release_name']})"
-                )
-                url_names_cleared += 1
-
-        logger.info(f"Deduplication complete: cleared url_name on {url_names_cleared} entries")
-        return entries, url_names_cleared
-
-    @staticmethod
-    def validate_unique_url_names(entries: List[SearchEntry]) -> None:
-        """
-        Validate that all url_names in entries are unique.
-
-        Args:
-            entries: List of SearchEntry objects to validate
-
-        Raises:
-            ValueError: If duplicate url_names are found
-        """
-        url_name_to_genomes = {}
-
-        for entry in entries:
-            url_name = None
-            genome_uuid = None
-
-            for field in entry.fields:
-                if field.name == "url_name":
-                    url_name = field.value
-                elif field.name == "genome_uuid":
-                    genome_uuid = field.value
-
-            if url_name:
-                if url_name not in url_name_to_genomes:
-                    url_name_to_genomes[url_name] = []
-                url_name_to_genomes[url_name].append(genome_uuid)
-
-        duplicates = {
-            url_name: genomes for url_name, genomes in url_name_to_genomes.items() if len(genomes) > 1
-        }
-
-        if duplicates:
-            error_msg = ["Duplicate url_names found in final index:"]
-            for url_name, genomes in duplicates.items():
-                error_msg.append(f"  - '{url_name}': {', '.join(genomes)}")
-            raise ValueError("\n".join(error_msg))
-
-        logger.info(f"Validation passed: all {len(url_name_to_genomes)} url_names are unique")
-
-
 # ============================================================================
 # MAIN SERVICE CLASS WITH BATCHING
 # ============================================================================
@@ -649,11 +519,13 @@ class EntryDeduplicator:
 class GenomeSearchIndexer:
     """Service for generating genome search documents"""
 
+    FTP_BASE_URL = "http://ftp.ebi.ac.uk/pub/ensemblorganisms"
+
     def __init__(self, metadata_uri: str, taxonomy_uri: str, batch_size: int = 500):
         self.metadata_db = DBConnection(metadata_uri)
         self.taxonomy_db = DBConnection(taxonomy_uri)
+        self.genome_adaptor = GenomeAdaptor(self.metadata_db, self.taxonomy_db)
         self.release_selector = ReleaseSelector()
-        self.deduplicator = EntryDeduplicator()
         self.batch_size = batch_size
 
     def _get_genome_ids_to_process(self, session: Session) -> List[int]:
@@ -763,6 +635,32 @@ class GenomeSearchIndexer:
             "rank": genome.organism.rank or 0,
             "genome_group_ids": self._extract_genome_group_ids(genome),
         }
+
+    def _get_ftp_path(self, genome: Genome, release: EnsemblRelease) -> str:
+        """
+        Build the search FTP URL using GenomeAdaptor.get_public_path as the source of truth.
+
+        get_public_path returns dataset-specific relative paths. The search index stores
+        the genome-level FTP directory, so use the genebuild path and remove its final
+        dataset directory.
+        """
+        paths = self.genome_adaptor.get_public_path(
+            genome_uuid=genome.genome_uuid,
+            dataset_type="genebuild",
+            release=release.label if release else None,
+        )
+
+        genebuild_path = next(
+            (path_info["path"] for path_info in paths if path_info["dataset_type"] == "genebuild"),
+            None,
+        )
+        if not genebuild_path:
+            raise MissingDatasetFieldError(
+                f"Could not construct FTP path for genome {genome.genome_uuid}: genebuild path not found"
+            )
+
+        genome_path = genebuild_path.removesuffix("/geneset")
+        return f"{self.FTP_BASE_URL}/{genome_path}/"
 
     def _extract_genome_group_ids(self, genome: Genome) -> List[int]:
         """Extract current genome group IDs for repeated search fields."""
@@ -891,7 +789,7 @@ class GenomeSearchIndexer:
 
         releases_str = ",".join([r.label for r in all_integrated]) if all_integrated else ""
 
-        is_current = self.release_selector.get_is_latest_release_current(genome, release, latest_release)
+        is_current = self.release_selector.get_is_latest_release_current(genome, release, latest_release) 
 
         doc_data.update(
             {
@@ -901,6 +799,7 @@ class GenomeSearchIndexer:
                 "latest_release_type": latest_release.release_type if latest_release else "",
                 "is_latest_release_current": is_current,
                 "releases": releases_str,
+                
             }
         )
 
@@ -916,6 +815,7 @@ class GenomeSearchIndexer:
                 "genebuild_method_display": dataset_extractor.get_genebuild_method_display(),
             }
         )
+        doc_data["ftp_url"] = self._get_ftp_path(genome, release)
 
         doc_data.update(self._get_taxonomy_lineage(taxonomy_session, genome.organism.taxonomy_id))
 
@@ -1015,17 +915,13 @@ class GenomeSearchIndexer:
                 # sort GenomeSearchDocuments
                 all_entries = self.sort_results(all_entries)
                 all_entries = update_rank(all_entries)
+                
+                # set url_name
+                all_entries = set_url_name(all_entries)
 
                 # convert to SearchEntry
                 # TODO turn to_search_entry into a model_serializer  
                 all_entries_as_search_entry = list(map(lambda d: d.to_search_entry(), all_entries))
-
-                # TODO alter this to be a reduce function, performed on GenomeSearchDocuments
-                logger.info(f"Deduplicating {len(all_entries_as_search_entry)} entries by url_name...")
-                processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(all_entries_as_search_entry)
-
-                logger.info("Validating url_name uniqueness...")
-                self.deduplicator.validate_unique_url_names(processed_entries)
 
                 output_file = Path(output_path)
                 output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1034,8 +930,8 @@ class GenomeSearchIndexer:
                     search_index = SearchIndex(
                         name="ensemblNext",
                         release=newest_partial,
-                        entry_count=len(processed_entries),
-                        entries=processed_entries,
+                        entry_count=len(all_entries_as_search_entry),
+                        entries=all_entries_as_search_entry,
                     )
                     if pretty_print:
                         json.dump(search_index.model_dump(), f, indent=2)
@@ -1043,15 +939,14 @@ class GenomeSearchIndexer:
                         json.dump(search_index.model_dump(), f)
 
                 logger.info(
-                    f"Successfully exported {len(processed_entries)} documents to {output_path} "
-                    f"(cleared url_name on {num_cleared} entries with duplicate url_names)"
+                    f"Successfully exported {len(all_entries_as_search_entry)} documents to {output_path} "
                 )
 
                 if error_collection.has_errors():
                     logger.warning(f"Failed to index {len(error_collection.errors)} genome(s)")
                     print(error_collection.get_summary())
 
-                return len(processed_entries), error_collection
+                return len(all_entries_as_search_entry), error_collection
 
     def export_to_json_auto(
             self,
@@ -1190,21 +1085,17 @@ class GenomeSearchIndexer:
                                 # sort GenomeSearchDocuments
                 search_entries = self.sort_results(search_entries)
                 search_entries = update_rank(search_entries)
+                
+                # set url_name
+                search_entries = set_url_name(search_entries)
 
                 # convert to SearchEntry
                 # TODO turn to_search_entry into a model_serializer  
                 search_entries_as_search_entry = list(map(lambda d: d.to_search_entry(), search_entries))
 
-                # TODO alter this to be a reduce function, performed on GenomeSearchDocuments
-                logger.info(f"Deduplicating {len(search_entries_as_search_entry)} entries by url_name...")
-                processed_entries, num_cleared = self.deduplicator.deduplicate_by_url_name(search_entries_as_search_entry)
-
-                logger.info("Validating url_name uniqueness...")
-                self.deduplicator.validate_unique_url_names(processed_entries)
 
                 logger.info(
-                    f"Successfully indexed: {len(processed_entries)} genome(s) "
-                    f"(cleared url_name on {num_cleared} entries with duplicate url_names)"
+                    f"Successfully indexed: {len(search_entries)} genome(s) "
                 )
                 if error_collection.has_errors():
                     logger.warning(f"Failed to index: {len(error_collection.errors)} genome(s)")
@@ -1216,9 +1107,24 @@ class GenomeSearchIndexer:
                 return SearchIndex(
                     name="ensemblNext",
                     release=newest_partial,
-                    entry_count=len(processed_entries),
-                    entries=processed_entries,
+                    entry_count=len(search_entries_as_search_entry),
+                    entries=search_entries_as_search_entry,
                 )
+
+# ============================================================================
+# Set URL name
+# ============================================================================
+def set_url_name(docs: List[GenomeSearchDocument]) -> List[GenomeSearchDocument]:
+    """
+    Sets url_name to accession if the genome is attached to an integrated release.
+    Clears url_name for partial-only genomes.
+    """
+    for d in docs:
+        if d.latest_release_type == "integrated":
+            d.url_name = d.accession
+        else:
+            d.url_name = ""
+    return docs
 
 # ============================================================================
 # Default sort order untils

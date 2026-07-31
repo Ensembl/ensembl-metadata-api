@@ -32,8 +32,8 @@ from ensembl.production.metadata.api.models import (
 
 # Constants
 DATASET_TYPE_GENEBUILD = 'genebuild'
-DATASET_TYPE_VARIATION = 'variation'
-DATASET_TYPE_REGULATORY = 'regulatory_features'
+DATASET_TYPE_VARIATION = "short_variants"
+DATASET_TYPE_REGULATORY = "regulation_tracks"
 DATASET_TYPES_OF_INTEREST = [DATASET_TYPE_GENEBUILD, DATASET_TYPE_VARIATION, DATASET_TYPE_REGULATORY]
 
 RELEASE_TYPE_PARTIAL = 'partial'

@@ -84,6 +84,59 @@ class TestGenomeFactory:
         expected_keys = ["genome_uuid", "species", "dataset_name"]
         assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
 
+    def test_comma_separated_column_names_resolve_to_exact_columns(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            column_names=[
+                "genome_uuid,species,dataset_uuid,dataset_status,dataset_source,"
+                "dataset_source_location,dataset_name,dataset_type,genome_release,dataset_release"
+            ],
+        )
+
+        expected_keys = [
+            "genome_uuid",
+            "species",
+            "dataset_uuid",
+            "dataset_status",
+            "dataset_source",
+            "dataset_source_location",
+            "dataset_name",
+            "dataset_type",
+            "genome_release",
+            "dataset_release",
+        ]
+        assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
+
+    def test_division_filter_uses_default_columns_when_columns_omitted(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            division=["vertebrates"],
+        )
+
+        expected_keys = [
+            "genome_uuid",
+            "species",
+            "dataset_uuid",
+            "dataset_status",
+            "dataset_source",
+            "dataset_source_location",
+            "dataset_name",
+            "dataset_type",
+            "genome_release",
+            "dataset_release",
+        ]
+        assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
+
+    def test_filters_accept_vars_round_trip(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            division=["vertebrates"],
+        )
+
+        round_tripped_filters = GenomeInputFilters(**vars(filters))
+        column_keys = [getattr(col, "key", getattr(col, "name", None)) for col in round_tripped_filters.columns]
+        assert column_keys == [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns]
+
     def test_invalid_column_names_fallback_to_default_columns(self):
         filters = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
@@ -124,12 +177,12 @@ class TestGenomeFactory:
     @pytest.mark.parametrize(
         "release_name, release_type, dataset_type, dataset_name, dataset_status, dataset_is_current, expected_count",
         [
-            ([1], 'partial', 'variation', ['variation'], ['Released'], 1,  3),
-            ([2], 'partial', 'variation', ['variation'], ['Processed'], 1,  4),
-            ([3], 'partial', 'variation', ['variation'], ['Processed'], 1,  1),
-            ([4], 'partial', 'variation', ['variation'], [], 1,  0),
-            ([5], 'partial', 'variation', ['variation'], ['Released'], 1, 5)
-        ]
+            ([1], "partial", "short_variants", ["variation"], ["Released"], 1, 3),
+            ([2], "partial", "short_variants", ["variation"], ["Processed"], 1, 4),
+            ([3], "partial", "short_variants", ["variation"], ["Processed"], 1, 1),
+            ([4], "partial", "short_variants", ["variation"], [], 1, 0),
+            ([5], "partial", "short_variants", ["variation"], ["Released"], 1, 5),
+        ],
     )
     def test_fetch_genomes_varaition_iscurrent_dataset_params(self, genome_factory, genome_filters, release_name,
                                                               release_type, dataset_type, dataset_name, dataset_status,
@@ -347,4 +400,3 @@ class TestGenomeFactory:
             assert 'Parquet export failed' in str(exc) or 'requires pandas' in str(exc)
         else:
             assert output_file.exists()
-

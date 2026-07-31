@@ -9,8 +9,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import os
+import re
 
 from ensembl.production.metadata.api.models import Genome, Assembly
+
 
 def get_genome_sets_by_assembly_and_provider(session):
     """
@@ -46,3 +49,34 @@ def get_genome_sets_by_assembly_and_provider(session):
     genome_sets_with_multiple = {key: genomes for key, genomes in genome_sets.items() if len(genomes) > 1}
 
     return genome_sets_with_multiple
+
+
+def format_accession_path(accession: str) -> str:
+    """
+    Converts  assembly accession (e.g., 'GCF_043381705.1') to a structured path format
+    (e.g., 'GCF/043/381/705/1').
+
+    Parameters:
+        accession (str): The accession string to format.
+
+    Returns:
+        str: Formatted path-like string.
+
+    Raises:
+        ValueError: If the accession format is invalid.
+    """
+    pattern = r'^(GCF|GCA)_(\d+)\.(\d+)$'
+    match = re.match(pattern, accession)
+
+    if not match:
+        raise ValueError(f"Invalid accession format: '{accession}'. Expected format like '(GCF|GCA)_#########.#'.")
+
+    prefix, number, version = match.groups()
+
+    if len(number) > 9:
+        raise ValueError(f"Unexpected number length in accession: '{number}'. Expected up to 9 digits.")
+
+    chunks = [number[i:i + 3] for i in range(0, 9, 3)]
+
+    # Ensure we have exactly 3 chunks, filling with '000' if necessary
+    return os.path.join(prefix, *chunks, version)
