@@ -17,6 +17,7 @@ from sqlalchemy.orm import aliased
 from ensembl.utils.database import DBConnection
 
 from ensembl.production.metadata.api.adaptors.base import BaseAdaptor
+from ensembl.production.metadata.api.factories.utils import format_accession_path
 from ensembl.production.metadata.api.models import Organism, Assembly, DatasetAttribute, Genome, GenomeDataset, Dataset
 
 
@@ -84,11 +85,16 @@ class VepAdaptor(BaseAdaptor):
             # Format last geneset update
             last_geneset_update = re.sub(r"-", "_", result.last_geneset_update)
 
+            formatted_accession_path = format_accession_path(result.assembly_accession)
+
             # Construct the locations
-            faa_location = f"{scientific_name}/{result.assembly_accession}/vep/genome/softmasked.fa.bgz"
+            faa_location = (
+                f"{formatted_accession_path}/{result.annotation_source}/"
+                f"{last_geneset_update}/vep/softmasked.fa.bgz"
+            )
             gff_location = (
-                f"{scientific_name}/{result.assembly_accession}/vep/"
-                f"{result.annotation_source}/geneset/{last_geneset_update}/genes.gff3.bgz"
+                f"{formatted_accession_path}/{result.annotation_source}/"
+                f"{last_geneset_update}/vep/genes.gff3.bgz"
             )
 
             # Return based on the `file` argument
