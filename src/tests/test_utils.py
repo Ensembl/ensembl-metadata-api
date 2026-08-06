@@ -954,16 +954,16 @@ class TestUtils:
                 # Human
                 "65d4f21f-695a-4ed0-be67-5732a551fea4",
                 {
-                    "faaLocation": "GCA/018/473/295/1/ensembl/2022_08/vep/softmasked.fa.bgz",
-                    "gffLocation": "GCA/018/473/295/1/ensembl/2022_08/vep/genes.gff3.bgz"
+                    "faaLocation": "GCA/018/473/295/1/ensembl/2022_08/genome/unmasked.fa.bgz",
+                    "gffLocation": "GCA/018/473/295/1/ensembl/2022_08/geneset/genes.gff3.bgz"
                 }
             ),
             (
                 # Ecoli
                 "a73351f7-93e7-11ec-a39d-005056b38ce3",
                 {
-                    'faaLocation': 'GCA/000/005/845/2/community/2018_09/vep/softmasked.fa.bgz',
-                    'gffLocation': 'GCA/000/005/845/2/community/2018_09/vep/genes.gff3.bgz'
+                    'faaLocation': 'GCA/000/005/845/2/community/2018_09/genome/unmasked.fa.bgz',
+                    'gffLocation': 'GCA/000/005/845/2/community/2018_09/geneset/genes.gff3.bgz'
                 }
             ),
             (

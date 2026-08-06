@@ -90,11 +90,11 @@ class VepAdaptor(BaseAdaptor):
             # Construct the locations
             faa_location = (
                 f"{formatted_accession_path}/{result.annotation_source}/"
-                f"{last_geneset_update}/vep/softmasked.fa.bgz"
+                f"{last_geneset_update}/genome/unmasked.fa.bgz"
             )
             gff_location = (
                 f"{formatted_accession_path}/{result.annotation_source}/"
-                f"{last_geneset_update}/vep/genes.gff3.bgz"
+                f"{last_geneset_update}/geneset/genes.gff3.bgz"
             )
 
             # Return based on the `file` argument
