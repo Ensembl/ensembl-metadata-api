@@ -179,8 +179,8 @@ def copy_genome_files(
 def fetch_public_source_paths(
     genome_adaptor: GenomeAdaptor, genome_uuid: str, release: str | None = None
 ) -> dict[str, list[Path]]:
-    genebuild_paths = genome_adaptor.get_public_path(genome_uuid, dataset_type="genebuild", release=release)
-    assembly_paths = genome_adaptor.get_public_path(genome_uuid, dataset_type="assembly", release=release)
+    genebuild_paths = genome_adaptor.get_public_path(genome_uuid, dataset_type="genebuild")
+    assembly_paths = genome_adaptor.get_public_path(genome_uuid, dataset_type="assembly")
     return old_relative_paths(
         assembly_path=assembly_paths[0]["path"],
         genebuild_path=genebuild_paths[0]["path"],
