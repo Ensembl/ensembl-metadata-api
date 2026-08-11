@@ -99,8 +99,8 @@ def new_relative_paths(record: GenomeVepRecord) -> dict[str, Path]:
     }
 
 
-def fetch_release_genomes(
-    metadata_uri: str, release: str | float | Decimal, genome_uuid: str | None = None
+def fetch_genomes(
+    metadata_uri: str, release: str | float | Decimal | None = None, genome_uuid: str | None = None
 ) -> list[GenomeVepRecord]:
     query = (
         select(
@@ -114,10 +114,14 @@ def fetch_release_genomes(
         .select_from(Genome)
         .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
         .join(Organism, Genome.organism_id == Organism.organism_id)
-        .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
-        .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
-        .where(EnsemblRelease.name == release)
     )
+
+    if release is not None:
+        query = (
+            query.join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
+            .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
+            .where(EnsemblRelease.name == release)
+        )
     if genome_uuid:
         query = query.where(Genome.genome_uuid == genome_uuid)
 
@@ -203,11 +207,14 @@ def parse_args() -> argparse.Namespace:
         "--new_base_dir", required=True, help="Root directory to populate with the new layout."
     )
     parser.add_argument("--metadata_uri", required=True, help="Metadata database URI.")
-    parser.add_argument("--release", required=True, help="Exact Ensembl release name to process.")
+    parser.add_argument("--release", help="Exact Ensembl release name to process.")
     parser.add_argument("--genome_uuid", help="Optional single genome UUID to copy.")
     parser.add_argument("--dry_run", action="store_true", help="Log planned copies without writing files.")
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if not args.release and not args.genome_uuid:
+        parser.error("at least one of --release or --genome_uuid is required")
+    return args
 
 
 def main() -> int:
@@ -220,16 +227,18 @@ def main() -> int:
     if not old_base_dir.is_dir():
         raise FileNotFoundError(f"Old base directory does not exist: {old_base_dir}")
 
-    records = fetch_release_genomes(
+    records = fetch_genomes(
         metadata_uri=args.metadata_uri,
         release=args.release,
         genome_uuid=args.genome_uuid,
     )
     if not records:
-        raise ValueError(
-            f"No genomes found for release {args.release}"
-            + (f" and genome_uuid {args.genome_uuid}" if args.genome_uuid else "")
-        )
+        filters = []
+        if args.release:
+            filters.append(f"release {args.release}")
+        if args.genome_uuid:
+            filters.append(f"genome_uuid {args.genome_uuid}")
+        raise ValueError(f"No genomes found for {' and '.join(filters)}")
 
     warnings: list[str] = []
     for record in records:
