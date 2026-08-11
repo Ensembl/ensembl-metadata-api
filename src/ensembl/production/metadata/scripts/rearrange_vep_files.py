@@ -1,14 +1,14 @@
 import argparse
 import logging
-import re
 import shutil
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 
 from ensembl.utils.database import DBConnection
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
+from ensembl.production.metadata.api.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.api.models import (
     Assembly,
     EnsemblRelease,
@@ -43,18 +43,6 @@ def configure_logging(verbose: bool) -> None:
     logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
 
-def normalise_scientific_name(scientific_name: str) -> str:
-    value = re.sub(r"[^a-zA-Z0-9]+", " ", scientific_name)
-    return re.sub(r" +", "_", value).strip("_")
-
-
-def normalise_last_geneset_update(last_geneset_update: str) -> str:
-    match = re.match(r"^(\d{4}-\d{2})", last_geneset_update)
-    if match:
-        return match.group(1).replace("-", "_")
-    return last_geneset_update.replace("-", "_")
-
-
 def format_assembly_uuid_path(assembly_uuid: str) -> str:
     compact_uuid = assembly_uuid.replace("-", "")
     return f"{compact_uuid[:3]}/{compact_uuid}"
@@ -64,20 +52,9 @@ def format_genome_uuid(genome_uuid: str) -> str:
     return genome_uuid.replace("-", "")
 
 
-def old_relative_paths(record: GenomeVepRecord) -> dict[str, list[Path]]:
-    scientific_name = normalise_scientific_name(record.scientific_name)
-    geneset_update = normalise_last_geneset_update(record.last_geneset_update)
-
-    genome_dir = Path(scientific_name) / record.assembly_accession / "vep" / "genome"
-    geneset_dir = (
-        Path(scientific_name)
-        / record.assembly_accession
-        / "vep"
-        / record.annotation_source
-        / "geneset"
-        / geneset_update
-    )
-
+def old_relative_paths(assembly_path: str, genebuild_path: str) -> dict[str, list[Path]]:
+    genome_dir = Path(assembly_path)
+    geneset_dir = Path(genebuild_path)
     return {
         "genes.gff3.bgz": [geneset_dir / "genes.gff3.bgz"],
         "genes.gff3.bgz.csi": [geneset_dir / "genes.gff3.bgz.csi"],
@@ -120,7 +97,7 @@ def fetch_genomes(
         query = (
             query.join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
             .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
-            .where(EnsemblRelease.name == release)
+            .where(or_(EnsemblRelease.name == release, EnsemblRelease.label == release))
         )
     if genome_uuid:
         query = query.where(Genome.genome_uuid == genome_uuid)
@@ -154,10 +131,13 @@ def fetch_genomes(
 
 
 def copy_genome_files(
-    record: GenomeVepRecord, old_base_dir: Path, new_base_dir: Path, dry_run: bool = False
+    record: GenomeVepRecord,
+    old_base_dir: Path,
+    new_base_dir: Path,
+    source_paths: dict[str, list[Path]],
+    dry_run: bool = False,
 ) -> list[str]:
     warnings: list[str] = []
-    source_paths = old_relative_paths(record)
     target_paths = new_relative_paths(record)
 
     for filename in REQUIRED_OUTPUTS:
@@ -196,6 +176,17 @@ def copy_genome_files(
     return warnings
 
 
+def fetch_public_source_paths(
+    genome_adaptor: GenomeAdaptor, genome_uuid: str, release: str | None = None
+) -> dict[str, list[Path]]:
+    genebuild_paths = genome_adaptor.get_public_path(genome_uuid, dataset_type="genebuild", release=release)
+    assembly_paths = genome_adaptor.get_public_path(genome_uuid, dataset_type="assembly", release=release)
+    return old_relative_paths(
+        assembly_path=assembly_paths[0]["path"],
+        genebuild_path=genebuild_paths[0]["path"],
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Rearrange VEP files from the legacy layout into the UUID-based layout."
@@ -227,6 +218,7 @@ def main() -> int:
     if not old_base_dir.is_dir():
         raise FileNotFoundError(f"Old base directory does not exist: {old_base_dir}")
 
+    genome_adaptor = GenomeAdaptor(args.metadata_uri, args.metadata_uri)
     records = fetch_genomes(
         metadata_uri=args.metadata_uri,
         release=args.release,
@@ -242,7 +234,16 @@ def main() -> int:
 
     warnings: list[str] = []
     for record in records:
-        warnings.extend(copy_genome_files(record, old_base_dir, new_base_dir, dry_run=args.dry_run))
+        source_paths = fetch_public_source_paths(genome_adaptor, record.genome_uuid, release=args.release)
+        warnings.extend(
+            copy_genome_files(
+                record,
+                old_base_dir,
+                new_base_dir,
+                source_paths=source_paths,
+                dry_run=args.dry_run,
+            )
+        )
 
     LOGGER.info("Processed %s genome(s)", len(records))
     if warnings:
