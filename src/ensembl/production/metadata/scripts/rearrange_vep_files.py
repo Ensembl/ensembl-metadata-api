@@ -102,7 +102,6 @@ def new_relative_paths(record: GenomeVepRecord) -> dict[str, Path]:
 def fetch_release_genomes(
     metadata_uri: str, release: str | float | Decimal, genome_uuid: str | None = None
 ) -> list[GenomeVepRecord]:
-    release_value = Decimal(str(release))
     query = (
         select(
             Genome.genome_uuid,
@@ -117,7 +116,7 @@ def fetch_release_genomes(
         .join(Organism, Genome.organism_id == Organism.organism_id)
         .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
         .join(EnsemblRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
-        .where(EnsemblRelease.version == release_value)
+        .where(EnsemblRelease.name == release)
     )
     if genome_uuid:
         query = query.where(Genome.genome_uuid == genome_uuid)
@@ -204,7 +203,7 @@ def parse_args() -> argparse.Namespace:
         "--new_base_dir", required=True, help="Root directory to populate with the new layout."
     )
     parser.add_argument("--metadata_uri", required=True, help="Metadata database URI.")
-    parser.add_argument("--release", required=True, help="Exact Ensembl release version to process.")
+    parser.add_argument("--release", required=True, help="Exact Ensembl release name to process.")
     parser.add_argument("--genome_uuid", help="Optional single genome UUID to copy.")
     parser.add_argument("--dry_run", action="store_true", help="Log planned copies without writing files.")
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")
