@@ -255,7 +255,7 @@ class GenomeQueryBuilder:
     def _apply_filters(self, query):
         genomes_release = aliased(EnsemblRelease)
         genomes_dataset_release = aliased(EnsemblRelease)
-        ensembl_release_type_filter = 'integrated'
+        ensembl_release_type_filter = ['integrated', 'archive']
 
         if self.filters.requires_organism_group():
             query = query.outerjoin(Organism.organism_group_members).outerjoin(OrganismGroupMember.organism_group)
@@ -291,14 +291,14 @@ class GenomeQueryBuilder:
         elif self.filters.antispecies:
             query = query.filter(~Genome.production_name.in_(self.filters.antispecies))
 
-        if self.filters.release_type == 'integrated':
-            ensembl_release_type_filter = 'partial'
+        if self.filters.release_type in ('integrated', 'archive'):
+            ensembl_release_type_filter = ['partial']
 
         query = query.filter(
             ~exists().where(
                 and_(
                     genomes_release.release_id == GenomeRelease.release_id,
-                    genomes_release.release_type == ensembl_release_type_filter
+                    genomes_release.release_type.in_(ensembl_release_type_filter)
                 )
             )
         )
@@ -306,7 +306,7 @@ class GenomeQueryBuilder:
             ~exists().where(
                 and_(
                     genomes_dataset_release.release_id == GenomeDataset.release_id,
-                    genomes_dataset_release.release_type == ensembl_release_type_filter
+                    genomes_dataset_release.release_type.in_(ensembl_release_type_filter)
                 )
             )
         )
@@ -322,7 +322,7 @@ class GenomeQueryBuilder:
 
         if self.filters.release_name:
             filter_release_type = EnsemblRelease.name.in_(self.filters.release_name)
-            if self.filters.release_type == 'integrated':
+            if self.filters.release_type in ('integrated', 'archive'):
                 filter_release_type = GenomeDataset.release_id.in_(self.filters.release_name)
 
             query = query.filter(filter_release_type)
@@ -542,11 +542,11 @@ def main():
         "--release_type",
         type=str,
         default="partial",
-        choices=["partial", 'integrated'],
+        choices=["partial", 'integrated', 'archive'],
         required=False,
         help="""
-        Fetch genome datasets and apply release-type filtering to eliminate duplicates introduced during 
-        integration release.
+        Fetch genome datasets and apply release-type filtering to eliminate duplicates introduced during
+        integration release. 'archive' is treated the same as 'integrated' for filtering purposes.
         """,
     )
     parser.add_numeric_argument(

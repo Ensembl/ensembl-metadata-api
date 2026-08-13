@@ -20,6 +20,7 @@ from ensembl.production.metadata.api.exceptions import DatasetFactoryException
 from ensembl.production.metadata.api.factories.genomes import (
     GenomeInputFilters,
     GenomeOutputWriter,
+    GenomeQueryBuilder,
     OutputFormat,
 )
 from ensembl.production.metadata.api.models import Dataset, Genome, DatasetStatus
@@ -156,6 +157,72 @@ class TestGenomeFactory:
             "dataset_release",
         ]
         assert [getattr(col, "key", getattr(col, "name", None)) for col in filters.columns] == expected_keys
+
+    @pytest.mark.parametrize("release_type", ["integrated", "archive"])
+    def test_archive_release_type_is_accepted_and_matches_integrated_dedup(self, release_type):
+        # 'archive' should be a valid release_type choice, and it should be treated
+        # exactly like 'integrated' by the dedup (NOT EXISTS) filters, since an archived
+        # release is a former integrated release.
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            release_type=release_type,
+        )
+        query = GenomeQueryBuilder(filters).build()
+        compiled = query.compile(compile_kwargs={"literal_binds": True})
+        sql = str(compiled)
+
+        # both 'integrated' and 'archive' flip the dedup filter to exclude 'partial'-linked rows
+        assert "release_type IN ('partial')" in sql
+        # the explicit exact-match filter is applied with the requested release_type
+        assert f"ensembl_release.release_type = '{release_type}'" in sql
+
+    def test_default_release_type_dedup_excludes_integrated_and_archive(self):
+        # When release_type isn't 'integrated'/'archive', the default dedup filter should
+        # exclude rows linked to either type, not just 'integrated'.
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            release_type="partial",
+        )
+        query = GenomeQueryBuilder(filters).build()
+        sql = str(query.compile(compile_kwargs={"literal_binds": True}))
+
+        assert "release_type IN ('integrated', 'archive')" in sql
+
+    def test_release_name_filter_treats_archive_like_integrated(self):
+        filters_integrated = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            release_type="integrated",
+            release_name=[7],
+        )
+        filters_archive = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            release_type="archive",
+            release_name=[7],
+        )
+
+        sql_integrated = str(
+            GenomeQueryBuilder(filters_integrated).build().compile(compile_kwargs={"literal_binds": True})
+        )
+        sql_archive = str(
+            GenomeQueryBuilder(filters_archive).build().compile(compile_kwargs={"literal_binds": True})
+        )
+
+        # both should join on GenomeDataset.release_id rather than EnsemblRelease.name
+        assert "genome_dataset.release_id IN (7)" in sql_integrated
+        assert "genome_dataset.release_id IN (7)" in sql_archive
+
+    def test_fetch_genomes_by_archive_release_type_returns_no_rows_without_archive_data(
+        self, genome_factory, genome_filters
+    ):
+        # No release_type='archive' data exists in the fixture DB yet, so filtering on it
+        # should simply return no results, without raising.
+        genome_filters['batch_size'] = 0
+        genome_filters['release_type'] = 'archive'
+        genome_filters['dataset_type'] = 'genebuild'
+        genome_filters['dataset_names'] = ['genebuild']
+        genome_filters['dataset_status'] = ['Released']
+        fetched_genome_factory_count = len([genome for genome in genome_factory.get_genomes(**genome_filters)])
+        assert fetched_genome_factory_count == 0
 
     @pytest.mark.parametrize(
         "batch_size, status, expected_count",
