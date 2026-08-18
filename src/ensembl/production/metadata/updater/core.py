@@ -28,6 +28,7 @@ from ensembl.production.metadata.api import exceptions
 from ensembl.production.metadata.api.factories.datasets import DatasetFactory
 from ensembl.production.metadata.api.models import *
 from ensembl.production.metadata.updater.base import BaseMetaUpdater
+from ensembl.production.metadata.updater.updater_utils import get_homology_reference_collection
 
 logging.basicConfig(level=logging.INFO)
 
@@ -961,6 +962,14 @@ class CoreMetaUpdater(BaseMetaUpdater):
         else:
             dataset_source = source
         dataset_type = meta_session.query(DatasetType).filter(DatasetType.name == "homologies").first()
+        reference_set = self.get_meta_single_meta_key(species_id, "compara.homology_reference_set")
+        if reference_set is None:
+            taxonomy_id = self.get_meta_single_meta_key(species_id, "organism.taxonomy_id")
+            reference_set = get_homology_reference_collection(taxonomy_id, self.taxonomy_uri, meta_session)
+        if dataset_attributes is None:
+            dataset_attributes = {}
+        dataset_attributes["compara.homology_reference_set"] = reference_set
+
         dataset_factory = DatasetFactory(self.metadata_uri)
         (dataset_uuid, homology_dataset, homology_dataset_attributes,
          homology_genome_dataset) = dataset_factory.create_dataset(meta_session, genome, dataset_source,
