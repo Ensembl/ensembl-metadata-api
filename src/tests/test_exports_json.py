@@ -217,13 +217,16 @@ class TestFTPMetadataExporter:
         assert 'annotations' in file_paths
         annotations = file_paths['annotations']
         # Core files always present
-        for fname in ('cdna.fa.gz', 'cdna.fa.bgz', 'genes.embl.gz',
+        for fname in ('cdna.fa.bgz', 'genes.embl.gz',
                       'genes.gff3.gz', 'genes.gff3.bgz',
                       'genes.gtf.gz', 'genes.gtf.bgz',
-                      'pep.fa.gz', 'pep.fa.bgz', 'xref.tsv.gz'):
+                      'pep.fa.bgz', 'xref.tsv.gz'):
             assert fname in annotations, f"Expected {fname} in genebuild annotations"
+        # FASTA files should only be block-gzipped.
+        for fname in ('cdna.fa.gz', 'pep.fa.gz'):
+            assert fname not in annotations, f"Unexpected gzipped FASTA {fname} in genebuild annotations"
         # Paths should be rooted under base_path
-        assert annotations['cdna.fa.gz'] == f"{base_path}/cdna.fa.gz"
+        assert annotations['cdna.fa.bgz'] == f"{base_path}/cdna.fa.bgz"
         # Index files must NOT be present
         for fname in annotations:
             assert not fname.endswith('.fai'), f"Index file {fname} should not be listed"
@@ -245,11 +248,14 @@ class TestFTPMetadataExporter:
         assert 'genome_sequences' in file_paths
         genome_seqs = file_paths['genome_sequences']
         for fname in ('chromosomes.tsv.gz',
-                      'hardmasked.fa.bgz', 'hardmasked.fa.gz',
-                      'softmasked.fa.bgz', 'softmasked.fa.gz',
-                      'unmasked.fa.bgz', 'unmasked.fa.gz'):
+                      'hardmasked.fa.bgz',
+                      'softmasked.fa.bgz',
+                      'unmasked.fa.bgz'):
             assert fname in genome_seqs, f"Expected {fname} in genome_sequences"
-        assert genome_seqs['softmasked.fa.gz'] == f"{base_path}/softmasked.fa.gz"
+        # FASTA files should only be block-gzipped.
+        for fname in ('hardmasked.fa.gz', 'softmasked.fa.gz', 'unmasked.fa.gz'):
+            assert fname not in genome_seqs, f"Unexpected gzipped FASTA {fname} in genome_sequences"
+        assert genome_seqs['softmasked.fa.bgz'] == f"{base_path}/softmasked.fa.bgz"
         # Index files must NOT be present
         for fname in genome_seqs:
             assert not fname.endswith('.fai')
