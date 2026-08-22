@@ -34,7 +34,7 @@ def genome_filters(test_dbs):
         'genome_uuid': [],
         'dataset_uuid': [],
         'division': [],
-        'dataset_type': '',
+        'dataset_type': 'genebuild',
         'dataset_names': [],
         'species': [],
         'antispecies': [],
@@ -76,9 +76,31 @@ class TestGenomeFactory:
         assert isinstance(filters.organism_group_type, str)
         assert isinstance(filters.update_dataset_status, str)
 
+    def test_missing_dataset_type_and_dataset_names_raises(self):
+        with pytest.raises(ValueError, match="dataset_type.*dataset_names"):
+            GenomeInputFilters(
+                metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            )
+
+    def test_dataset_names_alone_satisfies_filter_requirement(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_names=["genebuild"],
+        )
+        assert filters.dataset_type == ""
+        assert filters.dataset_names == ["genebuild"]
+
+    def test_dataset_names_defaults_to_none(self):
+        filters = GenomeInputFilters(
+            metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
+        )
+        assert filters.dataset_names is None
+
     def test_column_names_resolve_to_selectable_columns(self):
         filters = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             column_names=["genome_uuid", "species", "dataset_name"],
         )
 
@@ -88,6 +110,7 @@ class TestGenomeFactory:
     def test_comma_separated_column_names_resolve_to_exact_columns(self):
         filters = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             column_names=[
                 "genome_uuid,species,dataset_uuid,dataset_status,dataset_source,"
                 "dataset_source_location,dataset_name,dataset_type,genome_release,dataset_release"
@@ -111,6 +134,7 @@ class TestGenomeFactory:
     def test_division_filter_uses_default_columns_when_columns_omitted(self):
         filters = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             division=["vertebrates"],
         )
 
@@ -131,6 +155,7 @@ class TestGenomeFactory:
     def test_filters_accept_vars_round_trip(self):
         filters = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             division=["vertebrates"],
         )
 
@@ -141,6 +166,7 @@ class TestGenomeFactory:
     def test_invalid_column_names_fallback_to_default_columns(self):
         filters = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             column_names=["not_a_column", "also_invalid"],
         )
 
@@ -165,6 +191,7 @@ class TestGenomeFactory:
         # release is a former integrated release.
         filters = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             release_type=release_type,
         )
         query = GenomeQueryBuilder(filters).build()
@@ -181,6 +208,7 @@ class TestGenomeFactory:
         # exclude rows linked to either type, not just 'integrated'.
         filters = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             release_type="partial",
         )
         query = GenomeQueryBuilder(filters).build()
@@ -191,11 +219,13 @@ class TestGenomeFactory:
     def test_release_name_filter_treats_archive_like_integrated(self):
         filters_integrated = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             release_type="integrated",
             release_name=[7],
         )
         filters_archive = GenomeInputFilters(
             metadata_db_uri="mysql://ensro@localhost/ensembl_genome_metadata",
+            dataset_type="genebuild",
             release_type="archive",
             release_name=[7],
         )
@@ -355,6 +385,10 @@ class TestGenomeFactory:
         leaf_uuid = '7bb8919c-d9e0-4eca-9a49-7a6d9e311c8d'
         genome_filters['genome_uuid'] = []
         genome_filters['dataset_uuid'] = [leaf_uuid]
+        # leaf_uuid is an 'xrefs' dataset, not 'genebuild' (the fixture default); the
+        # dataset_uuid filter already pins down the exact row, this just satisfies the
+        # "dataset_type or dataset_names must be provided" requirement.
+        genome_filters['dataset_type'] = 'xrefs'
 
         # update dataset status to processing
         genome_filters['update_dataset_status'] = 'Processing'

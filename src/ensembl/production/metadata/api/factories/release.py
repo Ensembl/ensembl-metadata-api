@@ -255,9 +255,9 @@ class ReleaseFactory:
                     raise ValueError(f"Release {version} has errors: {errors}")
                 else:
                     print(f"Release {version} has errors: {errors}")
-                    input("Are you sure you want to continue? Press any key to continue or Ctrl+C to exit.")
-                    print("You are continuing. Good luck with that.")
-                    logger.info(f"Release {version} has errors: {errors}. Continuing with force.")
+                    #input("Are you sure you want to continue? Press any key to continue or Ctrl+C to exit.")
+                    #print("You are continuing. Good luck with that.")
+                    #logger.info(f"Release {version} has errors: {errors}. Continuing with force.")
             # Mark datasets as released and set them as current
             genome_datasets = session.query(GenomeDataset).filter_by(release_id=release_id).all()
             for genome_dataset in genome_datasets:

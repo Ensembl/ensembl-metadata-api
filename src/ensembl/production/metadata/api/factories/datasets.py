@@ -635,7 +635,7 @@ class DatasetFactory:
 
         parent_genome_dataset = session.query(GenomeDataset).join(Dataset).join(DatasetType).filter(
             GenomeDataset.genome_id == genome_id,
-            DatasetType.dataset_type_id == parent_dataset_type).one()
+            DatasetType.dataset_type_id == parent_dataset_type).first() # quick fix , if a genome is in multiple releases, this returns the first one, will not have impact as both genome dataset linked to one dataset 
         parent_uuid = parent_genome_dataset.dataset.dataset_uuid
         parent_status = parent_genome_dataset.dataset.status
         return parent_uuid, parent_status

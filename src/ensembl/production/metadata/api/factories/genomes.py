@@ -22,7 +22,7 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Iterator, List
+from typing import Iterator, List, Optional
 
 from ensembl.utils.argparse import ArgumentParser
 from ensembl.utils.database import DBConnection
@@ -110,7 +110,7 @@ class GenomeInputFilters:
     dataset_uuid: List[str] = field(default_factory=list)
     division: List[str] = field(default_factory=list)
     dataset_type: str = ""
-    dataset_names: str = ""
+    dataset_names: Optional[List[str]] = None
     dataset_is_current: int = 0
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
@@ -216,6 +216,12 @@ class GenomeInputFilters:
         )
 
     def __post_init__(self) -> None:
+        if not self.dataset_type and not self.dataset_names:
+            raise ValueError(
+                "At least one of 'dataset_type' or 'dataset_names' must be provided, "
+                "otherwise the query is not scoped to any dataset."
+            )
+
         if self.column_names:
             self.columns = self.resolve_columns(self.column_names)
 
@@ -501,9 +507,10 @@ def main():
         "--dataset_names",
         nargs="*",
         type=str,
-        default=["genebuild"],
+        default=None,
         required=False,
-        help="List of dataset types to filter the query. eg. assembly, genebuild, variation etc.",
+        help="List of dataset names to filter the query. eg. assembly, genebuild, variation etc. "
+             "At least one of --dataset_type or --dataset_names must be provided.",
     )
     parser.add_argument(
         "--species",
@@ -620,6 +627,8 @@ def main():
     )
 
     args = parser.parse_args()
+    if not args.dataset_type and not args.dataset_names:
+        parser.error("At least one of --dataset_type or --dataset_names must be provided.")
     output_format = OutputFormat.from_string(args.output_format)
 
     meta_details = re.match(r"mysql:\/\/.*:?(.*?)@(.*?):\d+\/(.*)", args.metadata_db_uri)
