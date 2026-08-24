@@ -294,6 +294,20 @@ class TestDatasetFactory:
             assert child_dataset.genome_datasets[0].release_id is None
             assert sibling_dataset.genome_datasets[0].release_id is None
 
+    def test_query_all_child_datasets_without_parent_genome_link(self, test_dbs, dataset_factory):
+        """
+        If a parent dataset has no GenomeDataset row, child lookup should not crash.
+        """
+        metadata_db = DBConnection(test_dbs["ensembl_genome_metadata"].dbc.url)
+        parent_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
+
+        with metadata_db.test_session_scope() as session:
+            parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == parent_uuid).one()
+            session.delete(parent_dataset.genome_datasets[0])
+            session.flush()
+
+            assert dataset_factory.query_all_child_datasets(parent_uuid, session) == []
+
 
 @pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
                                        {'src': Path(__file__).parent / "databases/ncbi_taxonomy"},
