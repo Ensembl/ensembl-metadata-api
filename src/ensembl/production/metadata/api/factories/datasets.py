@@ -675,9 +675,13 @@ class DatasetFactory:
         if not child_dataset_types:
             return []  # Return an empty list if no child types are found
         # This will break if we have multiple genome datasets for a single dataset, which is not currently the case.
-        genome_id = parent_dataset.genome_datasets[0].genome_id
+        genome_id = next((gd.genome_id for gd in parent_dataset.genome_datasets), None)
         if not genome_id:
-            raise ValueError("No associated Genome found for the given parent dataset UUID")
+            logger.warning(
+                "Skipping child dataset lookup for dataset %s because it has no associated GenomeDataset rows",
+                dataset_uuid,
+            )
+            return []
 
         child_datasets = []
         for child_type in child_dataset_types:
