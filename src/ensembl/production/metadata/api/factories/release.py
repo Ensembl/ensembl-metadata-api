@@ -206,6 +206,25 @@ class ReleaseFactory:
             if not scoped_genome_ids:
                 raise ValueError(f"Release '{release.name}' has no genomes attached to it.")
 
+            conflicting_genome_releases = (
+                session.query(Genome.genome_uuid, EnsemblRelease.name)
+                .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
+                .join(EnsemblRelease, GenomeRelease.release_id == EnsemblRelease.release_id)
+                .filter(Genome.genome_id.in_(scoped_genome_ids))
+                .filter(GenomeRelease.release_id != release_id)
+                .filter(EnsemblRelease.release_type == "partial")
+                .distinct()
+                .all()
+            )
+            if conflicting_genome_releases:
+                conflicts = ", ".join(
+                    f"{genome_uuid} via partial release {other_release_name}"
+                    for genome_uuid, other_release_name in conflicting_genome_releases[:10]
+                )
+                raise ValueError(
+                    f"Release '{release.name}' includes genomes already attached to other partial releases: {conflicts}"
+                )
+
             existing_genome_release_ids = {
                 genome_id
                 for (genome_id,) in session.query(GenomeRelease.genome_id)
@@ -230,6 +249,15 @@ class ReleaseFactory:
                 len(candidate_links),
                 len(scoped_genome_ids),
             )
+            dataset_ids_in_other_partial_releases = {
+                dataset_id
+                for (dataset_id,) in session.query(GenomeDataset.dataset_id)
+                .join(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
+                .filter(GenomeDataset.release_id != release_id)
+                .filter(EnsemblRelease.release_type == "partial")
+                .distinct()
+                .all()
+            }
             genome_uuid_by_id = {
                 genome_id: genome_uuid
                 for genome_id, genome_uuid in session.query(Genome.genome_id, Genome.genome_uuid)
@@ -251,6 +279,13 @@ class ReleaseFactory:
             }
 
             for genome_dataset in candidate_links:
+                if genome_dataset.dataset_id in dataset_ids_in_other_partial_releases:
+                    logger.info(
+                        "Skipping dataset %s for genome %s because it is already attached to another partial release.",
+                        genome_dataset.dataset.dataset_uuid,
+                        genome_uuid_by_id.get(genome_dataset.genome_id, genome_dataset.genome_id),
+                    )
+                    continue
                 link_key = (genome_dataset.genome_id, genome_dataset.dataset_id)
                 release_link = release_link_map.get(link_key)
                 if release_link is None:
@@ -325,6 +360,7 @@ class ReleaseFactory:
                 if not assembly_genome_releases:
                     continue
 
+                previous_current = next((gr for gr in assembly_genome_releases if gr.is_current == 1), None)
                 winner = max(
                     assembly_genome_releases,
                     key=lambda gr: (
@@ -335,9 +371,13 @@ class ReleaseFactory:
                 )
 
                 for genome_release in assembly_genome_releases:
-                    genome_release.is_current = (
-                        1 if genome_release.genome_release_id == winner.genome_release_id else 0
-                    )
+                    if genome_release.genome_release_id == winner.genome_release_id:
+                        genome_release.is_current = 1
+                        if previous_current is not None:
+                            genome_release.default = previous_current.default
+                    else:
+                        genome_release.is_current = 0
+                        genome_release.default = 0
 
                 logger.info(
                     "Genome releases for assembly %s and provider %s have been updated.",

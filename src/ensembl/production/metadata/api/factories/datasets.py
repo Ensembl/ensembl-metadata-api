@@ -30,7 +30,6 @@ from ensembl.production.metadata.api.models import (
     EnsemblRelease,
     DatasetSource,
     GenomeRelease,
-    ReleaseStatus,
 )
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
@@ -281,10 +280,8 @@ class DatasetFactory:
             .outerjoin(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
             .filter(
                 (GenomeDataset.release_id == release_id)
-                | (
-                    (EnsemblRelease.release_type == "partial")
-                    & (EnsemblRelease.status == ReleaseStatus.RELEASED)
-                )
+                | (EnsemblRelease.release_type == "partial")
+                | GenomeDataset.release_id.is_(None)
             )
         )
         if genome_ids:
