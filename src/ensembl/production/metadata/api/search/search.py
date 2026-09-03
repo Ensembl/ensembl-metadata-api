@@ -243,8 +243,8 @@ class GenomeSearchDocument(BaseModel):
 class DatasetFieldExtractor:
     """
     Extracts dataset-related fields for a genome.
-    Always uses is_current=1 datasets regardless of release.
-    Release is kept for context in error messages.
+    Prefers datasets attached to the indexed release.
+    Falls back to current datasets only when the release-specific link does not exist.
     """
 
     def __init__(self, session: Session, genome: Genome, release: EnsemblRelease):
@@ -258,17 +258,20 @@ class DatasetFieldExtractor:
         Get datasets relevant for this genome.
 
         Logic:
-        - Always return datasets with is_current == 1
+        - Prefer datasets linked to the indexed release
+        - Fall back to current datasets when no release-specific links exist
         - Filter to only Released datasets
         """
         if self._datasets_cache is not None:
             return self._datasets_cache
 
-        self._datasets_cache = [
-            gd
-            for gd in self.genome.genome_datasets
-            if gd.is_current == 1 and gd.dataset.status == DatasetStatus.RELEASED
+        released_datasets = [
+            gd for gd in self.genome.genome_datasets if gd.dataset.status == DatasetStatus.RELEASED
         ]
+
+        release_datasets = [gd for gd in released_datasets if gd.release_id == self.release.release_id]
+
+        self._datasets_cache = release_datasets or [gd for gd in released_datasets if gd.is_current == 1]
 
         return self._datasets_cache
 
