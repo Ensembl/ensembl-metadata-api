@@ -17,12 +17,20 @@ from collections import defaultdict
 import sqlalchemy.orm
 from ensembl.utils.database.dbconnection import DBConnection
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import func
 
 from ensembl.production.metadata.api.exceptions import *
-from ensembl.production.metadata.api.models import Dataset, Genome, GenomeDataset, \
-    DatasetType, DatasetStatus, EnsemblRelease, DatasetSource, GenomeRelease
+from ensembl.production.metadata.api.models import (
+    Dataset,
+    Genome,
+    GenomeDataset,
+    DatasetType,
+    DatasetStatus,
+    EnsemblRelease,
+    DatasetSource,
+    GenomeRelease,
+)
 from ensembl.production.metadata.updater.updater_utils import update_attributes
 
 logger = logging.getLogger(__name__)
@@ -236,81 +244,90 @@ class DatasetFactory:
             session.rollback()
             raise RuntimeError(f"Failed to update dataset statuses: {e}")
 
-    def is_current_datasets_resolve(self, release_id, session=None, logger=None):
+    def is_current_datasets_resolve(self, release_id, session=None, logger=None, genome_ids=None):
         """
-        Ensures that for each (genome_id, dataset_type_id) combination,
-        only one GenomeDataset has is_current=1, prioritizing the dataset with the given release_id.
+        Ensure GenomeDataset.is_current is consistent for a release.
+
+        Rules:
+        - For dataset types with multiple_current=0, keep exactly one current GenomeDataset
+          per (genome_id, dataset_type_id), preferring the specified release_id.
+        - For dataset types with multiple_current=1, allow one current GenomeDataset per
+          (genome_id, dataset_type_id, dataset.name), again preferring the specified release_id.
+        - Different dataset names may therefore each remain current for the same genome/type
+          when multiple_current=1.
 
         :param session: SQLAlchemy session object
         :param release_id: The release_id to prioritize
         :param logger: Optional logging.Logger instance
+        :param genome_ids: Optional iterable of genome_id values to limit the reconciliation scope
         :return: List of altered GenomeDataset objects
         """
         if not session:
             with self.__get_db_connexion().session_scope() as db_session:
-                return self.is_current_datasets_resolve(release_id=release_id, session=db_session, logger=logger)
+                return self.is_current_datasets_resolve(
+                    release_id=release_id,
+                    session=db_session,
+                    logger=logger,
+                    genome_ids=genome_ids,
+                )
 
         log = logger.info if logger else print
-        # TODO: Reimplement this method to manage with unreleased datasets and dataset_types that may have multiple is_current=1 entries correctly
-        # # Step 1: Identify problem pairs
-        # log("Scanning for (genome_id, dataset_type_id) combinations with multiple is_current=1 GenomeDatasets...")
-        # genome_type_pairs = (
-        #     session.query(GenomeDataset.genome_id, Dataset.dataset_type_id)
-        #     .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
-        #     .filter(GenomeDataset.is_current == 1)
-        #     .group_by(GenomeDataset.genome_id, Dataset.dataset_type_id)
-        #     .having(func.count(GenomeDataset.genome_dataset_id) > 1)
-        #     .all()
-        # )
-        #
-        # if not genome_type_pairs:
-        #     log("No duplicates found. Nothing to fix.")
-        #     return []
-        #
-        # altered_datasets = []
-        #
-        # for genome_id, dataset_type_id in genome_type_pairs:
-        #     log(f"Fixing genome_id={genome_id}, dataset_type_id={dataset_type_id}")
-        #
-        #     gds = (
-        #         session.query(GenomeDataset)
-        #         .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
-        #         .filter(
-        #             GenomeDataset.genome_id == genome_id,
-        #             Dataset.dataset_type_id == dataset_type_id
-        #         )
-        #         .all()
-        #     )
-        #
-        #     if not gds:
-        #         log(f"  [WARN] No GenomeDataset found for genome_id={genome_id}, dataset_type_id={dataset_type_id}")
-        #         continue
-        #
-        #     current_gds = [gd for gd in gds if gd.is_current]
-        #     log(f"  Found {len(current_gds)} is_current=1 entries")
-        #
-        #     # Log current entries
-        #     for gd in current_gds:
-        #         log(f"    - GD_ID={gd.genome_dataset_id}, dataset_id={gd.dataset_id}, release_id={gd.release_id}")
-        #
-        #     # Reset all to is_current=0
-        #     for gd in current_gds:
-        #         altered_datasets.append(gd)
-        #         gd.is_current = 0
-        #
-        #     # Set is_current=1 for matching release_id
-        #     matching = [gd for gd in gds if gd.release_id == release_id]
-        #     if len(matching) == 1:
-        #         matching[0].is_current = 1
-        #         log(f"  => Marked GD_ID={matching[0].genome_dataset_id} as current (release_id={release_id})")
-        #     elif len(matching) == 0:
-        #         log(f"  [WARN] No GenomeDataset found with release_id={release_id}")
-        #     else:
-        #         log(f"  [ERROR] Multiple GenomeDatasets found with release_id={release_id}, skipping setting current!")
-        #
-        # session.commit()
-        # log(f"Finished resolving is_current flags. {len(altered_datasets)} entries modified.")
-        # return altered_datasets
+        genome_ids = set(genome_ids or [])
+        query = (
+            session.query(GenomeDataset)
+            .join(Dataset, GenomeDataset.dataset_id == Dataset.dataset_id)
+            .join(DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id)
+            .outerjoin(EnsemblRelease, GenomeDataset.release_id == EnsemblRelease.release_id)
+            .filter(
+                (GenomeDataset.release_id == release_id)
+                | (EnsemblRelease.release_type == "partial")
+                | GenomeDataset.release_id.is_(None)
+            )
+        )
+        if genome_ids:
+            query = query.filter(GenomeDataset.genome_id.in_(genome_ids))
+        genome_datasets = query.all()
+        if not genome_datasets:
+            log("No GenomeDataset rows found. Nothing to fix.")
+            return []
+
+        grouped = defaultdict(list)
+        for genome_dataset in genome_datasets:
+            dataset = genome_dataset.dataset
+            dataset_type = dataset.dataset_type
+            if dataset_type.multiple_current:
+                group_key = (genome_dataset.genome_id, dataset.dataset_type_id, dataset.name)
+            else:
+                group_key = (genome_dataset.genome_id, dataset.dataset_type_id)
+            grouped[group_key].append(genome_dataset)
+
+        altered_datasets = []
+
+        def sort_key(genome_dataset):
+            dataset = genome_dataset.dataset
+            return (
+                1 if genome_dataset.release_id == release_id else 0,
+                1 if genome_dataset.is_current else 0,
+                1 if dataset.status == DatasetStatus.RELEASED else 0,
+                1 if dataset.status == DatasetStatus.PROCESSED else 0,
+                genome_dataset.release_id or -1,
+                genome_dataset.genome_dataset_id,
+            )
+
+        for group_key, group_rows in grouped.items():
+            winner = max(group_rows, key=sort_key)
+            for genome_dataset in group_rows:
+                desired_is_current = 1 if genome_dataset.genome_dataset_id == winner.genome_dataset_id else 0
+                if genome_dataset.is_current != desired_is_current:
+                    genome_dataset.is_current = desired_is_current
+                    altered_datasets.append(genome_dataset)
+
+        if altered_datasets:
+            log(
+                f"Resolved is_current on {len(altered_datasets)} GenomeDataset rows for release_id={release_id}"
+            )
+
+        return altered_datasets
 
     def attach_misc_datasets(self, release_id, session=None, force=False):
         """
@@ -430,7 +447,7 @@ class DatasetFactory:
         1. Identify all FAULTY datasets.
         2. Traverse upwards to mark all parent datasets as FAULTY.
         3. Retrieve all child datasets from the top-level parent; downgrade any
-           RELEASED children to PROCESSED, and remove their release association.
+           RELEASED children to FAULTY, and remove their release association.
         4. If any dataset in the chain has dataset_type.name of 'genebuild' or 'assembly':
            - Remove all genome_dataset.release_id values for the associated genome.
            - Delete all GenomeRelease entries for the affected genomes.
@@ -443,7 +460,35 @@ class DatasetFactory:
             with self.__get_db_connexion().session_scope() as db_session:
                 return self.process_faulty(session=db_session)
 
-        faulty_datasets = session.query(Dataset).filter(Dataset.status == DatasetStatus.FAULTY).all()
+        datasets = (
+            session.query(Dataset)
+            .options(
+                selectinload(Dataset.dataset_type),
+                selectinload(Dataset.genome_datasets),
+            )
+            .all()
+        )
+        dataset_by_id = {dataset.dataset_id: dataset for dataset in datasets}
+        children_by_parent_id = defaultdict(list)
+        datasets_by_genome_and_type = defaultdict(list)
+        has_non_faulty_assembly_by_genome = defaultdict(bool)
+        for dataset in datasets:
+            if dataset.parent_id is not None:
+                children_by_parent_id[dataset.parent_id].append(dataset)
+            for genome_dataset in dataset.genome_datasets:
+                datasets_by_genome_and_type[(genome_dataset.genome_id, dataset.dataset_type_id)].append(
+                    dataset
+                )
+            if dataset.dataset_type.name == "assembly" and dataset.status != DatasetStatus.FAULTY:
+                for genome_dataset in dataset.genome_datasets:
+                    has_non_faulty_assembly_by_genome[genome_dataset.genome_id] = True
+
+        child_type_ids_by_parent_type_id = defaultdict(list)
+        for dataset_type in session.query(DatasetType).all():
+            if dataset_type.parent is not None:
+                child_type_ids_by_parent_type_id[dataset_type.parent].append(dataset_type.dataset_type_id)
+
+        faulty_datasets = [dataset for dataset in datasets if dataset.status == DatasetStatus.FAULTY]
         if not faulty_datasets:
             logger.info("No faulty datasets found.")
             return
@@ -452,72 +497,137 @@ class DatasetFactory:
 
         updated_datasets = set()
         genomes_to_remove_release = set()
+        released_genomes_marked_faulty = set()
+        impacted_top_level_ids = set()
+        parent_ids_cache = {}
+        child_ids_cache = {}
+
+        def get_parent_ids(dataset):
+            cached_parent_ids = parent_ids_cache.get(dataset.dataset_id)
+            if cached_parent_ids is not None:
+                return cached_parent_ids
+
+            parent_ids = []
+            seen_ids = set()
+
+            if dataset.parent_id is not None and dataset.parent_id in dataset_by_id:
+                parent_ids.append(dataset.parent_id)
+                seen_ids.add(dataset.parent_id)
+            elif dataset.dataset_type.parent is not None:
+                for genome_dataset in dataset.genome_datasets:
+                    for parent_dataset in datasets_by_genome_and_type.get(
+                        (genome_dataset.genome_id, dataset.dataset_type.parent),
+                        [],
+                    ):
+                        if parent_dataset.dataset_id == dataset.dataset_id:
+                            continue
+                        if parent_dataset.dataset_id in seen_ids:
+                            continue
+                        seen_ids.add(parent_dataset.dataset_id)
+                        parent_ids.append(parent_dataset.dataset_id)
+
+            parent_ids_cache[dataset.dataset_id] = parent_ids
+            return parent_ids
+
+        def get_child_ids(dataset):
+            cached_child_ids = child_ids_cache.get(dataset.dataset_id)
+            if cached_child_ids is not None:
+                return cached_child_ids
+
+            child_ids = []
+            seen_ids = set()
+
+            for child_dataset in children_by_parent_id.get(dataset.dataset_id, []):
+                if child_dataset.dataset_id not in seen_ids:
+                    seen_ids.add(child_dataset.dataset_id)
+                    child_ids.append(child_dataset.dataset_id)
+
+            for child_type_id in child_type_ids_by_parent_type_id.get(dataset.dataset_type_id, []):
+                for genome_dataset in dataset.genome_datasets:
+                    for child_dataset in datasets_by_genome_and_type.get(
+                        (genome_dataset.genome_id, child_type_id), []
+                    ):
+                        if child_dataset.dataset_id == dataset.dataset_id:
+                            continue
+                        if child_dataset.dataset_id in seen_ids:
+                            continue
+                        seen_ids.add(child_dataset.dataset_id)
+                        child_ids.append(child_dataset.dataset_id)
+
+            child_ids_cache[dataset.dataset_id] = child_ids
+            return child_ids
 
         for dataset in faulty_datasets:
-            # Find the top-level parent dataset
-            top_level_uuid = self.__query_top_level_parent(session, dataset.dataset_uuid)
+            stack = [(dataset.dataset_id, {dataset.dataset_id})]
 
-            # Traverse upwards and mark all parent datasets as FAULTY
-            current_uuid = dataset.dataset_uuid
-            while current_uuid:
-                parent_uuid, _ = self.__query_parent_datasets(session, current_uuid)
-                if parent_uuid is None:
-                    break
-                parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == parent_uuid).one()
-                if parent_dataset.status != DatasetStatus.FAULTY:
-                    parent_dataset.status = DatasetStatus.FAULTY
-                    updated_datasets.add(parent_dataset.dataset_uuid)
-                current_uuid = parent_uuid
+            while stack:
+                current_dataset_id, path_ids = stack.pop()
+                current_dataset = dataset_by_id[current_dataset_id]
+                if current_dataset.status != DatasetStatus.FAULTY:
+                    current_dataset.status = DatasetStatus.FAULTY
+                    updated_datasets.add(current_dataset.dataset_uuid)
 
-            # Get all child datasets including the top-level parent itself
-            all_child_datasets = self.query_all_child_datasets(top_level_uuid, session)
-            all_child_datasets.append((top_level_uuid, None))
+                parent_ids = get_parent_ids(current_dataset)
+                if not parent_ids:
+                    impacted_top_level_ids.add(current_dataset.dataset_id)
+                    continue
 
-            # Remove release IDs where applicable
-            for child_uuid, _ in all_child_datasets:
-                # Downgrade any Released children to Processed — these can arise from
-                # old code that left children Released while the parent became Faulty or manual intevention.
-                # Should not be strictly necessary, but prevents false positives on the DC
-                child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one_or_none()
-                if child_dataset and child_dataset.status == DatasetStatus.RELEASED:
+                for parent_id in parent_ids:
+                    if parent_id in path_ids:
+                        raise ValueError(
+                            f"Cycle detected while traversing parents for faulty dataset {dataset.dataset_uuid}"
+                        )
+                    stack.append((parent_id, path_ids | {parent_id}))
+
+        processed_dataset_ids = set()
+        for top_level_id in impacted_top_level_ids:
+            stack = [(top_level_id, {top_level_id})]
+
+            while stack:
+                current_dataset_id, path_ids = stack.pop()
+                if current_dataset_id in processed_dataset_ids:
+                    continue
+                processed_dataset_ids.add(current_dataset_id)
+                chain_dataset = dataset_by_id[current_dataset_id]
+                if chain_dataset.status == DatasetStatus.RELEASED:
                     logger.info(
-                        f"Downgrading dataset {child_uuid} from RELEASED to PROCESSED "
-                        f"(parent chain is FAULTY)"
+                        "Downgrading dataset %s from RELEASED to FAULTY (parent chain is FAULTY)",
+                        chain_dataset.dataset_uuid,
                     )
-                    child_dataset.status = DatasetStatus.PROCESSED
-                    updated_datasets.add(child_uuid)
+                    chain_dataset.status = DatasetStatus.FAULTY
+                    updated_datasets.add(chain_dataset.dataset_uuid)
 
-                genome_datasets = (
-                    session.query(GenomeDataset)
-                    .join(Dataset)
-                    .filter(Dataset.dataset_uuid == child_uuid)
-                    .all()
-                )
-                for genome_dataset in genome_datasets:
+                for genome_dataset in chain_dataset.genome_datasets:
                     if genome_dataset.release_id:
-                        logger.info(f"Removing release from dataset {child_uuid}")
+                        logger.info("Removing release from dataset %s", chain_dataset.dataset_uuid)
                         genome_dataset.release_id = None
-                        updated_datasets.add(child_uuid)
+                        updated_datasets.add(chain_dataset.dataset_uuid)
 
-                    # Track genomes that need full release removal if dataset is 'genebuild' or 'assembly'
-                    if genome_dataset.dataset.dataset_type.name in {"genebuild", "assembly"}:
-                        assembly_datasets = session.query(Dataset).join(GenomeDataset).join(DatasetType).filter(
-                            GenomeDataset.genome_id == genome_dataset.genome_id).filter(
-                            Dataset.status != DatasetStatus.FAULTY).filter(DatasetType.name == "assembly").all()
-                        if len(assembly_datasets) == 0:
+                    if chain_dataset.dataset_type.name == "genebuild":
+                        genomes_to_remove_release.add(genome_dataset.genome_id)
+                    elif chain_dataset.dataset_type.name == "assembly":
+                        if not has_non_faulty_assembly_by_genome[genome_dataset.genome_id]:
                             genomes_to_remove_release.add(genome_dataset.genome_id)
-                            continue
-                            # The following section would reomve the assembly from good genomes with multiple releases.
-                            # Need to combine the two with integrated releases.
-                        # genebuild_datasets = session.query(Dataset).join(GenomeDataset).join(DatasetType).filter(
-                        #     GenomeDataset.genome_id == genome_dataset.genome_id).filter(
-                        #     Dataset.status != DatasetStatus.FAULTY).filter(DatasetType.name == "genebuild").all()
-                        # if len(genebuild_datasets) == 0:
-                        #     genomes_to_remove_release.add(genome_dataset.genome_id)
+
+                for child_id in get_child_ids(chain_dataset):
+                    if child_id in path_ids:
+                        raise ValueError(
+                            f"Cycle detected while traversing children for top-level dataset {chain_dataset.dataset_uuid}"
+                        )
+                    stack.append((child_id, path_ids | {child_id}))
 
         # Remove genome releases if necessary
         if genomes_to_remove_release:
             logger.info(f"Removing genome releases for {len(genomes_to_remove_release)} genomes.")
+
+            released_genomes_marked_faulty.update(
+                genome_uuid
+                for (genome_uuid,) in session.query(Genome.genome_uuid)
+                .join(GenomeRelease, GenomeRelease.genome_id == Genome.genome_id)
+                .filter(Genome.genome_id.in_(genomes_to_remove_release))
+                .distinct()
+                .all()
+            )
 
             # Remove release associations from all datasets linked to affected genomes
             genome_datasets = (
@@ -545,6 +655,11 @@ class DatasetFactory:
 
         session.commit()
         logger.info(f"Updated {len(updated_datasets)} datasets as FAULTY and removed releases where applicable.")
+        if released_genomes_marked_faulty:
+            released_genome_list = ", ".join(sorted(released_genomes_marked_faulty))
+            raise DatasetFactoryException(
+                f"Released genomes were marked faulty and removed from release: {released_genome_list}"
+            )
 
     def update_dataset_attributes(self, dataset_uuid, attribute_dict, **kwargs):
         session = kwargs.get('session')
@@ -698,14 +813,27 @@ class DatasetFactory:
         if not session:
             with self.__get_db_connexion().session_scope() as db_session:
                 return self.query_all_child_datasets(parent_dataset_uuid, db_session)
-        # This method returns the child datasets for a given dataset
-        child_datasets = self.__query_child_datasets(session, parent_dataset_uuid)
-
         all_child_datasets = []
-        for child_uuid, child_status in child_datasets:
-            all_child_datasets.append((child_uuid, child_status))
-            sub_children = self.query_all_child_datasets(child_uuid, session)
-            all_child_datasets.extend(sub_children)
+        visited_dataset_uuids = {parent_dataset_uuid}
+        stack = [parent_dataset_uuid]
+
+        while stack:
+            current_parent_uuid = stack.pop()
+            child_datasets = self.__query_child_datasets(session, current_parent_uuid)
+
+            for child_uuid, child_status in child_datasets:
+                if child_uuid in visited_dataset_uuids:
+                    logger.warning(
+                        "Skipping already visited child dataset %s while traversing descendants of %s",
+                        child_uuid,
+                        parent_dataset_uuid,
+                    )
+                    continue
+
+                visited_dataset_uuids.add(child_uuid)
+                all_child_datasets.append((child_uuid, child_status))
+                stack.append(child_uuid)
+
         return all_child_datasets
 
     def __update_status(self, session, dataset_uuid, status):

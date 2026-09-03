@@ -16,6 +16,7 @@ import pytest
 from ensembl.utils.database import UnitTestDB, DBConnection
 from sqlalchemy import func
 
+from ensembl.production.metadata.api.exceptions import DatasetFactoryException
 from ensembl.production.metadata.api.models import (Dataset, DatasetAttribute, Attribute, DatasetSource, DatasetType,
                                                     GenomeDataset, Genome, DatasetStatus, GenomeRelease)
 
@@ -252,7 +253,8 @@ class TestDatasetFactory:
 
         with metadata_db.test_session_scope() as session:
             dataset_factory.simple_update_dataset_status(genebuild_uuid, DatasetStatus.FAULTY, session=session)
-            dataset_factory.process_faulty(session)
+            with pytest.raises(DatasetFactoryException, match="Released genomes were marked faulty"):
+                dataset_factory.process_faulty(session)
 
             # Verify that the child dataset remains PROCESSED
             child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
@@ -261,6 +263,28 @@ class TestDatasetFactory:
             # Verify that the release_id has been removed from both parent and child genome datasets
             parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == genebuild_uuid).one()
             assert parent_dataset.genome_datasets[0].release_id is None
+            assert child_dataset.genome_datasets[0].release_id is None
+
+    def test_faulty_parent_marks_released_descendants_faulty(self, test_dbs, dataset_factory):
+        """
+        Released descendants of a faulty chain should be downgraded to FAULTY.
+        """
+        metadata_db = DBConnection(test_dbs["ensembl_genome_metadata"].dbc.url)
+        genebuild_uuid = "66db32ae-974f-480c-a60b-63cc49d00f68"
+        child_uuid = "8ec9f005-91d7-4015-be09-7b61b6d62c54"
+
+        with metadata_db.test_session_scope() as session:
+            child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
+            child_dataset.status = DatasetStatus.RELEASED
+
+            dataset_factory.simple_update_dataset_status(
+                genebuild_uuid, DatasetStatus.FAULTY, session=session
+            )
+            with pytest.raises(DatasetFactoryException, match="Released genomes were marked faulty"):
+                dataset_factory.process_faulty(session)
+
+            child_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == child_uuid).one()
+            assert child_dataset.status == DatasetStatus.FAULTY
             assert child_dataset.genome_datasets[0].release_id is None
 
     def test_faulty_child(self, test_dbs, dataset_factory):
@@ -278,7 +302,8 @@ class TestDatasetFactory:
 
         with metadata_db.test_session_scope() as session:
             dataset_factory.simple_update_dataset_status(child_uuid, DatasetStatus.FAULTY, session=session)
-            dataset_factory.process_faulty(session)
+            with pytest.raises(DatasetFactoryException, match="Released genomes were marked faulty"):
+                dataset_factory.process_faulty(session)
 
             # Verify that the parent dataset is now FAULTY
             parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == parent_uuid).one()
@@ -303,8 +328,9 @@ class TestDatasetFactory:
 
         with metadata_db.test_session_scope() as session:
             parent_dataset = session.query(Dataset).filter(Dataset.dataset_uuid == parent_uuid).one()
-            session.delete(parent_dataset.genome_datasets[0])
+            parent_dataset.genome_datasets.clear()
             session.flush()
+            session.expire_all()
 
             assert dataset_factory.query_all_child_datasets(parent_uuid, session) == []
 
@@ -632,5 +658,103 @@ class TestDatasetFactory3:
 
             # This one needs some work. Recently fixed the method to handle multiples of the same type, but we don't have good example data.
 
-            # assert old.is_current == 0
+            assert old.is_current == 0
             assert new.is_current == 1
+
+    def test_is_current_datasets_resolve_multiple_current_same_name(self, test_dbs, dataset_factory):
+        metadata_db = DBConnection(test_dbs["ensembl_genome_metadata"].dbc.url)
+        top_level_dataset = "99999999-847e-4742-a68b-18c3ece068aa"
+
+        with metadata_db.test_session_scope() as session:
+            top_level = session.query(Dataset).filter(Dataset.dataset_uuid == top_level_dataset).one()
+            genome = top_level.genome_datasets[0].genome
+
+            multi_type = DatasetType(
+                name="dataset_factory_multi_current_same_name",
+                label="Dataset factory multi current same name",
+                topic="production_processing",
+                parent=None,
+                multiple_current=1,
+            )
+            session.add(multi_type)
+            session.flush()
+
+            dataset_one = Dataset(
+                dataset_uuid="11111111-1111-1111-1111-111111111111",
+                dataset_type=multi_type,
+                dataset_source=top_level.dataset_source,
+                name="shared_name",
+                version="1.0",
+                label="Shared name one",
+                status=DatasetStatus.PROCESSED,
+            )
+            dataset_two = Dataset(
+                dataset_uuid="22222222-2222-2222-2222-222222222222",
+                dataset_type=multi_type,
+                dataset_source=top_level.dataset_source,
+                name="shared_name",
+                version="1.1",
+                label="Shared name two",
+                status=DatasetStatus.PROCESSED,
+            )
+            session.add_all([dataset_one, dataset_two])
+            session.flush()
+
+            gd_one = GenomeDataset(genome=genome, dataset=dataset_one, release_id=2, is_current=1)
+            gd_two = GenomeDataset(genome=genome, dataset=dataset_two, release_id=5, is_current=1)
+            session.add_all([gd_one, gd_two])
+            session.flush()
+
+            dataset_factory.is_current_datasets_resolve(release_id=5, session=session)
+
+            assert gd_one.is_current == 0
+            assert gd_two.is_current == 1
+
+    def test_is_current_datasets_resolve_multiple_current_different_names(self, test_dbs, dataset_factory):
+        metadata_db = DBConnection(test_dbs["ensembl_genome_metadata"].dbc.url)
+        top_level_dataset = "99999999-847e-4742-a68b-18c3ece068aa"
+
+        with metadata_db.test_session_scope() as session:
+            top_level = session.query(Dataset).filter(Dataset.dataset_uuid == top_level_dataset).one()
+            genome = top_level.genome_datasets[0].genome
+
+            multi_type = DatasetType(
+                name="dataset_factory_multi_current_diff_name",
+                label="Dataset factory multi current diff name",
+                topic="production_processing",
+                parent=None,
+                multiple_current=1,
+            )
+            session.add(multi_type)
+            session.flush()
+
+            dataset_one = Dataset(
+                dataset_uuid="33333333-3333-3333-3333-333333333333",
+                dataset_type=multi_type,
+                dataset_source=top_level.dataset_source,
+                name="name_one",
+                version="1.0",
+                label="Name one",
+                status=DatasetStatus.PROCESSED,
+            )
+            dataset_two = Dataset(
+                dataset_uuid="44444444-4444-4444-4444-444444444444",
+                dataset_type=multi_type,
+                dataset_source=top_level.dataset_source,
+                name="name_two",
+                version="1.1",
+                label="Name two",
+                status=DatasetStatus.PROCESSED,
+            )
+            session.add_all([dataset_one, dataset_two])
+            session.flush()
+
+            gd_one = GenomeDataset(genome=genome, dataset=dataset_one, release_id=2, is_current=1)
+            gd_two = GenomeDataset(genome=genome, dataset=dataset_two, release_id=5, is_current=1)
+            session.add_all([gd_one, gd_two])
+            session.flush()
+
+            dataset_factory.is_current_datasets_resolve(release_id=5, session=session)
+
+            assert gd_one.is_current == 1
+            assert gd_two.is_current == 1

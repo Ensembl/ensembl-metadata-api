@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 from ensembl.utils.database import UnitTestDB, DBConnection
+from sqlalchemy.exc import NoResultFound
 
 from ensembl.production.metadata.api.exceptions import MissingMetaException
 from ensembl.production.metadata.api.factories.genomes import GenomeFactory
@@ -258,6 +259,27 @@ class TestReleaseFactory:
             factory = ReleaseFactory(test_dbs['ensembl_genome_metadata'].dbc.url)
             errors = factory.pre_release_check("4")
             assert not errors, f"Unexpected errors found: {errors}"
+
+    def test_set_partial_released_uses_release_name(self, test_dbs):
+        metadata_db = DBConnection(test_dbs["ensembl_genome_metadata"].dbc.url)
+        factory = ReleaseFactory(test_dbs["ensembl_genome_metadata"].dbc.url)
+
+        release = factory.set_partial_released(release_name="4")
+        release_id = release.release_id
+
+        with metadata_db.session_scope() as session:
+            updated_release = (
+                session.query(EnsemblRelease).filter(EnsemblRelease.release_id == release_id).one()
+            )
+            assert updated_release.name == "4"
+            assert updated_release.status == ReleaseStatus.RELEASED
+            assert updated_release.is_current == 1
+
+    def test_set_partial_released_unknown_release_name_raises(self, test_dbs):
+        factory = ReleaseFactory(test_dbs["ensembl_genome_metadata"].dbc.url)
+
+        with pytest.raises(NoResultFound):
+            factory.set_partial_released(release_name="999")
 
 
 @pytest.mark.parametrize("test_dbs", [[{'src': Path(__file__).parent / "databases/ensembl_genome_metadata"},
