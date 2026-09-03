@@ -566,6 +566,38 @@ class TestGenomeSearchDocument:
 class TestDatasetFieldExtractor:
     """Test suite for DatasetFieldExtractor class."""
 
+    @staticmethod
+    def _make_genome_dataset(
+        dataset_type_name: str,
+        *,
+        release_id: int,
+        is_current: int,
+        status: DatasetStatus = DatasetStatus.RELEASED,
+        attributes: list[tuple[str, str]] | None = None,
+    ) -> Mock:
+        dataset_type = Mock(spec=DatasetType)
+        dataset_type.name = dataset_type_name
+
+        dataset = Mock(spec=Dataset)
+        dataset.dataset_type = dataset_type
+        dataset.status = status
+        dataset.dataset_attributes = []
+
+        for attribute_name, value in attributes or []:
+            attribute = Mock(spec=Attribute)
+            attribute.name = attribute_name
+
+            dataset_attr = Mock(spec=DatasetAttribute)
+            dataset_attr.attribute = attribute
+            dataset_attr.value = value
+            dataset.dataset_attributes.append(dataset_attr)
+
+        genome_dataset = Mock(spec=GenomeDataset)
+        genome_dataset.dataset = dataset
+        genome_dataset.release_id = release_id
+        genome_dataset.is_current = is_current
+        return genome_dataset
+
     def test_init(self, test_dbs):
         """Test DatasetFieldExtractor initialization."""
         metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
@@ -601,9 +633,9 @@ class TestDatasetFieldExtractor:
                 datasets = extractor._get_relevant_datasets()
 
                 assert isinstance(datasets, list)
-                # Should only include datasets with is_current=1 and status RELEASED
+                # Should only include release-specific datasets when they exist.
                 for gd in datasets:
-                    assert gd.is_current == 1
+                    assert gd.release_id == release.release_id
                     assert gd.dataset.status == DatasetStatus.RELEASED
 
     def test_get_relevant_datasets_partial_release(self, test_dbs):
@@ -624,9 +656,9 @@ class TestDatasetFieldExtractor:
                     datasets = extractor._get_relevant_datasets()
 
                     assert isinstance(datasets, list)
-                    # Should only include current datasets with status RELEASED
+                    # Should only include release-specific datasets when they exist.
                     for gd in datasets:
-                        assert gd.is_current == 1
+                        assert gd.release_id == release.release_id
                         assert gd.dataset.status == DatasetStatus.RELEASED
 
     def test_get_relevant_datasets_caching(self, test_dbs):
@@ -682,6 +714,58 @@ class TestDatasetFieldExtractor:
                 extractor = DatasetFieldExtractor(session, genome, release)
                 value = extractor._get_dataset_attribute("nonexistent_type", "nonexistent.attribute")
                 assert value is None
+
+    def test_get_relevant_datasets_prefers_release_specific_links(self, test_dbs):
+        """Test release-specific datasets are preferred over unrelated current datasets."""
+        with test_dbs["ensembl_genome_metadata"].dbc.session_scope() as session:
+            genome = Mock(spec=Genome)
+            genome.genome_datasets = [
+                self._make_genome_dataset(
+                    "assembly",
+                    release_id=36,
+                    is_current=1,
+                    attributes=[("assembly.stats.contig_n50", "11194537")],
+                ),
+                self._make_genome_dataset(
+                    "assembly",
+                    release_id=37,
+                    is_current=1,
+                    attributes=[("assembly.stats.contig_n50", "999")],
+                ),
+            ]
+
+            release = Mock(spec=EnsemblRelease)
+            release.release_id = 36
+            release.label = "2026-07"
+
+            extractor = DatasetFieldExtractor(session, genome, release)
+            datasets = extractor._get_relevant_datasets()
+
+            assert datasets == [genome.genome_datasets[0]]
+
+    def test_get_contig_n50_uses_release_specific_dataset_before_current_fallback(self, test_dbs):
+        """Test contig N50 comes from the indexed release when available."""
+        with test_dbs["ensembl_genome_metadata"].dbc.session_scope() as session:
+            genome = Mock(spec=Genome)
+            genome.genome_uuid = "c0410902-1007-404d-a8dd-3adee003811e"
+            genome.genome_datasets = [
+                self._make_genome_dataset("assembly", release_id=99, is_current=1, attributes=[]),
+                self._make_genome_dataset(
+                    "assembly",
+                    release_id=36,
+                    is_current=0,
+                    attributes=[("assembly.stats.contig_n50", "11194537")],
+                ),
+            ]
+
+            release = Mock(spec=EnsemblRelease)
+            release.release_id = 36
+            release.release_type = "integrated"
+            release.label = "2026-07"
+
+            extractor = DatasetFieldExtractor(session, genome, release)
+
+            assert extractor.get_contig_n50() == 11194537
 
     def test_has_dataset_type_true(self, test_dbs):
         """Test has_dataset_type returns True when dataset type exists."""
