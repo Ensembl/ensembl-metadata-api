@@ -17,7 +17,7 @@ from collections import defaultdict
 from datetime import datetime
 
 from ensembl.utils.database import DBConnection
-from sqlalchemy import select, func, case
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ensembl.production.metadata.api.exceptions import TypeNotFoundException
@@ -170,42 +170,18 @@ class FTPMetadataExporter:
         attribute_results = session.execute(attributes_query).all()
 
         # --- Genebuild metadata (annotation source + geneset date) ---
-        genebuild_query = select(
-            Genome.genome_uuid,
-            Organism.scientific_name,
-            Assembly.accession,
-            func.max(case(
-                (Attribute.name == 'genebuild.annotation_source', DatasetAttribute.value),
-                else_=None
-            )).label('genebuild_source_name'),
-            func.max(case(
-                (Attribute.name == 'genebuild.last_geneset_update', DatasetAttribute.value),
-                else_=None
-            )).label('last_geneset_update')
-        ).select_from(
-            Genome
-        ).join(
-            Organism, Genome.organism_id == Organism.organism_id
-        ).join(
-            Assembly, Genome.assembly_id == Assembly.assembly_id
-        ).join(
-            GenomeDataset, Genome.genome_id == GenomeDataset.genome_id
-        ).join(
-            Dataset, GenomeDataset.dataset_id == Dataset.dataset_id
-        ).join(
-            DatasetType, Dataset.dataset_type_id == DatasetType.dataset_type_id
-        ).join(
-            DatasetAttribute, Dataset.dataset_id == DatasetAttribute.dataset_id
-        ).join(
-            Attribute, DatasetAttribute.attribute_id == Attribute.attribute_id
-        ).where(
-            Genome.genome_uuid.in_(genome_uuids),
-            DatasetType.name == 'genebuild',
-            Attribute.name.in_(['genebuild.annotation_source', 'genebuild.last_geneset_update'])
-        ).group_by(
-            Genome.genome_uuid,
-            Organism.scientific_name,
-            Assembly.accession
+        genebuild_query = (
+            select(
+                Genome.genome_uuid,
+                Organism.scientific_name,
+                Assembly.accession,
+                Genome.annotation_source.label("genebuild_source_name"),
+                Genome.genebuild_date.label("last_geneset_update"),
+            )
+            .select_from(Genome)
+            .join(Organism, Genome.organism_id == Organism.organism_id)
+            .join(Assembly, Genome.assembly_id == Assembly.assembly_id)
+            .where(Genome.genome_uuid.in_(genome_uuids))
         )
 
         genebuild_results = session.execute(genebuild_query).all()

@@ -22,7 +22,7 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Iterator, List
+from typing import Iterator, List, Optional
 
 from ensembl.utils.argparse import ArgumentParser
 from ensembl.utils.database import DBConnection
@@ -110,7 +110,7 @@ class GenomeInputFilters:
     dataset_uuid: List[str] = field(default_factory=list)
     division: List[str] = field(default_factory=list)
     dataset_type: str = ""
-    dataset_names: str = ""
+    dataset_names: Optional[List[str]] = None
     dataset_is_current: int = 0
     species: List[str] = field(default_factory=list)
     antispecies: List[str] = field(default_factory=list)
@@ -216,6 +216,12 @@ class GenomeInputFilters:
         )
 
     def __post_init__(self) -> None:
+        if not self.dataset_type and not self.dataset_names:
+            raise ValueError(
+                "At least one of 'dataset_type' or 'dataset_names' must be provided, "
+                "otherwise the query is not scoped to any dataset."
+            )
+
         if self.column_names:
             self.columns = self.resolve_columns(self.column_names)
 
@@ -255,7 +261,7 @@ class GenomeQueryBuilder:
     def _apply_filters(self, query):
         genomes_release = aliased(EnsemblRelease)
         genomes_dataset_release = aliased(EnsemblRelease)
-        ensembl_release_type_filter = 'integrated'
+        ensembl_release_type_filter = ['integrated', 'archive']
 
         if self.filters.requires_organism_group():
             query = query.outerjoin(Organism.organism_group_members).outerjoin(OrganismGroupMember.organism_group)
@@ -291,14 +297,14 @@ class GenomeQueryBuilder:
         elif self.filters.antispecies:
             query = query.filter(~Genome.production_name.in_(self.filters.antispecies))
 
-        if self.filters.release_type == 'integrated':
-            ensembl_release_type_filter = 'partial'
+        if self.filters.release_type in ('integrated', 'archive'):
+            ensembl_release_type_filter = ['partial']
 
         query = query.filter(
             ~exists().where(
                 and_(
                     genomes_release.release_id == GenomeRelease.release_id,
-                    genomes_release.release_type == ensembl_release_type_filter
+                    genomes_release.release_type.in_(ensembl_release_type_filter)
                 )
             )
         )
@@ -306,7 +312,7 @@ class GenomeQueryBuilder:
             ~exists().where(
                 and_(
                     genomes_dataset_release.release_id == GenomeDataset.release_id,
-                    genomes_dataset_release.release_type == ensembl_release_type_filter
+                    genomes_dataset_release.release_type.in_(ensembl_release_type_filter)
                 )
             )
         )
@@ -322,7 +328,7 @@ class GenomeQueryBuilder:
 
         if self.filters.release_name:
             filter_release_type = EnsemblRelease.name.in_(self.filters.release_name)
-            if self.filters.release_type == 'integrated':
+            if self.filters.release_type in ('integrated', 'archive'):
                 filter_release_type = GenomeDataset.release_id.in_(self.filters.release_name)
 
             query = query.filter(filter_release_type)
@@ -501,9 +507,10 @@ def main():
         "--dataset_names",
         nargs="*",
         type=str,
-        default=["genebuild"],
+        default=None,
         required=False,
-        help="List of dataset types to filter the query. eg. assembly, genebuild, variation etc.",
+        help="List of dataset names to filter the query. eg. assembly, genebuild, variation etc. "
+             "At least one of --dataset_type or --dataset_names must be provided.",
     )
     parser.add_argument(
         "--species",
@@ -542,11 +549,11 @@ def main():
         "--release_type",
         type=str,
         default="partial",
-        choices=["partial", 'integrated'],
+        choices=["partial", 'integrated', 'archive'],
         required=False,
         help="""
-        Fetch genome datasets and apply release-type filtering to eliminate duplicates introduced during 
-        integration release.
+        Fetch genome datasets and apply release-type filtering to eliminate duplicates introduced during
+        integration release. 'archive' is treated the same as 'integrated' for filtering purposes.
         """,
     )
     parser.add_numeric_argument(
@@ -620,6 +627,8 @@ def main():
     )
 
     args = parser.parse_args()
+    if not args.dataset_type and not args.dataset_names:
+        parser.error("At least one of --dataset_type or --dataset_names must be provided.")
     output_format = OutputFormat.from_string(args.output_format)
 
     meta_details = re.match(r"mysql:\/\/.*:?(.*?)@(.*?):\d+\/(.*)", args.metadata_db_uri)

@@ -22,6 +22,7 @@ from ensembl.production.metadata.scripts.create_datasets_json import *
 from ensembl.production.metadata.scripts.delete_ftp_by_uuid import *
 from ensembl.production.metadata.scripts.organism_to_organismgroup import *
 from ensembl.production.metadata.scripts.prepare_integrated_release import main as prepare_integrated_release_main
+from ensembl.production.metadata.scripts.update_release_metadata import main as update_release_metadata_main
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -246,6 +247,26 @@ class TestScripts:
             version=Decimal('200.0'),
             name='I2'
         )
+
+    @patch("ensembl.production.metadata.scripts.update_release_metadata.ReleaseFactory")
+    def test_update_release_metadata_script_invokes_factory_with_release_name(
+        self, mock_release_factory, test_dbs
+    ):
+        """Test update_release_metadata script calls ReleaseFactory.set_partial_released with release_name only."""
+        mock_instance = mock_release_factory.return_value
+        mock_instance.set_partial_released.return_value = type(
+            "Release", (), {"name": "4", "release_id": 4, "version": 112.0}
+        )()
+
+        with patch(
+            "sys.argv",
+            ["update_release_metadata.py", "--release-name", "4", "--metadata-db-uri", "sqlite:///:memory:"],
+        ):
+            result = update_release_metadata_main()
+
+        assert result == 0
+        mock_release_factory.assert_called_once_with("sqlite:///:memory:")
+        mock_instance.set_partial_released.assert_called_once_with(release_name="4")
 
     def test_json_file_structure_for_ftp_copy(self, test_dbs, tmp_path):
         """Test that ftp_copy can parse expected JSON structure."""
