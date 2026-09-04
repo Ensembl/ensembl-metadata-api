@@ -22,9 +22,9 @@ LOGGER = logging.getLogger(__name__)
 REQUIRED_OUTPUTS = (
     "genes.gff3.bgz",
     "genes.gff3.bgz.csi",
-    "unmasked.fa.bgz",
-    "unmasked.fa.bgz.gzi",
-    "unmasked.fa.bgz.fai",
+    "softmasked.fa.bgz",
+    "softmasked.fa.bgz.gzi",
+    "softmasked.fa.bgz.fai",
 )
 
 
@@ -58,9 +58,9 @@ def old_relative_paths(assembly_path: str, genebuild_path: str) -> dict[str, lis
     return {
         "genes.gff3.bgz": [geneset_dir / "genes.gff3.bgz"],
         "genes.gff3.bgz.csi": [geneset_dir / "genes.gff3.bgz.csi"],
-        "unmasked.fa.bgz": [genome_dir / "unmasked.fa.bgz"],
-        "unmasked.fa.bgz.gzi": [genome_dir / "unmasked.fa.bgz.gzi"],
-        "unmasked.fa.bgz.fai": [genome_dir / "unmasked.fa.bgz.fai"],
+        "softmasked.fa.bgz": [genome_dir / "softmasked.fa.bgz"],
+        "softmasked.fa.bgz.gzi": [genome_dir / "softmasked.fa.bgz.gzi"],
+        "softmasked.fa.bgz.fai": [genome_dir / "softmasked.fa.bgz.fai"],
     }
 
 
@@ -70,9 +70,9 @@ def new_relative_paths(record: GenomeVepRecord) -> dict[str, Path]:
     return {
         "genes.gff3.bgz": genome_dir / "genes.gff3.bgz",
         "genes.gff3.bgz.csi": genome_dir / "genes.gff3.bgz.csi",
-        "unmasked.fa.bgz": assembly_dir / "unmasked.fa.bgz",
-        "unmasked.fa.bgz.gzi": assembly_dir / "unmasked.fa.bgz.gzi",
-        "unmasked.fa.bgz.fai": assembly_dir / "unmasked.fa.bgz.fai",
+        "softmasked.fa.bgz": assembly_dir / "softmasked.fa.bgz",
+        "softmasked.fa.bgz.gzi": assembly_dir / "softmasked.fa.bgz.gzi",
+        "softmasked.fa.bgz.fai": assembly_dir / "softmasked.fa.bgz.fai",
     }
 
 
