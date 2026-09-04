@@ -54,7 +54,7 @@ class VepAdaptor(BaseAdaptor):
             formatted_assembly_uuid = format_uuid(result.assembly_uuid)
 
             # Construct the locations
-            faa_location = f"{formatted_assembly_uuid}/unmasked.fa.bgz"
+            faa_location = f"{formatted_assembly_uuid}/softmasked.fa.bgz"
             gff_location = f"{formatted_assembly_uuid}/{formatted_genome_uuid}/genes.gff3.bgz"
 
             # Return based on the `file` argument
