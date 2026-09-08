@@ -1212,7 +1212,7 @@ class GenomeAdaptor(BaseAdaptor):
         paths = []
         scientific_name = None
         accession = None
-        genebuild_source_name = None
+        annotation_source = None
         last_geneset_update = None
         if dataset_type == "variation":
             dataset_type = "short_variants"
@@ -1234,34 +1234,23 @@ class GenomeAdaptor(BaseAdaptor):
 
             # === METADATA RETRIEVAL ===
             # Get core genome metadata: organism name, assembly accession, and genebuild info
-            query = select(
-                Organism.scientific_name,
-                Assembly.accession,
-                func.max(case(
-                    (Attribute.name == 'genebuild.annotation_source', DatasetAttribute.value),
-                    else_=None
-                )).label('genebuild_source_name'),
-                func.max(case(
-                    (Attribute.name == 'genebuild.last_geneset_update', DatasetAttribute.value),
-                    else_=None
-                )).label('last_geneset_update')
-            ).select_from(
-                Genome
-            ).join(Organism).join(Assembly).join(GenomeDataset).join(Dataset).join(DatasetType).join(
-                DatasetAttribute).join(Attribute).where(
-                Genome.genome_uuid == genome_uuid,
-                DatasetType.name == 'genebuild',
-                Attribute.name.in_(['genebuild.annotation_source', 'genebuild.last_geneset_update'])
-            ).group_by(
-                Organism.scientific_name,
-                Assembly.accession
+            query = (
+                select(
+                    Organism.scientific_name,
+                    Assembly.accession,
+                    Genome.annotation_source,
+                    Genome.genebuild_date.label("last_geneset_update"),
+                )
+                .select_from(Genome)
+                .join(Organism)
+                .join(Assembly)
+                .where(Genome.genome_uuid == genome_uuid)
             )
-
             result = session.execute(query).first()
             if result:
-                scientific_name, accession, genebuild_source_name, last_geneset_update = result
+                scientific_name, accession, annotation_source, last_geneset_update = result
             else:
-                scientific_name = accession = genebuild_source_name = last_geneset_update = None
+                scientific_name = accession = annotation_source = last_geneset_update = None
 
             # === DATASET TYPE DISCOVERY ===
             supported_types = ["genebuild", "assembly", "homologies", "short_variants"]
@@ -1364,7 +1353,12 @@ class GenomeAdaptor(BaseAdaptor):
             raise ValueError(
                 f"Missing genebuild or assembly dataset types. Something is seriously wrong with {genome_uuid}")
 
-        if scientific_name is None or accession is None or genebuild_source_name is None or last_geneset_update is None:
+        if (
+            scientific_name is None
+            or accession is None
+            or annotation_source is None
+            or last_geneset_update is None
+        ):
             raise ValueError("Required metadata fields are missing. Please check the database entries.")
 
         # === PATH CONSTRUCTION ===
@@ -1373,10 +1367,10 @@ class GenomeAdaptor(BaseAdaptor):
             raise ValueError(f"Invalid last_geneset_update format: {last_geneset_update}")
         last_geneset_update = match.group(1).replace('-', '_')
 
-        genebuild_source_name = genebuild_source_name.lower()
+        annotation_source = annotation_source.lower()
 
         base_path = format_accession_path(accession)
-        common_path = f"{base_path}/{genebuild_source_name}/{last_geneset_update}"
+        common_path = f"{base_path}/{annotation_source}/{last_geneset_update}"
 
         if 'homologies' in unique_dataset_types and homology_release:
             homology_release = homology_release.replace('-', '_')
