@@ -59,3 +59,20 @@ class TestApi:
         assert path[0]['path'] == 'GCA/000/001/405/29/ensembl/2023_03/variation/2023_06_15'
         path = genome_adapter.get_public_path(genome_uuid, dataset_type='homologies')
         assert path[0]['path'] == 'GCA/000/001/405/29/ensembl/2023_03/homology/2023_06_15'
+
+    def test_public_path_uses_genome_annotation_metadata(self, test_dbs):
+        genome_adapter = GenomeAdaptor(
+            test_dbs["ensembl_genome_metadata"].dbc.url, test_dbs["ncbi_taxonomy"].dbc.url
+        )
+        genome_uuid = "a733574a-93e7-11ec-a39d-005056b38ce3"
+
+        with genome_adapter.metadata_db.session_scope() as session:
+            genome = session.execute(select(Genome).where(Genome.genome_uuid == genome_uuid)).scalar_one()
+            genome.annotation_source = "Imported_Annotation"
+            genome.genebuild_date = "2024-09"
+
+        path = genome_adapter.get_public_path(genome_uuid, dataset_type="genebuild")
+
+        assert path == [
+            {"dataset_type": "genebuild", "path": "GCA/000/146/045/2/imported_annotation/2024_09/geneset"}
+        ]
