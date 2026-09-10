@@ -9,7 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from sqlalchemy import or_, func, distinct
+from sqlalchemy import and_, distinct, func, or_
 
 from ensembl.production.metadata.api.models import Genome, GenomeRelease, EnsemblRelease, ReleaseStatus
 
@@ -18,7 +18,10 @@ def _live_genome_base_query(session):
     """
     Shared base query for live genomes:
         ensembl_release.status = 'Released'
-        AND (genome_release.is_current = 1 OR ensembl_release.release_type = 'integrated')
+        AND (
+            (ensembl_release.release_type = 'partial' AND genome_release.is_current = 1)
+            OR ensembl_release.release_type = 'integrated'
+        )
     """
     return (
         session.query(Genome)
@@ -27,7 +30,10 @@ def _live_genome_base_query(session):
         .filter(
             EnsemblRelease.status == ReleaseStatus.RELEASED,
             or_(
-                GenomeRelease.is_current == 1,
+                and_(
+                    EnsemblRelease.release_type == "partial",
+                    GenomeRelease.is_current == 1,
+                ),
                 EnsemblRelease.release_type == "integrated",
             ),
         )
@@ -49,7 +55,10 @@ def get_all_live_genomes_count(session):
         .filter(
             EnsemblRelease.status == ReleaseStatus.RELEASED,
             or_(
-                GenomeRelease.is_current == 1,
+                and_(
+                    EnsemblRelease.release_type == "partial",
+                    GenomeRelease.is_current == 1,
+                ),
                 EnsemblRelease.release_type == "integrated",
             ),
         )

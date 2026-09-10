@@ -10,12 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import date
 from pathlib import Path
 
 import pytest
 from ensembl.utils.database import DBConnection
 
-from ensembl.production.metadata.api.models import ReleaseStatus
+from ensembl.production.metadata.api.models import EnsemblRelease, Genome, GenomeRelease, ReleaseStatus
 from ensembl.production.metadata.api.search.utils import get_all_live_genomes, get_all_live_genomes_count
 
 db_directory = Path(__file__).parent / "databases"
@@ -56,3 +57,35 @@ class TestGetAllLiveGenomes:
             for genome in get_all_live_genomes(session):
                 statuses = {gr.ensembl_release.status for gr in genome.genome_releases}
                 assert ReleaseStatus.RELEASED in statuses
+
+    def test_archive_release_with_current_genome_is_not_live(self, test_dbs):
+        """Archive releases do not make a genome live, even when their link is current."""
+        metadata_uri = test_dbs["ensembl_genome_metadata"].dbc.url
+        with DBConnection(metadata_uri).session_scope() as session:
+            live_genome_ids = {genome.genome_id for genome in get_all_live_genomes(session)}
+            archive_only_genome = session.query(Genome).filter(~Genome.genome_id.in_(live_genome_ids)).first()
+            assert archive_only_genome is not None
+
+            archive_release = EnsemblRelease(
+                version=999.0,
+                release_date=date(2026, 1, 1),
+                label="archive-test-release",
+                is_current=0,
+                site_id=1,
+                release_type="archive",
+                status=ReleaseStatus.RELEASED,
+            )
+            session.add(archive_release)
+            session.flush()
+            session.add(
+                GenomeRelease(
+                    genome_id=archive_only_genome.genome_id,
+                    release_id=archive_release.release_id,
+                    is_current=1,
+                )
+            )
+            session.flush()
+
+            returned_ids = {genome.genome_id for genome in get_all_live_genomes(session)}
+            assert archive_only_genome.genome_id not in returned_ids
+            assert get_all_live_genomes_count(session) == len(live_genome_ids)
