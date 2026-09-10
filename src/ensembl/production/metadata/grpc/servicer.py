@@ -78,7 +78,6 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
         logger.debug(f"Received RPC for GetBriefGenomeDetailsByUUID with request: {request}")
         return utils.get_brief_genome_details_by_uuid(self.genome_adaptor, request.genome_uuid, request.release_version)
 
-
     def GetGenomesBySpecificKeyword(self, request, context):
         logger.debug(f"Received RPC for GetGenomesBySpecificKeyword with request: {request}")
         return utils.get_genomes_by_specific_keyword_iterator(
@@ -194,7 +193,7 @@ class EnsemblMetadataServicer(ensembl_metadata_pb2_grpc.EnsemblMetadataServicer)
     def GetGenomesInGroup(self, request, context):
         logger.debug(f"Received RPC for GetGenomesInGroup with request: {request}")
         return utils.get_genomes_in_group(
-            self.genome_adaptor, request.group_id, request.release_label
+            self.genome_adaptor, request.group_id, request.release_label, request.genome_group_uuid
         )
 
     def GetGenomeCounts(self, request, context):
