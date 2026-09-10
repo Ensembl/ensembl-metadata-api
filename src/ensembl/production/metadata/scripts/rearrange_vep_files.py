@@ -76,6 +76,17 @@ def new_relative_paths(record: GenomeVepRecord) -> dict[str, Path]:
     }
 
 
+def file_already_copied(source_path: Path, target_path: Path) -> bool:
+    """Return whether *target_path* has the size and timestamp preserved by ``copy2``."""
+    try:
+        source_stat = source_path.stat()
+        target_stat = target_path.stat()
+    except FileNotFoundError:
+        return False
+
+    return source_stat.st_size == target_stat.st_size and source_stat.st_mtime_ns == target_stat.st_mtime_ns
+
+
 def fetch_genomes(
     metadata_uri: str, release: str | float | Decimal | None = None, genome_uuid: str | None = None
 ) -> list[GenomeVepRecord]:
@@ -156,6 +167,10 @@ def copy_genome_files(
                 f"{record.genome_uuid}: missing source for {filename} "
                 f"(checked: {', '.join(str(path) for path in source_paths[filename])})"
             )
+            continue
+
+        if file_already_copied(source_path, target_path):
+            LOGGER.info("Skipping already copied file %s", target_path)
             continue
 
         LOGGER.info("Copying %s -> %s", source_path, target_path)
