@@ -245,7 +245,6 @@ class TestClass:
         assert json.loads(output) == expected_result
     # TODO: double check curernt only option
 
-
     @pytest.mark.parametrize(
         "genome_uuid, expected_output",
         [
@@ -253,19 +252,19 @@ class TestClass:
                 # Human
                 "65d4f21f-695a-4ed0-be67-5732a551fea4",
                 {
-                    "faaLocation": "Homo_sapiens/GCA_018473295.1/vep/genome/softmasked.fa.bgz",
-                    "gffLocation": "Homo_sapiens/GCA_018473295.1/vep/ensembl/geneset/2022_08/genes.gff3.bgz"
-                }
+                    "faaLocation": "8c7/8c71dc33a49f4be3a3ad4404fb374344/softmasked.fa.bgz",
+                    "gffLocation": "8c7/8c71dc33a49f4be3a3ad4404fb374344/65d4f21f695a4ed0be675732a551fea4/genes.gff3.bgz",
+                },
             ),
             (
                 # Ecoli
                 "a73351f7-93e7-11ec-a39d-005056b38ce3",
                 {
-                    'faaLocation': 'Escherichia_coli_str_K_12_substr_MG1655_str_K12/GCA_000005845.2/vep/genome/softmasked.fa.bgz',
-                    'gffLocation': 'Escherichia_coli_str_K_12_substr_MG1655_str_K12/GCA_000005845.2/vep/community/geneset/2018_09/genes.gff3.bgz'
-                }
-            )
-        ]
+                    "faaLocation": "532/532aa68f6500404ea4708afb718a770a/softmasked.fa.bgz",
+                    "gffLocation": "532/532aa68f6500404ea4708afb718a770a/a73351f793e711eca39d005056b38ce3/genes.gff3.bgz",
+                },
+            ),
+        ],
     )
     def test_create_vep_file_paths(self, vep_conn, genome_uuid, expected_output):
         input_data = vep_conn.fetch_vep_locations(genome_uuid)
