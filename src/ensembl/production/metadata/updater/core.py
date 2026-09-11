@@ -893,7 +893,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         assembly_accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
         provider_name = self.get_meta_single_meta_key(species_id, "genebuild.provider_name")
         last_geneset_update = self.get_meta_single_meta_key(species_id, "genebuild.last_geneset_update")
-        annotation_source = self.get_meta_single_meta_key(species_id, "genebuild.annotation_source")
+        annotation_source = self.get_meta_single_meta_key(species_id, "genebuild.annotation_source").lower()
         # Query for an existing combination - this is our uniqueness check
         # If this exists, we should NOT create a new one
         existing_combination = (
