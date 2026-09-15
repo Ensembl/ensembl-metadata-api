@@ -486,7 +486,6 @@ class FTPMetadataExporter:
             # geneset/ directory
             filenames = [
                 "cdna.fa.bgz",
-                "cdna.fa.gz",
                 "genes.embl.gz",
                 "genes.gff3.bgz",
                 "genes.gff3.gz",
@@ -499,7 +498,6 @@ class FTPMetadataExporter:
                 # "genes-including_alt.gtf.bgz",
                 # "genes-including_alt.gtf.gz", #
                 "pep.fa.bgz",
-                "pep.fa.gz",
                 "xref.tsv.gz",
             ]
             return {
@@ -511,11 +509,8 @@ class FTPMetadataExporter:
             filenames = [
                 "chromosomes.tsv.gz",
                 "hardmasked.fa.bgz",
-                "hardmasked.fa.gz",
                 "softmasked.fa.bgz",
-                "softmasked.fa.gz",
                 "unmasked.fa.bgz",
-                "unmasked.fa.gz",
             ]
             return {
                 "genome_sequences": {f: f"{base_path}/{f}" for f in filenames}
