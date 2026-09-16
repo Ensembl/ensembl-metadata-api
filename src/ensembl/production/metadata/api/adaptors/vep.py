@@ -9,15 +9,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import re
-
-from sqlalchemy import and_
-from sqlalchemy.orm import aliased
 
 from ensembl.utils.database import DBConnection
 
 from ensembl.production.metadata.api.adaptors.base import BaseAdaptor
-from ensembl.production.metadata.api.models import Organism, Assembly, DatasetAttribute, Genome, GenomeDataset, Dataset
+from ensembl.production.metadata.api.models import Assembly, Genome
 
 
 class VepAdaptor(BaseAdaptor):
@@ -33,63 +29,33 @@ class VepAdaptor(BaseAdaptor):
         :return: A dictionary containing the FAA and GFF locations or a specific location string if 'file' is set.
         """
         with self.metadata_db.session_scope() as session:
-            # Aliases for clarity and distinct filtering
-            annotation_source_attr = aliased(DatasetAttribute)
-            last_geneset_update_attr = aliased(DatasetAttribute)
 
             query = (
-                session.query(
-                    Organism.scientific_name,
-                    Assembly.accession.label("assembly_accession"),
-                    annotation_source_attr.value.label("annotation_source"),
-                    last_geneset_update_attr.value.label("last_geneset_update"),
-                )
-                .join(Genome, Genome.organism_id == Organism.organism_id)
-                .join(Assembly, Assembly.assembly_id == Genome.assembly_id)
-                .join(GenomeDataset, GenomeDataset.genome_id == Genome.genome_id)
-                .join(Dataset, Dataset.dataset_id == GenomeDataset.dataset_id)
-                .outerjoin(
-                    annotation_source_attr,
-                    and_(
-                        annotation_source_attr.dataset_id == Dataset.dataset_id,
-                        annotation_source_attr.attribute.has(name="genebuild.annotation_source"),
-                    ),
-                )
-                .outerjoin(
-                    last_geneset_update_attr,
-                    and_(
-                        last_geneset_update_attr.dataset_id == Dataset.dataset_id,
-                        last_geneset_update_attr.attribute.has(name="genebuild.last_geneset_update"),
-                    ),
-                )
+                session.query(Assembly.assembly_uuid)
+                .join(Genome, Genome.assembly_id == Assembly.assembly_id)
                 .filter(
                     Genome.genome_uuid == genome_uuid,
-                    Dataset.name == "genebuild",
                 )
-                .distinct()
+                .distinct()  # Should be unnecesary.
             )
 
             result = query.one_or_none()
 
             if not result:
                 raise ValueError(f"No data found for genome UUID: {genome_uuid}")
-            elif not result.annotation_source or not result.last_geneset_update:
-                raise ValueError(f"Missing annotation source or last geneset update for genome UUID: {genome_uuid}")
 
-            # Format the scientific name
-            scientific_name = result.scientific_name
-            scientific_name = re.sub(r"[^a-zA-Z0-9]+", " ", scientific_name)
-            scientific_name = re.sub(r" +", "_", scientific_name).strip("_")
+            def format_uuid(uuid):
+                prefix = uuid[:3]
+                uuid = uuid.replace("-", "")
+                return f"{prefix}/{uuid}"
 
-            # Format last geneset update
-            last_geneset_update = re.sub(r"-", "_", result.last_geneset_update)
+            formatted_genome_uuid = genome_uuid.replace("-", "")
+
+            formatted_assembly_uuid = format_uuid(result.assembly_uuid)
 
             # Construct the locations
-            faa_location = f"{scientific_name}/{result.assembly_accession}/vep/genome/softmasked.fa.bgz"
-            gff_location = (
-                f"{scientific_name}/{result.assembly_accession}/vep/"
-                f"{result.annotation_source}/geneset/{last_geneset_update}/genes.gff3.bgz"
-            )
+            faa_location = f"{formatted_assembly_uuid}/softmasked.fa.bgz"
+            gff_location = f"{formatted_assembly_uuid}/{formatted_genome_uuid}/genes.gff3.bgz"
 
             # Return based on the `file` argument
             if self.file == "faa_location":
