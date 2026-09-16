@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 from ensembl.utils.database import DBConnection
 
+from ensembl.production.metadata.api.adaptors.genome import GenomeAdaptor
 from ensembl.production.metadata.api.factories.genome_groups import GenomeGroupFactory
 from ensembl.production.metadata.api.models import Genome, GenomeGroup, GenomeGroupMember
 
@@ -70,6 +71,13 @@ class TestGenomeGroupFactory:
             assert member is not None
             assert member.is_current == 1
             assert member.genome_id == genome_id
+            assert group.genome_group_uuid
+
+            genome_group_uuid = group.genome_group_uuid
+
+        adaptor = GenomeAdaptor(metadata_uri, test_dbs["ncbi_taxonomy"].dbc.url)
+        assert adaptor.fetch_genomes(genome_group_uuid=genome_group_uuid)
+        assert adaptor.fetch_genome_group_members_detailed(genome_group_uuid=genome_group_uuid)
 
         remove_result = factory.remove_genomes_from_group(metadata_uri, group_name, [genome_uuid])
         assert remove_result["removed"] == 1

@@ -105,6 +105,7 @@ class GenomeGroup(LoadAble, Base):
     label = Column(String(128), nullable=False)
     searchable = Column(TINYINT(1), nullable=False, default=0)
     description = Column(String(255))
+    genome_group_uuid = Column(String(32), nullable=False, unique=True, default=lambda: str(uuid.uuid4()))
 
     # One to many relationships
     # genome_group_id to organism_group_member

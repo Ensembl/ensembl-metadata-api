@@ -843,6 +843,7 @@ def get_genome_groups_by_reference(
         dummy_data = [
             {
                 "group_id": "grch38-group",
+                "genome_group_uuid": "ef4b6091-cc0f-418e-a78e-57efbf9fdac7",
                 "group_type": group_type,
                 "group_name": "",
                 "reference_genome": {
@@ -890,6 +891,7 @@ def get_genome_groups_by_reference(
             },
             {
                 "group_id": "t2t-group",
+                "genome_group_uuid": "17a859b1-58de-4ecb-a175-dda42122e7bb",
                 "group_type": group_type,
                 "group_name": "",
                 "reference_genome": {
@@ -962,15 +964,17 @@ def get_genome_groups_by_reference(
 
 def get_genomes_in_group(
     db_conn: Any,
-    group_id: str,
-    release_label: str | None,
+    group_id: str | None = None,
+    release_label: str | None = None,
+    genome_group_uuid: str | None = None,
 ):
-    if not group_id:
-        logger.warning("Missing or Empty Group type field.")
+    if not group_id and not genome_group_uuid:
+        logger.warning("Missing group ID or genome group UUID.")
         return msg_factory.create_genomes_in_group()
 
     try:
-        # The logic calling the ORM and fetching data from the DB using group_id
+        # The logic calling the ORM and fetching data from the DB using group_id or
+        # genome_group_uuid
         # will go here. We return dummy data for now.
         # /!\ Remember to handle the release label in the real query.
 
@@ -1339,8 +1343,9 @@ def get_genomes_in_group(
         # Dummy error handling until ORM logic is implemented.
         logger.exception(
             "Unexpected error while fetching genomes in group "
-            "(group_id=%r, release_label=%r)",
+            "(group_id=%r, genome_group_uuid=%r, release_label=%r)",
             group_id,
+            genome_group_uuid,
             release_label,
         )
         return msg_factory.create_genomes_in_group([])
