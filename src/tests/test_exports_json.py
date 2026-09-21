@@ -216,7 +216,6 @@ class TestFTPMetadataExporter:
 
         assert 'annotations' in file_paths
         annotations = file_paths['annotations']
-<<<<<<< Updated upstream
         # Core files always present
         for fname in ('cdna.fa.bgz', 'genes.embl.gz',
                       'genes.gff3.gz', 'genes.gff3.bgz',
@@ -258,6 +257,7 @@ class TestFTPMetadataExporter:
         for fname in ('hardmasked.fa.gz', 'softmasked.fa.gz', 'unmasked.fa.gz'):
             assert fname not in genome_seqs, f"Unexpected gzipped FASTA {fname} in genome_sequences"
         assert genome_seqs['softmasked.fa.bgz'] == f"{base_path}/softmasked.fa.bgz"
+        assert genome_seqs['chromosomes.tsv.gz'] == f"{base_path}/chromosomes.tsv.gz"
         # Index files must NOT be present
         for fname in genome_seqs:
             assert not fname.endswith('.fai')
