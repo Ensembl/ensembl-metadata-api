@@ -9,6 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+
 import argparse
 import json
 import re
@@ -299,9 +300,9 @@ class FTPMetadataExporter:
             }
 
         assembly_data = metadata_structure["species"][species_key]["assemblies"][assembly_key]
-        self._process_genome_datasets_bulk(data, assembly_data)
+        self._process_genome_datasets_bulk(data, assembly_data, assembly.level)
 
-    def _process_genome_datasets_bulk(self, genome_data, assembly_data):
+    def _process_genome_datasets_bulk(self, genome_data, assembly_data, assembly_level):
         """Process all datasets for a genome using preloaded data."""
 
         genome = genome_data['genome']
@@ -353,7 +354,9 @@ class FTPMetadataExporter:
             try:
                 assembly_paths = self._get_public_paths_bulk(genebuild_metadata, datasets, 'assembly')
                 if assembly_paths:
-                    file_paths = self._get_dataset_file_paths(assembly_paths[0]["path"], 'assembly')
+                    file_paths = self._get_dataset_file_paths(
+                        assembly_paths[0]["path"], 'assembly', assembly_level
+                    )
                     assembly_data["assembly"] = {"files": file_paths}
             except Exception as e:
                 print(f"Error generating assembly paths for genome {genome.genome_uuid}: {e}")
@@ -474,7 +477,7 @@ class FTPMetadataExporter:
     # File listings
     # ------------------------------------------------------------------
 
-    def _get_dataset_file_paths(self, base_path, dataset_type, *_, **__):
+    def _get_dataset_file_paths(self, base_path, dataset_type, assembly_level=None, *_, **__):
         """
         Return the explicit file listings for a dataset type under base_path.
 
@@ -507,11 +510,13 @@ class FTPMetadataExporter:
         elif dataset_type == 'assembly':
             # genome/ directory
             filenames = [
-                "chromosomes.tsv.gz",
                 "hardmasked.fa.bgz",
                 "softmasked.fa.bgz",
                 "unmasked.fa.bgz",
             ]
+            # chromosomes.tsv.gz only exists when assembly.level is "chromosome" or "complete genome"
+            if assembly_level and assembly_level.lower() in ("chromosome", "complete genome"):
+                filenames.insert(0, "chromosomes.tsv.gz")
             return {
                 "genome_sequences": {f: f"{base_path}/{f}" for f in filenames}
             }

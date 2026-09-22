@@ -243,10 +243,11 @@ class TestFTPMetadataExporter:
         metadata_uri = test_dbs['ensembl_genome_metadata'].dbc.url
         exporter = FTPMetadataExporter(metadata_uri)
         base_path = "GCA/000/001/405/29/ensembl/2024_01/genome"
-        file_paths = exporter._get_dataset_file_paths(base_path, 'assembly')
+        file_paths = exporter._get_dataset_file_paths(base_path, 'assembly', 'chromosome')
 
         assert 'genome_sequences' in file_paths
         genome_seqs = file_paths['genome_sequences']
+        # Only *.fa.bgz for genome sequences, not the plain .gz duplicate
         for fname in ('chromosomes.tsv.gz',
                       'hardmasked.fa.bgz',
                       'softmasked.fa.bgz',
@@ -256,6 +257,7 @@ class TestFTPMetadataExporter:
         for fname in ('hardmasked.fa.gz', 'softmasked.fa.gz', 'unmasked.fa.gz'):
             assert fname not in genome_seqs, f"Unexpected gzipped FASTA {fname} in genome_sequences"
         assert genome_seqs['softmasked.fa.bgz'] == f"{base_path}/softmasked.fa.bgz"
+        assert genome_seqs['chromosomes.tsv.gz'] == f"{base_path}/chromosomes.tsv.gz"
         # Index files must NOT be present
         for fname in genome_seqs:
             assert not fname.endswith('.fai')
@@ -264,6 +266,25 @@ class TestFTPMetadataExporter:
         assert 'vep' not in file_paths
         # md5sum must NOT be present
         assert 'md5sum.txt' not in genome_seqs
+
+    def test_get_dataset_file_paths_assembly_complete_genome(self, test_dbs):
+        """chromosomes.tsv.gz is also included for assembly.level == 'complete genome'."""
+        metadata_uri = test_dbs['ensembl_genome_metadata'].dbc.url
+        exporter = FTPMetadataExporter(metadata_uri)
+        base_path = "GCA/000/001/405/29/ensembl/2024_01/genome"
+        file_paths = exporter._get_dataset_file_paths(base_path, 'assembly', 'complete genome')
+
+        assert 'chromosomes.tsv.gz' in file_paths['genome_sequences']
+
+    def test_get_dataset_file_paths_assembly_non_chromosome_level(self, test_dbs):
+        """chromosomes.tsv.gz is omitted for assembly levels other than chromosome/complete genome."""
+        metadata_uri = test_dbs['ensembl_genome_metadata'].dbc.url
+        exporter = FTPMetadataExporter(metadata_uri)
+        base_path = "GCA/000/001/405/29/ensembl/2024_01/genome"
+
+        for level in (None, 'scaffold', 'contig'):
+            file_paths = exporter._get_dataset_file_paths(base_path, 'assembly', level)
+            assert 'chromosomes.tsv.gz' not in file_paths['genome_sequences']
 
     def test_get_dataset_file_paths_homologies(self, test_dbs):
         """Test _get_dataset_file_paths generates correct file paths for homologies."""
