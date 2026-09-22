@@ -188,28 +188,29 @@ class GenomeAdaptor(BaseAdaptor):
         return genome_uuid
 
     def fetch_genomes(
-            self,
-            genome_id=None,
-            genome_uuid=None,
-            genome_tag=None,
-            organism_uuid=None,
-            assembly_uuid=None,
-            assembly_accession=None,
-            assembly_name=None,
-            use_default_assembly=False,
-            biosample_id=None,
-            production_name=None,
-            taxonomy_id=None,
-            group=None,
-            genome_group_id=None,
-            genome_group_name=None,
-            genome_group_type=None,
-            genome_group_reference_only=False,
-            site_name=None,
-            release_type=None,
-            release_version=None,
-            genebuild_date = None,
-            status = "All"
+        self,
+        genome_id=None,
+        genome_uuid=None,
+        genome_tag=None,
+        organism_uuid=None,
+        assembly_uuid=None,
+        assembly_accession=None,
+        assembly_name=None,
+        use_default_assembly=False,
+        biosample_id=None,
+        production_name=None,
+        taxonomy_id=None,
+        group=None,
+        genome_group_id=None,
+        genome_group_name=None,
+        genome_group_type=None,
+        genome_group_reference_only=False,
+        site_name=None,
+        release_type=None,
+        release_version=None,
+        genebuild_date=None,
+        status="All",
+        genome_group_uuid=None,
     ):
         """
         Fetches genome information based on the specified parameters.
@@ -227,6 +228,11 @@ class GenomeAdaptor(BaseAdaptor):
             production_name (Union[str, List[str]]): The production name(s) of the organism(s) to fetch.
             taxonomy_id (Union[int, List[int]]): The taxonomy ID(s) of the organism(s) to fetch.
             group (Union[str, List[str]]): The name(s) of the organism group(s) to filter by.
+            genome_group_id (Union[int, List[int]]): The ID(s) of the genome group(s) to filter by.
+            genome_group_uuid (Union[str, List[str]]): The UUID(s) of the genome group(s) to filter by.
+            genome_group_name (Union[str, List[str]]): The name(s) of the genome group(s) to filter by.
+            genome_group_type (Union[str, List[str]]): The type(s) of the genome group(s) to filter by.
+            genome_group_reference_only (bool): Whether to return only reference genome group members.
             site_name (str): The name of the Ensembl site to filter by.
             release_type (str): The dataset_type of the Ensembl release to filter by.
             release_version (int): The maximum version of the Ensembl release to filter by.
@@ -278,7 +284,13 @@ class GenomeAdaptor(BaseAdaptor):
                 .filter(OrganismGroup.name.in_(group) | OrganismGroup.code.in_(group))
 
         # genome group logic
-        if genome_group_id or genome_group_name or genome_group_type or genome_group_reference_only:
+        if (
+            genome_group_id
+            or genome_group_uuid
+            or genome_group_name
+            or genome_group_type
+            or genome_group_reference_only
+        ):
             genome_select = genome_select.join(
                 GenomeGroupMember, Genome.genome_id == GenomeGroupMember.genome_id
             ).join(
@@ -288,6 +300,10 @@ class GenomeAdaptor(BaseAdaptor):
             if genome_group_id:
                 genome_group_id = check_parameter(genome_group_id)
                 genome_select = genome_select.where(GenomeGroup.genome_group_id.in_(genome_group_id))
+
+            if genome_group_uuid:
+                genome_group_uuid = check_parameter(genome_group_uuid)
+                genome_select = genome_select.where(GenomeGroup.genome_group_uuid.in_(genome_group_uuid))
 
             if genome_group_name:
                 genome_group_name = check_parameter(genome_group_name)
@@ -1142,7 +1158,13 @@ class GenomeAdaptor(BaseAdaptor):
             return session.execute(query).scalars().all()
 
     def fetch_genome_group_members_detailed(
-            self, genome_group_id=None, group_name=None, is_current=True, release_version=None, release_status="Released"
+        self,
+        genome_group_id=None,
+        group_name=None,
+        is_current=True,
+        release_version=None,
+        release_status="Released",
+        genome_group_uuid=None,
     ):
         """
         Fetch genomes and their membership details for a genome group.
@@ -1151,6 +1173,7 @@ class GenomeAdaptor(BaseAdaptor):
 
         Args:
             genome_group_id (Union[int, List[int]]): The ID(s) of the genome group(s).
+            genome_group_uuid (Union[str, List[str]]): The UUID(s) of the genome group(s).
             group_name (Union[str, List[str]]): The name(s) of the genome group(s).
             is_current (bool): If True, return only current genome group memberships.
             release_version (float): Return memberships up to this release version.
@@ -1168,6 +1191,10 @@ class GenomeAdaptor(BaseAdaptor):
         if genome_group_id:
             genome_group_id = check_parameter(genome_group_id)
             member_select = member_select.where(GenomeGroup.genome_group_id.in_(genome_group_id))
+
+        if genome_group_uuid:
+            genome_group_uuid = check_parameter(genome_group_uuid)
+            member_select = member_select.where(GenomeGroup.genome_group_uuid.in_(genome_group_uuid))
 
         if group_name:
             group_name = check_parameter(group_name)

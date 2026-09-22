@@ -410,6 +410,7 @@ message GroupInfo {
   string group_type = 2;
   string group_name = 3;
   BriefGenomeDetails reference_genome = 4;
+  string genome_group_uuid = 5;
 }
 
 message GenomeGroupsWithReference {
@@ -640,8 +641,9 @@ message GroupTypeRequest {
 Genomes in Group Request
  */
 message GenomesInGroupRequest {
-  string group_id = 1;       // Mandatory, might be a UUID, for now mocking using "grch38-group" and "t2t-group" values
+  string group_id = 1;       // Optional legacy group ID, currently mocked with "grch38-group" and "t2t-group"
   string release_label = 2;  // Optional, default to latest integrated + is_current partials
+  string genome_group_uuid = 3; // Optional alternative to group_id
 }
 
 message GenomeCountsRequest {
