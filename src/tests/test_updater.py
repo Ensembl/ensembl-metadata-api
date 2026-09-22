@@ -19,6 +19,7 @@ from ensembl.utils.database import UnitTestDB, DBConnection
 from ensembl.production.metadata.api.exceptions import MetadataUpdateException
 from ensembl.production.metadata.api.factory import meta_factory
 from ensembl.production.metadata.api.models import *
+from ensembl.production.metadata.updater.core import CoreMetaUpdater
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
@@ -38,6 +39,13 @@ db_directory = db_directory.resolve()
                          indirect=True)
 class TestUpdater:
     dbc = None  # type: UnitTestDB
+
+    @pytest.mark.parametrize(
+        "raw_rank, expected_rank",
+        [(1, 1), ("22", 22), ("MT", None), ("X", None), (None, None)],
+    )
+    def test_normalise_chromosome_rank(self, raw_rank, expected_rank):
+        assert CoreMetaUpdater._normalise_chromosome_rank(raw_rank) == expected_rank
 
     def test_new_organism(self, test_dbs):
         test = meta_factory(test_dbs['core_1'].dbc.url,

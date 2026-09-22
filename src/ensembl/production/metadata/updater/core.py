@@ -599,7 +599,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 if accession_info[seq_region_name]["length"] is None:
                     location = attribute_dict.get(seq_region_name, {}).get("sequence_location", None)
                     sequence_location = location_mapping[location]
-                    karyotype_rank = attribute_dict.get(seq_region_name, {}).get("karyotype_rank", None)
+                    raw_karyotype_rank = attribute_dict.get(seq_region_name, {}).get("karyotype_rank", None)
+                    karyotype_rank = self._normalise_chromosome_rank(raw_karyotype_rank)
 
                     chromosomal = 1 if karyotype_rank is not None else (1 if coord_system_name == "chromosome" else 0)
 
@@ -639,6 +640,19 @@ class CoreMetaUpdater(BaseMetaUpdater):
                     sequence_aliases.append(sequence_alias)
 
             return assembly_sequences, sequence_aliases
+
+    @staticmethod
+    def _normalise_chromosome_rank(rank):
+        """Return a database-compatible chromosome rank, if one is supplied.
+
+        Core ``karyotype_rank`` attributes are strings and can contain labels
+        such as ``MT``. The metadata schema stores a numeric rank, so labels
+        are represented by ``None`` rather than being passed to MySQL.
+        """
+        try:
+            return int(rank)
+        except (TypeError, ValueError):
+            return None
 
     def _is_valid_ena_accession(self, identifier):
         """
