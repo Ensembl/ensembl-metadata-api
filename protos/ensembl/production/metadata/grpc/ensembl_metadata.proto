@@ -121,6 +121,9 @@ service EnsemblMetadata {
   // Get Genomes In Group by group id
   rpc GetGenomesInGroup(GenomesInGroupRequest) returns (GenomesInGroup) {}
 
+  // Retrieve a genome group's metadata and current genome members by group id.
+  rpc GetGenomeGroupProperties(GenomeGroupPropertiesRequest) returns (GenomeGroupProperties) {}
+
   // Get Genome counts
   rpc GetGenomeCounts(GenomeCountsRequest) returns (GenomeCounts) {}
 }
@@ -421,6 +424,20 @@ message GenomesInGroup {
   repeated BriefGenomeDetails genomes = 1;
 }
 
+/*
+Properties of a genome group and its current members.
+ */
+message GenomeGroupProperties {
+  int32 genome_group_id = 1;
+  string type = 2;
+  string name = 3;
+  string label = 4;
+  bool searchable = 5;
+  string description = 6;
+  repeated string genome_uuids = 7;
+  repeated string reference_genome_uuids = 8;
+}
+
 message TaxonomyGroupCount {
   string label = 1;
   int32 count =2;
@@ -644,6 +661,13 @@ message GenomesInGroupRequest {
   string group_id = 1;       // Optional legacy group ID, currently mocked with "grch38-group" and "t2t-group"
   string release_label = 2;  // Optional, default to latest integrated + is_current partials
   string genome_group_uuid = 3; // Optional alternative to group_id
+}
+
+/*
+Genome group properties request.
+ */
+message GenomeGroupPropertiesRequest {
+  int32 genome_group_id = 1; // Mandatory
 }
 
 message GenomeCountsRequest {

@@ -1351,6 +1351,21 @@ def get_genomes_in_group(
         return msg_factory.create_genomes_in_group([])
 
 
+def get_genome_group_properties(db_conn: Any, genome_group_id: int):
+    """Return properties and current genome UUIDs for a genome group."""
+    if not genome_group_id or genome_group_id < 0:
+        logger.warning("Missing or invalid Genome Group ID field.")
+        return msg_factory.create_genome_group_properties()
+
+    try:
+        data = db_conn.fetch_genome_group_properties(genome_group_id)
+        return msg_factory.create_genome_group_properties(data)
+    except (ValueError, RuntimeError) as error:
+        logger.error(error)
+
+    return msg_factory.create_genome_group_properties()
+
+
 def get_genome_counts(db_conn: Any, release_label: str | None):
 
     try:

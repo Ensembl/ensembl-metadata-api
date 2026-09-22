@@ -1157,6 +1157,57 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(query).scalars().all()
 
+    def fetch_genome_group_properties(self, genome_group_id: int):
+        """Fetch a genome group and the UUIDs of its current genome members.
+
+        Reference member UUIDs are returned separately as useful metadata for
+        consumers which need to distinguish the representative genome from the
+        rest of the collection.
+
+        Args:
+            genome_group_id: Primary key of the genome group.
+
+        Returns:
+            A dictionary containing the group properties, or ``None`` when the
+            group does not exist.
+        """
+        group_query = select(GenomeGroup).where(GenomeGroup.genome_group_id == genome_group_id)
+        member_query = (
+            select(Genome.genome_uuid, GenomeGroupMember.is_reference)
+            .join(GenomeGroupMember, Genome.genome_id == GenomeGroupMember.genome_id)
+            .where(
+                GenomeGroupMember.genome_group_id == genome_group_id,
+                GenomeGroupMember.is_current == 1,
+            )
+            .order_by(Genome.genome_uuid)
+        )
+
+        logger.debug(group_query)
+        logger.debug(member_query)
+        with self.metadata_db.session_scope() as session:
+            group = session.execute(group_query).scalar_one_or_none()
+            if group is None:
+                return None
+
+            # A genome should have one current membership per group. De-duplicate
+            # defensively so legacy rows cannot leak duplicate UUIDs to clients.
+            members = {}
+            for genome_uuid, is_reference in session.execute(member_query):
+                members[genome_uuid] = members.get(genome_uuid, False) or bool(is_reference)
+
+            return {
+                "genome_group_id": group.genome_group_id,
+                "type": group.type,
+                "name": group.name,
+                "label": group.label or "",
+                "searchable": bool(group.searchable),
+                "description": group.description or "",
+                "genome_uuids": list(members),
+                "reference_genome_uuids": [
+                    genome_uuid for genome_uuid, is_reference in members.items() if is_reference
+                ],
+            }
+
     def fetch_genome_group_members_detailed(
         self,
         genome_group_id=None,
