@@ -594,6 +594,14 @@ def create_genomes_in_group(data=None):
     )
 
 
+def create_genome_group_properties(data=None):
+    """Create a genome group properties protobuf message."""
+    if data is None:
+        return ensembl_metadata_pb2.GenomeGroupProperties()
+
+    return ensembl_metadata_pb2.GenomeGroupProperties(**data)
+
+
 def create_genome_counts(data=None):
     if data is None:
         return ensembl_metadata_pb2.GenomeCounts()
