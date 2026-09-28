@@ -56,7 +56,7 @@ dependencies = [
     "protobuf",
     "grpcio-tools",
     "grpcio-reflection",
-    "sqlalchemy >= 2.0",
+    "sqlalchemy >= 2.0, < 2.1",
     "duckdb >= 1.2.0",
     "duckdb-engine >= 0.17.0",
     "pymysql",
