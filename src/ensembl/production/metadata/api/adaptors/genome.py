@@ -1220,13 +1220,15 @@ class GenomeAdaptor(BaseAdaptor):
             session.expire_on_commit = False
             return session.execute(member_select).all()
 
-    def get_public_path(self, genome_uuid, dataset_type='all', release=None):
+    def get_public_path(self, genome_uuid, dataset_type='all', dataset_status=DatasetStatus.RELEASED, release=None):
         """
         Retrieve public file paths for genomic datasets.
 
         Args:
             genome_uuid (str): Unique identifier for the genome
             dataset_type (str): Type of dataset ('genebuild', 'assembly', 'homologies', 'short_variants', or 'all')
+            dataset_status (DatasetStatus | str): Status the datasets must have. Accepts the enum or its
+                value (e.g. "Released"). Defaults to DatasetStatus.RELEASED.
             release (str, optional): Specific Ensembl release label. If None, uses current release.
 
         Returns:
@@ -1243,6 +1245,8 @@ class GenomeAdaptor(BaseAdaptor):
         last_geneset_update = None
         if dataset_type == "variation":
             dataset_type = "short_variants"
+        if not isinstance(dataset_status, DatasetStatus):
+            dataset_status = DatasetStatus(dataset_status)
 
         with self.metadata_db.session_scope() as session:
             # === VALIDATION SECTION ===
@@ -1286,7 +1290,7 @@ class GenomeAdaptor(BaseAdaptor):
             ).join(GenomeDataset).join(Genome).where(
                 Genome.genome_uuid == genome_uuid,
                 DatasetType.name.in_(supported_types),
-                Dataset.status == DatasetStatus.RELEASED
+                Dataset.status == dataset_status
             )
             unique_dataset_types = session.execute(unique_dataset_types_query).scalars().all()
 
@@ -1306,7 +1310,7 @@ class GenomeAdaptor(BaseAdaptor):
                             .where(
                                 Genome.genome_uuid == genome_uuid,
                                 DatasetType.name == "short_variants",
-                                Dataset.status == DatasetStatus.RELEASED,
+                                Dataset.status == dataset_status,
                                 GenomeDataset.is_current == True,
                                 EnsemblRelease.release_type == "partial",
                             )
@@ -1322,7 +1326,7 @@ class GenomeAdaptor(BaseAdaptor):
                             Genome).where(
                             Genome.genome_uuid == genome_uuid,
                             DatasetType.name == 'homologies',
-                            Dataset.status == DatasetStatus.RELEASED,
+                            Dataset.status == dataset_status,
                             GenomeDataset.is_current == True,
                             EnsemblRelease.release_type == 'partial'
                         ).order_by(EnsemblRelease.release_id.desc())
@@ -1339,7 +1343,7 @@ class GenomeAdaptor(BaseAdaptor):
                             .where(
                                 Genome.genome_uuid == genome_uuid,
                                 DatasetType.name == "short_variants",
-                                Dataset.status == DatasetStatus.RELEASED,
+                                Dataset.status == dataset_status,
                                 EnsemblRelease.release_type == "partial",
                                 EnsemblRelease.release_id
                                 <= (
@@ -1363,7 +1367,7 @@ class GenomeAdaptor(BaseAdaptor):
                             Genome).where(
                             Genome.genome_uuid == genome_uuid,
                             DatasetType.name == 'homologies',
-                            Dataset.status == DatasetStatus.RELEASED,
+                            Dataset.status == dataset_status,
                             EnsemblRelease.release_type == 'partial',
                             EnsemblRelease.release_id <= (
                                 select(EnsemblRelease.release_id).where(
