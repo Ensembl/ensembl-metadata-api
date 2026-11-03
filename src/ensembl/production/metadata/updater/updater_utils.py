@@ -9,13 +9,14 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+from __future__ import annotations
+
 from sqlalchemy.orm import Session
 
-from ensembl.ncbi_taxonomy.api import Taxonomy
 from ensembl.production.metadata.api import exceptions
 from ensembl.production.metadata.api.exceptions import UpdaterException
 from ensembl.production.metadata.api.models import Attribute, DatasetAttribute, GenomeGroup
-from ensembl.utils.database import DBConnection
+from ensembl.production.metadata.updater.taxonomy import TaxonomyLookup, open_taxonomy
 
 
 def update_attributes(dataset, attributes, session, replace=False):
@@ -61,7 +62,9 @@ def update_attributes(dataset, attributes, session, replace=False):
     return dataset_attributes
 
 
-def get_homology_reference_collection(taxonomy_id: int, taxonomy_uri: str, session: Session) -> str:
+def get_homology_reference_collection(
+    taxonomy_id: int, taxonomy: TaxonomyLookup | str, session: Session
+) -> str:
     """Determine the compara homology reference collection for a given taxonomy ID.
 
     This method expects the metadata `genome_group` table to contain the data in the following format::
@@ -76,7 +79,8 @@ def get_homology_reference_collection(taxonomy_id: int, taxonomy_uri: str, sessi
 
     Args:
         taxonomy_id: NCBI taxonomy ID.
-        taxonomy_uri: NCBI taxonomy database URI.
+        taxonomy: An open taxonomy lookup, or a taxonomy URI (``file://`` for a TaxonDB snapshot,
+            otherwise an NCBI taxonomy database URI) to open and close for this call only.
         session: Metadata database session.
 
     Returns:
@@ -84,24 +88,25 @@ def get_homology_reference_collection(taxonomy_id: int, taxonomy_uri: str, sessi
 
     Raises:
         MetadataUpdateException: If no reference collection can be determined for ``taxonomy_id``.
+        TaxonNotFoundException: If ``taxonomy_id`` is not in the taxonomy.
 
     """
-    tax_db = DBConnection(taxonomy_uri)
     # Get all available homology reference collections, but keep only their name and label
     results = session.query(GenomeGroup).filter(GenomeGroup.type == "compara_reference").all()
     reference_collections = {str(collection.name): collection.label for collection in results}
     selected_collection: str | None = None
-    # Explore the taxonomy tree from the given taxonomy ID to the root, stopping at the first taxon ID
-    # that matches a homology reference collection
-    with tax_db.session_scope() as tax_session:
-        current = Taxonomy.fetch_node_by_id(tax_session, taxonomy_id)
-        while not Taxonomy.is_root(tax_session, current.taxon_id):
-            parent = Taxonomy.parent(tax_session, current.taxon_id)
-            parent_taxon_id = str(parent.taxon_id)
-            if parent_taxon_id in reference_collections:
-                selected_collection = parent_taxon_id
+    owns_lookup = isinstance(taxonomy, str)
+    lookup = open_taxonomy(taxonomy) if owns_lookup else taxonomy
+    try:
+        # Explore the ancestors of the given taxonomy ID (excluding the taxon itself), nearest first,
+        # stopping at the first one that matches a homology reference collection
+        for ancestor_id in lookup.ancestor_ids(taxonomy_id):
+            if str(ancestor_id) in reference_collections:
+                selected_collection = str(ancestor_id)
                 break
-            current = parent
+    finally:
+        if owns_lookup:
+            lookup.close()
     if selected_collection is None:
         raise exceptions.MetadataUpdateException(
             f"Taxonomy ID '{taxonomy_id}' did not get assigned any homology reference collection"
