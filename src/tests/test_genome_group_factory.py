@@ -131,6 +131,15 @@ class TestGenomeGroupFactory:
         assert members[0][0].genome_id == genome_id
         assert members[0][1].is_reference == 1
 
+        # fetch_genomes() does not return the membership record. Multiple
+        # matching memberships must therefore not duplicate its result tuple.
+        genomes = adaptor.fetch_genomes(
+            genome_group_uuid=genome_group_uuid,
+            is_current_genome_group_member=True,
+        )
+        assert {row[0].genome_id for row in genomes} == {genome_id}
+        assert len(genomes) == len({(row[0].genome_id, row[3].release_id) for row in genomes})
+
         # Keep the factory removal check below focused on its single-membership
         # behaviour.
         with DBConnection(metadata_uri).session_scope() as session:

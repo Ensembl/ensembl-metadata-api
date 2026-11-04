@@ -434,6 +434,9 @@ class GenomeAdaptor(BaseAdaptor):
         if site_name is not None:
             genome_select = genome_select.add_columns(EnsemblSite).filter(EnsemblSite.name == site_name)
 
+        # Distinct GenomeRelease rows remain separate results.
+        genome_select = genome_select.distinct()
+
         logger.debug(f"fetch_genome: {genome_select} / {release_version}")
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
