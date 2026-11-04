@@ -211,6 +211,7 @@ class GenomeAdaptor(BaseAdaptor):
         genebuild_date=None,
         status="All",
         genome_group_uuid=None,
+        is_current_genome_group_member=False,
     ):
         """
         Fetches genome information based on the specified parameters.
@@ -233,6 +234,8 @@ class GenomeAdaptor(BaseAdaptor):
             genome_group_name (Union[str, List[str]]): The name(s) of the genome group(s) to filter by.
             genome_group_type (Union[str, List[str]]): The type(s) of the genome group(s) to filter by.
             genome_group_reference_only (bool): Whether to return only reference genome group members.
+            is_current_genome_group_member (bool): Whether to return only genomes with a current
+                genome group membership.
             site_name (str): The name of the Ensembl site to filter by.
             release_type (str): The dataset_type of the Ensembl release to filter by.
             release_version (int): The maximum version of the Ensembl release to filter by.
@@ -290,6 +293,7 @@ class GenomeAdaptor(BaseAdaptor):
             or genome_group_name
             or genome_group_type
             or genome_group_reference_only
+            or is_current_genome_group_member
         ):
             genome_select = genome_select.join(
                 GenomeGroupMember, Genome.genome_id == GenomeGroupMember.genome_id
@@ -316,7 +320,7 @@ class GenomeAdaptor(BaseAdaptor):
             if genome_group_reference_only:
                 genome_select = genome_select.where(GenomeGroupMember.is_reference == 1)
 
-            if status == GenomeStatus.CURRENT:
+            if is_current_genome_group_member:
                 genome_select = genome_select.where(GenomeGroupMember.is_current == 1)
         if (genebuild_date):
             genome_select = genome_select.filter(Genome.genebuild_date == genebuild_date)
@@ -1218,7 +1222,21 @@ class GenomeAdaptor(BaseAdaptor):
         logger.debug(member_select)
         with self.metadata_db.session_scope() as session:
             session.expire_on_commit = False
-            return session.execute(member_select).all()
+            members = session.execute(member_select).all()
+
+        # A genome may have more than one current membership record for a group
+        # (for example, when records exist for different releases).  The query is
+        # ordered with reference memberships first, so retain the first row for
+        # each group/genome pair.
+        unique_members = []
+        seen_members = set()
+        for genome, member in members:
+            member_key = (member.genome_group_id, genome.genome_id)
+            if member_key not in seen_members:
+                unique_members.append((genome, member))
+                seen_members.add(member_key)
+
+        return unique_members
 
     def get_public_path(self, genome_uuid, dataset_type='all', release=None):
         """

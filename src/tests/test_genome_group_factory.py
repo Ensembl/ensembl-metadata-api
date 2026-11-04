@@ -74,10 +74,76 @@ class TestGenomeGroupFactory:
             assert group.genome_group_uuid
 
             genome_group_uuid = group.genome_group_uuid
+            genome_group_id = group.genome_group_id
+            release_id = member.release_id
 
         adaptor = GenomeAdaptor(metadata_uri, test_dbs["ncbi_taxonomy"].dbc.url)
         assert adaptor.fetch_genomes(genome_group_uuid=genome_group_uuid)
         assert adaptor.fetch_genome_group_members_detailed(genome_group_uuid=genome_group_uuid)
+        assert adaptor.fetch_genomes(
+            genome_group_uuid=genome_group_uuid,
+            is_current_genome_group_member=True,
+        )
+
+        with DBConnection(metadata_uri).session_scope() as session:
+            member = (
+                session.query(GenomeGroupMember)
+                .filter(
+                    GenomeGroupMember.genome_group_id == genome_group_id,
+                    GenomeGroupMember.genome_id == genome_id,
+                )
+                .one()
+            )
+            member.is_current = 0
+
+        assert adaptor.fetch_genomes(genome_group_uuid=genome_group_uuid)
+        assert not adaptor.fetch_genomes(
+            genome_group_uuid=genome_group_uuid,
+            is_current_genome_group_member=True,
+        )
+
+        with DBConnection(metadata_uri).session_scope() as session:
+            member = (
+                session.query(GenomeGroupMember)
+                .filter(
+                    GenomeGroupMember.genome_group_id == genome_group_id,
+                    GenomeGroupMember.genome_id == genome_id,
+                )
+                .one()
+            )
+            member.is_current = 1
+
+        # Membership rows can be duplicated across releases. The detailed
+        # lookup should return one row per genome, preferring the reference row.
+        with DBConnection(metadata_uri).session_scope() as session:
+            session.add(
+                GenomeGroupMember(
+                    genome_id=genome_id,
+                    genome_group_id=genome_group_id,
+                    release_id=release_id,
+                    is_current=1,
+                    is_reference=1,
+                )
+            )
+
+        members = adaptor.fetch_genome_group_members_detailed(genome_group_uuid=genome_group_uuid)
+        assert len(members) == 1
+        assert members[0][0].genome_id == genome_id
+        assert members[0][1].is_reference == 1
+
+        # Keep the factory removal check below focused on its single-membership
+        # behaviour.
+        with DBConnection(metadata_uri).session_scope() as session:
+            duplicate = (
+                session.query(GenomeGroupMember)
+                .filter(
+                    GenomeGroupMember.genome_group_id == genome_group_id,
+                    GenomeGroupMember.genome_id == genome_id,
+                    GenomeGroupMember.is_reference == 1,
+                )
+                .one()
+            )
+            session.delete(duplicate)
 
         remove_result = factory.remove_genomes_from_group(metadata_uri, group_name, [genome_uuid])
         assert remove_result["removed"] == 1
