@@ -18,10 +18,8 @@ import sqlalchemy as db
 import sqlalchemy.exc
 from ensembl.core.models import Meta, CoordSystem, SeqRegionAttrib, SeqRegion, \
     SeqRegionSynonym, AttribType
-from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 from sqlalchemy import or_, func
 from sqlalchemy import select, and_
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import aliased
 
 from ensembl.production.metadata.api import exceptions
@@ -186,6 +184,8 @@ class CoreMetaUpdater(BaseMetaUpdater):
                 logger.error(f"Failed to process species {species_id} ({production_name}): {str(e)}")
                 failed_species.append((species_id, production_name, str(e)))
                 # Continue to next species rather than failing entirely
+
+        self.close_taxonomy()
 
         # Log summary for multi-species databases
         if len(multi_species) > 1:
@@ -468,72 +468,64 @@ class CoreMetaUpdater(BaseMetaUpdater):
 
     def get_or_new_organism(self, species_id, meta_session):
         """
-        Get an existing Organism instance or create a new one, depending on the information from the metadata database.
-        """
-        # Fetch the Ensembl name of the organism from metadata using either 'species.biosample_id'
-        # or 'organism.production_name' as the key.
-        biosample_id = self.get_meta_single_meta_key(species_id, "organism.biosample_id")
-        tol_id = self.get_meta_single_meta_key(species_id, "organism.tol_id")
+        Get an existing Organism (matched on organism.biosample_id) or create a new one.
 
-        # Getting the common name from the meta table, otherwise we grab it from ncbi.
-        common_name = self.get_meta_single_meta_key(species_id, "organism.common_name")
+        For a new organism, organism.taxonomy_id must be a current ID in the taxonomy. The scientific
+        name, common name and species-level taxonomy ID come from the core meta table when present,
+        otherwise from the taxonomy, so a core database only needs to carry organism.taxonomy_id.
+        """
+        biosample_id = self.get_meta_single_meta_key(species_id, "organism.biosample_id")
         taxid = self.get_meta_single_meta_key(species_id, "organism.taxonomy_id")
         if taxid is None:
             raise exceptions.MissingMetaException("organism.taxid is required")
+
+        # An existing Organism is reused as is, without consulting the taxonomy.
+        old_organism = meta_session.query(Organism).filter(Organism.biosample_id == biosample_id).one_or_none()
+        if old_organism:
+            return old_organism
+
+        taxonomy = self.taxonomy
+        # Raises TaxonNotFoundException for unknown, deleted or merged taxonomy IDs.
+        taxid = taxonomy.validate(taxid)
+
+        scientific_name = self.get_meta_single_meta_key(species_id, "organism.scientific_name")
+        if scientific_name is None:
+            scientific_name = taxonomy.scientific_name(taxid)
+            logger.info(f"organism.scientific_name not in core meta; using '{scientific_name}' from taxonomy")
+
+        common_name = self.get_meta_single_meta_key(species_id, "organism.common_name")
         if common_name is None:
-            with self.taxonomy_db.session_scope() as session:
-                common_name = session.query(NCBITaxaName).filter(
-                    NCBITaxaName.taxon_id == taxid,
-                    NCBITaxaName.name_class == "genbank common name"
-                ).one_or_none()
-                if common_name is not None:
-                    common_name = common_name.name
+            common_name = taxonomy.genbank_common_name(taxid)
         # Ensure that the first character is upper case.
-        if common_name is not None:
+        if common_name:
             common_name = common_name[0].upper() + common_name[1:]
+
         species_taxonomy_id = self.get_meta_single_meta_key(species_id, "organism.species_taxonomy_id")
         if species_taxonomy_id is None:
-            species_taxonomy_id = taxid
-        # Instantiate a new Organism object using data fetched from metadata.
+            # The nearest taxon at rank 'species' (itself for a species); for a taxon with no
+            # species in its lineage, e.g. a genus, fall back to the taxon itself.
+            species_taxonomy_id = taxonomy.species_taxonomy_id(taxid) or taxid
+
         new_organism = Organism(
             species_taxonomy_id=species_taxonomy_id,
-            taxonomy_id=self.get_meta_single_meta_key(species_id, "organism.taxonomy_id"),
+            taxonomy_id=taxid,
             common_name=common_name,
-            scientific_name=self.get_meta_single_meta_key(species_id, "organism.scientific_name"),
+            scientific_name=scientific_name,
             biosample_id=biosample_id,
             strain=self.get_meta_single_meta_key(species_id, "organism.strain"),
             strain_type=self.get_meta_single_meta_key(species_id, "organism.strain_type"),
             scientific_parlance_name=self.get_meta_single_meta_key(species_id, "organism.scientific_parlance_name"),
-            tol_id=tol_id
+            tol_id=self.get_meta_single_meta_key(species_id, "organism.tol_id"),
         )
 
-        # Query the metadata database to find if an Organism with the same Ensembl name already exists.
-        old_organism = meta_session.query(Organism).filter(
-            Organism.biosample_id == new_organism.biosample_id).one_or_none()
+        # Check if an Assembly with the same accession already exists in the metadata database.
+        accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
+        assembly_test = meta_session.query(Assembly).filter(Assembly.accession == accession).one_or_none()
+        if assembly_test is not None:
+            logger.info("Assembly Accession already exists for a different organism.")
 
-        # If an existing Organism is found, return it and indicate that it already existed.
-        if old_organism:
-            return old_organism
-        else:
-            # If no existing Organism is found, conduct additional checks before creating a new one.
-
-            # Check if the new organism's taxonomy ID exists in the taxonomy database.
-            with self.taxonomy_db.session_scope() as session:
-                try:
-                    Taxonomy.fetch_node_by_id(session, new_organism.taxonomy_id)
-                except NoResultFound:
-                    raise exceptions.TaxonNotFoundException(
-                        f"taxon id {new_organism.taxonomy_id} not found in taxonomy database for scientific name")
-
-            # Check if an Assembly with the same accession already exists in the metadata database.
-            accession = self.get_meta_single_meta_key(species_id, "assembly.accession")
-            assembly_test = meta_session.query(Assembly).filter(Assembly.accession == accession).one_or_none()
-            if assembly_test is not None:
-                logger.info("Assembly Accession already exists for a different organism.")
-
-            meta_session.add(new_organism)
-            # Return the newly created Organism and indicate that it is new.
-            return new_organism
+        meta_session.add(new_organism)
+        return new_organism
 
     def get_assembly_sequences(self, species_id, assembly):
         """
@@ -979,7 +971,7 @@ class CoreMetaUpdater(BaseMetaUpdater):
         reference_set = self.get_meta_single_meta_key(species_id, "compara.homology_reference_set")
         if reference_set is None:
             taxonomy_id = self.get_meta_single_meta_key(species_id, "organism.taxonomy_id")
-            reference_set = get_homology_reference_collection(taxonomy_id, self.taxonomy_uri, meta_session)
+            reference_set = get_homology_reference_collection(taxonomy_id, self.taxonomy, meta_session)
         if dataset_attributes is None:
             dataset_attributes = {}
         dataset_attributes["compara.homology_reference_set"] = reference_set
