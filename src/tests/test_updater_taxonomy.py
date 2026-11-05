@@ -26,8 +26,9 @@ from ensembl.production.metadata.updater.taxonomy import (
 )
 from ensembl.production.metadata.updater.updater_utils import get_homology_reference_collection
 
-
-@pytest.mark.parametrize(
+# Applied to every test in this module: the autouse 'engine' fixture in conftest.py needs
+# test_dbs['ensembl_genome_metadata'] even for tests that use no database themselves.
+pytestmark = pytest.mark.parametrize(
     "test_dbs",
     [
         [
@@ -37,6 +38,8 @@ from ensembl.production.metadata.updater.updater_utils import get_homology_refer
     ],
     indirect=True,
 )
+
+
 class TestSQLTaxonomyLookup:
     """The legacy ncbi_taxonomy database backend, on the updater_utils fixture."""
 
