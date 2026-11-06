@@ -61,7 +61,9 @@ dependencies = [
     "duckdb-engine >= 0.17.0",
     "pymysql",
     "mysqlclient",
-    "pydantic >= 2.0"
+    "pydantic >= 2.0",
+    "pandas >= 2.2.3",
+    "ensembl-taxonomy @ git+https://github.com/Ensembl/ensembl-taxonomy.git@feature/taxos",
 ]
 
 [project.urls]
