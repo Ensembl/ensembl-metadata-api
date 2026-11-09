@@ -33,8 +33,10 @@ Usage:
         [--include-common-name] [--release-name=116]
 
 Common-name changes are left out of the JSON unless --include-common-name is given.
-Proposed names are capitalised (first letter upper case, as in the metadata
-DB). A name differing from NCBI's only in letter case is never reported.
+Scientific names must match the NCBI snapshot exactly (case-sensitive): any
+difference, case included, is reported and the proposed name is NCBI's verbatim.
+Common names ignore case-only differences, and proposed common names are
+capitalised (first letter upper case, as in the metadata DB).
 
 With --release-name, the run first checks that the release's
 ensembl_release.taxonomy_snapshot matches the TaxonDB snapshot (its taxdump_id)
@@ -344,9 +346,9 @@ def _capitalise(name: str) -> str:
 
 
 def _same_name(a: str, b: str) -> bool:
-    """True if two names match ignoring surrounding spaces and letter case
-    ("little brown bat" vs "Little brown bat", "homo Sapiens" vs "Homo sapiens").
-    Case-only differences are never reported."""
+    """True if two common names match ignoring surrounding spaces and letter
+    case ("little brown bat" vs "Little brown bat"). Scientific names are
+    compared exactly instead (see _sci_change)."""
     return a.strip().casefold() == b.strip().casefold()
 
 
@@ -486,8 +488,18 @@ def build_check_table(
 # ── Step 2: query the check table into per-taxon change sets ────────────────
 
 def _str_change(current: str, new: str) -> StrChange:
-    """A proposed name change; `new` is capitalised to match metadata names."""
+    """A proposed common_name change; `new` is capitalised to match metadata names."""
     return StrChange(current=current, new=_capitalise(new), confidence=classify_name_pair(current, new))
+
+
+def _sci_change(current: str, ncbi: str | None) -> StrChange | None:
+    """A proposed scientific_name change, or None if the current name already
+    equals NCBI's exactly (case-sensitive, ignoring surrounding spaces).
+    `new` is NCBI's name verbatim."""
+    current, ncbi = current.strip(), (ncbi or "").strip()
+    if not ncbi or current == ncbi:
+        return None
+    return StrChange(current=current, new=ncbi, confidence=classify_name_pair(current, ncbi))
 
 
 Updates = dict[
@@ -549,11 +561,12 @@ def _add_sci_updates(
         if tid in skip_tids:
             continue
         for (current, ncbi_name), oids in entries[tid].items():
-            if not ncbi_name or _same_name(current, ncbi_name):
+            sci_change = _sci_change(current, ncbi_name)
+            if sci_change is None:
                 continue
             updates[_next_update_key(updates, "taxon_scientific_name_update")] = TaxonScientificNameUpdateEntry(
                 taxonomy_id=tid,
-                changes=ScientificNameChanges(scientific_name=_str_change(current, ncbi_name)),
+                changes=ScientificNameChanges(scientific_name=sci_change),
                 targets=_build_targets(oids, context),
             )
 
@@ -589,9 +602,7 @@ def _add_taxon_id_updates(updates: Updates, con: duckdb.DuckDBPyConnection, cont
         if not has_genomes:
             skipped.add(tid)
             continue
-        sci_change = (
-            _str_change(current_sci, ncbi_sci) if ncbi_sci and not _same_name(current_sci, ncbi_sci) else None
-        )
+        sci_change = _sci_change(current_sci, ncbi_sci)
         updates[_next_update_key(updates, "taxon_id_update")] = TaxonIdUpdateEntry(
             taxonomy_id=tid,
             changes=IdChanges(taxonomy_id=IntChange(current=tid, new=new_tid), scientific_name=sci_change),

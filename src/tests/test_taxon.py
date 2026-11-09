@@ -75,8 +75,8 @@ ORGANISMS = [
     (12, 1000, 1000, "bat", "Myotis lucifugus", "ensembl", "full_genebuild", ["u12a", "u12b"]),
     (13, 1000, 1000, "bat", "Myotis lucifugus", "ensembl", "full_genebuild", ["u13a", "u13b"]),
     (14, 600, 600, None, "Homo sapien", "ensembl", "full_genebuild", ["u14"]),
-    # Names differing from NCBI's only in letter case: never reported,
-    # on a merged taxonomy_id (15) or not (7, 16).
+    # Scientific names differing from NCBI's only in letter case: still reported
+    # (exact match required), on a merged taxonomy_id (15) or not (7, 16).
     (15, 200, 200, None, "new name", "ensembl", "full_genebuild", ["u15"]),
     (16, 600, 600, None, "homo sapiens", "ensembl", "full_genebuild", ["u16"]),
 ]
@@ -221,6 +221,25 @@ def test_same_name(a, b, expected):
     assert compare._same_name(a, b) is expected
 
 
+@pytest.mark.parametrize(
+    "current, ncbi, expected",
+    [
+        ("Homo sapiens", "Homo sapiens", None),
+        (" Homo sapiens ", "Homo sapiens", None),
+        ("Homo sapiens", None, None),
+        ("Homo sapiens", "", None),
+        ("homo sapiens", "Homo sapiens", ("Homo sapiens", ConfidenceLevel.CASE_DIFF)),
+        ("homo Sapiens", "Homo sapiens", ("Homo sapiens", ConfidenceLevel.CASE_DIFF)),
+        # NCBI's name is proposed verbatim, never re-capitalised.
+        ("Uncultured bacterium", "uncultured bacterium", ("uncultured bacterium", ConfidenceLevel.CASE_DIFF)),
+        ("Homo sapien", "Homo sapiens", ("Homo sapiens", ConfidenceLevel.SIMILAR)),
+    ],
+)
+def test_sci_change(current, ncbi, expected):
+    change = compare._sci_change(current, ncbi)
+    assert (None if change is None else (change.new, change.confidence)) == expected
+
+
 def test_reports(taxonomy_dir, organism_rows):
     updates, deletes = compare.check_taxonomy("unused", taxonomy_dir, include_common_name=True)
     assert updates.metadata.taxonomy_release == "2026-06-29T16:39:01Z"
@@ -234,7 +253,7 @@ def test_reports(taxonomy_dir, organism_rows):
     ] == [
         (200, 201, ("Old name", "New name"), [2]),
         (200, 201, ("Old name variant", "New name"), [3]),
-        (200, 201, None, [15]),  # case only: id changes, name is left alone
+        (200, 201, ("new name", "New name"), [15]),  # scientific names are case-sensitive
     ]
     # ...so merged organisms get no separate scientific_name update.
     for oid in (2, 3, 15):
@@ -275,9 +294,11 @@ def test_reports(taxonomy_dir, organism_rows):
     assert [(g.genome_uuid, g.genebuild_source, g.genebuild_method) for g in bat.targets[0].genomes] == [
         ("u12a", "ensembl", "full_genebuild"), ("u12b", "ensembl", "full_genebuild")]
 
-    # Case-only differences are never reported.
-    assert _entries_for(updates, 7) == []
-    assert _entries_for(updates, 16) == []
+    # Scientific names must match NCBI exactly: case-only differences are reported.
+    for oid, current in ((7, "homo Sapiens"), (16, "homo sapiens")):
+        entry, = _entries_for(updates, oid)
+        change = entry.changes.scientific_name
+        assert (change.current, change.new, change.confidence) == (current, "Homo sapiens", ConfidenceLevel.CASE_DIFF)
     similar, = _entries_for(updates, 14)
     assert similar.changes.scientific_name.confidence == ConfidenceLevel.SIMILAR
 
@@ -286,10 +307,10 @@ def test_reports(taxonomy_dir, organism_rows):
         for oid in (1, 9) for e in _entries_for(updates, oid) if isinstance(e, TaxonCommonNameUpdateEntry)
     }
     assert common == {1: ("mouse", "House mouse"), 9: ("", "Dog")}
-    # Proposed scientific names are capitalised too.
+    # Proposed scientific names are NCBI's verbatim (not re-capitalised).
     other, = _entries_for(updates, 10)
     assert (other.changes.scientific_name.current, other.changes.scientific_name.new) == (
-        "Something else", "Totally different")
+        "Something else", "totally different")
 
     assert [(d.taxonomy_id, d.id_type, d.missing_behavior) for d in deletes.root] == [
         (300, "taxonomy_id", "DELETED"),
@@ -329,10 +350,10 @@ def test_implement(tmp_path, taxonomy_dir, organism_rows, metadata_uri):
     assert after[3] == (201, 201, "New name", None)
     # Species-only merge changes only the species id.
     assert after[6] == (500, 502, "Foo bar", None)
-    # Case only: name untouched, even when the taxonomy_id merges.
-    assert after[15] == (201, 201, "new name", None)
+    # A taxonomy_id merge applies its scientific_name change whatever the confidence.
+    assert after[15] == (201, 201, "New name", None)
     assert after[16] == before[16]
-    # Name-only changes are filtered by confidence: similar applied; different skipped.
+    # Name-only changes are filtered by confidence: similar applied; case_diff and different skipped.
     assert after[7] == before[7]
     assert after[14][2] == "Homo sapiens"
     assert after[10] == before[10]
