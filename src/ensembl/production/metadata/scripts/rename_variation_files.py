@@ -14,8 +14,8 @@ dataset from metadata, derives its public FTP directory, and renames::
 The index extension is deliberately discovered rather than assumed to be
 ``.tbi``; for example, both ``.tbi`` and ``.csi`` are supported.  Use
 ``--report-file`` to retain the audit output.  With ``--execute``,
-``--ignore-errors`` skips datasets with per-dataset errors, such as a missing
-index, while still refusing global safety conflicts.
+``--ignore-errors`` renames a present VCF even when its index is missing,
+while still refusing global safety conflicts.
 
 Run a dry run first (the default), then repeat with ``--execute`` once its
 output has been checked.
@@ -73,6 +73,7 @@ class AuditResult:
     bad_vcfs: int
     good_indexes: int
     bad_indexes: int
+    can_rename: bool
 
 
 def fetch_variation_datasets(metadata_uri: str) -> list[VariationDataset]:
@@ -145,7 +146,7 @@ def audit_dataset(ftp_root: Path, dataset: VariationDataset) -> AuditResult:
     """Check one dataset, retaining every file error that can be identified."""
     errors = list(dataset.errors)
     if dataset.ftp_path is None:
-        return AuditResult(dataset, [], errors, good_vcfs=0, bad_vcfs=1, good_indexes=0, bad_indexes=1)
+        return AuditResult(dataset, [], errors, 0, 1, 0, 1, can_rename=False)
 
     source = ftp_root / dataset.ftp_path / OLD_FILENAME
     vcf_exists = source.is_file()
@@ -160,30 +161,23 @@ def audit_dataset(ftp_root: Path, dataset: VariationDataset) -> AuditResult:
     for index_file in invalid_indexes:
         errors.append(f"Index is not a file for {dataset.dataset_uuid}: {index_file}")
 
-    if errors:
-        return AuditResult(
-            dataset,
-            [],
-            errors,
-            good_vcfs=int(vcf_exists),
-            bad_vcfs=int(not vcf_exists),
-            good_indexes=len(valid_indexes),
-            bad_indexes=max(1, len(invalid_indexes)) if not valid_indexes else len(invalid_indexes),
-        )
+    operations = []
+    if vcf_exists and not dataset.errors:
+        target = source.with_name(dataset.new_filename)
+        operations.append((source, target))
+        for index_file in valid_indexes:
+            suffix = index_file.name.removeprefix(OLD_FILENAME)
+            operations.append((index_file, target.with_name(f"{target.name}{suffix}")))
 
-    target = source.with_name(dataset.new_filename)
-    operations = [(source, target)]
-    for index_file in valid_indexes:
-        suffix = index_file.name.removeprefix(OLD_FILENAME)
-        operations.append((index_file, target.with_name(f"{target.name}{suffix}")))
     return AuditResult(
         dataset,
         operations,
-        [],
-        good_vcfs=1,
-        bad_vcfs=0,
+        errors,
+        good_vcfs=int(vcf_exists),
+        bad_vcfs=int(not vcf_exists),
         good_indexes=len(valid_indexes),
-        bad_indexes=0,
+        bad_indexes=max(1, len(invalid_indexes)) if not valid_indexes else len(invalid_indexes),
+        can_rename=bool(operations),
     )
 
 
@@ -208,7 +202,7 @@ def audit_datasets(ftp_root: Path, datasets: list[VariationDataset]) -> tuple[li
     for dataset in datasets:
         results.append(audit_dataset(ftp_root, dataset))
 
-    operations = [operation for result in results if not result.errors for operation in result.operations]
+    operations = [operation for result in results if result.can_rename for operation in result.operations]
     return results, preflight_errors(operations)
 
 
@@ -239,10 +233,11 @@ def log_audit(results: list[AuditResult], global_errors: list[str], execute: boo
         for error in global_errors:
             LOGGER.error("  - %s", error)
 
-    if not global_errors and ready_results:
+    renamable_results = [result for result in results if result.can_rename]
+    if not global_errors and renamable_results:
         action = "Will rename" if execute else "Would rename"
         LOGGER.info("%s:", action)
-        for result in ready_results:
+        for result in renamable_results:
             for source, target in result.operations:
                 LOGGER.info("  %s -> %s", source, target)
 
@@ -270,7 +265,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--ignore-errors",
         action="store_true",
-        help="With --execute, skip datasets with errors and rename the remaining valid files.",
+        help="With --execute, rename present VCFs even if their indexes are missing; skip unavailable VCFs/metadata.",
     )
     return parser.parse_args()
 
@@ -310,10 +305,15 @@ def main() -> int:
         LOGGER.error("No files were renamed; fix the reported errors and run again.")
         return 1
     if failed_results:
-        LOGGER.warning("Ignoring errors and skipping %s dataset(s)", len(failed_results))
+        skipped_results = [result for result in failed_results if not result.can_rename]
+        LOGGER.warning(
+            "Ignoring errors: renaming %s dataset(s) with a present VCF and skipping %s unavailable dataset(s)",
+            len(results) - len(skipped_results),
+            len(skipped_results),
+        )
 
-    operations = [operation for result in results if not result.errors for operation in result.operations]
-    ready_dataset_count = len(results) - len(failed_results)
+    operations = [operation for result in results if result.can_rename for operation in result.operations]
+    ready_dataset_count = len([result for result in results if result.can_rename])
     if args.execute:
         for source, target in operations:
             source.rename(target)
