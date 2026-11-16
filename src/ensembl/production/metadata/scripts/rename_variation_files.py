@@ -51,11 +51,21 @@ class VariationDataset:
     genome_uuid: str
     dataset_uuid: str
     dataset_name: str
-    ftp_path: Path
+    ftp_path: Path | None
+    errors: tuple[str, ...] = ()
 
     @property
     def new_filename(self) -> str:
         return f"{NEW_DATASET_TYPE}-{self.dataset_name}.vcf.gz"
+
+
+@dataclass
+class AuditResult:
+    """Filesystem checks and planned changes for one metadata dataset."""
+
+    dataset: VariationDataset
+    operations: list[tuple[Path, Path]]
+    errors: list[str]
 
 
 def fetch_variation_datasets(metadata_uri: str) -> list[VariationDataset]:
@@ -91,30 +101,34 @@ def fetch_variation_datasets(metadata_uri: str) -> list[VariationDataset]:
 
     datasets = []
     for row in rows:
+        errors = []
         if not row.dataset_name or Path(row.dataset_name).name != row.dataset_name:
-            raise ValueError(f"Dataset {row.dataset_uuid} has an unsafe name: {row.dataset_name!r}")
+            errors.append(f"unsafe dataset name: {row.dataset_name!r}")
         if not row.accession or not row.annotation_source or not row.genebuild_date:
-            raise ValueError(f"Dataset {row.dataset_uuid} has incomplete genome metadata")
+            errors.append("incomplete genome metadata (accession, annotation source, or genebuild date)")
 
         geneset_date = str(row.genebuild_date)[:7]
         if len(geneset_date) != 7 or geneset_date[4] != "-":
-            raise ValueError(
-                f"Dataset {row.dataset_uuid} has an invalid genebuild date: {row.genebuild_date!r}"
-            )
+            errors.append(f"invalid genebuild date: {row.genebuild_date!r}")
+        if not row.partial_release_label:
+            errors.append("missing partial release label")
 
-        ftp_path = (
-            Path(format_accession_path(row.accession))
-            / str(row.annotation_source).lower()
-            / Path(geneset_date.replace("-", "_"))
-            / "variation"
-            / str(row.partial_release_label).replace("-", "_")
-        )
+        ftp_path = None
+        if not errors:
+            ftp_path = (
+                Path(format_accession_path(row.accession))
+                / str(row.annotation_source).lower()
+                / Path(geneset_date.replace("-", "_"))
+                / "variation"
+                / str(row.partial_release_label).replace("-", "_")
+            )
         datasets.append(
             VariationDataset(
                 genome_uuid=row.genome_uuid,
                 dataset_uuid=row.dataset_uuid,
                 dataset_name=row.dataset_name,
                 ftp_path=ftp_path,
+                errors=tuple(errors),
             )
         )
     return datasets
@@ -122,6 +136,8 @@ def fetch_variation_datasets(metadata_uri: str) -> list[VariationDataset]:
 
 def planned_renames(ftp_root: Path, dataset: VariationDataset) -> list[tuple[Path, Path]]:
     """Build the VCF and detected-index rename operations for one dataset."""
+    if dataset.ftp_path is None:
+        raise ValueError("FTP path could not be derived from metadata")
     source = ftp_root / dataset.ftp_path / OLD_FILENAME
     index_files = sorted(source.parent.glob(f"{OLD_FILENAME}.*"))
     if not source.is_file():
@@ -139,17 +155,71 @@ def planned_renames(ftp_root: Path, dataset: VariationDataset) -> list[tuple[Pat
     return renames
 
 
-def preflight(operations: list[tuple[Path, Path]]) -> None:
-    """Reject duplicate sources/targets and any operation that would overwrite a file."""
+def preflight_errors(operations: list[tuple[Path, Path]]) -> list[str]:
+    """Return global safety errors for a set of otherwise valid operations."""
+    errors = []
     sources = [source for source, _ in operations]
     targets = [target for _, target in operations]
     if len(sources) != len(set(sources)):
-        raise ValueError("Metadata produced duplicate source files")
+        errors.append("metadata produced duplicate source files")
     if len(targets) != len(set(targets)):
-        raise ValueError("Metadata produced conflicting destination files")
+        errors.append("metadata produced conflicting destination files")
     existing_targets = [str(target) for target in targets if target.exists()]
     if existing_targets:
-        raise FileExistsError("Refusing to overwrite existing destination(s): " + ", ".join(existing_targets))
+        errors.append("refusing to overwrite existing destination(s): " + ", ".join(existing_targets))
+    return errors
+
+
+def audit_datasets(ftp_root: Path, datasets: list[VariationDataset]) -> tuple[list[AuditResult], list[str]]:
+    """Check every dataset and collect errors without changing the filesystem."""
+    results = []
+    for dataset in datasets:
+        errors = list(dataset.errors)
+        operations = []
+        if not errors:
+            try:
+                operations = planned_renames(ftp_root, dataset)
+            except (OSError, ValueError) as error:
+                errors.append(str(error))
+        results.append(AuditResult(dataset=dataset, operations=operations, errors=errors))
+
+    operations = [operation for result in results if not result.errors for operation in result.operations]
+    return results, preflight_errors(operations)
+
+
+def log_audit(results: list[AuditResult], global_errors: list[str], execute: bool) -> None:
+    """Print a readable complete audit report before optionally renaming files."""
+    failed_results = [result for result in results if result.errors]
+    ready_results = [result for result in results if not result.errors]
+    LOGGER.info(
+        "Variation-file rename audit: %s dataset(s), %s ready, %s with errors",
+        len(results),
+        len(ready_results),
+        len(failed_results),
+    )
+
+    if failed_results:
+        LOGGER.error("Dataset errors:")
+        for result in failed_results:
+            dataset = result.dataset
+            LOGGER.error(
+                "  %s (%s; genome %s)", dataset.dataset_uuid, dataset.dataset_name, dataset.genome_uuid
+            )
+            if dataset.ftp_path:
+                LOGGER.error("    FTP path: %s", dataset.ftp_path)
+            for error in result.errors:
+                LOGGER.error("    - %s", error)
+    if global_errors:
+        LOGGER.error("Global safety errors:")
+        for error in global_errors:
+            LOGGER.error("  - %s", error)
+
+    if not failed_results and not global_errors:
+        action = "Will rename" if execute else "Would rename"
+        LOGGER.info("%s:", action)
+        for result in ready_results:
+            for source, target in result.operations:
+                LOGGER.info("  %s -> %s", source, target)
 
 
 def parse_args() -> argparse.Namespace:
@@ -171,16 +241,24 @@ def main() -> int:
         LOGGER.warning("No current released short-variant datasets found")
         return 0
 
-    operations = [operation for dataset in datasets for operation in planned_renames(ftp_root, dataset)]
-    preflight(operations)
+    results, global_errors = audit_datasets(ftp_root, datasets)
+    log_audit(results, global_errors, args.execute)
+    if any(result.errors for result in results) or global_errors:
+        LOGGER.error("No files were renamed; fix the reported errors and run again.")
+        return 1
 
-    mode = "Renaming" if args.execute else "Would rename"
-    for source, target in operations:
-        LOGGER.info("%s %s -> %s", mode, source, target)
-        if args.execute:
+    operations = [operation for result in results for operation in result.operations]
+    if args.execute:
+        for source, target in operations:
             source.rename(target)
+        LOGGER.info("Renamed %s file(s) for %s dataset(s)", len(operations), len(datasets))
+    else:
+        LOGGER.info(
+            "Dry run complete: %s file(s) for %s dataset(s) are ready to rename",
+            len(operations),
+            len(datasets),
+        )
 
-    LOGGER.info("%s %s file(s) for %s dataset(s)", mode, len(operations), len(datasets))
     return 0
 
 
