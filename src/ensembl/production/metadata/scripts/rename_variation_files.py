@@ -12,7 +12,10 @@ dataset from metadata, derives its public FTP directory, and renames::
     variation.vcf.gz.*    -> short_variant-<dataset.name>.vcf.gz.*
 
 The index extension is deliberately discovered rather than assumed to be
-``.tbi``; for example, both ``.tbi`` and ``.csi`` are supported.
+``.tbi``; for example, both ``.tbi`` and ``.csi`` are supported.  Use
+``--report-file`` to retain the audit output.  With ``--execute``,
+``--ignore-errors`` skips datasets with per-dataset errors, such as a missing
+index, while still refusing global safety conflicts.
 
 Run a dry run first (the default), then repeat with ``--execute`` once its
 output has been checked.
@@ -236,7 +239,7 @@ def log_audit(results: list[AuditResult], global_errors: list[str], execute: boo
         for error in global_errors:
             LOGGER.error("  - %s", error)
 
-    if not failed_results and not global_errors:
+    if not global_errors and ready_results:
         action = "Will rename" if execute else "Would rename"
         LOGGER.info("%s:", action)
         for result in ready_results:
@@ -258,12 +261,36 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--metadata-uri", required=True, help="Metadata database URI.")
     parser.add_argument("--ftp-root", required=True, type=Path, help="Root containing the public FTP layout.")
+    parser.add_argument(
+        "--report-file",
+        type=Path,
+        help="Write the audit report to this file as well as standard error (overwrites an existing file).",
+    )
     parser.add_argument("--execute", action="store_true", help="Perform the renames (default: dry run).")
+    parser.add_argument(
+        "--ignore-errors",
+        action="store_true",
+        help="With --execute, skip datasets with errors and rename the remaining valid files.",
+    )
     return parser.parse_args()
+
+
+def add_report_file_handler(report_file: Path) -> None:
+    """Mirror the audit log to *report_file*, replacing a prior report."""
+    if not report_file.parent.is_dir():
+        raise NotADirectoryError(f"Report directory does not exist: {report_file.parent}")
+    handler = logging.FileHandler(report_file, mode="w")
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logging.getLogger().addHandler(handler)
 
 
 def main() -> int:
     args = parse_args()
+    if args.ignore_errors and not args.execute:
+        raise ValueError("--ignore-errors requires --execute")
+    if args.report_file:
+        add_report_file_handler(args.report_file)
+
     ftp_root = args.ftp_root.resolve()
     if not ftp_root.is_dir():
         raise NotADirectoryError(f"FTP root does not exist or is not a directory: {ftp_root}")
@@ -275,20 +302,27 @@ def main() -> int:
 
     results, global_errors = audit_datasets(ftp_root, datasets)
     log_audit(results, global_errors, args.execute)
-    if any(result.errors for result in results) or global_errors:
+    failed_results = [result for result in results if result.errors]
+    if global_errors:
         LOGGER.error("No files were renamed; fix the reported errors and run again.")
         return 1
+    if failed_results and not args.ignore_errors:
+        LOGGER.error("No files were renamed; fix the reported errors and run again.")
+        return 1
+    if failed_results:
+        LOGGER.warning("Ignoring errors and skipping %s dataset(s)", len(failed_results))
 
-    operations = [operation for result in results for operation in result.operations]
+    operations = [operation for result in results if not result.errors for operation in result.operations]
+    ready_dataset_count = len(results) - len(failed_results)
     if args.execute:
         for source, target in operations:
             source.rename(target)
-        LOGGER.info("Renamed %s file(s) for %s dataset(s)", len(operations), len(datasets))
+        LOGGER.info("Renamed %s file(s) for %s dataset(s)", len(operations), ready_dataset_count)
     else:
         LOGGER.info(
             "Dry run complete: %s file(s) for %s dataset(s) are ready to rename",
             len(operations),
-            len(datasets),
+            ready_dataset_count,
         )
 
     return 0
