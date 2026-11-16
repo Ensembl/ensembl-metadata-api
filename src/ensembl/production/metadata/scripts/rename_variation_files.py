@@ -66,6 +66,10 @@ class AuditResult:
     dataset: VariationDataset
     operations: list[tuple[Path, Path]]
     errors: list[str]
+    good_vcfs: int
+    bad_vcfs: int
+    good_indexes: int
+    bad_indexes: int
 
 
 def fetch_variation_datasets(metadata_uri: str) -> list[VariationDataset]:
@@ -134,25 +138,50 @@ def fetch_variation_datasets(metadata_uri: str) -> list[VariationDataset]:
     return datasets
 
 
-def planned_renames(ftp_root: Path, dataset: VariationDataset) -> list[tuple[Path, Path]]:
-    """Build the VCF and detected-index rename operations for one dataset."""
+def audit_dataset(ftp_root: Path, dataset: VariationDataset) -> AuditResult:
+    """Check one dataset, retaining every file error that can be identified."""
+    errors = list(dataset.errors)
     if dataset.ftp_path is None:
-        raise ValueError("FTP path could not be derived from metadata")
+        return AuditResult(dataset, [], errors, good_vcfs=0, bad_vcfs=1, good_indexes=0, bad_indexes=1)
+
     source = ftp_root / dataset.ftp_path / OLD_FILENAME
+    vcf_exists = source.is_file()
+    if not vcf_exists:
+        errors.append(f"VCF not found for {dataset.dataset_uuid}: {source}")
+
     index_files = sorted(source.parent.glob(f"{OLD_FILENAME}.*"))
-    if not source.is_file():
-        raise FileNotFoundError(f"VCF not found for {dataset.dataset_uuid}: {source}")
+    valid_indexes = [index_file for index_file in index_files if index_file.is_file()]
+    invalid_indexes = [index_file for index_file in index_files if not index_file.is_file()]
     if not index_files:
-        raise FileNotFoundError(f"No index found for {dataset.dataset_uuid}: {source}.*")
+        errors.append(f"No index found for {dataset.dataset_uuid}: {source}.*")
+    for index_file in invalid_indexes:
+        errors.append(f"Index is not a file for {dataset.dataset_uuid}: {index_file}")
+
+    if errors:
+        return AuditResult(
+            dataset,
+            [],
+            errors,
+            good_vcfs=int(vcf_exists),
+            bad_vcfs=int(not vcf_exists),
+            good_indexes=len(valid_indexes),
+            bad_indexes=max(1, len(invalid_indexes)) if not valid_indexes else len(invalid_indexes),
+        )
 
     target = source.with_name(dataset.new_filename)
-    renames = [(source, target)]
-    for index_file in index_files:
-        if not index_file.is_file():
-            raise FileNotFoundError(f"Index is not a file for {dataset.dataset_uuid}: {index_file}")
+    operations = [(source, target)]
+    for index_file in valid_indexes:
         suffix = index_file.name.removeprefix(OLD_FILENAME)
-        renames.append((index_file, target.with_name(f"{target.name}{suffix}")))
-    return renames
+        operations.append((index_file, target.with_name(f"{target.name}{suffix}")))
+    return AuditResult(
+        dataset,
+        operations,
+        [],
+        good_vcfs=1,
+        bad_vcfs=0,
+        good_indexes=len(valid_indexes),
+        bad_indexes=0,
+    )
 
 
 def preflight_errors(operations: list[tuple[Path, Path]]) -> list[str]:
@@ -174,14 +203,7 @@ def audit_datasets(ftp_root: Path, datasets: list[VariationDataset]) -> tuple[li
     """Check every dataset and collect errors without changing the filesystem."""
     results = []
     for dataset in datasets:
-        errors = list(dataset.errors)
-        operations = []
-        if not errors:
-            try:
-                operations = planned_renames(ftp_root, dataset)
-            except (OSError, ValueError) as error:
-                errors.append(str(error))
-        results.append(AuditResult(dataset=dataset, operations=operations, errors=errors))
+        results.append(audit_dataset(ftp_root, dataset))
 
     operations = [operation for result in results if not result.errors for operation in result.operations]
     return results, preflight_errors(operations)
@@ -220,6 +242,16 @@ def log_audit(results: list[AuditResult], global_errors: list[str], execute: boo
         for result in ready_results:
             for source, target in result.operations:
                 LOGGER.info("  %s -> %s", source, target)
+
+    LOGGER.info(
+        "Summary: short_variant datasets: %s; VCFs changed/good: %s; bad VCFs: %s; "
+        "indexes changed/good: %s; bad/missing indexes: %s",
+        len(results),
+        sum(result.good_vcfs for result in results),
+        sum(result.bad_vcfs for result in results),
+        sum(result.good_indexes for result in results),
+        sum(result.bad_indexes for result in results),
+    )
 
 
 def parse_args() -> argparse.Namespace:
