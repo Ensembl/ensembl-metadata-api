@@ -12,6 +12,8 @@
 
 import csv
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -20,6 +22,54 @@ from ensembl.production.metadata.api.models import EnsemblRelease
 
 db_directory = Path(__file__).parent / 'databases'
 db_directory = db_directory.resolve()
+
+
+@pytest.mark.parametrize(
+    "test_dbs",
+    [[{'src': db_directory / "ensembl_genome_metadata"}, {'src': db_directory / "ncbi_taxonomy"}]],
+    indirect=True,
+)
+def test_gather_partial_data_merges_update_flags_by_accession(test_dbs):
+    """Combine updates from distinct genomes belonging to the same assembly."""
+    organism = SimpleNamespace(scientific_name='Mus musculus', common_name='Mouse')
+    assembly = SimpleNamespace(name='GRCm39', accession='GCA_000001635.9')
+    other_assembly = SimpleNamespace(name='Other assembly', accession='GCA_000001635.8')
+    genomes = [
+        SimpleNamespace(genome_id=1, organism=organism, assembly=assembly),
+        SimpleNamespace(genome_id=2, organism=organism, assembly=assembly),
+        SimpleNamespace(genome_id=3, organism=organism, assembly=other_assembly),
+    ]
+    generator = ChangelogGenerator.__new__(ChangelogGenerator)
+    generator.release_label = '2026-07-13'
+    generator.metadata_db = MagicMock()
+    session = generator.metadata_db.session_scope.return_value.__enter__.return_value
+    session.execute.return_value.scalar_one.return_value = 42
+    session.execute.return_value.scalars.return_value.all.return_value = genomes
+    generator._get_datasets_for_partial_bulk = MagicMock(return_value={
+        1: {'genebuild'},
+        2: {'short_variants', 'regulation_tracks'},
+        3: {'short_variants'},
+    })
+    generator._get_annotation_sources_bulk = MagicMock(return_value={
+        1: 'ensembl', 2: 'ensembl', 3: 'ensembl',
+    })
+
+    results = generator.gather_partial_data()
+
+    assert len(results) == 2
+    by_accession = {row['assembly_accession']: row for row in results}
+    assert by_accession['GCA_000001635.9'] == {
+        'scientific_name': 'Mus musculus',
+        'common_name': 'Mouse',
+        'assembly_name': 'GRCm39',
+        'assembly_accession': 'GCA_000001635.9',
+        'annotation_provider': 'ensembl',
+        'geneset_updated': 1,
+        'variation_updated': 1,
+        'regulation_updated': 1,
+    }
+    other = by_accession['GCA_000001635.8']
+    assert (other['geneset_updated'], other['variation_updated'], other['regulation_updated']) == (0, 1, 0)
 
 
 @pytest.mark.parametrize(
