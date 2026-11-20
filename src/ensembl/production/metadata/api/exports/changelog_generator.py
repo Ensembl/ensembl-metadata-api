@@ -238,7 +238,19 @@ class ChangelogGenerator:
                 }
                 results.append(result)
 
-            return results
+            # Merge genomes sharing an assembly, preserving all dataset updates.
+            results_by_accession = {}
+            for result in results:
+                accession = result['assembly_accession']
+                if accession not in results_by_accession:
+                    results_by_accession[accession] = result
+                    continue
+
+                merged = results_by_accession[accession]
+                for key in ('geneset_updated', 'variation_updated', 'regulation_updated'):
+                    merged[key] = max(merged[key], result[key])
+
+            return list(results_by_accession.values())
 
     def gather_integrated_data(self) -> List[Dict]:
         """
