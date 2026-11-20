@@ -30,6 +30,7 @@ from ensembl.production.metadata.api.models import (
     GenomeGroup,
     GenomeRelease,
 )
+from ensembl.production.metadata.updater.taxonomy import open_taxonomy
 from ensembl.production.metadata.updater.updater_utils import (
     get_homology_reference_collection,
     update_attributes,
@@ -102,7 +103,11 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--metadata_uri", required=True, help="Metadata DB URI")
-    parser.add_argument("--taxonomy_uri", required=True, help="NCBI taxonomy DB URI")
+    parser.add_argument(
+        "--taxonomy_uri",
+        required=True,
+        help="NCBI taxonomy DB URI, or file://<dir> of a TaxonDB Parquet snapshot",
+    )
     parser.add_argument(
         "--release_name",
         required=True,
@@ -122,13 +127,14 @@ def main():
     dbc = DBConnection(args.metadata_uri)
 
     # Cache reference-collection lookups by taxonomy_id: many genomes (e.g. multiple
-    # assemblies of the same species) share a taxonomy_id, and each lookup opens its
-    # own connection/session against the taxonomy DB, so this avoids redundant work.
+    # assemblies of the same species) share a taxonomy_id, and each lookup walks the
+    # taxon's lineage, so this avoids redundant work.
     taxonomy_cache: dict[int, str | Exception] = {}
 
     stats = {"total": 0, "already_set": 0, "set": 0, "unresolved": 0, "errors": 0}
 
-    with dbc.session_scope() as session:
+    # Open the taxonomy once: a TaxonDB snapshot (file:// URI) is loaded into memory when opened.
+    with open_taxonomy(args.taxonomy_uri) as taxonomy, dbc.session_scope() as session:
         check_preconditions(session)
         release = resolve_partial_release(session, args.release_name)
 
@@ -157,7 +163,7 @@ def main():
             if taxonomy_id not in taxonomy_cache:
                 try:
                     taxonomy_cache[taxonomy_id] = get_homology_reference_collection(
-                        taxonomy_id, args.taxonomy_uri, session
+                        taxonomy_id, taxonomy, session
                     )
                 except Exception as exc:  # noqa: BLE001 - one bad taxon must not abort the whole backfill
                     taxonomy_cache[taxonomy_id] = exc

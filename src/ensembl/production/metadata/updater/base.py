@@ -17,6 +17,7 @@ from sqlalchemy.engine import make_url
 
 from ensembl.production.metadata.api import exceptions
 from ensembl.production.metadata.api.models import DatasetSource, EnsemblRelease, ReleaseStatus
+from ensembl.production.metadata.updater.taxonomy import TaxonomyLookup, open_taxonomy
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +28,24 @@ class BaseMetaUpdater:
         self.taxonomy_uri = taxonomy_uri
         self.db = DBConnection(self.db_uri)
         self.metadata_db = DBConnection(metadata_uri)
-        self.taxonomy_db = DBConnection(taxonomy_uri)
+        # Opened on first use: a TaxonDB snapshot is loaded into memory when opened.
+        self._taxonomy = None
         if release_name is None:
             self.release_name = None
         else:
             self.release_name = release_name
+
+    @property
+    def taxonomy(self) -> TaxonomyLookup:
+        """Taxonomy lookup for ``taxonomy_uri``: a TaxonDB snapshot (``file://``) or a SQL database."""
+        if self._taxonomy is None:
+            self._taxonomy = open_taxonomy(self.taxonomy_uri)
+        return self._taxonomy
+
+    def close_taxonomy(self) -> None:
+        if self._taxonomy is not None:
+            self._taxonomy.close()
+            self._taxonomy = None
 
     def is_object_new(self, obj):
         """
