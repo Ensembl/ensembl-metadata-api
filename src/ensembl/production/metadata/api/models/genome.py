@@ -114,6 +114,14 @@ class GenomeGroup(LoadAble, Base):
 
 class GenomeGroupMember(LoadAble, Base):
     __tablename__ = "genome_group_member"
+    __table_args__ = (
+        UniqueConstraint(
+            "genome_id",
+            "genome_group_id",
+            "release_id",
+            name="uq_genome_group_release",
+        ),
+    )
 
     genome_group_member_id = Column(Integer, primary_key=True)
     is_reference = Column(TINYINT(1), nullable=False, default=0)
