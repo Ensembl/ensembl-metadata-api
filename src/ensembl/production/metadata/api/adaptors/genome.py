@@ -1241,6 +1241,51 @@ class GenomeAdaptor(BaseAdaptor):
 
         return unique_members
 
+    def get_blast_path(self, genome_uuid: str) -> str:
+        """Return the BLAST directory for a genome's latest partial release.
+
+        BLAST assets are stored under the name of the partial release to which
+        the genome is attached. Planned and prepared releases are included so
+        callers can resolve the destination while a release is being built.
+
+        Args:
+            genome_uuid: UUID of the genome whose BLAST path is required.
+
+        Returns:
+            A path in the form ``release-<release_name>/blast/<genome_uuid>``.
+
+        Raises:
+            ValueError: If ``genome_uuid`` is empty, the genome does not exist,
+                or it is not attached to a named partial release.
+        """
+        if not genome_uuid:
+            raise ValueError("genome_uuid is required")
+
+        with self.metadata_db.session_scope() as session:
+            genome_exists = session.execute(
+                select(Genome.genome_id).where(Genome.genome_uuid == genome_uuid)
+            ).first()
+            if genome_exists is None:
+                raise ValueError(f"Genome with UUID {genome_uuid} not found")
+
+            release_name = session.execute(
+                select(EnsemblRelease.name)
+                .join(GenomeRelease, EnsemblRelease.release_id == GenomeRelease.release_id)
+                .join(Genome, Genome.genome_id == GenomeRelease.genome_id)
+                .where(
+                    Genome.genome_uuid == genome_uuid,
+                    EnsemblRelease.release_type == "partial",
+                )
+                .order_by(EnsemblRelease.release_id.desc())
+            ).scalars().first()
+
+        if not release_name:
+            raise ValueError(
+                f"Genome with UUID {genome_uuid} is not attached to a named partial release"
+            )
+
+        return f"release-{release_name}/blast/{genome_uuid}"
+
     def get_public_path(self, genome_uuid, dataset_type='all', release=None):
         """
         Retrieve public file paths for genomic datasets.

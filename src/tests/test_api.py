@@ -26,6 +26,36 @@ from ensembl.production.metadata.api.adaptors.genome import *
 class TestApi:
     dbc = None  # type: UnitTestDB
 
+    def test_get_blast_path(self, test_dbs):
+        genome_adapter = GenomeAdaptor(
+            test_dbs["ensembl_genome_metadata"].dbc.url,
+            test_dbs["ncbi_taxonomy"].dbc.url,
+        )
+        genome_uuid = "a7335667-93e7-11ec-a39d-005056b38ce3"
+
+        assert genome_adapter.get_blast_path(genome_uuid) == (
+            "release-5/blast/a7335667-93e7-11ec-a39d-005056b38ce3"
+        )
+
+    def test_get_blast_path_requires_genome_uuid(self, test_dbs):
+        genome_adapter = GenomeAdaptor(
+            test_dbs["ensembl_genome_metadata"].dbc.url,
+            test_dbs["ncbi_taxonomy"].dbc.url,
+        )
+
+        with pytest.raises(ValueError, match="genome_uuid is required"):
+            genome_adapter.get_blast_path("")
+
+    def test_get_blast_path_rejects_unknown_genome(self, test_dbs):
+        genome_adapter = GenomeAdaptor(
+            test_dbs["ensembl_genome_metadata"].dbc.url,
+            test_dbs["ncbi_taxonomy"].dbc.url,
+        )
+        genome_uuid = "00000000-0000-0000-0000-000000000000"
+
+        with pytest.raises(ValueError, match=f"Genome with UUID {genome_uuid} not found"):
+            genome_adapter.get_blast_path(genome_uuid)
+
     def test_get_public_path(self, test_dbs):
         genome_adapter = GenomeAdaptor(test_dbs['ensembl_genome_metadata'].dbc.url, test_dbs['ncbi_taxonomy'].dbc.url)
         genome_uuid = 'a733574a-93e7-11ec-a39d-005056b38ce3'
