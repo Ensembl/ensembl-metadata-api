@@ -59,6 +59,7 @@ dependencies = [
     "sqlalchemy >= 2.0, < 2.1",
     "duckdb >= 1.2.0",
     "duckdb-engine >= 0.17.0",
+    "ensembl-taxonomy @ git+https://github.com/Ensembl/ensembl-taxonomy.git@feature/taxos",
     "pymysql",
     "mysqlclient",
     "pydantic >= 2.0"
@@ -92,6 +93,7 @@ assign-organism-to-organismgroup = "ensembl.production.metadata.scripts.organism
 set-partial-release = "ensembl.production.metadata.scripts.update_release_metadata:main"
 set-integrated-release = "ensembl.production.metadata.scripts.prepare_integrated_release:main"
 check-genome-search-index = "ensembl.production.metadata.api.search.check:main"
+genome-taxonomy-counts = "ensembl.production.metadata.scripts.genome_taxonomy_counts:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

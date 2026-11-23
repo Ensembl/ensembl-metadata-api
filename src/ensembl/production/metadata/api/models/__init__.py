@@ -5,4 +5,5 @@ from .genome import *
 from .organism import *
 from .release import *
 from .taxonomy import *
+from .taxonomy_counts import *
 from .utils import check_release_status
