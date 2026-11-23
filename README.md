@@ -81,6 +81,23 @@ Replace `<username>`, `<password>`, `<host>`, `<port>`, and `<database_name>` wi
 
 ---
 
+## Release taxonomy counts
+
+Build the `genome_taxonomy_counts` report from the metadata database and a
+cached Parcade taxonomy taxdump:
+
+```shell
+genome-taxonomy-counts \
+  --metadata-uri mysql+pymysql://<username>:<password>@<host>:<port>/<database_name> \
+  --taxonomy-location /path/to/taxon_cache/taxdumps/2026/20261001T033004Z
+```
+
+`--taxonomy-location` may also be a `file://` URI. The command replaces the
+report rows on each run and preserves the historical all-release (`release_id`
+0) and per-released-release counts.
+
+---
+
 ## gRPC Setup
 
 ### Generate/Update Protobuf Files
