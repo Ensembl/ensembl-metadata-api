@@ -1,9 +1,11 @@
+import itertools
 from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, text
 
 from ensembl.production.metadata.scripts.genome_taxonomy_counts import GenomeTaxonomyCountGenerator
+from ensembl.production.metadata.scripts.genome_taxonomy_counts import _ensure_itertools_batched
 
 
 class FakeTaxonDB:
@@ -47,6 +49,23 @@ class FakeTaxonDB:
 
 
 db_directory = Path(__file__).parent / "databases"
+
+
+@pytest.mark.parametrize(
+    "test_dbs",
+    [[
+        {"src": db_directory / "ensembl_genome_metadata"},
+        {"src": db_directory / "ncbi_taxonomy"},
+    ]],
+    indirect=True,
+)
+def test_supplies_itertools_batched_for_python_before_312(monkeypatch, test_dbs):
+    del test_dbs  # The autouse database fixture is required by this test module.
+    monkeypatch.delattr(itertools, "batched", raising=False)
+
+    _ensure_itertools_batched()
+
+    assert list(itertools.batched(range(5), 2)) == [(0, 1), (2, 3), (4,)]
 
 
 @pytest.mark.parametrize(

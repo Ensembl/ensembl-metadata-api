@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from dataclasses import dataclass
+import itertools
 from pathlib import Path
 import sys
 from typing import Protocol
@@ -68,8 +69,24 @@ def _taxonomy_uri(path_or_uri: str) -> str:
     return Path(path_or_uri).expanduser().resolve().as_uri()
 
 
+def _ensure_itertools_batched() -> None:
+    """Provide the Python 3.12 itertools API used by ensembl-taxonomy on Python 3.10/3.11."""
+    if hasattr(itertools, "batched"):
+        return
+
+    def batched(iterable, size):
+        if size < 1:
+            raise ValueError("n must be at least one")
+        iterator = iter(iterable)
+        while batch := tuple(itertools.islice(iterator, size)):
+            yield batch
+
+    itertools.batched = batched
+
+
 def _taxon_db(taxonomy_location: str) -> TaxonomyDatabase:
     try:
+        _ensure_itertools_batched()
         from ensembl.taxonomy.db import TaxonDB
     except ImportError as exc:  # pragma: no cover - depends on installed extras
         raise RuntimeError(
