@@ -8,15 +8,16 @@ lookups use :class:`ensembl.taxonomy.db.TaxonDB`, which reads a cached Parcade
 from __future__ import annotations
 
 import argparse
+import itertools
+import sys
 from collections import Counter
 from dataclasses import dataclass
-import itertools
 from pathlib import Path
-import sys
-from typing import Protocol
+from typing import Callable, Protocol
 
 from ensembl.utils.database import DBConnection
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 
 from ensembl.production.metadata.api.models import (
     EnsemblRelease,
@@ -60,6 +61,9 @@ TAXONOMY_GROUPS = (
     ("viridiplantae", "Green Plants", 5),
     ("root", "Others", 6),
 )
+
+ProgressCallback = Callable[[str, int, int], None]
+QUERY_BATCH_SIZE = 1_000
 
 
 def _taxonomy_uri(path_or_uri: str) -> str:
@@ -150,7 +154,6 @@ class GenomeTaxonomyCountGenerator:
                 or_(EnsemblRelease.release_type == "integrated", GenomeRelease.is_current.is_(True)),
             )
             .distinct()
-            .all()
         )
 
     @staticmethod
@@ -164,11 +167,23 @@ class GenomeTaxonomyCountGenerator:
                 GenomeRelease.is_current.is_(True),
                 EnsemblRelease.status == ReleaseStatus.RELEASED,
             )
-            .all()
         )
 
-    def generate(self) -> GenomeTaxonomyCountReport:
+    @staticmethod
+    def _report_progress(
+        callback: ProgressCallback | None, phase: str, processed: int, total: int, progress_every: int
+    ) -> None:
+        if callback and (processed == 0 or processed == total or processed % progress_every == 0):
+            callback(phase, processed, total)
+
+    def generate(
+        self,
+        progress_callback: ProgressCallback | None = None,
+        progress_every: int = QUERY_BATCH_SIZE,
+    ) -> GenomeTaxonomyCountReport:
         """Replace the report table and return its rows and unresolved taxonomy IDs."""
+        if progress_every < 1:
+            raise ValueError("progress_every must be at least one")
         # ``create`` is SQLAlchemy schema management, not handwritten DDL;
         # checkfirst keeps this safe to run for every release.
         with self.metadata_db.connect() as connection:
@@ -193,15 +208,44 @@ class GenomeTaxonomyCountGenerator:
 
             with self.metadata_db.session_scope() as session:
                 counts: Counter[tuple[int, str, int]] = Counter()
-                for genome in self._all_release_genomes(session):
+                all_release_query = self._all_release_genomes(session)
+                all_release_total = all_release_query.count()
+                self._report_progress(
+                    progress_callback, "Current-release genomes", 0, all_release_total, progress_every
+                )
+                for processed, genome in enumerate(
+                    all_release_query.options(joinedload(Genome.organism)).yield_per(QUERY_BATCH_SIZE),
+                    start=1,
+                ):
                     group_id = group_for(genome.organism.taxonomy_id)
                     if group_id is not None:
                         counts[(0, "", group_id)] += 1
+                    self._report_progress(
+                        progress_callback,
+                        "Current-release genomes",
+                        processed,
+                        all_release_total,
+                        progress_every,
+                    )
 
-                for release, genome in self._released_genomes(session):
+                released_query = self._released_genomes(session)
+                released_total = released_query.count()
+                self._report_progress(
+                    progress_callback, "Released-release genomes", 0, released_total, progress_every
+                )
+                for processed, (release, genome) in enumerate(
+                    released_query.options(joinedload(Genome.organism)).yield_per(QUERY_BATCH_SIZE), start=1
+                ):
                     group_id = group_for(genome.organism.taxonomy_id)
                     if group_id is not None:
                         counts[(release.release_id, release.label or "", group_id)] += 1
+                    self._report_progress(
+                        progress_callback,
+                        "Released-release genomes",
+                        processed,
+                        released_total,
+                        progress_every,
+                    )
 
                 session.query(GenomeTaxonomyCount).delete()
                 rows = []
@@ -237,12 +281,25 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="Taxonomy cache directory or file:// URI containing ncbi_taxa_*.parquet",
     )
+    parser.add_argument(
+        "--progress-every",
+        type=int,
+        default=QUERY_BATCH_SIZE,
+        help="Report progress to stderr after this many genomes (default: %(default)s)",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    report = GenomeTaxonomyCountGenerator(args.metadata_uri, args.taxonomy_location).generate()
+    def print_progress(phase: str, processed: int, total: int) -> None:
+        percent = (processed / total * 100) if total else 100
+        print(f"{phase}: {processed:,}/{total:,} ({percent:.1f}%)", file=sys.stderr)
+
+    report = GenomeTaxonomyCountGenerator(args.metadata_uri, args.taxonomy_location).generate(
+        progress_callback=print_progress,
+        progress_every=args.progress_every,
+    )
     print(f"Created genome_taxonomy_counts with {sum(row.count for row in report.rows)} counted genomes.")
     for row in report.rows:
         print(f"{row.release_id}\t{row.label}\t{row.ensembl_taxon_name}\t{row.count}")

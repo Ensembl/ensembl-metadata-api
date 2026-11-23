@@ -83,7 +83,8 @@ def test_generates_all_release_and_released_release_counts(test_dbs):
         taxon_db_factory=FakeTaxonDB,
     )
 
-    report = generator.generate()
+    progress_updates = []
+    report = generator.generate(progress_callback=lambda *update: progress_updates.append(update))
     rows = report.rows
 
     assert rows
@@ -94,6 +95,11 @@ def test_generates_all_release_and_released_release_counts(test_dbs):
     )
     assert all(row.label == "" for row in rows if row.release_id == 0)
     assert report.failed_taxonomy_ids == []
+    assert {phase for phase, _, _ in progress_updates} == {
+        "Current-release genomes",
+        "Released-release genomes",
+    }
+    assert all(processed == total for _, processed, total in progress_updates if processed)
 
 
 @pytest.mark.parametrize(
