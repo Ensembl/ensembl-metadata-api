@@ -18,10 +18,31 @@ create indexes.
 
 import argparse
 import logging
+import os
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+# Permit direct execution from any working directory without requiring callers
+# to set PYTHONPATH.  This is deliberately local to this disposable script.
+SOURCE_ROOT = Path(__file__).resolve().parents[4]
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
+
+# Prefer this checkout's virtual environment when the caller invokes the
+# script directly with a Python that lacks the project's dependencies.  This
+# keeps the one-off command free of activation/PYTHONPATH boilerplate.
+try:
+    import ensembl.utils.database  # noqa: F401
+except ModuleNotFoundError as error:
+    venv_python = SOURCE_ROOT.parent / ".venv" / "bin" / "python"
+    if venv_python.is_file() and Path(sys.executable) != venv_python:
+        os.execv(str(venv_python), [str(venv_python), str(Path(__file__).resolve()), *sys.argv[1:]])
+    raise RuntimeError(
+        "Cannot import ensembl-utils. Run this script from a checkout with its .venv available."
+    ) from error
 
 from ensembl.production.metadata.scripts.rename_variation_files import (
     VariationDataset,
