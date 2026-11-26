@@ -294,6 +294,7 @@ class FTPMetadataExporter:
         if assembly_key not in metadata_structure["species"][species_key]["assemblies"]:
             metadata_structure["species"][species_key]["assemblies"][assembly_key] = {
                 "name": getattr(assembly, 'name', None),
+                "ucsc_name": getattr(assembly, 'ucsc_name', None),
                 "level": getattr(assembly, 'level', None),
                 "genebuild_providers": {},
                 "assembly": None
